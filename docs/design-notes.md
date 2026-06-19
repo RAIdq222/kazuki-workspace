@@ -85,9 +85,36 @@
 - カット単位で中間成果物をファイルに残し、**途中再開可能**にする。
 - リテイクは最大3回（充足判定はAI、後段で実装）。失敗カットは人手送りフラグ。
 
-## 8. 未決事項 / 次アクション
+## 8. 実行経路 / ネットワークの知見（重要・検証済み）
 
+Higgsfield への接続経路を切り分けた結果:
+
+- **MCPコネクター経由の操作は許可リスト不要で動く**（Anthropicサーバー経由）。
+  実際に通った: `balance`(残高), `models_explore`(仕様), `media_upload`(presigned URL発行),
+  `generate_image`(命令発行), Google Drive からの原図ダウンロード。
+- **サンドボックスから直接出る通信は環境の egress 許可リストで制限される**。
+  → Higgsfield のアップロード先 `upload.higgsfield.ai` への PUT が `403` でブロック。
+  → これが「お試し生成」を Claude Code on the web 上で完結できなかった唯一の原因。
+- `media_import_url`（サーバー側fetch）は **Google Drive 各URL形式でリダイレクト超過(>2)で失敗**。
+  Drive は import 非対応とみなす。直リンク配信のホストが必要。
+
+### 結論（実行方針）
+- **本番の300カットバッチ**: ユーザー環境（Mac/サーバー）で Python＋**Higgsfield CLI** 実行。
+  egress 制限が無いため `media_upload`+PUT もCLIも素直に通る。これが本筋。
+- **Claude Code on the web で動かす場合**: 環境の Network access を **Custom** にして
+  `*.higgsfield.ai`, `upload.higgsfield.ai`, `*.cloudfront.net` を許可（+既定リストも保持）、
+  または **Full**。設定変更は新セッションから反映される見込み。
+
+### 永続化の注意
+- git push が `403`（GitHub専用プロキシ／このセッションの書き込み権限の問題）で失敗中。
+  新セッションへ移る前に push を解決するか、Drive 等にバックアップが必要。
+
+## 9. 未決事項 / 次アクション
+
+- [ ] 環境の Network access に Higgsfield を許可（Custom/Full）→ 新セッションで自動実行を実証
+- [ ] git push の 403 を解決（リポジトリ書き込み権限の確認）
 - [ ] 香盤表の **.xlsx 原本**を入手（PDFより正確に取れる）
-- [ ] お試し生成で「配置維持・指示無視・2枚入力可否」を実測（Higgsfield接続復帰待ち）
+- [ ] 原図＋プロンプトで「配置維持・指示無視・パース修正・2枚入力可否」を実測
 - [ ] 原図サンプル2〜3枚で原図理解v1を試行
 - [ ] 「場所名→ボード」対応表のフォーマット確定
+- [ ] 本番骨組み: CLI呼び出しラッパ / 香盤表パーサ / 中間成果物の保存規約
