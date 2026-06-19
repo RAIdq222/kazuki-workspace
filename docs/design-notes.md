@@ -195,3 +195,18 @@ Higgsfield への接続経路を切り分けた結果:
   そのため名前指定の on/off は layer_filter ではなく `.visible` 書き換え＋`force=True` で行う。
 - 「枠・タイトル・タップ」等が **背景ラスター(`LO用紙`)に焼き込まれている**ことがあり、
   名前レイヤーを隠しても完全には消えない。完全な「絵だけ抽出」は後段の原図理解で扱う。
+
+## 11. CLI（実装済み・2026-06-19）
+
+`src/genzu_fix/cli.py`（`python -m genzu_fix.cli`、PYTHONPATH=src）。
+生成だけ環境で認証経路が違うため **prep / finish の2フェーズ**に分割。
+
+- `prep <psd> [--prompt-file f] [--board img ...] [--out-dir d] [--transparent]`
+  → 表示合成PNG → 比率パディング → `manifest.json`（psd/visible/padded/boards/prompt/prep）。
+- （生成）padded.png（＋boards）を GPT Image 2 へ。web では MCP、本番は Higgsfield CLI/API。
+- `finish <manifest> --result gen.png [--out-psd o] [--base-name AI原図修正]
+   [--job-id ..] [--result-url ..] [--cost ..]`
+  → 余白切り戻し → 元PSDへレイヤー差し込み → `runs/ledger.jsonl` に記録。
+
+通しテスト済み（test.psd）: prep→(疑似生成)→finish で `AI原図修正` 層が入り台帳1行追加、元レイヤー保持。
+残: 本番環境向けに生成バックエンド（Higgsfield CLI/API）を `run` サブコマンドへ統合。
