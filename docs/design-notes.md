@@ -93,17 +93,35 @@ Higgsfield への接続経路を切り分けた結果:
   実際に通った: `balance`(残高), `models_explore`(仕様), `media_upload`(presigned URL発行),
   `generate_image`(命令発行), Google Drive からの原図ダウンロード。
 - **サンドボックスから直接出る通信は環境の egress 許可リストで制限される**。
-  → Higgsfield のアップロード先 `upload.higgsfield.ai` への PUT が `403` でブロック。
-  → これが「お試し生成」を Claude Code on the web 上で完結できなかった唯一の原因。
+  → 以前は `upload.higgsfield.ai` への PUT が `403` でブロックされていた。
+  → **【2026-06-19 解消・実証】** 環境の Network access に Higgsfield を許可後、
+     `upload.higgsfield.ai` への直 PUT が **200** で成功。`media_upload`→PUT→`media_confirm`→
+     `generate_image`→`show_generations`(結果URL取得)→ダウンロード→切り戻し までの
+     **全工程を web セッション内で完結**できることを確認済み。
 - `media_import_url`（サーバー側fetch）は **Google Drive 各URL形式でリダイレクト超過(>2)で失敗**。
   Drive は import 非対応とみなす。直リンク配信のホストが必要。
+  → ただし `media_upload`+PUT が web 上で通るようになったため、import_url は不要になった。
 
 ### 結論（実行方針）
 - **本番の300カットバッチ**: ユーザー環境（Mac/サーバー）で Python＋**Higgsfield CLI** 実行。
   egress 制限が無いため `media_upload`+PUT もCLIも素直に通る。これが本筋。
-- **Claude Code on the web で動かす場合**: 環境の Network access を **Custom** にして
-  `*.higgsfield.ai`, `upload.higgsfield.ai`, `*.cloudfront.net` を許可（+既定リストも保持）、
-  または **Full**。設定変更は新セッションから反映される見込み。
+- **Claude Code on the web で動かす場合**: 環境の Network access に Higgsfield を許可
+  （`*.higgsfield.ai`, `upload.higgsfield.ai`, `*.cloudfront.net` ＋既定リスト、または Full）。
+  → **2026-06-19 に許可済み・動作実証。web 上でお試し〜小バッチが完結可能。**
+
+## 8.5 実測結果（2026-06-19 / shz_02_143 南康郡_街・一点透視・1枚入力）
+
+原図 `shz_02_143_genzu_kari.png`（2104×1464）を GPT Image 2（high / 2k / 3:2）で編集:
+
+- **配置維持 ◎**: 左右の家並みの後退、中央消失点上の二層楼門、正面の通り — 構図・前後関係を保持。
+- **指示・補助線の除去 ◎**: 欄外管理情報（作品名/カットNo/BG名/TIME/スタジオ名）・手書き指示
+  `淡色処理`・パース補助線・VPマーク・地平線・四隅の黒バー・タップ穴を**完全に除去**。
+- **パース修正 ◎**: 全エッジ/軒/地面線が中央消失点へクリーンに収束。手描きの揺れも整う。
+- **比率パイプライン ◎**: 3:2/左右46px → 生成2048×1360 → 相対座標で元画角 2104×1464 に正確復元。
+- コスト **7 credits/枚**（high・2k）。300カットでも実用圏。
+- **留意点**: 出力がクリーンなベクター調線画になり、手描き美術原図のニュアンスは薄い。
+  細部（看板・装飾）は再解釈される（配置は維持）。**画風の寄せは美術ボード入力（2枚目）が鍵** → 次に検証。
+- プロンプト雛形は本リポジトリのコミット履歴（generate_image 呼び出し）に記録。
 
 ### 永続化の注意
 - git push が `403`（GitHub専用プロキシ／このセッションの書き込み権限の問題）で失敗中。
@@ -111,10 +129,11 @@ Higgsfield への接続経路を切り分けた結果:
 
 ## 9. 未決事項 / 次アクション
 
-- [ ] 環境の Network access に Higgsfield を許可（Custom/Full）→ 新セッションで自動実行を実証
+- [x] 環境の Network access に Higgsfield を許可 → **web 上で生成完結を実証（2026-06-19）**
 - [ ] git push の 403 を解決（リポジトリ書き込み権限の確認）
-- [ ] 香盤表の **.xlsx 原本**を入手（PDFより正確に取れる）
-- [ ] 原図＋プロンプトで「配置維持・指示無視・パース修正・2枚入力可否」を実測
+- [x] 香盤表の **.xlsx 原本**の所在を特定（Drive: `俺だけレベルアップな件_パチスロ_Aパート_BG進行表_20260121.xlsx`）
+- [x] 原図＋プロンプトで「配置維持・指示無視・パース修正」を実測（1枚入力で全て◎）
+- [ ] **2枚入力（原図＋美術ボード）で画風・色味の寄せを実測**（ボード入手待ち）
 - [ ] 原図サンプル2〜3枚で原図理解v1を試行
 - [ ] 「場所名→ボード」対応表のフォーマット確定
 - [ ] 本番骨組み: CLI呼び出しラッパ / 香盤表パーサ / 中間成果物の保存規約
