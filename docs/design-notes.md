@@ -153,6 +153,9 @@ Higgsfield への接続経路を切り分けた結果:
 - [ ] 原図サンプル2〜3枚で原図理解v1を試行
 - [ ] 「場所名→ボード」対応表のフォーマット確定
 - [ ] 本番骨組み: CLI呼び出しラッパ / 香盤表パーサ / 中間成果物の保存規約
+- [x] **生成結果を元PSDへ新規レイヤー差し込み**（`insert_result_layer`・枝番リテイク対応）を実証
+- [ ] PSD→PNG→生成→切り戻し→**PSD差し込み**→台帳記録 を1コマンドに連結
+- [ ] `export_visible_to_png` のテキスト/参考レイヤー除外ルール（実運用でパターン収集後）
 
 ## 10. PSD→PNG 書き出し（実装済み・2026-06-19）
 
@@ -166,6 +169,24 @@ Higgsfield への接続経路を切り分けた結果:
   → 原図理解 v1 の素性データとして有用。
 - `export_with_overrides(psd, out, show=, hide=)` … レイヤー名で可視を上書きして再合成
   （`.visible` 書き換え＋`composite(force=True)`。ネスト層にも効く）。
+- `insert_result_layer(psd, image, out_psd, base_name="AI原図修正")` … **最終成果物**。
+  生成結果(PNG)を元PSDの**最前面に新規レイヤーとして差し込み**、別PSDへ保存（入力は非破壊）。
+  元レイヤー構成は全保持。**リテイクは枝番**で積む（`AI原図修正` → `AI原図修正_02` → `_03`…）。
+  検証済み: 保存→再オープンでレイヤー存在・元レイヤー保持・合成は最新を最前面に反映。
+
+### 生成結果のPSD差し込み（insert_result_layer）の要点
+- psd-tools 1.17 は書き込み可能: `PixelLayer.frompil(img, parent, name=, top=, left=)`＋`PSDImage.save()`。
+- **日本語レイヤー名**: PSD レガシー名は macroman で書くため日本語は不可。
+  `frompil(name=...)` はレガシー名へ直書きして save 時に `UnicodeEncodeError`。
+  → 回避: frompil 後に `layer.name = "AI原図修正"` と**セッター経由**で代入すると、
+  レガシー名は `"?"`、Unicode 名は `luni` タグブロックへ格納され、**Photoshop は luni を表示**。
+- frompil は parent 末尾＝最前面に追加。差し込み層はフルキャンバス不透明なので最前面が見える。
+- 入力PSDは変更せず必ず `out_psd` に保存（非破壊）。本番では出力を別名/別ディレクトリに。
+
+### 運用で詰める予定（パターン収集後に判断）
+- `export_visible_to_png` で**引継ぎメモ等のテキストレイヤー/参考資料が一緒に写る**ケースがありうる。
+  まず実運用でパターンを集め、除外ルール（`kind=='type'` の除外や名前規則）を後で決める。
+  `list_layers` が `kind` を返すのでテキスト層の洗い出しには使える。
 
 ### 検証で分かった psd-tools の注意点
 - `composite()` は既定で**保存済みプレビューを返す**（可視変更が反映されない）。
