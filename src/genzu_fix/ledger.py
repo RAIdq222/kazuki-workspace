@@ -29,6 +29,7 @@ class GenRecord:
     cost_credits: float | None = None
     status: str = "completed"
     notes: str = ""
+    qc: dict = field(default_factory=dict)   # 検品結果 (qc.QCResult を asdict したもの)
 
 
 def append(rec: GenRecord, path: str = LEDGER_PATH) -> None:
