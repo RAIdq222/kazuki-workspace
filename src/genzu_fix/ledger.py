@@ -30,6 +30,7 @@ class GenRecord:
     status: str = "completed"
     notes: str = ""
     qc: dict = field(default_factory=dict)   # 検品結果 (qc.QCResult を asdict したもの)
+    scene_info: dict = field(default_factory=dict)  # 絵コンテ/原図注記から抽出した場面情報
 
 
 def append(rec: GenRecord, path: str = LEDGER_PATH) -> None:
