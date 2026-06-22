@@ -117,6 +117,34 @@ def _dict_to_prep(d: dict):
     return image_aspect.PrepResult(**d)
 
 
+def cmd_layers(args) -> None:
+    """フォルダ内（または指定）の PSD のレイヤー一覧を1つの CSV に書き出す。
+    テキスト除外の可否（文字が別レイヤーか焼き込みか）を判断する材料にする。
+    """
+    import csv
+    import glob as _glob
+
+    targets = []
+    for p in args.paths:
+        if os.path.isdir(p):
+            targets += sorted(_glob.glob(os.path.join(p, "*.psd")))
+        else:
+            targets.append(p)
+
+    with open(args.out, "w", newline="", encoding="utf-8-sig") as f:
+        w = csv.writer(f)
+        w.writerow(["psd", "layer", "kind", "visible", "depth", "bbox"])
+        for psd_path in targets:
+            try:
+                for li in psd_export.list_layers(psd_path):
+                    w.writerow([os.path.basename(psd_path), li.name, li.kind,
+                                int(li.visible), li.depth, "%d,%d,%d,%d" % li.bbox])
+            except Exception as e:  # 壊れたPSD等はスキップして続行
+                w.writerow([os.path.basename(psd_path), f"<ERROR: {e}>", "", "", "", ""])
+    print(f"{len(targets)} PSD → {args.out}")
+    print("テキストレイヤーは kind='type' の行。これを見れば文字が別レイヤーか焼き込みか分かります。")
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="genzu_fix", description="背景原図 修正パイプライン")
     sub = p.add_subparsers(dest="command", required=True)
@@ -145,6 +173,11 @@ def build_parser() -> argparse.ArgumentParser:
     pf.add_argument("--resolution", default="2k")
     pf.add_argument("--quality", default="high")
     pf.set_defaults(func=cmd_finish)
+
+    pl = sub.add_parser("layers", help="PSD群のレイヤー一覧をCSVに書き出す（テキスト除外の判断材料）")
+    pl.add_argument("paths", nargs="+", help="PSDファイル or フォルダ")
+    pl.add_argument("--out", default="layers.csv")
+    pl.set_defaults(func=cmd_layers)
     return p
 
 
