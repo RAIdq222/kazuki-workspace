@@ -34,7 +34,8 @@ def cmd_prep(args) -> None:
     padded_png = os.path.join(out_dir, "padded.png")
 
     bg = None if args.transparent else (255, 255, 255)
-    vw, vh = psd_export.export_visible_to_png(args.psd, visible_png, bg=bg)
+    vw, vh = psd_export.export_visible_to_png(
+        args.psd, visible_png, bg=bg, drop_text=not args.keep_text)
     prep = image_aspect.build_input_image(visible_png, padded_png)
 
     prompt = ""
@@ -128,6 +129,8 @@ def build_parser() -> argparse.ArgumentParser:
     pp.add_argument("--board", action="append", help="美術ボード画像（複数可）")
     pp.add_argument("--transparent", action="store_true",
                     help="合成PNGの余白を透過にする（既定は白）")
+    pp.add_argument("--keep-text", action="store_true",
+                    help="テキストレイヤーを残す（既定は除外）")
     pp.set_defaults(func=cmd_prep)
 
     pf = sub.add_parser("finish", help="結果PNG → 切り戻し → PSD差し込み → 台帳")

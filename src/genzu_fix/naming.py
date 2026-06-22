@@ -83,6 +83,47 @@ def parse_cut_codes(filename: str) -> dict:
     return {"work": work, "ep": ep, "cuts": cuts, "raw": filename}
 
 
+def build_board_index(filenames: list[str]) -> list[dict]:
+    """美術ボードのファイル名群を構造化インデックス（dictのリスト）にする。"""
+    from dataclasses import asdict
+    return [asdict(parse_board(f)) for f in filenames]
+
+
+def _norm(s: str) -> str:
+    """名寄せ用の表記ゆれ吸収（最小限）。"""
+    return (s or "").replace("郡", "群").replace("攫", "廃").replace(" ", "").lower()
+
+
+def match_board(query: dict, board_index: list[dict], top: int = 3) -> list[dict]:
+    """カット側の手がかり(query)に近い美術ボード候補を上位順に返す。
+
+    query 例: {'scene':'SZ#2#3','place':'南康郡_街','time':'昼','weather':''}
+    スコア: シーン一致+3 / 場所トークン重なり+2 / 時間一致+1 / 天気一致+1。
+    """
+    q_scene = {_norm(t) for t in (query.get("scene") or "").replace(",", " ").split() if t}
+    q_place = _norm(query.get("place", ""))
+    q_time = _norm(query.get("time", ""))
+    q_weather = _norm(query.get("weather", ""))
+
+    scored = []
+    for b in board_index:
+        score = 0
+        if q_scene and {_norm(t) for t in b["scene_tags"]} & q_scene:
+            score += 3
+        bp = _norm(b["place"])
+        if q_place and bp and (q_place in bp or bp in q_place
+                               or any(tok and tok in bp for tok in q_place.split("_"))):
+            score += 2
+        if q_time and _norm(b["time"]) == q_time:
+            score += 1
+        if q_weather and _norm(b["weather"]) == q_weather:
+            score += 1
+        if score:
+            scored.append((score, b))
+    scored.sort(key=lambda x: -x[0])
+    return [{"score": s, **b} for s, b in scored[:top]]
+
+
 if __name__ == "__main__":
     import sys, json
     for line in sys.stdin:

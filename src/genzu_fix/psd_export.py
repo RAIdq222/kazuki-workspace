@@ -64,15 +64,26 @@ def _flatten(image, bg):
     return canvas
 
 
-def export_visible_to_png(psd_path: str, out_path: str, bg=(255, 255, 255)):
+def export_visible_to_png(psd_path: str, out_path: str, bg=(255, 255, 255),
+                          drop_text: bool = False):
     """PSD の可視レイヤーを合成して PNG 保存する。
 
-    既定は PSD に保存された合成プレビューを使う（= 保存時の表示状態そのもの・高速）。
+    drop_text=False（既定）: PSD に保存された合成プレビューを使う（= 保存時の表示状態・高速）。
+    drop_text=True: テキストレイヤー(kind=='type')を除いて再合成する
+        （引継ぎメモ等の文字を入力PNGに含めない。再レンダリングのため少し遅い）。
     bg: 透過を塗り潰す背景色。None なら透過(RGBA)のまま保存。
     戻り値: (width, height)
     """
     psd = PSDImage.open(psd_path)
-    image = psd.composite()  # 保存済みプレビュー = 表示レイヤーの WYSIWYG
+    if drop_text:
+        dropped = 0
+        for layer in psd.descendants():
+            if str(layer.kind) == "type":
+                layer.visible = False
+                dropped += 1
+        image = psd.composite(force=True)
+    else:
+        image = psd.composite()  # 保存済みプレビュー = 表示レイヤーの WYSIWYG
     image = _flatten(image, bg)
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
     image.save(out_path)
