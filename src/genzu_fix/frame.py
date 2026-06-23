@@ -16,27 +16,42 @@ import numpy as np
 from PIL import Image
 
 
-def header_bottom(image_path: str, lo: float = 0.04, hi: float = 0.16,
-                  dark_th: int = 150) -> int:
-    """管理ヘッダー帯の下端 y を推定する。
+def header_bottom(image_path: str, text_lo: float = 0.10, text_hi: float = 0.155,
+                  gap: float = 0.05, dark_th: int = 150) -> int:
+    """管理ヘッダー帯の下端 y を推定する（2段方式）。
 
-    上から lo..hi の帯で、行ごとの暗画素率が最小になる行（＝ヘッダー文字と作画の間の白い隙間）を返す。
-    全幅の枠線（撮影フレーム）はスパイクになるので最小値選択では拾わない＝作画を切らない。
+    DANGUN系の原図シートは上から「タップ穴の黒タブ → 印刷ヘッダー文字行
+    (作品名/カットNo/TIME/スタジオ名) → 作画」の順に並ぶ。ヘッダー下端は
+    実測で高さの ~0.14 に安定している。
+
+    1段目: ヘッダー文字行を text_lo..text_hi 帯の「最も暗い行」として特定する
+            （タップ穴の上の白帯を誤検出しないよう、探索帯はタブより下に置く）。
+    2段目: その文字行の直下 gap 以内で「最も白い行」(=文字と作画の隙間)を切る位置にする。
+
+    全幅の枠線(撮影フレーム)はスパイクだが、文字行より下の白帯探索では拾わない＝作画を切らない。
+    注: 作画が上端から始まる非標準シート(空/雲・ノート多数等)では誤るので、その場合は
+        strip_header(..., top_override=y) で明示的に与えること（§19 データ品質）。
     """
     im = np.asarray(Image.open(image_path).convert("L")).astype(float)
     H, _ = im.shape
     row_dark = (im < dark_th).mean(axis=1)
-    a, b = int(H * lo), int(H * hi)
+    a, b = int(H * text_lo), int(H * text_hi)
     if b <= a:
-        return int(H * 0.08)
-    return a + int(np.argmin(row_dark[a:b]))
+        return int(H * 0.14)
+    y_text = a + int(np.argmax(row_dark[a:b]))   # 最暗行 = ヘッダー文字行
+    lo = y_text + 2
+    hi = min(H, y_text + int(H * gap))
+    if hi <= lo:
+        return y_text
+    return lo + int(np.argmin(row_dark[lo:hi]))   # 文字の下の白い隙間
 
 
-def strip_header(image_path: str, out_path: str):
+def strip_header(image_path: str, out_path: str, top_override: int | None = None):
     """ヘッダー帯だけ落として保存し、戻し用の領域 (left, top, right, bottom) を返す。
     左右・下は全幅・全高をそのまま残す（余分・PAN用を切らない）。
+    top_override を渡すと自動検出を使わずその y で切る（非標準シート用）。
     """
-    y = header_bottom(image_path)
+    y = top_override if top_override is not None else header_bottom(image_path)
     im = Image.open(image_path).convert("RGB")
     W, H = im.size
     region = (0, y, W, H)
