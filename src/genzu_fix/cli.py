@@ -36,7 +36,8 @@ def cmd_prep(args) -> None:
     bg = None if args.transparent else (255, 255, 255)
     vw, vh = psd_export.export_visible_to_png(
         args.psd, visible_png, bg=bg, drop_text=not args.keep_text)
-    prep = image_aspect.build_input_image(visible_png, padded_png)
+    prep = image_aspect.build_input_image(visible_png, padded_png,
+                                          resolution=args.resolution)
 
     prompt = ""
     if args.prompt_file:
@@ -110,11 +111,15 @@ def cmd_finish(args) -> None:
 def _prep_to_dict(prep) -> dict:
     return {k: getattr(prep, k) for k in (
         "aspect_ratio", "canvas_w", "canvas_h", "paste_x", "paste_y",
-        "src_w", "src_h", "frac_left", "frac_top", "frac_right", "frac_bottom")}
+        "src_w", "src_h", "scale", "scaled_w", "scaled_h", "resolution",
+        "frac_left", "frac_top", "frac_right", "frac_bottom")}
 
 
 def _dict_to_prep(d: dict):
-    return image_aspect.PrepResult(**d)
+    # 旧 manifest（新フィールドなし）も読めるよう、既知フィールドだけ渡す
+    import dataclasses
+    keys = {f.name for f in dataclasses.fields(image_aspect.PrepResult)}
+    return image_aspect.PrepResult(**{k: v for k, v in d.items() if k in keys})
 
 
 def cmd_layers(args) -> None:
@@ -159,6 +164,8 @@ def build_parser() -> argparse.ArgumentParser:
                     help="合成PNGの余白を透過にする（既定は白）")
     pp.add_argument("--keep-text", action="store_true",
                     help="テキストレイヤーを残す（既定は除外）")
+    pp.add_argument("--resolution", default="2k",
+                    help="生成解像度tier。入力をこのtierの出力寸ぴったりで作る")
     pp.set_defaults(func=cmd_prep)
 
     pf = sub.add_parser("finish", help="結果PNG → 切り戻し → PSD差し込み → 台帳")
