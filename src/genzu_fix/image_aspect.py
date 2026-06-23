@@ -98,6 +98,12 @@ def restore_crop_box(gen_w: int, gen_h: int, prep: PrepResult) -> tuple[int, int
 
     出力比が要求比と厳密一致しなくても、相対座標で切るのでズレに強い。
     返り値は (left, top, right, bottom) のピクセル座標。
+
+    注意: これは「生成画像の比率 = 入力キャンバスの比率」が成り立つ前提でのみ
+    幾何が完全一致する。GPT Image 2 は要求比(例 3:2=1.5000)に対し 2048x1360=1.5059
+    のように厳密一致しない出力を返すため、x/y のスケールが食い違いズレる。
+    実画像の切り戻しでは restore_output_image(normalize=True) を使い、先に
+    キャンバス比へ正規化してからこの box を当てること（§20.5）。
     """
     left = round(prep.frac_left * gen_w)
     top = round(prep.frac_top * gen_h)
@@ -120,12 +126,29 @@ def build_input_image(src_path: str, out_path: str, pad_color=(255, 255, 255)) -
     return prep
 
 
-def restore_output_image(gen_path: str, out_path: str, prep: PrepResult) -> None:
-    """生成結果から余白を切り戻し、元の画角・解像度に合わせて保存する。"""
+def restore_output_image(gen_path: str, out_path: str, prep: PrepResult,
+                         normalize: bool = True) -> None:
+    """生成結果から余白を切り戻し、元の画角・解像度に合わせて保存する。
+
+    normalize=True（既定）:
+        生成画像を先に入力キャンバス寸法 (canvas_w x canvas_h) へ異方リサイズして
+        “厳密なキャンバス比”に戻し、整数の貼り付け座標(paste_x/y, +src_w/h)で切る。
+        GPT Image 2 の出力比が要求比と僅かに違っても（例 3:2 要求に対し 1.5059 が返る）、
+        x/y のスケール食い違いによるズレが出ない。これがレジスト安定の要（§20.5）。
+        異方リサイズ量はごく僅か（比率差 ~0.4%）で作画への影響は無視できる。
+    normalize=False:
+        旧来の「生成画像の実寸 × 割合」で切る（比率が一致している前提のときのみ）。
+    """
     from PIL import Image
 
     gen = Image.open(gen_path).convert("RGB")
-    box = restore_crop_box(gen.width, gen.height, prep)
+    if normalize:
+        # 厳密なキャンバス比へ戻してから、設計時の整数座標でそのまま切る
+        gen = gen.resize((prep.canvas_w, prep.canvas_h), Image.LANCZOS)
+        box = (prep.paste_x, prep.paste_y,
+               prep.paste_x + prep.src_w, prep.paste_y + prep.src_h)
+    else:
+        box = restore_crop_box(gen.width, gen.height, prep)
     cropped = gen.crop(box)
     # 元の原図と同じ画素数に戻す（比較・PSD格納用）
     restored = cropped.resize((prep.src_w, prep.src_h), Image.LANCZOS)
