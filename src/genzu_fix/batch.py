@@ -4,10 +4,11 @@
 原図を1本ずつ次の流れで処理する:
 
   1. prep   : PSD → 表示合成PNG(文字除外) → ヘッダー除去 → GPT出力寸ぴったりの入力PNG
-  2. 生成    : 公式 Higgsfield CLI を呼ぶ（gpt_image_2 の --image はパス可なのでupload不要）
+  2. 生成    : 公式 Higgsfield CLI を呼ぶ
+                 higgsfield upload <input.png>            → media UUID
                  higgsfield generate create gpt_image_2 \
                      --prompt ... --aspect_ratio <ar> --resolution 2k --quality high \
-                     --image <input.png> --wait --json     → 結果URL(result_url)
+                     <IMAGE_FLAG> <uuid> --wait --json     → 結果URL
                  結果PNGをダウンロード
   3. finish : 生成結果を原図画角へ戻し、元PSDへ「AI原図修正」レイヤー差し込み、台帳追記
 
@@ -165,9 +166,10 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
     prep = image_aspect.build_input_image(body, inp, resolution=resolution)
     prompt = build_prompt(board, scene, prompt_override)
     print(f"    input {prep.canvas_w}x{prep.canvas_h} ({prep.aspect_ratio})  board='{board or '—'}'")
-    # 2. 生成（Higgsfield CLI）。gpt_image_2 の --image はパス可（MODELS.md）なのでアップロード不要。
+    # 2. 生成（Higgsfield CLI）
     gen_raw = os.path.join(out_dir, "gen_raw.png")
-    url = _hf_generate(inp, prompt, prep.aspect_ratio, resolution, quality, model, image_flag, dry)
+    uuid = _hf_upload(inp, dry)
+    url = _hf_generate(uuid, prompt, prep.aspect_ratio, resolution, quality, model, image_flag, dry)
     if not dry:
         urllib.request.urlretrieve(url, gen_raw)
     # 3. finish（戻し→region復帰→PSD差し込み）
