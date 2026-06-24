@@ -118,6 +118,73 @@ def export_with_overrides(psd_path: str, out_path: str,
     return image.size
 
 
+# 背景作画でない＝常に除外するレイヤー名の手がかり（部分一致・小文字比較）
+_EXCLUDE_HINTS = ("美監補足", "指示", "セル参考", "camera", "参考")
+
+
+def export_background_layer(psd_path: str, out_path: str, bg=(255, 255, 255),
+                            include_book: bool = False):
+    """背景作画レイヤーだけを合成して PNG 保存する（指示/参考/セル/BOOK を除外）。
+
+    選択ロジック:
+      1) [type](文字) と 美監補足/指示/セル参考/Camera/参考 を含む名前は常に非表示。
+      2) トップレベルで背景作画を選ぶ: 名前が "BG" 始まり → 無ければ "LO" 始まり → 無ければ "背景"。
+         選んだもの以外のトップレベル画像（参考フレーム等）も非表示にする。
+      3) BOOK◯（燭台/寝台/柱/モヤ 等の別ブック）は既定で除外。include_book=True で合成に含める。
+      4) どれも該当しなければフォールバック（除外後の可視レイヤーをそのまま合成）。
+    戻り値: (width, height, info)  info={"strategy","layers"}。
+    """
+    psd = PSDImage.open(psd_path)
+
+    def excluded(name: str) -> bool:
+        nl = (name or "").lower()
+        return any(h.lower() in nl for h in _EXCLUDE_HINTS)
+
+    def is_book(name: str) -> bool:
+        return "book" in (name or "").lower()
+
+    # 1) 文字・指示・参考・セルを全階層で隠す
+    for layer in psd.descendants():
+        if str(layer.kind) == "type" or excluded(layer.name):
+            layer.visible = False
+
+    top = list(psd)
+
+    def is_pixel(l):
+        return str(l.kind) != "group"
+
+    def starts(l, p):
+        return (l.name or "").lower().startswith(p)
+
+    bg_layers = [l for l in top if is_pixel(l) and starts(l, "bg") and not excluded(l.name)]
+    lo_layers = [l for l in top if is_pixel(l) and starts(l, "lo") and not excluded(l.name)]
+    haikei = [l for l in top if l.name == "背景"]
+    book_layers = [l for l in top if is_pixel(l) and is_book(l.name)]
+    target = bg_layers or lo_layers or haikei
+
+    if target:
+        strategy = "BG" if bg_layers else ("LO" if lo_layers else "背景")
+        keep = {id(l) for l in target}
+        if include_book:
+            keep |= {id(l) for l in book_layers}
+        # 選択レイヤー(+任意でBOOK)以外のトップレベル画像は隠す（参考フレーム等を排除）。
+        # グループ（セル参考/美監補足等）も一律オフ（背景作画はトップレベルのpixel）。
+        for l in top:
+            l.visible = is_pixel(l) and (id(l) in keep)
+    else:
+        strategy = "fallback"
+        if not include_book:
+            for l in book_layers:
+                l.visible = False
+
+    image = _flatten(psd.composite(force=True), bg)
+    os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
+    image.save(out_path)
+    used = list(target) + (book_layers if (include_book and target) else [])
+    info = {"strategy": strategy, "layers": [l.name for l in used]}
+    return image.size[0], image.size[1], info
+
+
 def _next_retake_name(existing_names, base: str) -> str:
     """既存レイヤー名の集合から、次に使う名前を決める。
     base が無ければ base、あれば base_02, base_03 … と枝番を採番する。

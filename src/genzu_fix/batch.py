@@ -154,18 +154,20 @@ def _hf_generate(media_id: str, prompt: str, aspect: str, resolution: str,
 
 def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
                 prompt_override: str | None, resolution: str, quality: str,
-                model: str, image_flag: str, dry: bool) -> dict:
+                model: str, image_flag: str, dry: bool, include_book: bool = False) -> dict:
     os.makedirs(out_dir, exist_ok=True)
     cut = os.path.splitext(os.path.basename(psd_path))[0]
     visible = os.path.join(out_dir, "visible.png")
     body = os.path.join(out_dir, "body.png")
     inp = os.path.join(out_dir, "input.png")
-    # 1. prep
-    vw, vh = psd_export.export_visible_to_png(psd_path, visible, bg=(255, 255, 255), drop_text=True)
+    # 1. prep（背景作画レイヤーだけ合成。指示/参考/セル/BOOKを除外）
+    vw, vh, linfo = psd_export.export_background_layer(
+        psd_path, visible, bg=(255, 255, 255), include_book=include_book)
     region = frame.strip_header(visible, body)
     prep = image_aspect.build_input_image(body, inp, resolution=resolution)
     prompt = build_prompt(board, scene, prompt_override)
-    print(f"    input {prep.canvas_w}x{prep.canvas_h} ({prep.aspect_ratio})  board='{board or '—'}'")
+    print(f"    layer[{linfo['strategy']}]={linfo['layers']}  "
+          f"input {prep.canvas_w}x{prep.canvas_h} ({prep.aspect_ratio})  board='{board or '—'}'")
     # 2. 生成（Higgsfield CLI）
     gen_raw = os.path.join(out_dir, "gen_raw.png")
     uuid = _hf_upload(inp, dry)
@@ -206,6 +208,8 @@ def main(argv=None) -> None:
     p.add_argument("--image-flag", default="--image",
                    help="生成時に入力画像UUIDを渡すフラグ名（要 `higgsfield generate create gpt_image_2 --help` で確認）")
     p.add_argument("--dry-run", action="store_true", help="prepのみ実行し、叩くhiggsfieldコマンドを表示")
+    p.add_argument("--include-book", action="store_true",
+                   help="BOOK◯（燭台/寝台/柱/モヤ等の別ブック）も合成に含める（既定は除外）")
     a = p.parse_args(argv)
 
     # PSDの実パスを genzu-dir 配下から探す索引（ファイル名→パス）
@@ -249,7 +253,8 @@ def main(argv=None) -> None:
         out_dir = os.path.join(a.out, os.path.splitext(fn)[0])
         try:
             process_cut(psd, r.get("board", ""), r.get("scene", ""), out_dir,
-                        prompt_override, a.resolution, a.quality, a.model, a.image_flag, a.dry_run)
+                        prompt_override, a.resolution, a.quality, a.model, a.image_flag,
+                        a.dry_run, a.include_book)
             ok += 1
         except Exception as e:
             print(f"    ! 失敗: {e}")
