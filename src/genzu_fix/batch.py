@@ -65,13 +65,34 @@ def build_prompt(board: str, scene: str, prompt_override: str | None = None) -> 
     )
 
 
+def _resolve(cmd: list[str]) -> list[str]:
+    """Windowsでnpm製CLI(higgsfield.cmd)を確実に起動できるよう実体パスに解決する。
+    .cmd/.bat は cmd /c 経由で起動（CreateProcessが直接実行できないため）。"""
+    import shutil
+    exe = shutil.which(cmd[0])
+    if not exe:
+        # PATHEXTで拾えない場合のフォールバック
+        for ext in (".cmd", ".exe", ".bat", ""):
+            cand = shutil.which(cmd[0] + ext)
+            if cand:
+                exe = cand
+                break
+    if not exe:
+        raise RuntimeError(
+            f"'{cmd[0]}' が見つかりません。Higgsfield CLI が入っているか確認してください "
+            f"(`higgsfield auth token` が通るか)。")
+    if os.name == "nt" and exe.lower().endswith((".cmd", ".bat")):
+        return ["cmd", "/c", exe] + cmd[1:]
+    return [exe] + cmd[1:]
+
+
 def _run(cmd: list[str], dry: bool) -> str:
     print("    $ " + " ".join(cmd))
     if dry:
         return ""
-    r = subprocess.run(cmd, capture_output=True, text=True)
+    r = subprocess.run(_resolve(cmd), capture_output=True, text=True, encoding="utf-8")
     if r.returncode != 0:
-        raise RuntimeError(f"command failed ({r.returncode}): {r.stderr.strip()[:400]}")
+        raise RuntimeError(f"command failed ({r.returncode}): {(r.stderr or r.stdout).strip()[:400]}")
     return r.stdout.strip()
 
 
