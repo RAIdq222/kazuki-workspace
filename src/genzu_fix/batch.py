@@ -97,8 +97,8 @@ def _run(cmd: list[str], dry: bool) -> str:
 
 
 def _hf_upload(path: str, dry: bool) -> str:
-    """higgsfield upload <path> → media UUID（--json 優先、無ければ出力からUUID抽出）。"""
-    out = _run(["higgsfield", "upload", path, "--json"], dry)
+    """higgsfield upload create <path> → media UUID（--json 優先、無ければ出力からUUID抽出）。"""
+    out = _run(["higgsfield", "upload", "create", path, "--json"], dry)
     if dry or not out:
         return "<uuid>"
     try:
