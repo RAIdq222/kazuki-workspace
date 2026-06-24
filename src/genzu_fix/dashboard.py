@@ -261,8 +261,20 @@ applySaved();
     return head + meta + "<table>" + th + "".join(body) + "</table>" + script + "</body></html>"
 
 
+def timestamped_path(path: str, tz_offset_hours: int = 9) -> str:
+    """ファイル名に YYYYMMDDHHMM のタイムスタンプを付ける（既定 JST=UTC+9）。
+    例: dashboard.html -> dashboard_202606242140.html
+    """
+    from datetime import datetime, timezone, timedelta
+    ts = datetime.now(timezone.utc).astimezone(
+        timezone(timedelta(hours=tz_offset_hours))).strftime("%Y%m%d%H%M")
+    root, ext = os.path.splitext(path)
+    return f"{root}_{ts}{ext}"
+
+
 def generate(out_html: str, ledger_path: str = None, cuts_json: str = None,
-             thumbs_json: str = None, boards_json: str = None) -> int:
+             thumbs_json: str = None, boards_json: str = None,
+             timestamp: bool = False) -> tuple[int, str]:
     rows = ledger_mod.load(ledger_path or ledger_mod.LEDGER_PATH)
     cuts = None
     if cuts_json and os.path.exists(cuts_json):
@@ -277,9 +289,11 @@ def generate(out_html: str, ledger_path: str = None, cuts_json: str = None,
         with open(boards_json, encoding="utf-8") as f:
             board_options = json.load(f)  # ["board1.png", ...]
     table = build_rows(rows, cuts)
+    if timestamp:
+        out_html = timestamped_path(out_html)
     with open(out_html, "w", encoding="utf-8") as f:
         f.write(render_html(table, thumbs=thumbs, board_options=board_options))
-    return len(table)
+    return len(table), out_html
 
 
 if __name__ == "__main__":
@@ -290,6 +304,8 @@ if __name__ == "__main__":
     p.add_argument("--cuts", default=None, help="カット一覧JSON（未生成カットも表示）")
     p.add_argument("--thumbs", default=None, help="{cut:{genzu,result}} 画像パスJSON（埋め込み）")
     p.add_argument("--boards", default=None, help="美術ボード候補のファイル名JSON（プルダウン選択肢）")
+    p.add_argument("--timestamp", action="store_true",
+                   help="出力ファイル名に YYYYMMDDHHMM(JST) を付ける")
     a = p.parse_args()
-    n = generate(a.out_html, a.ledger, a.cuts, a.thumbs, a.boards)
-    print(f"wrote {a.out_html} ({n} cuts)")
+    n, path = generate(a.out_html, a.ledger, a.cuts, a.thumbs, a.boards, a.timestamp)
+    print(f"wrote {path} ({n} cuts)")
