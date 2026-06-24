@@ -261,6 +261,129 @@ applySaved();
     return head + meta + "<table>" + th + "".join(body) + "</table>" + script + "</body></html>"
 
 
+def render_genzu_list(index_rows: list[dict], board_options: list[str] | None = None,
+                      generated_cuts: set | None = None,
+                      title: str = "原図一覧（ep7）") -> str:
+    """原図インベントリ（カット順）をHTML化。担当(GKV優先)・シーン・状態・美術ボード選択付き。
+
+    index_rows: {cut_num, cut_label, filename, assignee, scene} の配列。
+    generated_cuts: 生成済みの cut_label 集合（状態表示用）。
+    """
+    board_options = board_options or []
+    generated_cuts = generated_cuts or set()
+    # 担当ごとの色（GKV=外注は強調）
+    assignees = sorted({r["assignee"] for r in index_rows})
+    palette = ["#1a5fb4", "#117a65", "#9a6700", "#6f42c1", "#a8329a", "#3a7d3a", "#8a5a00"]
+    color = {a: palette[i % len(palette)] for i, a in enumerate(a2 for a2 in assignees if a2 != "GKV")}
+    color["GKV"] = "#d1242f"
+
+    head = """<!doctype html><html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>%s</title>
+<style>
+ body{font-family:system-ui,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;margin:24px;color:#222}
+ h1{font-size:20px} .meta{color:#666;font-size:12px;margin-bottom:10px}
+ table{border-collapse:collapse;width:100%%} th,td{border:1px solid #ddd;padding:6px 8px;vertical-align:middle;font-size:13px}
+ th{background:#f4f4f4;position:sticky;top:0;text-align:left}
+ tr.gkv{background:#fff4f4}
+ td.cut{font-weight:700;white-space:nowrap}
+ .who{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;color:#fff;white-space:nowrap}
+ .who.gkv{font-weight:700}
+ .file{font-family:ui-monospace,monospace;font-size:11px;color:#555;word-break:break-all}
+ .scene{font-size:12px;color:#444;white-space:nowrap}
+ .gen{font-size:11px;padding:1px 6px;border-radius:8px}
+ .gen.done{background:#1a7f37;color:#fff} .gen.todo{background:#eee;color:#888}
+ select.board{max-width:240px;font-size:12px;padding:3px} select.board.set{background:#eaf5ea;border-color:#1a7f37}
+ .toolbar{margin:10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+ .toolbar button{font-size:13px;padding:6px 12px;cursor:pointer;border:1px solid #ccc;border-radius:6px;background:#fff}
+ .toolbar button.on{background:#d1242f;color:#fff;border-color:#d1242f}
+ .toolbar .hint{color:#666;font-size:12px} .saved-note{color:#1a7f37;font-size:12px}
+</style></head><body>""" % html.escape(title)
+
+    counts = {}
+    for r in index_rows:
+        counts[r["assignee"]] = counts.get(r["assignee"], 0) + 1
+    cnt_str = " / ".join(f"{a}:{counts[a]}" for a in sorted(counts, key=lambda a: (-counts[a], a)))
+    meta = (f'<h1>{html.escape(title)}</h1>'
+            f'<div class="meta">原図 {len(index_rows)}行（カット単位・束は展開） ・ '
+            f'GKV(外注) {counts.get("GKV",0)}行 ・ 担当内訳 {html.escape(cnt_str)} ・ '
+            f'美術ボード候補 {len(board_options)}件 ・ '
+            f'{datetime.now().strftime("%Y-%m-%d %H:%M")} 生成</div>'
+            '<div class="toolbar">'
+            '<button id="gkvtop" onclick="toggleGkvTop()">GKVを上に表示</button>'
+            '<button id="gkvonly" onclick="toggleGkvOnly()">GKVのみ表示</button>'
+            '<button onclick="resetSort()">カット番号順に戻す</button>'
+            '<button onclick="exportCSV()">美術ボード対応をCSVで書き出し</button>'
+            '<span class="hint">担当=作画担当フォルダ。GKVは外注（優先確認）。欠番=Bank等で正常。美術ボードはプルダウンで選ぶと自動保存。</span>'
+            '<span id="savednote" class="saved-note"></span></div>')
+
+    th = ("<tr><th>カット</th><th>担当</th><th>シーン</th><th>原図ファイル</th>"
+          "<th>状態</th><th>美術ボード</th></tr>")
+    body = []
+    for r in index_rows:
+        a = r["assignee"]; is_gkv = (a == "GKV")
+        label = r["cut_label"]
+        gen = "done" if label in generated_cuts else "todo"
+        gen_txt = "生成済" if gen == "done" else "未"
+        opts = ['<option value="">— 未選択 —</option>'] + [
+            f'<option value="{html.escape(b)}">{html.escape(b)}</option>' for b in board_options]
+        sel = (f'<select class="board" data-cut="{html.escape(label)}">' + "".join(opts) + '</select>')
+        body.append(
+            f'<tr class="{"gkv" if is_gkv else ""}" data-cutnum="{r["cut_num"]}" '
+            f'data-assignee="{html.escape(a)}">'
+            f'<td class="cut">{html.escape(label)}</td>'
+            f'<td><span class="who {"gkv" if is_gkv else ""}" '
+            f'style="background:{color.get(a,"#888")}">{html.escape(a)}</span></td>'
+            f'<td class="scene">{html.escape(r.get("scene",""))}</td>'
+            f'<td class="file">{html.escape(r["filename"])}</td>'
+            f'<td><span class="gen {gen}">{gen_txt}</span></td>'
+            f'<td>{sel}</td></tr>')
+
+    script = """
+<script>
+const LS_KEY="genzu_board_assign_v1";
+function loadSel(){try{return JSON.parse(localStorage.getItem(LS_KEY)||"{}");}catch(e){return {};}}
+function saveSel(m){localStorage.setItem(LS_KEY,JSON.stringify(m));}
+function note(t){const n=document.getElementById("savednote");n.textContent=t;setTimeout(()=>{n.textContent="";},1500);}
+const tb=()=>document.querySelector("table tbody")||document.querySelector("table");
+let gkvTop=false, gkvOnly=false;
+function applySaved(){
+  const m=loadSel();
+  document.querySelectorAll("select.board").forEach(s=>{
+    const cut=s.dataset.cut;
+    if(cut in m){s.value=m[cut];}
+    s.classList.toggle("set",!!s.value);
+    s.addEventListener("change",()=>{const c=loadSel(); if(s.value){c[cut]=s.value;}else{delete c[cut];}
+      saveSel(c); s.classList.toggle("set",!!s.value); note("保存しました (cut "+cut+")");});
+  });
+}
+function rows(){return Array.from(document.querySelectorAll("tbody tr"));}
+function reorder(){
+  const rs=rows();
+  rs.sort((a,b)=>{
+    if(gkvTop){const ga=a.dataset.assignee==="GKV"?0:1, gb=b.dataset.assignee==="GKV"?0:1; if(ga!==gb)return ga-gb;}
+    return (+a.dataset.cutnum)-(+b.dataset.cutnum);
+  });
+  const t=tb(); rs.forEach(r=>t.appendChild(r));
+}
+function applyFilter(){ rows().forEach(r=>{ r.style.display=(gkvOnly && r.dataset.assignee!=="GKV")?"none":""; }); }
+function toggleGkvTop(){gkvTop=!gkvTop; document.getElementById("gkvtop").classList.toggle("on",gkvTop); reorder();}
+function toggleGkvOnly(){gkvOnly=!gkvOnly; document.getElementById("gkvonly").classList.toggle("on",gkvOnly); applyFilter();}
+function resetSort(){gkvTop=false; gkvOnly=false; document.getElementById("gkvtop").classList.remove("on");
+  document.getElementById("gkvonly").classList.remove("on"); reorder(); applyFilter();}
+function exportCSV(){
+  const out=[["cut","assignee","scene","filename","board"]];
+  rows().forEach(r=>{const sel=r.querySelector("select.board");
+    out.push([r.querySelector(".cut").textContent, r.dataset.assignee,
+      r.querySelector(".scene").textContent, r.querySelector(".file").textContent, sel?sel.value:""]);});
+  const csv="\\ufeff"+out.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(",")).join("\\r\\n");
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  a.download="genzu_board_map.csv"; a.click();
+}
+applySaved();
+</script>"""
+    return head + meta + "<table><tbody>" + th + "".join(body) + "</tbody></table>" + script + "</body></html>"
+
+
 def timestamped_path(path: str, tz_offset_hours: int = 9) -> str:
     """ファイル名に YYYYMMDDHHMM のタイムスタンプを付ける（既定 JST=UTC+9）。
     例: dashboard.html -> dashboard_202606242140.html
