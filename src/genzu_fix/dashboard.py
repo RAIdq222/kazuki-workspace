@@ -262,16 +262,18 @@ applySaved();
 
 
 def render_genzu_list(index_rows: list[dict], board_options: list[str] | None = None,
-                      generated_cuts: set | None = None,
+                      generated_cuts: set | None = None, defaults: dict | None = None,
                       title: str = "原図一覧（ep7）") -> str:
     """原図インベントリ（カット順）をHTML化。担当(GKV優先)・シーン・状態・美術ボード選択付き。
 
     index_rows: {cut_num, cut_label, filename, assignee, scene} の配列。
     generated_cuts: 生成済みの cut_label 集合（状態表示用）。
+    defaults: {cut_label: board_filename} 既定の美術ボード割当（範囲一括の初期値など）。
+              ブラウザの localStorage 手動選択があればそちらを優先する。
     """
     board_options = board_options or []
     generated_cuts = generated_cuts or set()
-    # 担当ごとの色（GKV=外注は強調）
+    defaults = defaults or {}
     assignees = sorted({r["assignee"] for r in index_rows})
     palette = ["#1a5fb4", "#117a65", "#9a6700", "#6f42c1", "#a8329a", "#3a7d3a", "#8a5a00"]
     color = {a: palette[i % len(palette)] for i, a in enumerate(a2 for a2 in assignees if a2 != "GKV")}
@@ -283,7 +285,7 @@ def render_genzu_list(index_rows: list[dict], board_options: list[str] | None = 
  body{font-family:system-ui,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;margin:24px;color:#222}
  h1{font-size:20px} .meta{color:#666;font-size:12px;margin-bottom:10px}
  table{border-collapse:collapse;width:100%%} th,td{border:1px solid #ddd;padding:6px 8px;vertical-align:middle;font-size:13px}
- th{background:#f4f4f4;position:sticky;top:0;text-align:left}
+ thead th{background:#f4f4f4;position:sticky;top:0;text-align:left}
  tr.gkv{background:#fff4f4}
  td.cut{font-weight:700;white-space:nowrap}
  .who{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;color:#fff;white-space:nowrap}
@@ -297,12 +299,18 @@ def render_genzu_list(index_rows: list[dict], board_options: list[str] | None = 
  .toolbar button{font-size:13px;padding:6px 12px;cursor:pointer;border:1px solid #ccc;border-radius:6px;background:#fff}
  .toolbar button.on{background:#d1242f;color:#fff;border-color:#d1242f}
  .toolbar .hint{color:#666;font-size:12px} .saved-note{color:#1a7f37;font-size:12px}
+ .rangebar{margin:6px 0 14px;padding:8px;border:1px solid #cde;border-radius:8px;background:#f4f9ff;
+   display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+ .rangebar input{width:70px;padding:4px} .rangebar select{max-width:260px;padding:4px}
+ .rangebar button{padding:6px 12px;cursor:pointer;border:1px solid #1a5fb4;border-radius:6px;background:#1a5fb4;color:#fff}
 </style></head><body>""" % html.escape(title)
 
     counts = {}
     for r in index_rows:
         counts[r["assignee"]] = counts.get(r["assignee"], 0) + 1
     cnt_str = " / ".join(f"{a}:{counts[a]}" for a in sorted(counts, key=lambda a: (-counts[a], a)))
+    board_opts_html = "".join(f'<option value="{html.escape(b)}">{html.escape(b)}</option>'
+                              for b in board_options)
     meta = (f'<h1>{html.escape(title)}</h1>'
             f'<div class="meta">原図 {len(index_rows)}行（カット単位・束は展開） ・ '
             f'GKV(外注) {counts.get("GKV",0)}行 ・ 担当内訳 {html.escape(cnt_str)} ・ '
@@ -313,11 +321,18 @@ def render_genzu_list(index_rows: list[dict], board_options: list[str] | None = 
             '<button id="gkvonly" onclick="toggleGkvOnly()">GKVのみ表示</button>'
             '<button onclick="resetSort()">カット番号順に戻す</button>'
             '<button onclick="exportCSV()">美術ボード対応をCSVで書き出し</button>'
-            '<span class="hint">担当=作画担当フォルダ。GKVは外注（優先確認）。欠番=Bank等で正常。美術ボードはプルダウンで選ぶと自動保存。</span>'
-            '<span id="savednote" class="saved-note"></span></div>')
+            '<span class="hint">担当=作画担当フォルダ。GKVは外注（優先確認）。欠番=Bank等で正常。</span>'
+            '<span id="savednote" class="saved-note"></span></div>'
+            # 範囲一括指定（300カットを1つずつ選ばずに済む）
+            '<div class="rangebar"><b>範囲一括指定</b>'
+            ' cut <input id="rfrom" type="number" placeholder="から"> 〜'
+            ' <input id="rto" type="number" placeholder="まで">'
+            f' → <select id="rboard"><option value="">— ボード選択 —</option>{board_opts_html}</select>'
+            ' <button onclick="applyRange()">この範囲に適用</button>'
+            '<span class="hint">例: 53〜206 に「#6#7森の中（夜）R.png」。空欄ボードを選ぶと範囲をクリア。</span></div>')
 
-    th = ("<tr><th>カット</th><th>担当</th><th>シーン</th><th>原図ファイル</th>"
-          "<th>状態</th><th>美術ボード</th></tr>")
+    thead = ("<thead><tr><th>カット</th><th>担当</th><th>シーン</th><th>原図ファイル</th>"
+             "<th>状態</th><th>美術ボード</th></tr></thead>")
     body = []
     for r in index_rows:
         a = r["assignee"]; is_gkv = (a == "GKV")
@@ -338,23 +353,27 @@ def render_genzu_list(index_rows: list[dict], board_options: list[str] | None = 
             f'<td><span class="gen {gen}">{gen_txt}</span></td>'
             f'<td>{sel}</td></tr>')
 
-    script = """
+    defaults_json = json.dumps(defaults, ensure_ascii=False)
+    script = ("""
 <script>
 const LS_KEY="genzu_board_assign_v1";
+const DEFAULTS=__DEFAULTS__;
 function loadSel(){try{return JSON.parse(localStorage.getItem(LS_KEY)||"{}");}catch(e){return {};}}
 function saveSel(m){localStorage.setItem(LS_KEY,JSON.stringify(m));}
-function note(t){const n=document.getElementById("savednote");n.textContent=t;setTimeout(()=>{n.textContent="";},1500);}
-const tb=()=>document.querySelector("table tbody")||document.querySelector("table");
+function note(t){const n=document.getElementById("savednote");n.textContent=t;setTimeout(()=>{n.textContent="";},2000);}
+const tbody=()=>document.querySelector("table tbody");
 let gkvTop=false, gkvOnly=false;
 function applySaved(){
-  const m=loadSel();
+  const m=loadSel(); let seeded=false;
   document.querySelectorAll("select.board").forEach(s=>{
     const cut=s.dataset.cut;
-    if(cut in m){s.value=m[cut];}
+    if(cut in m){ s.value=m[cut]; }                 // 手動選択を最優先
+    else if(DEFAULTS[cut]){ s.value=DEFAULTS[cut]; m[cut]=DEFAULTS[cut]; seeded=true; }  // 既定を反映&保存
     s.classList.toggle("set",!!s.value);
     s.addEventListener("change",()=>{const c=loadSel(); if(s.value){c[cut]=s.value;}else{delete c[cut];}
       saveSel(c); s.classList.toggle("set",!!s.value); note("保存しました (cut "+cut+")");});
   });
+  if(seeded) saveSel(m);
 }
 function rows(){return Array.from(document.querySelectorAll("tbody tr"));}
 function reorder(){
@@ -363,13 +382,26 @@ function reorder(){
     if(gkvTop){const ga=a.dataset.assignee==="GKV"?0:1, gb=b.dataset.assignee==="GKV"?0:1; if(ga!==gb)return ga-gb;}
     return (+a.dataset.cutnum)-(+b.dataset.cutnum);
   });
-  const t=tb(); rs.forEach(r=>t.appendChild(r));
+  const t=tbody(); rs.forEach(r=>t.appendChild(r));
 }
 function applyFilter(){ rows().forEach(r=>{ r.style.display=(gkvOnly && r.dataset.assignee!=="GKV")?"none":""; }); }
 function toggleGkvTop(){gkvTop=!gkvTop; document.getElementById("gkvtop").classList.toggle("on",gkvTop); reorder();}
 function toggleGkvOnly(){gkvOnly=!gkvOnly; document.getElementById("gkvonly").classList.toggle("on",gkvOnly); applyFilter();}
 function resetSort(){gkvTop=false; gkvOnly=false; document.getElementById("gkvtop").classList.remove("on");
   document.getElementById("gkvonly").classList.remove("on"); reorder(); applyFilter();}
+function applyRange(){
+  const f=parseInt(document.getElementById("rfrom").value,10);
+  const t=parseInt(document.getElementById("rto").value,10);
+  const board=document.getElementById("rboard").value;
+  if(isNaN(f)||isNaN(t)){alert("cut範囲（から・まで）を入力してください");return;}
+  const c=loadSel(); let n=0;
+  rows().forEach(r=>{const cn=+r.dataset.cutnum;
+    if(cn>=Math.min(f,t)&&cn<=Math.max(f,t)){
+      const s=r.querySelector("select.board"); s.value=board;
+      if(board){c[s.dataset.cut]=board;}else{delete c[s.dataset.cut];}
+      s.classList.toggle("set",!!board); n++;}});
+  saveSel(c); note(n+"件に適用しました ("+f+"〜"+t+")");
+}
 function exportCSV(){
   const out=[["cut","assignee","scene","filename","board"]];
   rows().forEach(r=>{const sel=r.querySelector("select.board");
@@ -380,8 +412,9 @@ function exportCSV(){
   a.download="genzu_board_map.csv"; a.click();
 }
 applySaved();
-</script>"""
-    return head + meta + "<table><tbody>" + th + "".join(body) + "</tbody></table>" + script + "</body></html>"
+</script>""").replace("__DEFAULTS__", defaults_json)
+    return (head + meta + "<table>" + thead + "<tbody>" + "".join(body)
+            + "</tbody></table>" + script + "</body></html>")
 
 
 def timestamped_path(path: str, tz_offset_hours: int = 9) -> str:
