@@ -3,9 +3,12 @@
 生成ステップだけ実行環境で認証経路が異なる（web セッションは MCP 経由、
 本番環境は Higgsfield CLI/API）ため、生成を挟む 2 フェーズに分ける:
 
-  prep   : PSD → 表示レイヤー合成PNG → 比率パディング → manifest 出力（ローカル完結）
-  (生成) : padded.png（＋美術ボード）を GPT Image 2 に渡して結果PNGを得る
-  finish : 結果PNG → 余白切り戻し → 元PSDへ「AI原図修正」差し込み → 台帳記録
+  prep   : PSD → 表示合成PNG → ヘッダー除去 → GPT出力寸ぴったりの入力 → manifest（ローカル完結）
+  (生成) : padded.png（＝出力寸入力, ＋美術ボード）を GPT Image 2 に渡して結果PNGを得る
+  finish : 結果PNG → 切り戻し → ヘッダー分を元座標へ復帰 → 元PSDへ「AI原図修正」差し込み → 台帳
+
+レジストが合う理由: 入力を GPT 出力寸ぴったりで作る(入力==出力グリッド)ため、入力作成の
+逆処理で戻せば幾何的にズレない（§20.6）。ヘッダー帯は撮影フレーム外の作画(余分)を切らずに落とす。
 
 使用例:
   python -m genzu_fix.cli prep  genzu.psd --prompt-file p.txt --board board.png
@@ -19,7 +22,7 @@ import json
 import os
 import time
 
-from . import image_aspect, psd_export, ledger
+from . import image_aspect, psd_export, ledger, frame
 
 
 def _stem(path: str) -> str:
@@ -31,12 +34,16 @@ def cmd_prep(args) -> None:
     os.makedirs(out_dir, exist_ok=True)
 
     visible_png = os.path.join(out_dir, "visible.png")
+    body_png = os.path.join(out_dir, "body.png")
     padded_png = os.path.join(out_dir, "padded.png")
 
     bg = None if args.transparent else (255, 255, 255)
     vw, vh = psd_export.export_visible_to_png(
         args.psd, visible_png, bg=bg, drop_text=not args.keep_text)
-    prep = image_aspect.build_input_image(visible_png, padded_png,
+    # 管理ヘッダー帯を落とす（撮影フレーム外の余分=作画は残す）。非標準シートは --header-top で明示。
+    region = frame.strip_header(visible_png, body_png, top_override=args.header_top)
+    # ヘッダー除去後の本体を GPT Image 2 の出力寸ぴったりへ収めて入力にする
+    prep = image_aspect.build_input_image(body_png, padded_png,
                                           resolution=args.resolution)
 
     prompt = ""
@@ -50,7 +57,10 @@ def cmd_prep(args) -> None:
         "cut": _stem(args.psd),
         "psd": os.path.abspath(args.psd),
         "visible_png": os.path.abspath(visible_png),
+        "body_png": os.path.abspath(body_png),
         "padded_png": os.path.abspath(padded_png),
+        "canvas_size": [vw, vh],
+        "region": list(region),
         "boards": [os.path.abspath(b) for b in (args.board or [])],
         "prompt": prompt,
         "aspect_ratio": prep.aspect_ratio,
@@ -62,8 +72,9 @@ def cmd_prep(args) -> None:
         json.dump(manifest, f, ensure_ascii=False, indent=2)
 
     print(f"visible : {visible_png}  ({vw}x{vh})")
+    print(f"body    : {body_png}  (header除去 region={region})")
     print(f"padded  : {padded_png}  (aspect {prep.aspect_ratio}, "
-          f"canvas {prep.canvas_w}x{prep.canvas_h})")
+          f"canvas {prep.canvas_w}x{prep.canvas_h} = GPT出力寸)")
     print(f"boards  : {manifest['boards'] or '(none)'}")
     print(f"manifest: {manifest_path}")
     print("\n次: padded.png（＋boards）を GPT Image 2 に渡して生成し、結果を保存してから finish を実行。")
@@ -77,13 +88,23 @@ def cmd_finish(args) -> None:
     psd_path = args.psd or manifest["psd"]
     out_dir = os.path.dirname(args.manifest)
     restored_png = os.path.join(out_dir, "restored.png")
+    full_png = os.path.join(out_dir, "restored_full.png")
 
+    # 生成結果を本体画角へ切り戻し（入力作成の逆処理＝幾何は厳密）
     image_aspect.restore_output_image(args.result, restored_png, prep)
+    # ヘッダーを落とした分を元のキャンバス座標へ戻す（region 外はヘッダー帯＝白）
+    region = manifest.get("region")
+    canvas = manifest.get("canvas_size")
+    if region and canvas:
+        frame.paste_into_region(tuple(canvas), tuple(region), restored_png, full_png)
+        insert_src = full_png
+    else:  # 旧 manifest 後方互換（ヘッダー除去なし）
+        insert_src = restored_png
 
     out_psd = args.out_psd or os.path.join(
         out_dir, f"{manifest['cut']}_AI.psd")
     layer_name = psd_export.insert_result_layer(
-        psd_path, restored_png, out_psd, base_name=args.base_name)
+        psd_path, insert_src, out_psd, base_name=args.base_name)
 
     rec = ledger.GenRecord(
         run_id=args.job_id or "",
@@ -166,6 +187,8 @@ def build_parser() -> argparse.ArgumentParser:
                     help="テキストレイヤーを残す（既定は除外）")
     pp.add_argument("--resolution", default="2k",
                     help="生成解像度tier。入力をこのtierの出力寸ぴったりで作る")
+    pp.add_argument("--header-top", type=int, default=None,
+                    help="ヘッダー帯の下端yを明示指定（非標準シート用。既定は自動検出）")
     pp.set_defaults(func=cmd_prep)
 
     pf = sub.add_parser("finish", help="結果PNG → 切り戻し → PSD差し込み → 台帳")
