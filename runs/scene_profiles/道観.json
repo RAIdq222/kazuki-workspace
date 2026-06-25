@@ -1,0 +1,43 @@
+{
+  "key": "道観",
+  "_note": "ドラフト：美術ボード #6_山の中道教の寺院… を確認して確定すること",
+  "match": ["道観"],
+  "place": {
+    "en": "a Daoist temple compound in the mountains",
+    "jp": "山中の道教寺院（道観）の境内・建屋"
+  },
+  "era": {
+    "en": "Chinese Northern-and-Southern-Dynasties to early-Tang period, mountain Daoist temple",
+    "jp": "中国 南北朝〜初唐ごろ／山岳の道教寺院"
+  },
+  "structures": {
+    "en": [
+      "tiled or thatched temple halls with timber post-and-beam framing",
+      "wooden colonnades / verandas and railings",
+      "stone steps, packed-earth courtyard and paved approach",
+      "plain ritual fittings; set into a mountain forest backdrop"
+    ],
+    "jp": [
+      "瓦または茅葺の堂宇、木組みの柱と梁",
+      "木の回廊・縁・欄干",
+      "石段・土間の中庭・敷石のアプローチ",
+      "簡素な調度。背景は山の自然林"
+    ]
+  },
+  "style_note": {
+    "en": "Humble Chinese mountain Daoist temple; rooflines, timber framing and the mountain setting carry the shot. Soft light; some scenes have light rain",
+    "jp": "質素な中国山岳の道観。屋根のライン・木組み・山の地形が画面を支える。光は柔らかく、一部小雨"
+  },
+  "avoid": {
+    "en": [
+      "Japanese temple/shrine silhouettes (torii, pagoda, karahafu)",
+      "European architecture",
+      "grand ornate palace decoration; modern elements"
+    ],
+    "jp": [
+      "日本の寺社シルエット（鳥居・五重塔・唐破風）",
+      "西洋建築",
+      "豪壮で過剰な宮殿装飾／近代要素"
+    ]
+  }
+}
