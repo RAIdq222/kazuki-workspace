@@ -181,15 +181,21 @@ def _prep_board(src: str, out: str, maxside: int = 1536):
 def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
                 prompt_override: str | None, resolution: str, quality: str,
                 model: str, image_flag: str, dry: bool, include_book: bool = False,
-                header_top: int | None = None, board_path: str | None = None) -> dict:
+                header_top: int | None = None, board_path: str | None = None,
+                genzu_source: str = "base") -> dict:
     os.makedirs(out_dir, exist_ok=True)
     cut = os.path.splitext(os.path.basename(psd_path))[0]
     visible = os.path.join(out_dir, "visible.png")
     body = os.path.join(out_dir, "body.png")
     inp = os.path.join(out_dir, "input.png")
-    # 1. prep（背景作画レイヤーだけ合成。指示/参考/セル/BOOKを除外）
-    vw, vh, linfo = psd_export.export_background_layer(
-        psd_path, visible, bg=(255, 255, 255), include_book=include_book)
+    # 1. prep（原図ソース: base=背景レイヤー自動検出 / visible=見たまま全レイヤー合成）
+    if genzu_source == "visible":
+        vw, vh = psd_export.export_visible_to_png(psd_path, visible, bg=(255, 255, 255),
+                                                  drop_text=False)
+        linfo = {"strategy": "visible", "layers": ["(見たまま)"]}
+    else:
+        vw, vh, linfo = psd_export.export_background_layer(
+            psd_path, visible, bg=(255, 255, 255), include_book=include_book)
     # 既定は「切らない」＝原図全域を入力に（レジストは入力=出力グリッドで担保, §20.6）。
     # ヘッダーはプロンプトで除去。header_top 指定時のみ帯を落とす（非標準シート用）。
     if header_top is None:

@@ -148,12 +148,15 @@ def _result_path(uid):
     return p if os.path.exists(p) else None
 
 
-def _genzu_preview(uid, psd_path):
+def _genzu_preview(uid, psd_path, source="base", force=False):
     out = os.path.join(_unit_dir(uid), "visible.png")
-    if not os.path.exists(out) and psd_path:
+    if (force or not os.path.exists(out)) and psd_path:
         os.makedirs(_unit_dir(uid), exist_ok=True)
         try:
-            psd_export.export_background_layer(psd_path, out, include_book=CFG["include_book"])
+            if source == "visible":
+                psd_export.export_visible_to_png(psd_path, out, drop_text=False)
+            else:
+                psd_export.export_background_layer(psd_path, out, include_book=CFG["include_book"])
         except Exception:
             return None
     return out if os.path.exists(out) else None
@@ -199,7 +202,8 @@ def _run_generate(uid):
         batch.process_cut(psd, board, u["scene"], _unit_dir(uid), st.get("prompt") or None,
                           CFG["resolution"], CFG["quality"], CFG["model"], CFG["image_flag"],
                           dry=False, include_book=CFG["include_book"],
-                          header_top=CFG["header_top"], board_path=board_path)
+                          header_top=CFG["header_top"], board_path=board_path,
+                          genzu_source=st.get("genzu_source", "base"))
         with STATE_LOCK:
             if st.get("generated_once"):
                 st["retakes"] = st.get("retakes", 0) + 1
@@ -223,10 +227,14 @@ def create_app():
     def unit_view(proj, u):
         uid = u["id"]
         st = STATE.get(uid, {})
+        with JOBS_LOCK:
+            running = JOBS.get(uid, {}).get("status") == "running"
         return {"id": uid, "cuts": u["cuts"], "assignee": u["assignee"], "scene": u["scene"],
                 "board": st.get("board", u["board"]), "group": proj["group"], "project": proj["key"],
+                "work": proj["work"], "ep": proj["ep"],
                 "has_psd": u["filename"] in proj["psd_idx"],
-                "status": st.get("status", "todo"),
+                "status": st.get("status", "todo"), "running": running,
+                "genzu_source": st.get("genzu_source", "base"),
                 "has_result": _result_path(uid) is not None,
                 "prompt_edited": bool(st.get("prompt")), "retakes": st.get("retakes", 0)}
 
@@ -236,8 +244,9 @@ def create_app():
 
     @app.get("/api/projects")
     def api_projects():
-        return jsonify([{"key": p["key"], "group": p["group"], "count": len(p["units"]),
-                         "boards_opts": p["boards_opts"]} for p in PROJECTS.values()])
+        return jsonify([{"key": p["key"], "group": p["group"], "work": p["work"], "ep": p["ep"],
+                         "count": len(p["units"]), "boards_opts": p["boards_opts"]}
+                        for p in PROJECTS.values()])
 
     @app.post("/api/projects")
     def api_add_project():
@@ -298,6 +307,20 @@ def create_app():
         _save_state()
         return jsonify({"ok": True})
 
+    @app.post("/api/unit/<uid>/recapture")
+    def api_recapture(uid):
+        proj, u = _find_unit(uid)
+        if not u:
+            return jsonify({"error": "not found"}), 404
+        source = (request.json or {}).get("source", "base")
+        STATE.setdefault(uid, {})["genzu_source"] = source
+        _save_state()
+        psd = proj["psd_idx"].get(u["filename"])
+        p = _genzu_preview(uid, psd, source=source, force=True)
+        if not p:
+            return jsonify({"error": "原図の取得に失敗（PSD未検出?）"}), 400
+        return jsonify({"ok": True, "source": source})
+
     @app.post("/api/unit/<uid>/open")
     def api_open(uid):
         proj, u = _find_unit(uid)
@@ -337,7 +360,8 @@ def create_app():
         if not u:
             return "", 404
         if which == "genzu":
-            p = _genzu_preview(uid, proj["psd_idx"].get(u["filename"]))
+            src = STATE.get(uid, {}).get("genzu_source", "base")
+            p = _genzu_preview(uid, proj["psd_idx"].get(u["filename"]), source=src)
         elif which == "result":
             p = _result_path(uid)
         else:
@@ -355,21 +379,23 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
  *{box-sizing:border-box}
  body{margin:0;font-family:system-ui,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;color:#222;background:#f6f7f9}
  header{position:sticky;top:0;background:#fff;border-bottom:1px solid #ddd;z-index:5}
- .tabs{display:flex;gap:4px;padding:8px 12px 0;align-items:center;flex-wrap:wrap}
- .tab{padding:7px 16px;border:1px solid #ddd;border-bottom:none;border-radius:8px 8px 0 0;background:#eef0f3;cursor:pointer;font-size:13px}
- .tab.active{background:#fff;font-weight:700;border-color:#1a5fb4;color:#1a5fb4}
- .tab.add{background:#1a5fb4;color:#fff;border-color:#1a5fb4;border-radius:8px}
- .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:8px 12px;font-size:12px}
+ .tabs{display:flex;gap:4px;padding:6px 12px 0;align-items:center;flex-wrap:wrap}
+ .tabs.eps{padding-top:2px}
+ .tab{padding:6px 14px;border:1px solid #ddd;border-radius:8px 8px 0 0;background:#eef0f3;cursor:pointer;font-size:13px}
+ .tabs.works .tab.active{background:#1a5fb4;color:#fff;font-weight:700;border-color:#1a5fb4}
+ .tabs.eps .tab.active{background:#fff;font-weight:700;border-color:#1a5fb4;color:#1a5fb4}
+ .tab.add{background:#e8f0ff;color:#1a5fb4;border-color:#bcd}
+ .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:8px 12px;font-size:12px;border-top:1px solid #eee}
  .summary{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
  .pill{padding:2px 9px;border-radius:10px;font-size:12px;background:#eef0f3}
- .pill.ok{background:#dff3e6;color:#0a5} .pill.ng{background:#fde2e2;color:#d1242f}
- .pbar{height:8px;width:160px;background:#e6e8eb;border-radius:5px;overflow:hidden}
+ .pill.ok{background:#dff3e6;color:#0a5} .pill.ng{background:#fde2e2;color:#d1242f} .pill.run{background:#fff3d6;color:#a36a00}
+ .pbar{height:8px;width:140px;background:#e6e8eb;border-radius:5px;overflow:hidden}
  .pbar>i{display:block;height:100%;background:#1a7f37}
  .grow{flex:1}
  main{padding:12px}
  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px}
  .card{background:#fff;border:1px solid #ddd;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px}
- .card.reject{border-color:#d1242f} .card.accepted{border-color:#1a7f37}
+ .card.reject{border-color:#d1242f} .card.accepted{border-color:#1a7f37} .card.running{border-color:#bf8700;box-shadow:0 0 0 2px #ffe6a8}
  .chead{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
  .cut{font-weight:700} .scene{color:#888;font-size:11px;width:100%}
  .who{display:inline-block;padding:1px 7px;border-radius:8px;color:#fff;font-size:10px}
@@ -380,6 +406,9 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
  .thumbs figure{margin:0;flex:1} .thumbs figcaption{font-size:10px;color:#888}
  .thumbs img{width:100%;height:150px;object-fit:contain;border:1px solid #eee;background:#fff;cursor:zoom-in}
  .ph{height:150px;border:1px dashed #ddd;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:11px}
+ .prog{height:6px;background:#ffe6a8;border-radius:4px;overflow:hidden;display:none}
+ .prog.on{display:block} .prog>i{display:block;height:100%;width:40%;background:#bf8700;animation:slide 1.1s infinite}
+ @keyframes slide{0%{margin-left:-40%}100%{margin-left:100%}}
  select{font-size:11px;padding:3px;max-width:100%;width:100%}
  details summary{cursor:pointer;font-size:12px;color:#1a5fb4}
  textarea{width:100%;height:120px;font-size:11px;font-family:ui-monospace,monospace;margin-top:4px}
@@ -391,29 +420,42 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
  button:disabled{opacity:.5;cursor:default}
  .log{white-space:pre-wrap;font-size:10px;color:#666;background:#fafafa;border:1px solid #eee;padding:4px;max-height:64px;overflow:auto}
  .muted{color:#999;font-size:11px}
- #lb{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:50}
- #lb img{max-width:96vw;max-height:96vh}
- #modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:60}
- #modal .box{background:#fff;padding:18px;border-radius:10px;width:520px;max-width:94vw}
- #modal label{display:block;font-size:12px;margin:8px 0 2px;color:#444}
- #modal input{width:100%;padding:6px;font-size:13px}
+ .ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:60}
+ .ov .box{background:#fff;padding:16px;border-radius:10px;max-width:96vw;max-height:96vh;overflow:auto}
+ #lb .box{background:none;padding:0} #lb img{max-width:94vw;max-height:90vh}
+ #gmodal .box{width:auto} #gmodal img{max-width:80vw;max-height:72vh;border:1px solid #ddd}
+ #modal .box{width:540px} #modal label{display:block;font-size:12px;margin:8px 0 2px;color:#444} #modal input{width:100%;padding:6px;font-size:13px}
 </style></head><body>
 <header>
- <div class="tabs" id="tabs"></div>
+ <div class="tabs works" id="works"></div>
+ <div class="tabs eps" id="eps"></div>
  <div class="toolbar">
    担当 <select id="fAssignee" style="width:auto"><option value="">全部</option></select>
    状態 <select id="fStatus" style="width:auto"><option value="">全部</option><option>todo</option><option>generating</option><option>done</option><option>accepted</option><option>reject</option></select>
    <label><input type="checkbox" id="fResult"> 未生成のみ</label>
    <span class="grow"></span>
    <span class="summary" id="summary"></span>
-   <button onclick="rescan()">フォルダ再取得</button>
-   <button onclick="refresh()">更新</button>
+   <button onclick="rescan()">フォルダ再取得</button><button onclick="refresh()">更新</button>
  </div>
 </header>
 <main><div class="grid" id="grid"></div></main>
-<div id="lb" onclick="this.style.display='none'"><img id="lbimg"></div>
-<div id="modal"><div class="box">
-  <h3 style="margin:0 0 6px">作品・話数を追加（フォルダから取得）</h3>
+
+<div class="ov" id="lb" onclick="this.style.display='none'"><div class="box"><img id="lbimg"></div></div>
+
+<div class="ov" id="gmodal"><div class="box">
+  <div class="bar" style="margin-bottom:8px"><b id="gTitle"></b><span class="grow"></span>
+    <button onclick="document.getElementById('gmodal').style.display='none'">閉じる</button></div>
+  <img id="gImg">
+  <div class="bar" style="margin-top:10px;align-items:center">原図ソース:
+    <label><input type="radio" name="gsrc" value="base"> 自動検出(Base)</label>
+    <label><input type="radio" name="gsrc" value="visible"> 見たまま(visible)</label>
+    <button class="primary" onclick="recapture()">この設定で取得しなおす</button>
+    <span id="gMsg" class="muted"></span></div>
+  <div class="muted">PhotoshopでPSDを直して保存→ここで「取得しなおす」。Baseは背景レイヤー自動検出、visibleは表示中の全レイヤー合成。</div>
+</div></div>
+
+<div class="ov" id="modal"><div class="box">
+  <h3 style="margin:0 0 6px" id="mTitle">作品・話数を追加（フォルダから取得）</h3>
   <label>作品名</label><input id="mWork" placeholder="尚善">
   <label>話数</label><input id="mEp" placeholder="08">
   <label>原図フォルダのフルパス（中を再帰走査）</label><input id="mGenzu" placeholder="C:\\...\\00.原図">
@@ -423,21 +465,28 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
    <span id="mMsg" class="muted"></span></div>
 </div></div>
 <script>
-let UNITS=[],PROJECTS=[],GROUP=null,BOARDS=[];
+let UNITS=[],PROJECTS=[],WORK=null,GROUP=null,BOARDS=[],GCUR=null;
+const RUN=new Set();
 const $=s=>document.querySelector(s);
 const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
 async function post(u,b){return (await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})})).json();}
 function lb(src){$('#lbimg').src=src;$('#lb').style.display='flex';}
+function unit(id){return UNITS.find(u=>u.id===id);}
 async function refresh(){
   PROJECTS=await (await fetch('/api/projects')).json();
   UNITS=await (await fetch('/api/units')).json();
-  const groups=PROJECTS.map(p=>p.group);
-  if(!GROUP||!groups.includes(GROUP)) GROUP=groups[0];
+  UNITS.forEach(u=>{if(u.running)RUN.add(u.id);});
+  const works=[...new Set(PROJECTS.map(p=>p.work))];
+  if(!WORK||!works.includes(WORK)) WORK=works[0];
+  const eps=PROJECTS.filter(p=>p.work===WORK);
+  if(!GROUP||!eps.some(p=>p.group===GROUP)) GROUP=eps[0]&&eps[0].group;
+  $('#works').innerHTML=works.map(w=>`<div class="tab ${w===WORK?'active':''}" data-w="${esc(w)}">${esc(w)}</div>`).join('')
+    +'<div class="tab add" onclick="openAdd(\'\')">＋作品</div>';
+  $('#eps').innerHTML=eps.map(p=>`<div class="tab ${p.group===GROUP?'active':''}" data-g="${esc(p.group)}">#${esc(p.ep)}</div>`).join('')
+    +`<div class="tab add" onclick="openAdd('${esc(WORK)}')">＋話数</div>`;
+  document.querySelectorAll('#works .tab[data-w]').forEach(t=>t.onclick=()=>{WORK=t.dataset.w;GROUP=null;refresh();});
+  document.querySelectorAll('#eps .tab[data-g]').forEach(t=>t.onclick=()=>{GROUP=t.dataset.g;refresh();});
   const cur=PROJECTS.find(p=>p.group===GROUP); BOARDS=cur?cur.boards_opts:[];
-  $('#tabs').innerHTML=groups.map(g=>`<div class="tab ${g===GROUP?'active':''}" data-g="${g}">${esc(g)}</div>`).join('')
-    +'<div class="tab add" id="addTab">＋ 作品・話数</div>';
-  document.querySelectorAll('.tab[data-g]').forEach(t=>t.onclick=()=>{GROUP=t.dataset.g;refresh();});
-  $('#addTab').onclick=()=>{$('#modal').style.display='flex';};
   const a=new Set(UNITS.filter(u=>u.group===GROUP).map(u=>u.assignee));
   const sel=$('#fAssignee'),c=sel.value;
   sel.innerHTML='<option value="">全部</option>'+[...a].sort().map(x=>`<option ${x===c?'selected':''}>${x}</option>`).join('');
@@ -449,25 +498,28 @@ function render(){
   const us=all.filter(u=>(!fa||u.assignee===fa)&&(!fs||u.status===fs)&&(!fr||!u.has_result));
   const gen=all.filter(u=>u.has_result).length, ok=all.filter(u=>u.status==='accepted').length, ng=all.filter(u=>u.status==='reject').length;
   const pct=all.length?Math.round(ok/all.length*100):0;
-  $('#summary').innerHTML=`<span class="pill">全${all.length}</span><span class="pill">生成済 ${gen}</span>`
-    +`<span class="pill ok">OK ${ok}</span><span class="pill ng">要修正 ${ng}</span>`
-    +`<span class="pill">未生成 ${all.length-gen}</span>`
+  const running=[...RUN].map(unit).filter(u=>u&&u.group===GROUP);
+  $('#summary').innerHTML=(running.length?`<span class="pill run">⏳生成中 ${running.length}: c${running.map(u=>u.cuts.join(',')).join(' / c')}</span>`:'')
+    +`<span class="pill">全${all.length}</span><span class="pill">生成済 ${gen}</span>`
+    +`<span class="pill ok">OK ${ok}</span><span class="pill ng">要修正 ${ng}</span><span class="pill">未生成 ${all.length-gen}</span>`
     +`<div class="pbar"><i style="width:${pct}%"></i></div><span class="muted">${pct}% OK</span>`;
   $('#grid').innerHTML=us.map(card).join('');
+  us.forEach(u=>{if(RUN.has(u.id))markRunning(u.id,true);});
 }
 function card(u){
   const t=Date.now();
   const opts='<option value="">— ボード未選択 —</option>'+BOARDS.map(b=>`<option ${b===u.board?'selected':''}>${esc(b)}</option>`).join('');
-  return `<div class="card ${u.status}" id="card_${u.id}">
+  return `<div class="card ${u.status} ${RUN.has(u.id)?'running':''}" id="card_${u.id}">
    <div class="chead"><span class="cut">c${u.cuts.join(',')}</span>
      <span class="who ${u.assignee==='GKV'?'gkv':'other'}">${u.assignee}</span>
      <span class="b ${u.status}">${u.status}</span>${u.retakes?`<span class="muted">RT${u.retakes}</span>`:''}
      ${u.has_psd?'':'<span class="muted">PSD無</span>'}<span class="scene">${esc(u.scene)}</span></div>
    <div class="thumbs">
-     <figure><figcaption>原図 ${u.has_psd?`<a href="#" onclick="openPsd('${u.id}');return false">[PSDを開く]</a>`:''}</figcaption>
-       ${u.has_psd?`<img loading="lazy" src="/img/${u.id}/genzu" onclick="lb(this.src)" onerror="this.outerHTML='<div class=ph>原図なし</div>'">`:'<div class="ph">PSD未検出</div>'}</figure>
+     <figure><figcaption>原図[${u.genzu_source}] ${u.has_psd?`<a href="#" onclick="openPsd('${u.id}');return false">PSDを開く</a> · <a href="#" onclick="openGenzu('${u.id}');return false">拡大/取り直し</a>`:''}</figcaption>
+       ${u.has_psd?`<img loading="lazy" src="/img/${u.id}/genzu" onclick="openGenzu('${u.id}')" onerror="this.outerHTML='<div class=ph>原図なし</div>'">`:'<div class="ph">PSD未検出</div>'}</figure>
      <figure><figcaption>生成結果</figcaption>${u.has_result?`<img loading="lazy" src="/img/${u.id}/result?t=${t}" onclick="lb(this.src)">`:'<div class="ph">未生成</div>'}</figure>
    </div>
+   <div class="prog ${RUN.has(u.id)?'on':''}" id="prog_${u.id}"><i></i></div>
    <select onchange="setBoard('${u.id}',this.value)">${opts}</select>
    <details><summary>プロンプト${u.prompt_edited?'（編集済）':''}</summary>
      <textarea id="pr_${u.id}" placeholder="（自動生成。編集して保存で上書き）"></textarea>
@@ -479,29 +531,38 @@ function card(u){
      <button class="ng" onclick="accept('${u.id}','reject')">要修正</button></div>
    <div class="log" id="log_${u.id}" style="display:none"></div></div>`;
 }
-async function openPsd(id){const r=await post('/api/unit/'+id+'/open',{}); if(r.error)slog(id,'開けません: '+r.error); else slog(id,'PSDを開きました');}
+function markRunning(id,on){const c=document.getElementById('card_'+id),p=document.getElementById('prog_'+id);
+  if(c)c.classList.toggle('running',on); if(p)p.classList.toggle('on',on);}
+function openGenzu(id){const u=unit(id); GCUR=id; $('#gTitle').textContent='原図 c'+u.cuts.join(',');
+  $('#gImg').src='/img/'+id+'/genzu?t='+Date.now();
+  document.querySelectorAll('input[name=gsrc]').forEach(r=>r.checked=(r.value===u.genzu_source));
+  $('#gMsg').textContent=''; $('#gmodal').style.display='flex';}
+async function recapture(){const src=document.querySelector('input[name=gsrc]:checked').value; $('#gMsg').textContent='取得中…';
+  const r=await post('/api/unit/'+GCUR+'/recapture',{source:src}); if(r.error){$('#gMsg').textContent='エラー: '+r.error;return;}
+  $('#gImg').src='/img/'+GCUR+'/genzu?t='+Date.now(); $('#gMsg').textContent='取得しました（'+src+'）'; await refresh();}
+async function openPsd(id){const r=await post('/api/unit/'+id+'/open',{}); slog(id,r.error?('開けません: '+r.error):'PSDを開きました');}
 async function loadPrompt(id){const d=await (await fetch('/api/unit/'+id)).json(); const t=document.getElementById('pr_'+id); if(t)t.value=d.prompt;}
 async function savePrompt(id){const t=document.getElementById('pr_'+id); await post('/api/unit/'+id+'/prompt',{prompt:t?t.value:''}); slog(id,'保存しました');}
 async function resetPrompt(id){await post('/api/unit/'+id+'/prompt',{prompt:''}); const t=document.getElementById('pr_'+id); if(t)t.value=''; slog(id,'自動に戻しました');}
 async function setBoard(id,v){await post('/api/unit/'+id+'/board',{board:v}); slog(id,'ボード保存');}
-async function accept(id,v){await post('/api/unit/'+id+'/accept',{value:v}); const u=UNITS.find(x=>x.id===id); if(u)u.status=v; render();}
+async function accept(id,v){await post('/api/unit/'+id+'/accept',{value:v}); const u=unit(id); if(u)u.status=v; render();}
 function slog(id,m){const l=document.getElementById('log_'+id); if(l){l.style.display='block';l.textContent=m;}}
 async function gen(id){
   const t=document.getElementById('pr_'+id); if(t&&t.value.trim()) await post('/api/unit/'+id+'/prompt',{prompt:t.value});
   const r=await post('/api/unit/'+id+'/generate',{}); if(r.error){slog(id,'エラー: '+r.error);return;}
-  const u=UNITS.find(x=>x.id===id); if(u)u.status='generating'; slog(id,'生成開始…(数分)');
-  const c=document.getElementById('card_'+id); c&&c.querySelectorAll('button').forEach(b=>b.disabled=true);
+  RUN.add(id); markRunning(id,true); const u=unit(id); if(u){u.status='generating';u.running=true;} render(); slog(id,'生成開始…(数分)');
+  const c=document.getElementById('card_'+id); c&&c.querySelectorAll('.bar button').forEach(b=>b.disabled=true);
   const poll=setInterval(async()=>{const j=await (await fetch('/api/unit/'+id+'/job')).json();
     slog(id,(j.log||[]).join('\n'));
-    if(j.status==='done'||j.status==='error'){clearInterval(poll); await refresh();}},2500);
+    if(j.status==='done'||j.status==='error'){clearInterval(poll); RUN.delete(id); await refresh();}},2500);
 }
-async function rescan(){const p=PROJECTS.find(x=>x.group===GROUP); if(!p)return; const r=await post('/api/projects/'+encodeURIComponent(p.key)+'/rescan',{}); await refresh();}
-async function addProject(){
-  $('#mMsg').textContent='追加中…';
+async function rescan(){const p=PROJECTS.find(x=>x.group===GROUP); if(!p)return; await post('/api/projects/'+encodeURIComponent(p.key)+'/rescan',{}); await refresh();}
+function openAdd(work){$('#mWork').value=work||''; $('#mEp').value=''; $('#mGenzu').value=''; $('#mBoards').value='';
+  $('#mTitle').textContent=work?(work+' に話数を追加'):'作品・話数を追加'; $('#mMsg').textContent=''; $('#modal').style.display='flex';}
+async function addProject(){$('#mMsg').textContent='追加中…';
   const r=await post('/api/projects',{work:$('#mWork').value,ep:$('#mEp').value,genzu_dir:$('#mGenzu').value,boards_dir:$('#mBoards').value});
   if(r.error){$('#mMsg').textContent='エラー: '+r.error;return;}
-  $('#modal').style.display='none'; GROUP=null; await refresh();
-}
+  $('#modal').style.display='none'; WORK=$('#mWork').value||WORK; GROUP=null; await refresh();}
 $('#fAssignee').onchange=render;$('#fStatus').onchange=render;$('#fResult').onchange=render;
 refresh();
 </script></body></html>"""
