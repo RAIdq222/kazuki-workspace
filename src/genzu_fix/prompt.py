@@ -18,6 +18,7 @@ import csv
 import glob
 import json
 import os
+import re
 from dataclasses import dataclass, field
 
 from .naming import parse_board
@@ -226,7 +227,8 @@ class SceneRegistry:
 # ---------------------------------------------------------------------------
 CUT_INFO_FIELDS = [
     "cut", "scene_key", "place", "time", "weather",
-    "situation", "remove", "structures", "era", "source",
+    "situation", "situation_en", "remove", "remove_en",
+    "structures", "era", "source",
 ]
 
 
@@ -237,9 +239,11 @@ class CutInfo:
     place: str = ""
     time: str = ""
     weather: str = ""
-    situation: str = ""   # 場面（コンテ由来。今は空欄→#4で充足）
-    remove: str = ""      # このカット固有の除去対象（コンテ由来。今は空欄→#4）
-    structures: str = ""  # scene_profile 由来の既定（; 区切り）。カット個別に上書き可
+    situation: str = ""     # 場面 JP（人の確認用。コンテ由来→④で充足）
+    situation_en: str = ""  # 場面 EN（モデル入力用）
+    remove: str = ""        # 除去対象 JP（確認用）
+    remove_en: str = ""     # 除去対象 EN（モデル入力用）
+    structures: str = ""    # scene_profile 由来の既定（; 区切り）。カット個別に上書き可
     era: str = ""
     source: str = ""
 
@@ -283,6 +287,11 @@ def cut_info_from_board(board: str, scene: str, registry: SceneRegistry,
     )
 
 
+def _en_sentence(s: str) -> str:
+    """EN文末を整える（末尾の 。/. を1つの . に正規化）。"""
+    return s.strip().rstrip("。.").strip() + "."
+
+
 def _cut_block(info: CutInfo) -> tuple[str, str]:
     en_parts, jp_parts = [], []
     t_en, t_jp = TIME_TREATMENT.get(info.time, ("", ""))
@@ -295,12 +304,19 @@ def _cut_block(info: CutInfo) -> tuple[str, str]:
         en_parts.append(w_en)
     if w_jp:
         jp_parts.append(w_jp)
-    if info.situation:
-        en_parts.append(f"In this shot: {info.situation}.")
-        jp_parts.append(f"このカット: {info.situation}。")
-    if info.remove:
-        en_parts.append(f"Remove in this shot: {info.remove}; keep the surrounding environment.")
-        jp_parts.append(f"このカットで消すもの: {info.remove}。周囲の環境は残す。")
+    # situation / remove は対訳。EN は *_en（無ければ JP でフォールバック）、JP は日本語。
+    sit_en = info.situation_en or info.situation
+    sit_jp = info.situation or info.situation_en
+    if sit_en:
+        en_parts.append("In this shot: " + _en_sentence(sit_en))
+    if sit_jp:
+        jp_parts.append(f"このカット: {sit_jp.rstrip('。')}。")
+    rem_en = info.remove_en or info.remove
+    rem_jp = info.remove or info.remove_en
+    if rem_en:
+        en_parts.append(f"Remove in this shot: {rem_en.rstrip('。.')}; keep the surrounding environment.")
+    if rem_jp:
+        jp_parts.append(f"このカットで消すもの: {rem_jp.rstrip('。')}。周囲の環境は残す。")
     en = ("[CUT] " + " ".join(en_parts)) if en_parts else ""
     jp = ("[カット] " + " ".join(jp_parts)) if jp_parts else ""
     return en, jp
@@ -338,6 +354,36 @@ def build_from_info(info: CutInfo, registry: SceneRegistry | None = None) -> Pro
     registry = registry or SceneRegistry.load()
     prof = next((p for p in registry.profiles if p.key == info.scene_key), None)
     return assemble(info, prof)
+
+
+def _norm_cut(label: str) -> str:
+    """カット番号キー（前ゼロを落とし枝番は保持）。例 '015'->'15', '016A'->'16A'。"""
+    m = re.match(r"0*(\d+)([A-Za-z]?)$", (label or "").strip())
+    return (m.group(1) + m.group(2).upper()) if m else (label or "").strip()
+
+
+def load_cut_info(csv_path: str) -> dict[str, CutInfo]:
+    """cut_scene_info CSV を cut 番号キーの CutInfo 辞書として読む（存在しなければ空）。"""
+    if not csv_path or not os.path.exists(csv_path):
+        return {}
+    out = {}
+    with open(csv_path, encoding="utf-8-sig") as f:
+        for row in csv.DictReader(f):
+            out[_norm_cut(row.get("cut", ""))] = CutInfo.from_row(row)
+    return out
+
+
+def build_for_cut(cut: str, board: str, scene: str,
+                  registry: SceneRegistry | None = None,
+                  cut_info_map: dict[str, CutInfo] | None = None) -> Prompt:
+    """カット番号があれば cut_scene_info の充足済み行（situation/remove 込み）を優先。
+    無ければ board/scene から機械生成（situation/remove は空）。"""
+    registry = registry or SceneRegistry.load()
+    if cut_info_map:
+        info = cut_info_map.get(_norm_cut(cut))
+        if info:
+            return build_from_info(info, registry)
+    return build(board, scene, registry=registry, cut=cut)
 
 
 # ---------------------------------------------------------------------------

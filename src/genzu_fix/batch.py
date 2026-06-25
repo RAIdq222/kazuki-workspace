@@ -46,12 +46,13 @@ def build_prompt(board: str, scene: str, prompt_override: str | None = None,
 
 
 def build_prompt_pair(board: str, scene: str, prompt_override: str | None = None,
-                      registry=None, cut: str = "") -> tuple[str, str | None]:
+                      registry=None, cut: str = "", cut_info_map=None) -> tuple[str, str | None]:
     """(EN, JP) を返す。EN はモデル入力、JP は人の確認用。
+    cut_info_map があり当該カットの充足済み行が在れば situation/remove 込みで組む。
     prompt_override がある場合は (override, None)。"""
     if prompt_override:
         return prompt_override, None
-    p = promptlib.build(board, scene, registry=registry, cut=cut)
+    p = promptlib.build_for_cut(cut, board, scene, registry=registry, cut_info_map=cut_info_map)
     return p.en, p.jp
 
 
@@ -144,7 +145,8 @@ def _hf_generate(media_id: str, prompt: str, aspect: str, resolution: str,
 
 def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
                 prompt_override: str | None, resolution: str, quality: str,
-                model: str, image_flag: str, dry: bool, include_book: bool = False) -> dict:
+                model: str, image_flag: str, dry: bool, include_book: bool = False,
+                cut_num: str = "", cut_info_map=None) -> dict:
     os.makedirs(out_dir, exist_ok=True)
     cut = os.path.splitext(os.path.basename(psd_path))[0]
     visible = os.path.join(out_dir, "visible.png")
@@ -155,7 +157,8 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
         psd_path, visible, bg=(255, 255, 255), include_book=include_book)
     region = frame.strip_header(visible, body)
     prep = image_aspect.build_input_image(body, inp, resolution=resolution)
-    prompt, prompt_jp = build_prompt_pair(board, scene, prompt_override)
+    prompt, prompt_jp = build_prompt_pair(board, scene, prompt_override,
+                                          cut=cut_num, cut_info_map=cut_info_map)
     # 確認用に EN（モデル入力）と JP（人の作業確認）を出力先へ残す
     with open(os.path.join(out_dir, "prompt.en.txt"), "w", encoding="utf-8") as f:
         f.write(prompt)
@@ -206,7 +209,14 @@ def main(argv=None) -> None:
     p.add_argument("--dry-run", action="store_true", help="prepのみ実行し、叩くhiggsfieldコマンドを表示")
     p.add_argument("--include-book", action="store_true",
                    help="BOOK◯（燭台/寝台/柱/モヤ等の別ブック）も合成に含める（既定は除外）")
+    p.add_argument("--cut-info", default="runs/cut_scene_info_ep7.csv",
+                   help="カット別構造化情報CSV（situation/remove 込み）。在ればプロンプトに反映")
     a = p.parse_args(argv)
+
+    # カット別 situation/remove（conte 由来）を読み込み（無ければ空でフォールバック）
+    cut_info_map = promptlib.load_cut_info(a.cut_info)
+    if cut_info_map:
+        print(f"cut_scene_info: {len(cut_info_map)} カット読み込み（{a.cut_info}）")
 
     # PSDの実パスを genzu-dir 配下から探す索引（ファイル名→パス）
     index = {}
@@ -250,7 +260,8 @@ def main(argv=None) -> None:
         try:
             process_cut(psd, r.get("board", ""), r.get("scene", ""), out_dir,
                         prompt_override, a.resolution, a.quality, a.model, a.image_flag,
-                        a.dry_run, a.include_book)
+                        a.dry_run, a.include_book,
+                        cut_num=r.get("cut", ""), cut_info_map=cut_info_map)
             ok += 1
         except Exception as e:
             print(f"    ! 失敗: {e}")
