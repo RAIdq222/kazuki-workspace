@@ -121,12 +121,26 @@ PY
 生成/リテイク→OK判定」をしたいときは **コンソール(`genzu_fix.server`)** を使う。
 
 ### 起動（原図とHiggsfield CLIがあるマシンで）
+
+**いちばん簡単（推奨）**: リポジトリ直下の `run_console.bat` を実行。PYTHONPATH 設定は不要
+（ランチャが `src/` を自動で通す）。依存が無ければ入れるコマンドを表示する。
 ```
-python -m pip install flask
-set PYTHONPATH=src
-python -m genzu_fix.server --genzu-dir "C:\Users\kuror\OneDrive\デスクトップ\尚善\尚善_原図修正自動化検証\00.原図" --out "C:\Users\kuror\OneDrive\デスクトップ\尚善\尚善_原図修正自動化検証\10.生成結果" --boards-dir "<美術ボード展開先>" --port 8765
+python -m pip install flask psd-tools pillow numpy   ← 初回だけ
+run_console.bat
+```
+`run_console.bat` は原図=`..\00.原図` / 出力=`..\10.生成結果`（リポジトリの一つ上）を既定にしてある。
+場所が違う場合は `.bat` 内の `GENZU` / `OUT` / `BOARDS` を書き換える。
+
+**コマンドで起動する場合**（ランチャ経由なので PYTHONPATH 不要）:
+```
+python run_console.py --genzu-dir "..\00.原図" --out "..\10.生成結果" --port 8765
 ```
 → ブラウザで `http://127.0.0.1:8765` を開く。
+
+> よくある失敗: `python -m genzu_fix.server ...` を直接叩くと
+> `ModuleNotFoundError: No module named 'genzu_fix'`。src レイアウトで PYTHONPATH が
+> 通っていないのが原因。`run_console.py` / `run_console.bat` を使えば起きない。
+> （`scripts/gather_handoff_ep7.py` も同様に PYTHONPATH 不要で直接実行できる）
 
 ### 使い方
 - 左: カット一覧（担当/状態でフィルタ。GKVは赤）。クリックで右に詳細。

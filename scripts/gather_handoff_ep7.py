@@ -26,6 +26,12 @@ import json
 import os
 import re
 import shutil
+import sys
+
+# src レイアウトのため、PYTHONPATH 未設定でも import できるよう自前で通す。
+_SRC = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src")
+if _SRC not in sys.path:
+    sys.path.insert(0, _SRC)
 
 from genzu_fix import psd_export
 
