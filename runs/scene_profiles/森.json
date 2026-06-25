@@ -1,0 +1,42 @@
+{
+  "key": "森",
+  "match": ["森"],
+  "place": {
+    "en": "a natural temperate forest in a mountainous region",
+    "jp": "山岳地帯の自然林（森の中）"
+  },
+  "era": {
+    "en": "Chinese Northern-and-Southern-Dynasties to early-Tang period, mountainous wilderness",
+    "jp": "中国 南北朝〜初唐ごろを思わせる山岳地帯"
+  },
+  "structures": {
+    "en": [
+      "tall, slender trunks of temperate deciduous broadleaf trees (elm, pagoda tree, maple, mixed scrub) standing in stands",
+      "mid- and low shrubs, undergrowth and a moss-covered ground",
+      "a trodden earth/mud path receding from foreground into depth",
+      "distant trees overlapping and fading to suggest spatial depth"
+    ],
+    "jp": [
+      "細く背の高い落葉広葉樹（楡・槐・楓・雑木）の幹が林立",
+      "中〜低木・下草・苔むした地面",
+      "手前から奥へ抜ける踏み分けの土道（雨時は濡れた泥）",
+      "奥の樹々は重なって霞み、奥行きを示す"
+    ]
+  },
+  "style_note": {
+    "en": "Naturalistic and plain; trees are not the subject — they reinforce the spatial skeleton and depth, not a single ornate feature",
+    "jp": "自然主義的で素朴。樹木は主役化させず、空間の骨格と奥行きを補強する程度に。特定の構成物を豪華に見せない"
+  },
+  "avoid": {
+    "en": [
+      "tropical plants, palms, dense jungle",
+      "Japanese-garden-style planting",
+      "giant fantasy trees"
+    ],
+    "jp": [
+      "熱帯植物・ヤシ・密林ジャングル",
+      "日本庭園風の植栽",
+      "巨大ファンタジー樹"
+    ]
+  }
+}
