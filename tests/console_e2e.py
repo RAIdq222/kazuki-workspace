@@ -1,0 +1,174 @@
+"""コンソール(genzu_fix.server)のブラウザ動作テスト（①拡大 ②左右入替 ③ボードホバー他）。
+
+実機の原図PSDやHiggsfieldを使わずに、out配下へ原図/結果のダミーPNGを置いて
+画像ルート・比較ビュー・ボード表示の挙動をPlaywrightで検証する。
+
+実行: PYTHONPATH=src python tests/console_e2e.py
+依存が無い環境（playwright/chromium未導入）は SKIP して終了コード0。
+"""
+from __future__ import annotations
+import os, sys, csv, time, socket, subprocess, tempfile
+
+CHROMIUM = "/opt/pw-browsers/chromium"
+
+
+def _free_port():
+    s = socket.socket()
+    s.bind(("127.0.0.1", 0))
+    p = s.getsockname()[1]
+    s.close()
+    return p
+
+
+def _solid(path, color, size=(200, 300)):
+    from PIL import Image
+    Image.new("RGB", size, color).save(path)
+
+
+def _make_fixture(root):
+    out = os.path.join(root, "out")
+    boards = os.path.join(root, "boards")
+    gz = os.path.join(root, "genzu")  # 空でよい（PSDは無し）
+    for d in (out, boards, gz, os.path.join(out, "testcut01")):
+        os.makedirs(d, exist_ok=True)
+    # 原図(前)=赤 / 最終結果(後)=青。比較で左右に出る。
+    _solid(os.path.join(out, "testcut01", "visible.png"), (220, 60, 60))
+    _solid(os.path.join(out, "testcut01", "restored_full.png"), (60, 80, 220))
+    _solid(os.path.join(boards, "BoardA.png"), (60, 200, 90))
+    csv_path = os.path.join(root, "cuts.csv")
+    with open(csv_path, "w", encoding="utf-8", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["cut", "assignee", "scene", "filename", "board"])
+        w.writerow(["1", "GKV", "テストc001", "testcut01.psd", "BoardA.png"])
+    return out, boards, gz, csv_path
+
+
+def _wait_http(url, timeout=20):
+    import urllib.request
+    end = time.time() + timeout
+    while time.time() < end:
+        try:
+            urllib.request.urlopen(url, timeout=1)
+            return True
+        except Exception:
+            time.sleep(0.3)
+    return False
+
+
+def main():
+    try:
+        from playwright.sync_api import sync_playwright
+    except Exception as e:
+        print("SKIP: playwright未導入:", e)
+        return 0
+    if not os.path.exists(CHROMIUM):
+        print("SKIP: chromium未検出:", CHROMIUM)
+        return 0
+
+    root = tempfile.mkdtemp(prefix="console_e2e_")
+    out, boards, gz, csv_path = _make_fixture(root)
+    port = _free_port()
+    env = dict(os.environ, PYTHONPATH="src")
+    proc = subprocess.Popen(
+        [sys.executable, "-m", "genzu_fix.server", "--genzu-dir", gz,
+         "--out", out, "--csv", csv_path, "--boards-dir", boards,
+         "--work", "テスト", "--ep", "01", "--port", str(port)],
+        env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    base = f"http://127.0.0.1:{port}"
+    failures = []
+    try:
+        if not _wait_http(base + "/api/projects"):
+            print("FAIL: サーバ起動せず")
+            print((proc.stdout.read() or b"").decode()[-2000:])
+            return 1
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(executable_path=CHROMIUM, args=["--no-sandbox"])
+            page = browser.new_page(viewport={"width": 1280, "height": 900})
+            errs = []
+            page.on("pageerror", lambda e: errs.append(str(e)))
+            page.goto(base, wait_until="networkidle")
+
+            def check(name, cond):
+                print(("ok  " if cond else "FAIL") + " " + name)
+                if not cond:
+                    failures.append(name)
+
+            # カードが1枚描画される
+            page.wait_for_selector(".card", timeout=8000)
+            check("カード描画", page.locator(".card").count() == 1)
+            # 画像ルート（原図/結果/ボード）が200
+            import urllib.request
+            for which in ("genzu", "result", "board"):
+                code = urllib.request.urlopen(f"{base}/img/testcut01/{which}").status
+                check(f"/img/{which}=200", code == 200)
+
+            # 比較を開く（横並びが既定）
+            page.evaluate("setCmpMode('side')")
+            page.locator("text=前後比較").first.click()
+            page.wait_for_selector("#cmp", state="visible")
+            check("比較オーバーレイ表示", page.locator("#cmp").is_visible())
+            check("横並びモード表示", page.locator("#cmpSide").is_visible())
+            a = page.get_attribute("#cmpSideA", "src") or ""
+            b = page.get_attribute("#cmpSideB", "src") or ""
+            check("横並び左=原図", "/genzu" in a)
+            check("横並び右=結果", "/result" in b)
+
+            # ① 横並びの画像クリックで拡大（ライトボックス）
+            page.click("#cmpSideA")
+            page.wait_for_selector("#lb", state="visible")
+            check("①画像クリックで拡大", "/genzu" in (page.get_attribute("#lbimg", "src") or ""))
+            page.click("#lb")  # 閉じる
+
+            # スライダーへ切替
+            page.evaluate("setCmpMode('slider')")
+            check("スライダーモード表示", page.locator("#cmpSlider").is_visible())
+            top_before = page.get_attribute("#cmpImgA", "src") or ""
+            check("スライダー上=原図(左)", "/genzu" in top_before)
+            # ポインタ移動で境界が動く
+            page.evaluate("""()=>{const s=document.querySelector('#cmpSlider');
+              const r=s.getBoundingClientRect();
+              s.dispatchEvent(new PointerEvent('pointermove',{clientX:r.left+r.width*0.25,bubbles:true}));}""")
+            left25 = page.evaluate("()=>document.querySelector('#cmpDiv').style.left")
+            check("境界が移動(≈25%)", left25 not in ("", "50%") and float(left25.replace("%", "")) < 40)
+
+            # ② 左右入替
+            page.click("text=左右入替")
+            top_after = page.get_attribute("#cmpImgA", "src") or ""
+            check("②入替で上=結果に", "/result" in top_after)
+            check("②タグ左が生成結果", page.inner_text("#cmpTagL") == "生成結果")
+            page.click("text=左右入替")  # 元に戻す
+
+            page.evaluate("()=>document.querySelector('#cmp').style.display='none'")
+
+            # ③ ボード表示ホバーでプレビュー
+            page.eval_on_selector("button:has-text('ボード表示')",
+                                  """el=>{const r=el.getBoundingClientRect();
+                                  el.dispatchEvent(new MouseEvent('mousemove',
+                                  {clientX:r.left+2,clientY:r.top+2,bubbles:true}));}""")
+            page.wait_for_selector("#bpop", state="visible", timeout=3000)
+            check("③ホバーでボードプレビュー", "/board" in (page.get_attribute("#bpopImg", "src") or ""))
+            # クリックでボード拡大
+            page.click("button:has-text('ボード表示')")
+            page.wait_for_selector("#lb", state="visible")
+            check("ボードクリックで拡大", "/board" in (page.get_attribute("#lbimg", "src") or ""))
+
+            check("JSランタイムエラー無し", not errs)
+            if errs:
+                print("  pageerror:", errs)
+            browser.close()
+    finally:
+        proc.terminate()
+        try:
+            proc.wait(timeout=5)
+        except Exception:
+            proc.kill()
+
+    if failures:
+        print(f"\n{len(failures)} 件失敗:", failures)
+        return 1
+    print("\nALL PASS")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

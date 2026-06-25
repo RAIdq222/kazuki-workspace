@@ -432,13 +432,15 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
  .muted{color:#999;font-size:11px}
  .ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:60}
  .ov .box{background:#fff;padding:16px;border-radius:10px;max-width:96vw;max-height:96vh;overflow:auto}
- #lb .box{background:none;padding:0} #lb img{max-width:94vw;max-height:90vh}
+ #lb{z-index:70} #lb .box{background:none;padding:0} #lb img{max-width:94vw;max-height:90vh}
+ #bpop{position:fixed;z-index:80;display:none;pointer-events:none;background:#fff;border:1px solid #888;border-radius:6px;padding:3px;box-shadow:0 4px 16px rgba(0,0,0,.3)}
+ #bpop img{display:block;max-width:300px;max-height:220px} #bpop .cap{font-size:10px;color:#666;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
  #gmodal .box{width:auto} #gmodal img{max-width:80vw;max-height:72vh;border:1px solid #ddd}
  #cmp .box{background:#fff;width:auto;max-width:96vw}
  .cmptabs button.on{background:#1a5fb4;color:#fff;border-color:#1a5fb4}
  .cmpSide{display:flex;gap:10px} .cmpSide figure{margin:0;text-align:center}
  .cmpSide figcaption{font-size:11px;color:#666;margin-bottom:3px}
- .cmpSide img{max-width:44vw;max-height:80vh;object-fit:contain;border:1px solid #eee;background:#fff}
+ .cmpSide img{max-width:44vw;max-height:80vh;object-fit:contain;border:1px solid #eee;background:#fff;cursor:zoom-in}
  .cmpSlider{position:relative;display:inline-block;line-height:0;cursor:ew-resize;user-select:none;touch-action:none;border:1px solid #eee}
  .cmpSlider .cmpimg{display:block;max-width:90vw;max-height:82vh}
  .cmpSlider .cmptop{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain}
@@ -462,20 +464,22 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
 <main><div class="grid" id="grid"></div></main>
 
 <div class="ov" id="lb" onclick="this.style.display='none'"><div class="box"><img id="lbimg"></div></div>
+<div id="bpop"><img id="bpopImg"><div class="cap" id="bpopCap"></div></div>
 
 <div class="ov" id="cmp" onclick="if(event.target===this)this.style.display='none'"><div class="box">
   <div class="bar" style="margin-bottom:8px;align-items:center">
     <b id="cmpTitle"></b><span class="grow"></span>
     <span class="cmptabs"><button id="cmpBside" onclick="setCmpMode('side')">横並び</button>
       <button id="cmpBslide" onclick="setCmpMode('slider')">スライダー比較</button></span>
+    <button onclick="swapCmp()" title="左右（原図↔生成結果）を入れ替え">⇄ 左右入替</button>
     <button onclick="document.getElementById('cmp').style.display='none'">閉じる</button></div>
   <div id="cmpSide" class="cmpSide">
-    <figure><figcaption>原図（前）</figcaption><img id="cmpSideA"></figure>
-    <figure><figcaption>生成結果（後）</figcaption><img id="cmpSideB"></figure></div>
+    <figure><figcaption id="cmpCapA">原図（前）</figcaption><img id="cmpSideA" onclick="lb(this.src)"></figure>
+    <figure><figcaption id="cmpCapB">生成結果（後）</figcaption><img id="cmpSideB" onclick="lb(this.src)"></figure></div>
   <div id="cmpSlider" class="cmpSlider" style="display:none">
     <img id="cmpImgB" class="cmpimg">
     <img id="cmpImgA" class="cmpimg cmptop">
-    <span class="cmptag" style="left:6px">原図</span><span class="cmptag" style="right:6px">生成結果</span>
+    <span class="cmptag" id="cmpTagL" style="left:6px">原図</span><span class="cmptag" id="cmpTagR" style="right:6px">生成結果</span>
     <div id="cmpDiv" class="cmpdiv"></div></div>
   <div class="muted" style="margin-top:6px">スライダー比較: 画像の上でマウスを左右に動かすと境界が移動（左=原図 / 右=生成結果）。</div>
 </div></div>
@@ -505,6 +509,7 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
 <script>
 let UNITS=[],PROJECTS=[],WORK=null,GROUP=null,BOARDS=[],GCUR=null,BOARDFILES=false;
 let CMPMODE=(function(){try{return localStorage.getItem('cmpmode')||'side'}catch(e){return 'side'}})();
+let CMPSWAP=false,CMPSRC={g:'',r:''};
 const RUN=new Set();
 const $=s=>document.querySelector(s);
 const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
@@ -522,17 +527,28 @@ function setSplit(pct){pct=Math.max(0,Math.min(100,pct));
   $('#cmpImgA').style.clipPath='inset(0 '+(100-pct)+'% 0 0)';$('#cmpDiv').style.left=pct+'%';}
 function cmpMove(e){const r=$('#cmpSlider').getBoundingClientRect();
   if(r.width)setSplit((e.clientX-r.left)/r.width*100);}
+function applyCmp(){const g=CMPSRC.g,r=CMPSRC.r,left=CMPSWAP?r:g,right=CMPSWAP?g:r;
+  $('#cmpSideA').src=left;$('#cmpSideB').src=right;$('#cmpImgA').src=left;$('#cmpImgB').src=right;
+  const la=CMPSWAP?'生成結果（後）':'原図（前）',lb2=CMPSWAP?'原図（前）':'生成結果（後）';
+  $('#cmpCapA').textContent=la;$('#cmpCapB').textContent=lb2;
+  $('#cmpTagL').textContent=CMPSWAP?'生成結果':'原図';$('#cmpTagR').textContent=CMPSWAP?'原図':'生成結果';}
+function swapCmp(){CMPSWAP=!CMPSWAP;applyCmp();}
 function openCmp(id){const u=unit(id);if(!u)return;
   if(!u.has_result){lb('/img/'+id+'/genzu?t='+Date.now());return;}
   $('#cmpTitle').textContent='生成前後比較 c'+u.cuts.join(',');
-  const t=Date.now(),g='/img/'+id+'/genzu?t='+t,r='/img/'+id+'/result?t='+t;
-  $('#cmpSideA').src=g;$('#cmpSideB').src=r;$('#cmpImgA').src=g;$('#cmpImgB').src=r;
-  setCmpMode(CMPMODE);$('#cmp').style.display='flex';}
+  const t=Date.now();CMPSRC={g:'/img/'+id+'/genzu?t='+t,r:'/img/'+id+'/result?t='+t};
+  applyCmp();setCmpMode(CMPMODE);$('#cmp').style.display='flex';}
 function showBoard(id){const u=unit(id);
   if(!u.board){slog(id,'ボード未選択（プルダウンで選択）');return;}
   if(!BOARDFILES){alert('美術ボード画像の場所が未設定です（起動時に --boards-dir を指定）。\n選択中のボード: '+u.board);return;}
   const im=$('#lbimg');im.onerror=()=>{im.onerror=null;$('#lb').style.display='none';alert('ボード画像が見つかりません: '+u.board);};
   im.src='/img/'+id+'/board?t='+Date.now();$('#lb').style.display='flex';}
+function boardHover(id,e){const u=unit(id);const p=$('#bpop');
+  if(!u||!u.board||!BOARDFILES){p.style.display='none';return;}
+  if($('#bpopImg').dataset.id!==id){$('#bpopImg').dataset.id=id;$('#bpopImg').src='/img/'+id+'/board?t='+Date.now();$('#bpopCap').textContent=u.board;}
+  const pad=14,w=320,vw=window.innerWidth;
+  p.style.left=Math.min(e.clientX+pad,vw-w)+'px';p.style.top=(e.clientY+pad)+'px';p.style.display='block';}
+function boardOut(){$('#bpop').style.display='none';}
 async function refresh(){
   PROJECTS=await (await fetch('/api/projects')).json();
   UNITS=await (await fetch('/api/units')).json();
@@ -582,7 +598,7 @@ function card(u){
    </div>
    <div class="prog ${RUN.has(u.id)?'on':''}" id="prog_${u.id}"><i></i></div>
    <div class="bar"><select style="flex:1;width:auto" onchange="setBoard('${u.id}',this.value)">${opts}</select>
-     <button onclick="showBoard('${u.id}')" title="美術ボードを表示（確認用）">ボード表示</button></div>
+     <button onclick="showBoard('${u.id}')" onmousemove="boardHover('${u.id}',event)" onmouseleave="boardOut()" title="クリックで拡大／ホバーでプレビュー">ボード表示</button></div>
    <details><summary>プロンプト${u.prompt_edited?'（編集済）':''}</summary>
      <textarea id="pr_${u.id}" placeholder="（自動生成。編集して保存で上書き）"></textarea>
      <div class="bar"><button onclick="savePrompt('${u.id}')">保存</button>
