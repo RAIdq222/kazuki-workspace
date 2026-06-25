@@ -168,9 +168,15 @@ def create_app():
     def unit_view(u):
         uid = u["id"]
         st = STATE.get(uid, {})
+        import re as _re
+        m = _re.search(r"([a-zA-Z]+)_(\d+)_", u["filename"])
+        work_code = m.group(1) if m else "?"
+        ep = m.group(2) if m else "?"
+        work = {"shz": "尚善"}.get(work_code, work_code)
         return {
             "id": uid, "cuts": u["cuts"], "assignee": u["assignee"], "scene": u["scene"],
             "board": st.get("board", u["board"]),
+            "work": work, "ep": ep, "group": f"{work} #{ep}",
             "has_psd": u["filename"] in psd_idx,
             "status": st.get("status", "todo"),
             "has_result": _result_path(uid) is not None,
@@ -266,101 +272,130 @@ def create_app():
 PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1"><title>原図修正コンソール</title>
 <style>
- body{margin:0;font-family:system-ui,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;color:#222;display:flex;height:100vh}
- #list{width:340px;border-right:1px solid #ddd;overflow:auto;flex:none}
- #detail{flex:1;overflow:auto;padding:16px}
- h1{font-size:15px;margin:10px 12px}
- .filters{padding:0 12px 8px;font-size:12px}
- .row{padding:8px 12px;border-bottom:1px solid #eee;cursor:pointer;font-size:13px}
- .row:hover{background:#f4f8ff} .row.sel{background:#e8f0ff}
- .row .cut{font-weight:700} .who{display:inline-block;padding:1px 6px;border-radius:8px;color:#fff;font-size:10px;margin-left:4px}
+ *{box-sizing:border-box}
+ body{margin:0;font-family:system-ui,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;color:#222;background:#f6f7f9}
+ header{position:sticky;top:0;background:#fff;border-bottom:1px solid #ddd;z-index:5}
+ .tabs{display:flex;gap:4px;padding:8px 12px 0}
+ .tab{padding:7px 16px;border:1px solid #ddd;border-bottom:none;border-radius:8px 8px 0 0;background:#eef0f3;cursor:pointer;font-size:13px}
+ .tab.active{background:#fff;font-weight:700;border-color:#1a5fb4;color:#1a5fb4}
+ .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:8px 12px;font-size:12px}
+ .toolbar .grow{flex:1}
+ main{padding:12px}
+ .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px}
+ .card{background:#fff;border:1px solid #ddd;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px}
+ .card.reject{border-color:#d1242f} .card.accepted{border-color:#1a7f37}
+ .chead{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+ .cut{font-weight:700} .scene{color:#888;font-size:11px;width:100%}
+ .who{display:inline-block;padding:1px 7px;border-radius:8px;color:#fff;font-size:10px}
  .gkv{background:#d1242f} .other{background:#1a5fb4}
  .b{display:inline-block;padding:1px 7px;border-radius:8px;font-size:11px;color:#fff}
  .todo{background:#9aa0a6}.generating{background:#bf8700}.done{background:#1a7f37}.accepted{background:#0a5}.reject{background:#d1242f}
- .imgs{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0}
- .imgs figure{margin:0} .imgs img{max-width:440px;max-height:340px;border:1px solid #ddd;background:#fff;display:block}
- figcaption{font-size:12px;color:#666;margin-bottom:4px}
- textarea{width:100%;height:150px;font-size:12px;font-family:ui-monospace,monospace}
- .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
- button{font-size:13px;padding:7px 13px;border:1px solid #ccc;border-radius:6px;background:#fff;cursor:pointer}
+ .thumbs{display:flex;gap:6px}
+ .thumbs figure{margin:0;flex:1}
+ .thumbs figcaption{font-size:10px;color:#888}
+ .thumbs img{width:100%;height:150px;object-fit:contain;border:1px solid #eee;background:#fff;cursor:zoom-in}
+ .ph{height:150px;border:1px dashed #ddd;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:11px}
+ select{font-size:11px;padding:3px;max-width:100%;width:100%}
+ details summary{cursor:pointer;font-size:12px;color:#1a5fb4}
+ textarea{width:100%;height:120px;font-size:11px;font-family:ui-monospace,monospace;margin-top:4px}
+ .bar{display:flex;gap:5px;flex-wrap:wrap}
+ button{font-size:12px;padding:5px 9px;border:1px solid #ccc;border-radius:6px;background:#fff;cursor:pointer}
  button.primary{background:#1a5fb4;color:#fff;border-color:#1a5fb4}
  button.ok{background:#1a7f37;color:#fff;border-color:#1a7f37}
  button.ng{background:#d1242f;color:#fff;border-color:#d1242f}
- select{font-size:12px;padding:4px;max-width:300px} .muted{color:#888;font-size:12px}
- #log{white-space:pre-wrap;font-size:11px;color:#555;background:#fafafa;border:1px solid #eee;padding:6px;margin-top:8px;max-height:120px;overflow:auto}
+ button:disabled{opacity:.5;cursor:default}
+ .log{white-space:pre-wrap;font-size:10px;color:#666;background:#fafafa;border:1px solid #eee;padding:4px;max-height:64px;overflow:auto}
+ .muted{color:#999;font-size:11px}
+ #lb{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:50}
+ #lb img{max-width:96vw;max-height:96vh}
 </style></head><body>
-<div id="list"><h1>原図修正コンソール</h1>
- <div class="filters">担当 <select id="fAssignee"><option value="">全部</option></select>
-  状態 <select id="fStatus"><option value="">全部</option><option>todo</option><option>generating</option><option>done</option><option>accepted</option><option>reject</option></select></div>
- <div id="rows"></div></div>
-<div id="detail"><div class="muted">左からカットを選択</div></div>
+<header>
+ <div class="tabs" id="tabs"></div>
+ <div class="toolbar">
+   担当 <select id="fAssignee" style="width:auto"><option value="">全部</option></select>
+   状態 <select id="fStatus" style="width:auto"><option value="">全部</option><option>todo</option><option>generating</option><option>done</option><option>accepted</option><option>reject</option></select>
+   <label><input type="checkbox" id="fResult"> 未生成のみ</label>
+   <span class="grow"></span>
+   <span id="counts" class="muted"></span>
+   <button onclick="refresh()">更新</button>
+ </div>
+</header>
+<main><div class="grid" id="grid"></div></main>
+<div id="lb" onclick="this.style.display='none'"><img id="lbimg"></div>
 <script>
-let UNITS=[], CUR=null, POLL=null;
+let UNITS=[], GROUP=null, BOARDS=[];
 const $=s=>document.querySelector(s);
-async function loadUnits(){
+const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+async function post(url,b){return (await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})})).json();}
+function lb(src){$('#lbimg').src=src;$('#lb').style.display='flex';}
+
+async function refresh(){
   UNITS=await (await fetch('/api/units')).json();
-  const a=new Set(UNITS.map(u=>u.assignee)); const sel=$('#fAssignee');
-  sel.innerHTML='<option value="">全部</option>'+[...a].sort().map(x=>`<option>${x}</option>`).join('');
-  renderList();
+  if(!BOARDS.length && UNITS.length){const d=await (await fetch('/api/unit/'+UNITS[0].id)).json(); BOARDS=d.boards_opts||[];}
+  // tabs = 作品 #話数
+  const groups=[...new Set(UNITS.map(u=>u.group))];
+  if(!GROUP||!groups.includes(GROUP)) GROUP=groups[0];
+  $('#tabs').innerHTML=groups.map(g=>`<div class="tab ${g===GROUP?'active':''}" data-g="${g}">${g}</div>`).join('');
+  document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{GROUP=t.dataset.g;render();});
+  const a=new Set(UNITS.map(u=>u.assignee));
+  const sel=$('#fAssignee'),cur=sel.value;
+  sel.innerHTML='<option value="">全部</option>'+[...a].sort().map(x=>`<option ${x===cur?'selected':''}>${x}</option>`).join('');
+  render();
 }
-function renderList(){
-  const fa=$('#fAssignee').value, fs=$('#fStatus').value;
-  const rows=UNITS.filter(u=>(!fa||u.assignee===fa)&&(!fs||u.status===fs));
-  $('#rows').innerHTML=rows.map(u=>`<div class="row ${CUR===u.id?'sel':''}" data-id="${u.id}">
-    <span class="cut">c${u.cuts.join(',')}</span>
-    <span class="who ${u.assignee==='GKV'?'gkv':'other'}">${u.assignee}</span>
-    <span class="b ${u.status}">${u.status}</span>
-    ${u.has_result?'🖼️':''}${u.prompt_edited?'✎':''}${u.has_psd?'':' <span class="muted">PSD無</span>'}
-    <div class="muted">${u.scene}</div></div>`).join('');
-  document.querySelectorAll('.row').forEach(r=>r.onclick=()=>openUnit(r.dataset.id));
+function render(){
+  const fa=$('#fAssignee').value, fs=$('#fStatus').value, fr=$('#fResult').checked;
+  const us=UNITS.filter(u=>u.group===GROUP&&(!fa||u.assignee===fa)&&(!fs||u.status===fs)&&(!fr||!u.has_result));
+  $('#counts').textContent=`${us.length}件 / 生成済 ${us.filter(u=>u.has_result).length} / OK ${us.filter(u=>u.status==='accepted').length}`;
+  $('#grid').innerHTML=us.map(card).join('');
 }
-$('#fAssignee').onchange=renderList; $('#fStatus').onchange=renderList;
-async function openUnit(id){
-  CUR=id; renderList();
-  const u=await (await fetch('/api/unit/'+id)).json();
-  $('#detail').innerHTML=`
-   <div class="bar"><b>c${u.cuts.join(',')}</b> <span class="who ${u.assignee==='GKV'?'gkv':'other'}">${u.assignee}</span>
-     <span class="b ${u.status}">${u.status}</span> <span class="muted">${u.scene} / ${u.filename}</span>
-     ${u.retakes?`<span class="muted">リテイク${u.retakes}</span>`:''}</div>
-   <div class="bar">美術ボード:
-     <select id="board"><option value="">— 未選択 —</option>${u.boards_opts.map(b=>`<option ${b===u.board?'selected':''}>${b}</option>`).join('')}</select></div>
-   <div class="imgs">
-     <figure><figcaption>原図(背景レイヤー)</figcaption><img src="/img/${id}/genzu?t=${Date.now()}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'muted',textContent:'原図プレビュー無し(PSD未検出?)'}))"></figure>
-     <figure><figcaption>生成結果</figcaption><img id="resImg" src="/img/${id}/result?t=${Date.now()}" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'muted',textContent:'未生成'}))"></figure>
+function card(u){
+  const t=Date.now();
+  const boardOpts='<option value="">— ボード未選択 —</option>'+BOARDS.map(b=>`<option ${b===u.board?'selected':''}>${esc(b)}</option>`).join('');
+  return `<div class="card ${u.status}" id="card_${u.id}" data-id="${u.id}">
+   <div class="chead"><span class="cut">c${u.cuts.join(',')}</span>
+     <span class="who ${u.assignee==='GKV'?'gkv':'other'}">${u.assignee}</span>
+     <span class="b ${u.status}">${u.status}</span>
+     ${u.retakes?`<span class="muted">RT${u.retakes}</span>`:''}
+     ${u.has_psd?'':'<span class="muted">PSD無</span>'}
+     <span class="scene">${esc(u.scene)}</span></div>
+   <div class="thumbs">
+     <figure><figcaption>原図</figcaption>${u.has_psd?`<img loading="lazy" src="/img/${u.id}/genzu" onclick="lb(this.src)" onerror="this.outerHTML='<div class=ph>原図なし</div>'">`:'<div class="ph">PSD未検出</div>'}</figure>
+     <figure><figcaption>生成結果</figcaption>${u.has_result?`<img loading="lazy" src="/img/${u.id}/result?t=${t}" onclick="lb(this.src)">`:'<div class="ph">未生成</div>'}</figure>
    </div>
-   <div><b>プロンプト</b> <span class="muted">${u.prompt_edited?'(編集済)':'(自動生成)'}</span></div>
-   <textarea id="prompt">${u.prompt.replace(/</g,'&lt;')}</textarea>
+   <select onchange="setBoard('${u.id}',this.value)">${boardOpts}</select>
+   <details><summary>プロンプト${u.prompt_edited?'（編集済）':''}</summary>
+     <textarea id="pr_${u.id}" placeholder="（自動生成。編集して保存で上書き）"></textarea>
+     <div class="bar"><button onclick="savePrompt('${u.id}')">保存</button>
+       <button onclick="loadPrompt('${u.id}')">読込/自動表示</button>
+       <button onclick="resetPrompt('${u.id}')">自動に戻す</button></div>
+   </details>
    <div class="bar">
-     <button onclick="savePrompt('${id}')">プロンプト保存</button>
-     <button onclick="resetPrompt('${id}')">自動に戻す</button>
-     <button class="primary" id="genBtn" onclick="gen('${id}')">${u.has_result?'リテイク実行':'生成実行'}</button>
-     <button class="ok" onclick="accept('${id}','accepted')">OK</button>
-     <button class="ng" onclick="accept('${id}','reject')">要修正</button>
+     <button class="primary" onclick="gen('${u.id}')">${u.has_result?'リテイク':'生成'}</button>
+     <button class="ok" onclick="accept('${u.id}','accepted')">OK</button>
+     <button class="ng" onclick="accept('${u.id}','reject')">要修正</button>
    </div>
-   <div class="muted">原図をPhotoshopで直したら、保存後に「リテイク実行」で読み直して再生成されます。</div>
-   <div id="log"></div>`;
-  $('#board').onchange=async e=>{await post('/api/unit/'+id+'/board',{board:e.target.value}); openUnit(id);};
-  if(POLL){clearInterval(POLL);POLL=null;}
+   <div class="log" id="log_${u.id}" style="display:none"></div></div>`;
 }
-async function post(url,body){return (await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})})).json();}
-async function savePrompt(id){await post('/api/unit/'+id+'/prompt',{prompt:$('#prompt').value}); flash('保存しました');}
-async function resetPrompt(id){await post('/api/unit/'+id+'/prompt',{prompt:''}); openUnit(id);}
-async function accept(id,v){await post('/api/unit/'+id+'/accept',{value:v}); await loadUnits(); openUnit(id);}
-function flash(m){const l=$('#log'); if(l) l.textContent=m;}
+async function loadPrompt(id){const d=await (await fetch('/api/unit/'+id)).json(); const t=document.getElementById('pr_'+id); if(t)t.value=d.prompt;}
+async function savePrompt(id){const t=document.getElementById('pr_'+id); await post('/api/unit/'+id+'/prompt',{prompt:t?t.value:''}); slog(id,'プロンプト保存');}
+async function resetPrompt(id){await post('/api/unit/'+id+'/prompt',{prompt:''}); const t=document.getElementById('pr_'+id); if(t)t.value=''; slog(id,'自動に戻しました');}
+async function setBoard(id,v){await post('/api/unit/'+id+'/board',{board:v}); slog(id,'ボード保存');}
+async function accept(id,v){await post('/api/unit/'+id+'/accept',{value:v}); const u=UNITS.find(x=>x.id===id); if(u)u.status=v; render();}
+function slog(id,m){const l=document.getElementById('log_'+id); if(l){l.style.display='block';l.textContent=m;}}
 async function gen(id){
-  await savePrompt(id);
-  const r=await post('/api/unit/'+id+'/generate',{});
-  if(r.error){flash('エラー: '+r.error);return;}
-  $('#genBtn').disabled=true; flash('生成開始…(数分かかります)');
-  POLL=setInterval(async()=>{
+  const t=document.getElementById('pr_'+id); if(t&&t.value.trim()) await post('/api/unit/'+id+'/prompt',{prompt:t.value});
+  const r=await post('/api/unit/'+id+'/generate',{}); if(r.error){slog(id,'エラー: '+r.error);return;}
+  const u=UNITS.find(x=>x.id===id); if(u)u.status='generating';
+  slog(id,'生成開始…(数分)');
+  const card=document.getElementById('card_'+id); card&&card.querySelectorAll('button').forEach(b=>b.disabled=true);
+  const poll=setInterval(async()=>{
     const j=await (await fetch('/api/unit/'+id+'/job')).json();
-    flash((j.log||[]).join('\n'));
-    if(j.status==='done'){clearInterval(POLL);POLL=null;$('#genBtn').disabled=false;
-      $('#resImg')&&($('#resImg').src='/img/'+id+'/result?t='+Date.now()); await loadUnits(); openUnit(id);}
-    if(j.status==='error'){clearInterval(POLL);POLL=null;$('#genBtn').disabled=false; flash('失敗: '+(j.error||'')); await loadUnits();}
+    slog(id,(j.log||[]).join('\n'));
+    if(j.status==='done'||j.status==='error'){clearInterval(poll); await refresh();}
   },2500);
 }
-loadUnits();
+$('#fAssignee').onchange=render; $('#fStatus').onchange=render; $('#fResult').onchange=render;
+refresh();
 </script></body></html>"""
 
 
