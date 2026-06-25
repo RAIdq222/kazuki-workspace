@@ -44,12 +44,22 @@ def _scene_hint(board: str, scene: str) -> str:
     return " / ".join(p for p in parts if p)
 
 
-def build_prompt(board: str, scene: str, prompt_override: str | None = None) -> str:
+def build_prompt(board: str, scene: str, prompt_override: str | None = None,
+                 board_as_image: bool = False) -> str:
     if prompt_override:
         return prompt_override
     hint = _scene_hint(board, scene)
-    ctx = (f" Scene/era reference (from the assigned art board — match its period, "
-           f"architecture and structural elements, NOT its color): {hint}." if hint else "")
+    if board_as_image:
+        # 2枚目に美術ボード画像を渡す前提の文面（構図は1枚目、時代/構成は2枚目を参照）
+        ref = (" You are given TWO images. IMAGE 1 is the rough background layout to redraw — "
+               "keep ITS exact composition, framing and position. IMAGE 2 is the art board for "
+               "this scene — use it ONLY as reference for the era, architecture, structures, "
+               "props and how things are drawn; do NOT copy its colors and do NOT change the "
+               "layout to match it. Output stays black-and-white line art.")
+        ctx = ref + (f" Scene: {hint}." if hint else "")
+    else:
+        ctx = (f" Scene/era reference (from the assigned art board — match its period, "
+               f"architecture and structural elements, NOT its color): {hint}." if hint else "")
     return (
         "Redraw this rough background layout sheet as a CLEAN black-and-white line "
         "drawing for anime art (haikei genzu). KEEP REGISTRATION: keep the EXACT same "
@@ -57,9 +67,10 @@ def build_prompt(board: str, scene: str, prompt_override: str | None = None) -> 
         "stay where it is; do not zoom, pan, shift, or re-center. Output: monochrome ink "
         "line art only, no color, no grey fills, hand-drawn line quality. Colored areas in "
         "the input are placeholder fills — render them as plain line art, not color. Remove "
-        "all production marks, handwritten notes, labels and tap holes, and remove any "
-        "character/figure and the things they carry or wear; reconstruct the plain "
-        "environment behind them (keep furniture and fixtures that belong to the room)." +
+        "the production header at the top (tap holes, cut number, studio name) and all "
+        "handwritten notes, labels and marks, and remove any character/figure and the things "
+        "they carry or wear; reconstruct the plain environment behind them (keep furniture "
+        "and fixtures that belong to the room)." +
         ctx +
         " The blank margin bands are padding — leave them blank, do not extend artwork into them."
     )
@@ -115,12 +126,16 @@ def _hf_upload(path: str, dry: bool) -> str:
 
 
 def _hf_generate(media_id: str, prompt: str, aspect: str, resolution: str,
-                 quality: str, model: str, image_flag: str, dry: bool) -> str:
-    """generate create → 結果画像URL。"""
+                 quality: str, model: str, image_flag: str, dry: bool,
+                 extra_images: list[str] | None = None) -> str:
+    """generate create → 結果画像URL。extra_images は追加の参照画像(UUID/パス)。"""
     cmd = ["higgsfield", "generate", "create", model,
            "--prompt", prompt, "--aspect_ratio", aspect,
            "--resolution", resolution, "--quality", quality,
-           image_flag, media_id, "--wait", "--json"]
+           image_flag, media_id]
+    for ex in (extra_images or []):
+        cmd += [image_flag, ex]
+    cmd += ["--wait", "--json"]
     out = _run(cmd, dry)
     if dry or not out:
         return ""
@@ -152,9 +167,21 @@ def _hf_generate(media_id: str, prompt: str, aspect: str, resolution: str,
     return url
 
 
+def _prep_board(src: str, out: str, maxside: int = 1536):
+    """美術ボードを参照入力用に縮小（巨大PNG対策）。"""
+    from PIL import Image
+    im = Image.open(src).convert("RGB")
+    if max(im.size) > maxside:
+        s = maxside / max(im.size)
+        im = im.resize((round(im.width * s), round(im.height * s)), Image.LANCZOS)
+    im.save(out)
+    return out
+
+
 def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
                 prompt_override: str | None, resolution: str, quality: str,
-                model: str, image_flag: str, dry: bool, include_book: bool = False) -> dict:
+                model: str, image_flag: str, dry: bool, include_book: bool = False,
+                header_top: int | None = None, board_path: str | None = None) -> dict:
     os.makedirs(out_dir, exist_ok=True)
     cut = os.path.splitext(os.path.basename(psd_path))[0]
     visible = os.path.join(out_dir, "visible.png")
@@ -163,15 +190,29 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
     # 1. prep（背景作画レイヤーだけ合成。指示/参考/セル/BOOKを除外）
     vw, vh, linfo = psd_export.export_background_layer(
         psd_path, visible, bg=(255, 255, 255), include_book=include_book)
-    region = frame.strip_header(visible, body)
+    # 既定は「切らない」＝原図全域を入力に（レジストは入力=出力グリッドで担保, §20.6）。
+    # ヘッダーはプロンプトで除去。header_top 指定時のみ帯を落とす（非標準シート用）。
+    if header_top is None:
+        region = (0, 0, vw, vh)
+        body = visible
+    else:
+        region = frame.strip_header(visible, body, top_override=header_top)
     prep = image_aspect.build_input_image(body, inp, resolution=resolution)
-    prompt = build_prompt(board, scene, prompt_override)
+    use_board = bool(board_path)
+    prompt = build_prompt(board, scene, prompt_override, board_as_image=use_board)
     print(f"    layer[{linfo['strategy']}]={linfo['layers']}  "
-          f"input {prep.canvas_w}x{prep.canvas_h} ({prep.aspect_ratio})  board='{board or '—'}'")
-    # 2. 生成（Higgsfield CLI）
+          f"crop={'no' if header_top is None else header_top}  board_img={'yes' if use_board else 'no'}  "
+          f"input {prep.canvas_w}x{prep.canvas_h} ({prep.aspect_ratio})")
+    # 2. 生成（Higgsfield CLI）。gpt_image_2 の --image はパス可（MODELS.md）。
     gen_raw = os.path.join(out_dir, "gen_raw.png")
     uuid = _hf_upload(inp, dry)
-    url = _hf_generate(uuid, prompt, prep.aspect_ratio, resolution, quality, model, image_flag, dry)
+    extra = []
+    if use_board:
+        board_ref = (_prep_board(board_path, os.path.join(out_dir, "board_ref.png"))
+                     if not dry else board_path)
+        extra.append(_hf_upload(board_ref, dry))
+    url = _hf_generate(uuid, prompt, prep.aspect_ratio, resolution, quality, model,
+                       image_flag, dry, extra)
     if not dry:
         urllib.request.urlretrieve(url, gen_raw)
     # 3. finish（戻し→region復帰→PSD差し込み）
@@ -210,7 +251,18 @@ def main(argv=None) -> None:
     p.add_argument("--dry-run", action="store_true", help="prepのみ実行し、叩くhiggsfieldコマンドを表示")
     p.add_argument("--include-book", action="store_true",
                    help="BOOK◯（燭台/寝台/柱/モヤ等の別ブック）も合成に含める（既定は除外）")
+    p.add_argument("--header-top", type=int, default=None,
+                   help="ヘッダー帯の下端yを指定して切る（既定は切らない＝原図全域を入力）")
+    p.add_argument("--boards-dir", default=None,
+                   help="美術ボード画像のあるディレクトリ（再帰探索）。指定すると2枚目入力に渡す")
     a = p.parse_args(argv)
+
+    # 美術ボード画像の索引（ファイル名→パス）
+    board_index = {}
+    if a.boards_dir:
+        for root, _, files in os.walk(a.boards_dir):
+            for f in files:
+                board_index.setdefault(f, os.path.join(root, f))
 
     # PSDの実パスを genzu-dir 配下から探す索引（ファイル名→パス）
     index = {}
@@ -251,10 +303,14 @@ def main(argv=None) -> None:
             if os.path.exists(pf):
                 prompt_override = open(pf, encoding="utf-8").read().strip()
         out_dir = os.path.join(a.out, os.path.splitext(fn)[0])
+        board_name = r.get("board", "")
+        board_path = board_index.get(board_name) if (a.boards_dir and board_name) else None
+        if a.boards_dir and board_name and not board_path:
+            print(f"    （注: 美術ボード '{board_name}' が boards-dir に見つからずテキスト参照のみ）")
         try:
-            process_cut(psd, r.get("board", ""), r.get("scene", ""), out_dir,
+            process_cut(psd, board_name, r.get("scene", ""), out_dir,
                         prompt_override, a.resolution, a.quality, a.model, a.image_flag,
-                        a.dry_run, a.include_book)
+                        a.dry_run, a.include_book, a.header_top, board_path)
             ok += 1
         except Exception as e:
             print(f"    ! 失敗: {e}")
