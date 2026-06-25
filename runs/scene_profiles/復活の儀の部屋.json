@@ -1,6 +1,8 @@
 {
   "key": "復活の儀の部屋",
-  "match": ["復活の儀"],
+  "match": [
+    "復活の儀"
+  ],
   "place": {
     "en": "an interior ritual chamber in the Hua (花) family residence",
     "jp": "花家邸内の「復活の儀」の部屋（室内）"
@@ -42,5 +44,49 @@
       "西洋風・近代的な家具や調度",
       "ファンタジー的／過剰な装飾"
     ]
-  }
+  },
+  "boards": [
+    {
+      "name": "SZ#6_復活の儀の部屋(夜)_R1.png",
+      "time": "夜",
+      "used_in_cutmap": true,
+      "url": "https://drive.google.com/file/d/1J4CtRurmidXqHnP3Yfv39TxSsRoNcSR4/view",
+      "drive_id": "1J4CtRurmidXqHnP3Yfv39TxSsRoNcSR4"
+    },
+    {
+      "name": "SZ#6_復活の儀の部屋(昼)_R1.png",
+      "time": "昼",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/15Pu1VHemYBbhZD9_uYok4Fmhmp_oPL1v/view",
+      "drive_id": "15Pu1VHemYBbhZD9_uYok4Fmhmp_oPL1v"
+    },
+    {
+      "name": "#6_復活の儀の部屋　外廊下（昼）_R1.png",
+      "time": "昼",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/1GUWwavUlFdc6ecsqCib8aEBCpctYMoNP/view",
+      "drive_id": "1GUWwavUlFdc6ecsqCib8aEBCpctYMoNP"
+    },
+    {
+      "name": "#6_復活の儀の部屋へのドア前（昼）.png",
+      "time": "昼",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/1tFC1P-51Qj3009VOTgt9d-iaGMOwMVw-/view",
+      "drive_id": "1tFC1P-51Qj3009VOTgt9d-iaGMOwMVw-"
+    },
+    {
+      "name": "#6花氏邸_屋敷_祭壇(昼)_R1.png",
+      "time": "昼",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/1ENT70LoQpnZyAhiSubw_dxXuJKqCaP2V/view",
+      "drive_id": "1ENT70LoQpnZyAhiSubw_dxXuJKqCaP2V"
+    },
+    {
+      "name": "#6花氏邸_屋敷_祭壇(浅夕)_R1.png",
+      "time": "浅夕",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/1KvY_-IFiYjXR1-juzWXwHdhVn4tQ6J54/view",
+      "drive_id": "1KvY_-IFiYjXR1-juzWXwHdhVn4tQ6J54"
+    }
+  ]
 }

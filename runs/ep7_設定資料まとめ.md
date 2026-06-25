@@ -131,7 +131,31 @@
 
 ---
 
+## 6. 美術ボード 実画像対応（クリックで実画像へ）
+
+Drive「01.美術ボード」フォルダの実ファイルへのリンク。`★`= cut_board_map が参照中。
+完全版（30枚・時間帯バリエーション含む）は **`runs/board_manifest_ep7.md`**、
+各 scene_profile JSON の `boards` フィールドにも同リンクを格納済み。
+
+| シーン | ★参照ボード（時間帯） | リンク |
+|---|---|---|
+| 復活の儀の部屋 | `SZ#6_復活の儀の部屋(夜)_R1`（夜） | [開く](https://drive.google.com/file/d/1J4CtRurmidXqHnP3Yfv39TxSsRoNcSR4/view) |
+| 花氏邸_全景 | `#6_花氏邸_全景（夜）_R2`（夜） | [開く](https://drive.google.com/file/d/1X97tGi9_C-kJoKPgElWRTWRHTjTwobmu/view) |
+| 森（夜） | `#6#7森の中（夜）R`（夜） | [開く](https://drive.google.com/file/d/1wgAo-MOBuZgFCIjE2GerRzMhB4FJFTMg/view) |
+| 森（昼/締め） | `#6#7森の中（昼）`（昼） | [開く](https://drive.google.com/file/d/1y-LoifPzIiWMW5NI0sy6fbEg8CAo2Yh9/view) |
+| 森（朝/明け方） | `森明けげ方`（朝） | [開く](https://drive.google.com/file/d/1_zzR6GtZcUWDNf5PjLub3G_IQ5x3zl3E/view) |
+| 道観 | `#6_山の中道教の寺院（昼）_R1`（昼）／`…_R1_朝`（朝） | [昼](https://drive.google.com/file/d/1vTABxngXIaHQrKjQ0AiaUtmSSZddxYGm/view)・[朝](https://drive.google.com/file/d/1eilKJiPxC87Fw12ug9yQZJBruO1AG3Qv/view) |
+| 道観_寝室 | `#6 寺院内 道然たちの寝室（昼）_R2`（昼） | [開く](https://drive.google.com/file/d/1jhd7pHQcXsCrnfMCfLz9YDwyuQq2og3B/view) |
+| 道観_台所食堂 | `寺院内 台所 食堂(夕方_雨)_R2`（夕方・雨） | [開く](https://drive.google.com/file/d/1L4dT0A0OJgIVns8Kmg6_abAcPs11bVxM/view) |
+
+> 補足: 各シーンには時間帯違いのボードが揃っている（道観=朝/昼/夕方/夕方雨/夜、花氏邸全景=昼/夕方/浅夕/夜 等）。
+> [CUT]層で時間帯を差す際の参照に使える。一覧は `board_manifest_ep7.md`。
+> ※ 画像の中身（線・色）の視覚確認は現行ツールでは不可（Driveの画像テキスト抽出は空・原寸DLは非現実的）。
+> リンク先を人が見て語彙を最終確定すること。
+
 ## 付録: 出典ファイル
+- `runs/board_manifest_ep7.csv` / `.md` … 美術ボード実画像の対応表（Drive ID / 閲覧URL）
+- `scripts/make_board_manifest_ep7.py` … 上記の生成スクリプト
 - `runs/conte_raw_ep7.csv` … 全298カット書き起こし（action/dialogue/se/time）
 - `runs/conte_raw_ep7_QC.md` … 抽出の方法・信頼度・要照合ポイント
 - `runs/cut_board_map_ep7.csv` … カット→シーン→美術ボードの対応

@@ -1,7 +1,10 @@
 {
   "key": "道観_寝室",
   "_note": "ドラフト：美術ボード #6 寺院内 道然たちの寝室（昼）_R2 を確認して確定すること",
-  "match": ["道観_寝室", "寝室"],
+  "match": [
+    "道観_寝室",
+    "寝室"
+  ],
   "place": {
     "en": "a monks' sleeping quarters inside a mountain Daoist temple",
     "jp": "山中の道観内の僧坊・寝室（室内）"
@@ -39,5 +42,21 @@
       "西洋・近代の家具",
       "華美・宮殿的な装飾"
     ]
-  }
+  },
+  "boards": [
+    {
+      "name": "#6 寺院内　道然たちの寝室（昼）_R2.png",
+      "time": "昼",
+      "used_in_cutmap": true,
+      "url": "https://drive.google.com/file/d/1jhd7pHQcXsCrnfMCfLz9YDwyuQq2og3B/view",
+      "drive_id": "1jhd7pHQcXsCrnfMCfLz9YDwyuQq2og3B"
+    },
+    {
+      "name": "#6 寺院内　道然たちの寝室（夜_窓開きver）_R2.png",
+      "time": "夜",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/17SDhik6h3t6OU16jGPQ7NSIzuXOuNwS5/view",
+      "drive_id": "17SDhik6h3t6OU16jGPQ7NSIzuXOuNwS5"
+    }
+  ]
 }

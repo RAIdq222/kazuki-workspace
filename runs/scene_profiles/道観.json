@@ -1,7 +1,9 @@
 {
   "key": "道観",
   "_note": "ドラフト：美術ボード #6_山の中道教の寺院… を確認して確定すること",
-  "match": ["道観"],
+  "match": [
+    "道観"
+  ],
   "place": {
     "en": "a Daoist temple compound in the mountains",
     "jp": "山中の道教寺院（道観）の境内・建屋"
@@ -39,5 +41,63 @@
       "西洋建築",
       "豪壮で過剰な宮殿装飾／近代要素"
     ]
-  }
+  },
+  "boards": [
+    {
+      "name": "#6_山の中道教の寺院（昼）_R1.png",
+      "time": "昼",
+      "used_in_cutmap": true,
+      "url": "https://drive.google.com/file/d/1vTABxngXIaHQrKjQ0AiaUtmSSZddxYGm/view",
+      "drive_id": "1vTABxngXIaHQrKjQ0AiaUtmSSZddxYGm"
+    },
+    {
+      "name": "#6_山の中道教の寺院_R1_朝.png",
+      "time": "朝",
+      "used_in_cutmap": true,
+      "url": "https://drive.google.com/file/d/1eilKJiPxC87Fw12ug9yQZJBruO1AG3Qv/view",
+      "drive_id": "1eilKJiPxC87Fw12ug9yQZJBruO1AG3Qv"
+    },
+    {
+      "name": "#6_山の中道教の寺院_R1_夕方.png",
+      "time": "夕方",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/1HUhgmAV3GwDXq9tE1hlFZbspEcQpI_II/view",
+      "drive_id": "1HUhgmAV3GwDXq9tE1hlFZbspEcQpI_II"
+    },
+    {
+      "name": "#6_山の中道教の寺院_R1_夕方 （雨）.png",
+      "time": "夕方(雨)",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/1lVn1ICdsqzrCowOomRBMYNFuYav5s-Dp/view",
+      "drive_id": "1lVn1ICdsqzrCowOomRBMYNFuYav5s-Dp"
+    },
+    {
+      "name": "#6_山の中道教の寺院_R1_夜.png",
+      "time": "夜",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/1K15KwSf0i49WQnFwLw7LZCw3D-VN57rb/view",
+      "drive_id": "1K15KwSf0i49WQnFwLw7LZCw3D-VN57rb"
+    },
+    {
+      "name": "寺院内 台所 食堂(夕方_雨)_R2_.png",
+      "time": "夕方(雨)",
+      "used_in_cutmap": true,
+      "url": "https://drive.google.com/file/d/1L4dT0A0OJgIVns8Kmg6_abAcPs11bVxM/view",
+      "drive_id": "1L4dT0A0OJgIVns8Kmg6_abAcPs11bVxM"
+    },
+    {
+      "name": "寺院内 台所 食堂(朝)_R2.png",
+      "time": "朝",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/1pX28Wt7-jvOvgJbrshT4CzgTwRDpLIOr/view",
+      "drive_id": "1pX28Wt7-jvOvgJbrshT4CzgTwRDpLIOr"
+    },
+    {
+      "name": "寺院内 台所 食堂(昼)_R2.png",
+      "time": "昼",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/1B2ABxfdDQPLYcCySoqxA_qwj8Be4wY3j/view",
+      "drive_id": "1B2ABxfdDQPLYcCySoqxA_qwj8Be4wY3j"
+    }
+  ]
 }
