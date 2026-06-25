@@ -30,39 +30,29 @@ import sys
 import time
 import urllib.request
 
-from . import image_aspect, psd_export, frame, ledger
+from . import image_aspect, psd_export, frame, ledger, prompt as promptlib
 
 
-# 美術ボード/シーン名から場面ヒント（時代・場所・時間）を抽出してプロンプトへ。
-def _scene_hint(board: str, scene: str) -> str:
-    b = os.path.splitext(board)[0] if board else ""
-    parts = []
-    if scene:
-        parts.append(re.sub(r"c\d.*$", "", scene))  # "森_夜c053～206" -> "森_夜"
-    if b:
-        parts.append(b)
-    return " / ".join(p for p in parts if p)
+def build_prompt(board: str, scene: str, prompt_override: str | None = None,
+                 registry=None, cut: str = "") -> str:
+    """カット別 EN プロンプト（GPT Image 2 入力用）を返す。
 
-
-def build_prompt(board: str, scene: str, prompt_override: str | None = None) -> str:
+    層構造の組み立ては genzu_fix.prompt（3層アセンブリ）に委譲する。
+    JP（確認用）も併せて欲しい場合は build_prompt_pair を使う。
+    """
     if prompt_override:
         return prompt_override
-    hint = _scene_hint(board, scene)
-    ctx = (f" Scene/era reference (from the assigned art board — match its period, "
-           f"architecture and structural elements, NOT its color): {hint}." if hint else "")
-    return (
-        "Redraw this rough background layout sheet as a CLEAN black-and-white line "
-        "drawing for anime art (haikei genzu). KEEP REGISTRATION: keep the EXACT same "
-        "framing, composition, position and scale as the input — every structure must "
-        "stay where it is; do not zoom, pan, shift, or re-center. Output: monochrome ink "
-        "line art only, no color, no grey fills, hand-drawn line quality. Colored areas in "
-        "the input are placeholder fills — render them as plain line art, not color. Remove "
-        "all production marks, handwritten notes, labels and tap holes, and remove any "
-        "character/figure and the things they carry or wear; reconstruct the plain "
-        "environment behind them (keep furniture and fixtures that belong to the room)." +
-        ctx +
-        " The blank margin bands are padding — leave them blank, do not extend artwork into them."
-    )
+    return promptlib.build(board, scene, registry=registry, cut=cut).en
+
+
+def build_prompt_pair(board: str, scene: str, prompt_override: str | None = None,
+                      registry=None, cut: str = "") -> tuple[str, str | None]:
+    """(EN, JP) を返す。EN はモデル入力、JP は人の確認用。
+    prompt_override がある場合は (override, None)。"""
+    if prompt_override:
+        return prompt_override, None
+    p = promptlib.build(board, scene, registry=registry, cut=cut)
+    return p.en, p.jp
 
 
 def _resolve(cmd: list[str]) -> list[str]:
@@ -165,7 +155,13 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
         psd_path, visible, bg=(255, 255, 255), include_book=include_book)
     region = frame.strip_header(visible, body)
     prep = image_aspect.build_input_image(body, inp, resolution=resolution)
-    prompt = build_prompt(board, scene, prompt_override)
+    prompt, prompt_jp = build_prompt_pair(board, scene, prompt_override)
+    # 確認用に EN（モデル入力）と JP（人の作業確認）を出力先へ残す
+    with open(os.path.join(out_dir, "prompt.en.txt"), "w", encoding="utf-8") as f:
+        f.write(prompt)
+    if prompt_jp:
+        with open(os.path.join(out_dir, "prompt.jp.txt"), "w", encoding="utf-8") as f:
+            f.write(prompt_jp)
     print(f"    layer[{linfo['strategy']}]={linfo['layers']}  "
           f"input {prep.canvas_w}x{prep.canvas_h} ({prep.aspect_ratio})  board='{board or '—'}'")
     # 2. 生成（Higgsfield CLI）

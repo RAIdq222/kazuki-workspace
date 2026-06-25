@@ -1,0 +1,405 @@
+"""カット別 生成プロンプトの組み立て（3層アセンブリ）。
+
+層構造:
+  [A] GLOBAL  作品共通（役割 / レジスト / 白黒線画 / 線質 / 除去 / 余白）— 固定文字列。
+  [B] SCENE   シーン固有（場所語彙 / era / 構成物 / 避けるもの）— runs/scene_profiles/<key>.json。
+  [C] CUT     カット固有（time/weather の線処理 + 場面 situation + 個別 remove）
+              — 香盤表 / 美術ボード名 / 絵コンテ 由来。
+
+出力は **EN（GPT Image 2 への入力）と JP（人の作業確認用）の対**で返す。
+モデルへ渡すのは EN のみ。JP は突合・レビュー用であってモデルには渡さない。
+
+`build(board, scene)` が表口。`runs/cut_scene_info_ep7.csv` の生成は `gen-info` サブコマンド、
+1カットのプレビューは `show` サブコマンドで行う。
+"""
+from __future__ import annotations
+
+import csv
+import glob
+import json
+import os
+from dataclasses import dataclass, field
+
+from .naming import parse_board
+
+# ---------------------------------------------------------------------------
+# [A] GLOBAL — 作品共通ブロック（固定）
+# ---------------------------------------------------------------------------
+
+# 既知の弱点（線の硬さ / 構図の再解釈）に振った文面。除去ルールは qc.py の
+# 「主体に属する=消す / 環境=残す」と一語一句揃える。
+GLOBAL_EN = (
+    "You are cleaning up a rough background layout (genzu) into a finished "
+    "BLACK-AND-WHITE LINE DRAWING for anime background art (haikei). Treat this as "
+    "trace-and-clean over the provided image, NOT a re-illustration.\n"
+    "REGISTRATION (top priority): reproduce the input's framing, camera angle, "
+    "composition, and the position/scale/perspective of EVERY element exactly. Do not "
+    "zoom, crop, pan, re-center or re-stage. Keep every contour anchored to the input.\n"
+    "LINE: hand-drawn pencil clean-up. Vary line weight — heavier in the foreground, "
+    "finer in the distance — with natural entry/exit tapering. Do NOT produce uniform "
+    "vector outlines or a coloring-book look. No grey shading or solid fills: pure black "
+    "ink lines on white.\n"
+    "COLOR: monochrome output only. Colored regions in the input are placeholder fills "
+    "— read them as shapes and render them as plain line work, never as color.\n"
+    "REMOVE: erase all production marks (handwritten notes, labels, numbers, frame "
+    "borders, perspective guide lines, registration tap-holes). Also remove any "
+    "character/person/animal and everything they hold, wear or carry; rebuild the plain "
+    "environment behind them. Keep furniture and fixtures that belong to the space "
+    "(a bed, shelves, a lamp stay; a book in a hand goes).\n"
+    "MARGINS: the blank padding bands are intentional — leave them empty."
+)
+
+GLOBAL_JP = (
+    "ラフな背景レイアウト（原図）を、アニメ背景美術（背景）の仕上げ線画＝白黒線画にクリーンアップする。\n"
+    "これは渡された画像の上での「トレース＆クリーン」であって、描き直し（再イラスト化）ではない。\n"
+    "レジスト（最優先）: 入力の画角・カメラアングル・構図、そして全要素の位置/スケール/パースを完全に再現する。\n"
+    "  ズーム・トリミング・パン・再センタリング・再演出をしない。各輪郭を入力に固定する。\n"
+    "線: 手描きの鉛筆クリーンアップ。線幅変調（近景は太く・遠景は細く）と自然な入り抜き。\n"
+    "  均一なベクター輪郭や塗り絵調にしない。グレーの陰影やベタ塗りは禁止、白地に黒のインク線のみ。\n"
+    "色: 出力は白黒のみ。入力中の色面はプレースホルダの塗り。形として読み取り、色ではなく素の線画として描く。\n"
+    "除去: 制作用マーク（手書き指示・ラベル・番号・フレーム枠・パース補助線・タップ穴）を全て消す。\n"
+    "  さらに、キャラ/人物/動物と、その持ち物・着衣・携行物を全て消し、背後の素の環境を再構成する。\n"
+    "  その場所に属する家具・什器は残す（寝台・棚・燭台は残す／手に持つ本は消す）。\n"
+    "余白: 周囲の空白パディング帯は意図的なもの。空白のまま残す。"
+)
+
+# era の既定値（作品共通の時代様式）。scene_profile 側で個別指定があればそちらを優先。
+DEFAULT_ERA_EN = "Chinese Northern-and-Southern-Dynasties to early-Tang period"
+DEFAULT_ERA_JP = "中国 南北朝〜初唐ごろ"
+
+# ---------------------------------------------------------------------------
+# [C] CUT — time / weather を白黒線画の「線の付け方」に翻訳する
+#     （白黒なので色は出さない。陰影の輪郭密度・遠近の線の落とし方だけが変わる）
+# ---------------------------------------------------------------------------
+TIME_TREATMENT = {
+    "夜": (
+        "Night scene — convey darkness only through denser, heavier shadow contours and "
+        "selective line build-up; remain pure black line on white, no grey fill, no solid "
+        "black masses.",
+        "夜の場面 — 暗さは陰影輪郭の密度と線の重ねだけで表す。白地に黒線のまま、グレーのベタやベタ黒の塊は使わない。",
+    ),
+    "明け方": (
+        "Dawn — soft low light; faint, long cast-shadow contours, light overall linework.",
+        "明け方 — 柔らかい低い光。淡く長い落ち影の輪郭、全体に軽い線。",
+    ),
+    "朝": (
+        "Morning — even gentle light; minimal cast shadow, clean light linework.",
+        "朝 — 均一で穏やかな光。落ち影は最小限、すっきりした軽い線。",
+    ),
+    "昼": (
+        "Daytime — neutral even lighting; restrained shadow contour lines.",
+        "昼 — ニュートラルで均一な光。陰影の輪郭線は控えめ。",
+    ),
+    "浅夕": (
+        "Early evening — slightly longer directional cast shadows than midday, still line only.",
+        "浅夕 — 昼よりやや長い方向性のある落ち影。線のみ。",
+    ),
+    "夕方": (
+        "Evening — longer directional cast-shadow contours; line only, no grey.",
+        "夕方 — 長い方向性のある落ち影の輪郭。線のみ、グレー無し。",
+    ),
+    "夕": (
+        "Evening — longer directional cast-shadow contours; line only, no grey.",
+        "夕 — 長い方向性のある落ち影の輪郭。線のみ、グレー無し。",
+    ),
+}
+
+WEATHER_TREATMENT = {
+    "雨": (
+        "Rain — suggest wet ground and reflections with line only; do not add grey fills or "
+        "rain streaks unless they are present in the layout.",
+        "雨 — 濡れた地面や反射は線だけで示唆する。原図に無い限りグレーのベタや雨脚は足さない。",
+    ),
+    "霧あり": (
+        "Fog — distant elements fade with lighter, sparser linework to suggest depth; no grey wash.",
+        "霧あり — 遠景は線を薄く疎にして奥行きを示す。グレーのウォッシュは使わない。",
+    ),
+    "霧": (
+        "Fog — distant elements fade with lighter, sparser linework to suggest depth; no grey wash.",
+        "霧 — 遠景は線を薄く疎にして奥行きを示す。グレーのウォッシュは使わない。",
+    ),
+    "霧なし": ("", ""),  # 明示的に「霧なし」= 何も足さない
+}
+
+
+# ---------------------------------------------------------------------------
+# [B] SCENE — シーン固有プロファイル（runs/scene_profiles/<key>.json）
+# ---------------------------------------------------------------------------
+@dataclass
+class SceneProfile:
+    key: str
+    match: list[str] = field(default_factory=list)   # ボード名/シーン名に対する別名（substring）
+    place_en: str = ""
+    place_jp: str = ""
+    era_en: str = DEFAULT_ERA_EN
+    era_jp: str = DEFAULT_ERA_JP
+    structures_en: list[str] = field(default_factory=list)
+    structures_jp: list[str] = field(default_factory=list)
+    style_en: str = ""
+    style_jp: str = ""
+    avoid_en: list[str] = field(default_factory=list)
+    avoid_jp: list[str] = field(default_factory=list)
+
+    @classmethod
+    def from_json(cls, path: str) -> "SceneProfile":
+        d = json.load(open(path, encoding="utf-8"))
+
+        def bi(key, default=""):
+            v = d.get(key) or {}
+            return v.get("en", default), v.get("jp", default)
+
+        def bilist(key):
+            v = d.get(key) or {}
+            return list(v.get("en", [])), list(v.get("jp", []))
+
+        place_en, place_jp = bi("place")
+        era_en, era_jp = bi("era", "")
+        st_en, st_jp = bilist("structures")
+        style_en, style_jp = bi("style_note")
+        av_en, av_jp = bilist("avoid")
+        return cls(
+            key=d["key"], match=list(d.get("match", [])),
+            place_en=place_en, place_jp=place_jp,
+            era_en=era_en or DEFAULT_ERA_EN, era_jp=era_jp or DEFAULT_ERA_JP,
+            structures_en=st_en, structures_jp=st_jp,
+            style_en=style_en, style_jp=style_jp,
+            avoid_en=av_en, avoid_jp=av_jp,
+        )
+
+    def block_en(self) -> str:
+        parts = [f"[SCENE] Setting: {self.place_en} — {self.era_en}."]
+        if self.structures_en:
+            parts.append("Elements likely present: " + ", ".join(self.structures_en) + ".")
+        if self.style_en:
+            parts.append(self.style_en.rstrip(".") + ".")
+        if self.avoid_en:
+            parts.append("Avoid: " + ", ".join(self.avoid_en) + ".")
+        return " ".join(parts)
+
+    def block_jp(self) -> str:
+        parts = [f"[シーン] 舞台: {self.place_jp}（{self.era_jp}）。"]
+        if self.structures_jp:
+            parts.append("在りうる構成物: " + "、".join(self.structures_jp) + "。")
+        if self.style_jp:
+            parts.append(self.style_jp.rstrip("。") + "。")
+        if self.avoid_jp:
+            parts.append("避ける: " + "、".join(self.avoid_jp) + "。")
+        return " ".join(parts)
+
+
+def _default_profiles_dir() -> str:
+    # リポジトリ直下の runs/scene_profiles（このファイルは src/genzu_fix/prompt.py）
+    here = os.path.dirname(os.path.abspath(__file__))
+    return os.path.normpath(os.path.join(here, "..", "..", "runs", "scene_profiles"))
+
+
+class SceneRegistry:
+    """scene_profiles/*.json を読み込み、ボード名/シーン名から最適プロファイルを引く。"""
+
+    def __init__(self, profiles: list[SceneProfile]):
+        self.profiles = profiles
+
+    @classmethod
+    def load(cls, profiles_dir: str | None = None) -> "SceneRegistry":
+        profiles_dir = profiles_dir or _default_profiles_dir()
+        profs = []
+        for p in sorted(glob.glob(os.path.join(profiles_dir, "*.json"))):
+            try:
+                profs.append(SceneProfile.from_json(p))
+            except (KeyError, json.JSONDecodeError):
+                continue
+        return cls(profs)
+
+    def resolve(self, board: str, scene: str) -> SceneProfile | None:
+        """別名（match）が board / scene に最も多く・長く一致するプロファイルを返す。"""
+        text = f"{board} {scene}"
+        best, best_score = None, 0
+        for prof in self.profiles:
+            score = sum(len(m) for m in prof.match if m and m in text)
+            if score > best_score:
+                best, best_score = prof, score
+        return best
+
+
+# ---------------------------------------------------------------------------
+# CutInfo — runs/cut_scene_info_ep7.csv の1行に対応する構造化情報
+# ---------------------------------------------------------------------------
+CUT_INFO_FIELDS = [
+    "cut", "scene_key", "place", "time", "weather",
+    "situation", "remove", "structures", "era", "source",
+]
+
+
+@dataclass
+class CutInfo:
+    cut: str = ""
+    scene_key: str = ""
+    place: str = ""
+    time: str = ""
+    weather: str = ""
+    situation: str = ""   # 場面（コンテ由来。今は空欄→#4で充足）
+    remove: str = ""      # このカット固有の除去対象（コンテ由来。今は空欄→#4）
+    structures: str = ""  # scene_profile 由来の既定（; 区切り）。カット個別に上書き可
+    era: str = ""
+    source: str = ""
+
+    def to_row(self) -> dict:
+        return {k: getattr(self, k) for k in CUT_INFO_FIELDS}
+
+    @classmethod
+    def from_row(cls, row: dict) -> "CutInfo":
+        return cls(**{k: (row.get(k) or "") for k in CUT_INFO_FIELDS})
+
+
+@dataclass
+class Prompt:
+    en: str
+    jp: str
+    info: CutInfo
+
+
+def cut_info_from_board(board: str, scene: str, registry: SceneRegistry,
+                        cut: str = "") -> CutInfo:
+    """ボード名 + シーン名から、機械で取れる範囲の CutInfo を作る。
+    situation / remove はコンテ依存なので空欄のまま（#4 で充足）。"""
+    bi = parse_board(board) if board else None
+    prof = registry.resolve(board, scene)
+    src = []
+    if board:
+        src.append(f"board:{board}")
+    if prof:
+        src.append(f"profile:{prof.key}")
+    return CutInfo(
+        cut=str(cut),
+        scene_key=prof.key if prof else "",
+        place=(prof.place_jp if prof else (bi.place if bi else "")),
+        time=(bi.time if bi else ""),
+        weather=(bi.weather if bi else ""),
+        situation="",
+        remove="",
+        structures=("；".join(prof.structures_jp) if prof else ""),
+        era=(prof.era_jp if prof else ""),
+        source=";".join(src),
+    )
+
+
+def _cut_block(info: CutInfo) -> tuple[str, str]:
+    en_parts, jp_parts = [], []
+    t_en, t_jp = TIME_TREATMENT.get(info.time, ("", ""))
+    w_en, w_jp = WEATHER_TREATMENT.get(info.weather, ("", ""))
+    if t_en:
+        en_parts.append(t_en)
+    if t_jp:
+        jp_parts.append(t_jp)
+    if w_en:
+        en_parts.append(w_en)
+    if w_jp:
+        jp_parts.append(w_jp)
+    if info.situation:
+        en_parts.append(f"In this shot: {info.situation}.")
+        jp_parts.append(f"このカット: {info.situation}。")
+    if info.remove:
+        en_parts.append(f"Remove in this shot: {info.remove}; keep the surrounding environment.")
+        jp_parts.append(f"このカットで消すもの: {info.remove}。周囲の環境は残す。")
+    en = ("[CUT] " + " ".join(en_parts)) if en_parts else ""
+    jp = ("[カット] " + " ".join(jp_parts)) if jp_parts else ""
+    return en, jp
+
+
+def assemble(info: CutInfo, profile: SceneProfile | None) -> Prompt:
+    en_blocks = [GLOBAL_EN]
+    jp_blocks = [GLOBAL_JP]
+    if profile:
+        en_blocks.append(profile.block_en())
+        jp_blocks.append(profile.block_jp())
+    elif info.place:
+        # プロファイル未整備でも place だけは渡す（最低限の B 層）
+        en_blocks.append(f"[SCENE] Setting: {info.place} — {info.era or DEFAULT_ERA_EN}.")
+        jp_blocks.append(f"[シーン] 舞台: {info.place}（{info.era or DEFAULT_ERA_JP}）。")
+    c_en, c_jp = _cut_block(info)
+    if c_en:
+        en_blocks.append(c_en)
+    if c_jp:
+        jp_blocks.append(c_jp)
+    return Prompt(en="\n\n".join(en_blocks), jp="\n\n".join(jp_blocks), info=info)
+
+
+def build(board: str, scene: str, registry: SceneRegistry | None = None,
+          cut: str = "") -> Prompt:
+    """表口: ボード名 + シーン名から EN/JP プロンプトの対を組み立てる。"""
+    registry = registry or SceneRegistry.load()
+    info = cut_info_from_board(board, scene, registry, cut=cut)
+    prof = registry.resolve(board, scene)
+    return assemble(info, prof)
+
+
+def build_from_info(info: CutInfo, registry: SceneRegistry | None = None) -> Prompt:
+    """充足済み CutInfo（cut_scene_info_ep7.csv の行など）からプロンプトを組む。"""
+    registry = registry or SceneRegistry.load()
+    prof = next((p for p in registry.profiles if p.key == info.scene_key), None)
+    return assemble(info, prof)
+
+
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+def _gen_info(args) -> None:
+    registry = SceneRegistry.load(args.profiles_dir)
+    with open(args.csv, encoding="utf-8-sig") as f:
+        rows = list(csv.DictReader(f))
+    if args.assignee:
+        rows = [r for r in rows if r.get("assignee") == args.assignee]
+    out_rows = []
+    for r in rows:
+        info = cut_info_from_board(r.get("board", ""), r.get("scene", ""),
+                                   registry, cut=r.get("cut", ""))
+        out_rows.append(info.to_row())
+    os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
+    with open(args.out, "w", encoding="utf-8-sig", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=CUT_INFO_FIELDS)
+        w.writeheader()
+        w.writerows(out_rows)
+    filled = sum(1 for r in out_rows if r["scene_key"])
+    print(f"wrote {args.out}: {len(out_rows)} cuts "
+          f"({filled} matched a scene profile, "
+          f"{len(out_rows) - filled} unmatched / no board)")
+
+
+def _show(args) -> None:
+    registry = SceneRegistry.load(args.profiles_dir)
+    with open(args.csv, encoding="utf-8-sig") as f:
+        rows = {r.get("cut"): r for r in csv.DictReader(f)}
+    r = rows.get(str(args.cut))
+    if not r:
+        raise SystemExit(f"cut {args.cut} not found in {args.csv}")
+    p = build(r.get("board", ""), r.get("scene", ""), registry, cut=str(args.cut))
+    print(f"# cut {args.cut}  scene={r.get('scene')!r}  board={r.get('board')!r}\n")
+    print("=== EN (model input) ===\n" + p.en)
+    print("\n=== JP (review) ===\n" + p.jp)
+
+
+def main(argv=None) -> None:
+    import argparse
+    ap = argparse.ArgumentParser(prog="genzu_fix.prompt",
+                                 description="カット別プロンプトの組み立て・確認")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+
+    g = sub.add_parser("gen-info", help="cut_board_map から cut_scene_info CSV を機械生成")
+    g.add_argument("--csv", default="runs/cut_board_map_ep7.csv")
+    g.add_argument("--assignee", default=None, help="担当で絞る（例 GKV）")
+    g.add_argument("--out", default="runs/cut_scene_info_ep7.csv")
+    g.add_argument("--profiles-dir", default=None)
+    g.set_defaults(func=_gen_info)
+
+    s = sub.add_parser("show", help="1カットの EN/JP プロンプトを表示")
+    s.add_argument("--cut", required=True)
+    s.add_argument("--csv", default="runs/cut_board_map_ep7.csv")
+    s.add_argument("--profiles-dir", default=None)
+    s.set_defaults(func=_show)
+
+    a = ap.parse_args(argv)
+    a.func(a)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,44 @@
+{
+  "key": "花氏邸_全景",
+  "match": ["全景", "花氏邸", "花家"],
+  "place": {
+    "en": "an exterior establishing view of the Hua (花) family estate",
+    "jp": "花氏邸の全景（外観・引き）"
+  },
+  "era": {
+    "en": "Chinese Northern-and-Southern-Dynasties to early-Tang period",
+    "jp": "中国 南北朝〜初唐ごろ"
+  },
+  "structures": {
+    "en": [
+      "a walled compound with tiled, upturned-eave roofs",
+      "timber-framed gates and halls",
+      "courtyard walls and stepped eaves",
+      "stone steps and paved approach",
+      "surrounding trees and garden planting"
+    ],
+    "jp": [
+      "瓦屋根（反り軒）の塀で囲まれた邸",
+      "木組みの門と建屋",
+      "中庭の塀・段状の軒",
+      "石段・敷石のアプローチ",
+      "周囲の樹木・庭の植栽"
+    ]
+  },
+  "style_note": {
+    "en": "Wide establishing exterior; rooflines, walls and the overall compound silhouette carry the composition",
+    "jp": "引きの確立ショット。屋根のライン・塀・邸全体のシルエットが構図を支える"
+  },
+  "avoid": {
+    "en": [
+      "Japanese castle or temple silhouettes",
+      "European architecture",
+      "modern buildings or infrastructure"
+    ],
+    "jp": [
+      "日本の城郭・寺社のシルエット",
+      "西洋建築",
+      "近代的な建物・インフラ"
+    ]
+  }
+}
