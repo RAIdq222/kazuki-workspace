@@ -144,8 +144,14 @@ def _unit_dir(uid):
 
 
 def _result_path(uid):
-    p = os.path.join(_unit_dir(uid), "gen_raw.png")
-    return p if os.path.exists(p) else None
+    # restored_full.png は原図画角へ戻した最終結果＝原図と画角一致（比較スライダーが揃う）。
+    # 無ければ生成直後の gen_raw.png にフォールバック。
+    d = _unit_dir(uid)
+    for n in ("restored_full.png", "gen_raw.png"):
+        p = os.path.join(d, n)
+        if os.path.exists(p):
+            return p
+    return None
 
 
 def _genzu_preview(uid, psd_path, source="base", force=False):
@@ -245,7 +251,8 @@ def create_app():
     @app.get("/api/projects")
     def api_projects():
         return jsonify([{"key": p["key"], "group": p["group"], "work": p["work"], "ep": p["ep"],
-                         "count": len(p["units"]), "boards_opts": p["boards_opts"]}
+                         "count": len(p["units"]), "boards_opts": p["boards_opts"],
+                         "has_board_files": bool(p["board_idx"])}
                         for p in PROJECTS.values()])
 
     @app.post("/api/projects")
@@ -364,6 +371,9 @@ def create_app():
             p = _genzu_preview(uid, proj["psd_idx"].get(u["filename"]), source=src)
         elif which == "result":
             p = _result_path(uid)
+        elif which == "board":
+            board = STATE.get(uid, {}).get("board", u["board"])
+            p = proj["board_idx"].get(board) if board else None
         else:
             p = None
         if not p or not os.path.exists(p):
@@ -424,6 +434,17 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
  .ov .box{background:#fff;padding:16px;border-radius:10px;max-width:96vw;max-height:96vh;overflow:auto}
  #lb .box{background:none;padding:0} #lb img{max-width:94vw;max-height:90vh}
  #gmodal .box{width:auto} #gmodal img{max-width:80vw;max-height:72vh;border:1px solid #ddd}
+ #cmp .box{background:#fff;width:auto;max-width:96vw}
+ .cmptabs button.on{background:#1a5fb4;color:#fff;border-color:#1a5fb4}
+ .cmpSide{display:flex;gap:10px} .cmpSide figure{margin:0;text-align:center}
+ .cmpSide figcaption{font-size:11px;color:#666;margin-bottom:3px}
+ .cmpSide img{max-width:44vw;max-height:80vh;object-fit:contain;border:1px solid #eee;background:#fff}
+ .cmpSlider{position:relative;display:inline-block;line-height:0;cursor:ew-resize;user-select:none;touch-action:none;border:1px solid #eee}
+ .cmpSlider .cmpimg{display:block;max-width:90vw;max-height:82vh}
+ .cmpSlider .cmptop{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain}
+ .cmpdiv{position:absolute;top:0;bottom:0;width:0;border-left:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.45);pointer-events:none}
+ .cmpdiv::after{content:"◂▸";position:absolute;top:50%;left:-11px;transform:translateY(-50%);background:#1a5fb4;color:#fff;font-size:10px;padding:2px 3px;border-radius:3px}
+ .cmptag{position:absolute;top:6px;font-size:11px;color:#fff;background:rgba(0,0,0,.55);padding:1px 6px;border-radius:4px;pointer-events:none}
  #modal .box{width:540px} #modal label{display:block;font-size:12px;margin:8px 0 2px;color:#444} #modal input{width:100%;padding:6px;font-size:13px}
 </style></head><body>
 <header>
@@ -441,6 +462,23 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
 <main><div class="grid" id="grid"></div></main>
 
 <div class="ov" id="lb" onclick="this.style.display='none'"><div class="box"><img id="lbimg"></div></div>
+
+<div class="ov" id="cmp" onclick="if(event.target===this)this.style.display='none'"><div class="box">
+  <div class="bar" style="margin-bottom:8px;align-items:center">
+    <b id="cmpTitle"></b><span class="grow"></span>
+    <span class="cmptabs"><button id="cmpBside" onclick="setCmpMode('side')">横並び</button>
+      <button id="cmpBslide" onclick="setCmpMode('slider')">スライダー比較</button></span>
+    <button onclick="document.getElementById('cmp').style.display='none'">閉じる</button></div>
+  <div id="cmpSide" class="cmpSide">
+    <figure><figcaption>原図（前）</figcaption><img id="cmpSideA"></figure>
+    <figure><figcaption>生成結果（後）</figcaption><img id="cmpSideB"></figure></div>
+  <div id="cmpSlider" class="cmpSlider" style="display:none">
+    <img id="cmpImgB" class="cmpimg">
+    <img id="cmpImgA" class="cmpimg cmptop">
+    <span class="cmptag" style="left:6px">原図</span><span class="cmptag" style="right:6px">生成結果</span>
+    <div id="cmpDiv" class="cmpdiv"></div></div>
+  <div class="muted" style="margin-top:6px">スライダー比較: 画像の上でマウスを左右に動かすと境界が移動（左=原図 / 右=生成結果）。</div>
+</div></div>
 
 <div class="ov" id="gmodal"><div class="box">
   <div class="bar" style="margin-bottom:8px"><b id="gTitle"></b><span class="grow"></span>
@@ -465,13 +503,36 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
    <span id="mMsg" class="muted"></span></div>
 </div></div>
 <script>
-let UNITS=[],PROJECTS=[],WORK=null,GROUP=null,BOARDS=[],GCUR=null;
+let UNITS=[],PROJECTS=[],WORK=null,GROUP=null,BOARDS=[],GCUR=null,BOARDFILES=false;
+let CMPMODE=(function(){try{return localStorage.getItem('cmpmode')||'side'}catch(e){return 'side'}})();
 const RUN=new Set();
 const $=s=>document.querySelector(s);
 const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
 async function post(u,b){return (await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})})).json();}
-function lb(src){$('#lbimg').src=src;$('#lb').style.display='flex';}
+function lb(src){const im=$('#lbimg');im.onerror=null;im.src=src;$('#lb').style.display='flex';}
 function unit(id){return UNITS.find(u=>u.id===id);}
+// 生成前後比較（通常=横並び / スライダー比較）
+function setCmpMode(m){CMPMODE=m;try{localStorage.setItem('cmpmode',m)}catch(e){}
+  const slider=m==='slider';
+  $('#cmpSide').style.display=slider?'none':'flex';
+  $('#cmpSlider').style.display=slider?'inline-block':'none';
+  $('#cmpBside').classList.toggle('on',!slider);$('#cmpBslide').classList.toggle('on',slider);
+  if(slider)setSplit(50);}
+function setSplit(pct){pct=Math.max(0,Math.min(100,pct));
+  $('#cmpImgA').style.clipPath='inset(0 '+(100-pct)+'% 0 0)';$('#cmpDiv').style.left=pct+'%';}
+function cmpMove(e){const r=$('#cmpSlider').getBoundingClientRect();
+  if(r.width)setSplit((e.clientX-r.left)/r.width*100);}
+function openCmp(id){const u=unit(id);if(!u)return;
+  if(!u.has_result){lb('/img/'+id+'/genzu?t='+Date.now());return;}
+  $('#cmpTitle').textContent='生成前後比較 c'+u.cuts.join(',');
+  const t=Date.now(),g='/img/'+id+'/genzu?t='+t,r='/img/'+id+'/result?t='+t;
+  $('#cmpSideA').src=g;$('#cmpSideB').src=r;$('#cmpImgA').src=g;$('#cmpImgB').src=r;
+  setCmpMode(CMPMODE);$('#cmp').style.display='flex';}
+function showBoard(id){const u=unit(id);
+  if(!u.board){slog(id,'ボード未選択（プルダウンで選択）');return;}
+  if(!BOARDFILES){alert('美術ボード画像の場所が未設定です（起動時に --boards-dir を指定）。\n選択中のボード: '+u.board);return;}
+  const im=$('#lbimg');im.onerror=()=>{im.onerror=null;$('#lb').style.display='none';alert('ボード画像が見つかりません: '+u.board);};
+  im.src='/img/'+id+'/board?t='+Date.now();$('#lb').style.display='flex';}
 async function refresh(){
   PROJECTS=await (await fetch('/api/projects')).json();
   UNITS=await (await fetch('/api/units')).json();
@@ -486,7 +547,7 @@ async function refresh(){
     +`<div class="tab add" onclick="openAdd('${esc(WORK)}')">＋話数</div>`;
   document.querySelectorAll('#works .tab[data-w]').forEach(t=>t.onclick=()=>{WORK=t.dataset.w;GROUP=null;refresh();});
   document.querySelectorAll('#eps .tab[data-g]').forEach(t=>t.onclick=()=>{GROUP=t.dataset.g;refresh();});
-  const cur=PROJECTS.find(p=>p.group===GROUP); BOARDS=cur?cur.boards_opts:[];
+  const cur=PROJECTS.find(p=>p.group===GROUP); BOARDS=cur?cur.boards_opts:[]; BOARDFILES=cur?!!cur.has_board_files:false;
   const a=new Set(UNITS.filter(u=>u.group===GROUP).map(u=>u.assignee));
   const sel=$('#fAssignee'),c=sel.value;
   sel.innerHTML='<option value="">全部</option>'+[...a].sort().map(x=>`<option ${x===c?'selected':''}>${x}</option>`).join('');
@@ -517,10 +578,11 @@ function card(u){
    <div class="thumbs">
      <figure><figcaption>原図[${u.genzu_source}] ${u.has_psd?`<a href="#" onclick="openPsd('${u.id}');return false">PSDを開く</a> · <a href="#" onclick="openGenzu('${u.id}');return false">拡大/取り直し</a>`:''}</figcaption>
        ${u.has_psd?`<img loading="lazy" src="/img/${u.id}/genzu" onclick="openGenzu('${u.id}')" onerror="this.outerHTML='<div class=ph>原図なし</div>'">`:'<div class="ph">PSD未検出</div>'}</figure>
-     <figure><figcaption>生成結果</figcaption>${u.has_result?`<img loading="lazy" src="/img/${u.id}/result?t=${t}" onclick="lb(this.src)">`:'<div class="ph">未生成</div>'}</figure>
+     <figure><figcaption>生成結果 ${u.has_result?`<a href="#" onclick="openCmp('${u.id}');return false">前後比較</a>`:''}</figcaption>${u.has_result?`<img loading="lazy" src="/img/${u.id}/result?t=${t}" onclick="openCmp('${u.id}')">`:'<div class="ph">未生成</div>'}</figure>
    </div>
    <div class="prog ${RUN.has(u.id)?'on':''}" id="prog_${u.id}"><i></i></div>
-   <select onchange="setBoard('${u.id}',this.value)">${opts}</select>
+   <div class="bar"><select style="flex:1;width:auto" onchange="setBoard('${u.id}',this.value)">${opts}</select>
+     <button onclick="showBoard('${u.id}')" title="美術ボードを表示（確認用）">ボード表示</button></div>
    <details><summary>プロンプト${u.prompt_edited?'（編集済）':''}</summary>
      <textarea id="pr_${u.id}" placeholder="（自動生成。編集して保存で上書き）"></textarea>
      <div class="bar"><button onclick="savePrompt('${u.id}')">保存</button>
@@ -564,6 +626,8 @@ async function addProject(){$('#mMsg').textContent='追加中…';
   if(r.error){$('#mMsg').textContent='エラー: '+r.error;return;}
   $('#modal').style.display='none'; WORK=$('#mWork').value||WORK; GROUP=null; await refresh();}
 $('#fAssignee').onchange=render;$('#fStatus').onchange=render;$('#fResult').onchange=render;
+$('#cmpSlider').addEventListener('pointermove',cmpMove);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('#cmp').style.display='none';$('#lb').style.display='none';$('#gmodal').style.display='none';}});
 refresh();
 </script></body></html>"""
 
