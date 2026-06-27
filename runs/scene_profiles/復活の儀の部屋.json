@@ -1,0 +1,92 @@
+{
+  "key": "復活の儀の部屋",
+  "match": [
+    "復活の儀"
+  ],
+  "place": {
+    "en": "an interior ritual chamber in the Hua (花) family residence",
+    "jp": "花家邸内の「復活の儀」の部屋（室内）"
+  },
+  "era": {
+    "en": "Chinese Northern-and-Southern-Dynasties to early-Tang period",
+    "jp": "中国 南北朝〜初唐ごろ"
+  },
+  "structures": {
+    "en": [
+      "timber post-and-beam framing with wooden pillars and crossbeams",
+      "latticed wooden screens and doors",
+      "a raised altar / ritual dais",
+      "hanging cloth drapery and banners",
+      "plank or stone flooring",
+      "standing candle/lamp stands"
+    ],
+    "jp": [
+      "木組みの柱と梁",
+      "格子の木戸・衝立",
+      "一段高い祭壇／儀式の壇",
+      "垂れ幕・幡",
+      "板敷きまたは石敷きの床",
+      "据え置きの燭台・灯火台"
+    ]
+  },
+  "style_note": {
+    "en": "Solemn, sparse historical interior; architectural and structural lines should lead the drawing",
+    "jp": "荘厳で簡素な時代劇の室内。建築・構造の線が画面を主導する"
+  },
+  "avoid": {
+    "en": [
+      "Japanese / wafu interior details (tatami, shoji, fusuma)",
+      "European or modern furniture and fittings",
+      "fantasy or ornate decorative excess"
+    ],
+    "jp": [
+      "和風内装（畳・障子・襖）",
+      "西洋風・近代的な家具や調度",
+      "ファンタジー的／過剰な装飾"
+    ]
+  },
+  "boards": [
+    {
+      "name": "SZ#6_復活の儀の部屋(夜)_R1.png",
+      "time": "夜",
+      "used_in_cutmap": true,
+      "url": "https://drive.google.com/file/d/1J4CtRurmidXqHnP3Yfv39TxSsRoNcSR4/view",
+      "drive_id": "1J4CtRurmidXqHnP3Yfv39TxSsRoNcSR4"
+    },
+    {
+      "name": "SZ#6_復活の儀の部屋(昼)_R1.png",
+      "time": "昼",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/15Pu1VHemYBbhZD9_uYok4Fmhmp_oPL1v/view",
+      "drive_id": "15Pu1VHemYBbhZD9_uYok4Fmhmp_oPL1v"
+    },
+    {
+      "name": "#6_復活の儀の部屋　外廊下（昼）_R1.png",
+      "time": "昼",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/1GUWwavUlFdc6ecsqCib8aEBCpctYMoNP/view",
+      "drive_id": "1GUWwavUlFdc6ecsqCib8aEBCpctYMoNP"
+    },
+    {
+      "name": "#6_復活の儀の部屋へのドア前（昼）.png",
+      "time": "昼",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/1tFC1P-51Qj3009VOTgt9d-iaGMOwMVw-/view",
+      "drive_id": "1tFC1P-51Qj3009VOTgt9d-iaGMOwMVw-"
+    },
+    {
+      "name": "#6花氏邸_屋敷_祭壇(昼)_R1.png",
+      "time": "昼",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/1ENT70LoQpnZyAhiSubw_dxXuJKqCaP2V/view",
+      "drive_id": "1ENT70LoQpnZyAhiSubw_dxXuJKqCaP2V"
+    },
+    {
+      "name": "#6花氏邸_屋敷_祭壇(浅夕)_R1.png",
+      "time": "浅夕",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/1KvY_-IFiYjXR1-juzWXwHdhVn4tQ6J54/view",
+      "drive_id": "1KvY_-IFiYjXR1-juzWXwHdhVn4tQ6J54"
+    }
+  ]
+}

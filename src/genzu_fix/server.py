@@ -174,8 +174,12 @@ def _effective_prompt(proj, u):
     if st.get("prompt"):
         return st["prompt"]
     board = st.get("board", u["board"])
-    use_board = bool(proj.get("boards_dir") and board)
-    return batch.build_prompt(board, u["scene"], None, board_as_image=use_board)
+    cut = (u["cuts"][0] if u.get("cuts") else "")
+    # プロンプトは genzu_fix.prompt（3層）に委譲（great-edisonの設計と統合）。
+    # 表示と生成を一致させるため cut_info_map（situation/remove）も渡す。
+    en, _ = batch.build_prompt_pair(board, u["scene"], None, cut=cut,
+                                    cut_info_map=CFG.get("cut_info_map"))
+    return en
 
 
 def _open_local(path):
@@ -210,7 +214,9 @@ def _run_generate(uid):
                           CFG["resolution"], CFG["quality"], CFG["model"], CFG["image_flag"],
                           dry=False, include_book=CFG["include_book"],
                           header_top=CFG["header_top"], board_path=board_path,
-                          genzu_source=st.get("genzu_source", "base"))
+                          genzu_source=st.get("genzu_source", "base"),
+                          cut_num=(u["cuts"][0] if u.get("cuts") else ""),
+                          cut_info_map=CFG.get("cut_info_map"))
         with STATE_LOCK:
             if st.get("generated_once"):
                 st["retakes"] = st.get("retakes", 0) + 1
@@ -743,11 +749,19 @@ def main(argv=None):
     p.add_argument("--image-flag", default="--image")
     p.add_argument("--include-book", action="store_true")
     p.add_argument("--header-top", type=int, default=None)
+    p.add_argument("--cut-info", default="runs/cut_scene_info_ep7.csv")
     p.add_argument("--port", type=int, default=8765)
     a = p.parse_args(argv)
+    # カット別 situation/remove（great-edisonの3層プロンプトCUT層）。在ればプロンプトに反映。
+    cut_info_map = {}
+    try:
+        cut_info_map = batch.promptlib.load_cut_info(a.cut_info)
+    except Exception:
+        pass
     CFG.update(dict(out=a.out, csv=a.csv, boards_json=a.boards_json,
                     resolution=a.resolution, quality=a.quality, model=a.model,
-                    image_flag=a.image_flag, include_book=a.include_book, header_top=a.header_top))
+                    image_flag=a.image_flag, include_book=a.include_book,
+                    header_top=a.header_top, cut_info_map=cut_info_map))
     OVERVIEWS.update(_load_json(a.overview_json, {}))
     global STATE
     STATE = _load_json(_state_path(), {})

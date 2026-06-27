@@ -1,0 +1,106 @@
+{
+  "key": "花氏邸_全景",
+  "match": [
+    "全景",
+    "花氏邸",
+    "花家"
+  ],
+  "place": {
+    "en": "an exterior establishing view of the Hua (花) family estate",
+    "jp": "花氏邸の全景（外観・引き）"
+  },
+  "era": {
+    "en": "Chinese Northern-and-Southern-Dynasties to early-Tang period",
+    "jp": "中国 南北朝〜初唐ごろ"
+  },
+  "structures": {
+    "en": [
+      "a walled compound with tiled, upturned-eave roofs",
+      "timber-framed gates and halls",
+      "courtyard walls and stepped eaves",
+      "stone steps and paved approach",
+      "surrounding trees and garden planting"
+    ],
+    "jp": [
+      "瓦屋根（反り軒）の塀で囲まれた邸",
+      "木組みの門と建屋",
+      "中庭の塀・段状の軒",
+      "石段・敷石のアプローチ",
+      "周囲の樹木・庭の植栽"
+    ]
+  },
+  "style_note": {
+    "en": "Wide establishing exterior; rooflines, walls and the overall compound silhouette carry the composition",
+    "jp": "引きの確立ショット。屋根のライン・塀・邸全体のシルエットが構図を支える"
+  },
+  "avoid": {
+    "en": [
+      "Japanese castle or temple silhouettes",
+      "European architecture",
+      "modern buildings or infrastructure"
+    ],
+    "jp": [
+      "日本の城郭・寺社のシルエット",
+      "西洋建築",
+      "近代的な建物・インフラ"
+    ]
+  },
+  "boards": [
+    {
+      "name": "#6_花氏邸_屋敷広間(夜)_R1.png",
+      "time": "夜",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/1WzJl3XyNuI5QvIfyVUbAMPlBi2BjNa-C/view",
+      "drive_id": "1WzJl3XyNuI5QvIfyVUbAMPlBi2BjNa-C"
+    },
+    {
+      "name": "#6_花氏邸_全景（夜）_R2.png",
+      "time": "夜",
+      "used_in_cutmap": true,
+      "url": "https://drive.google.com/file/d/1X97tGi9_C-kJoKPgElWRTWRHTjTwobmu/view",
+      "drive_id": "1X97tGi9_C-kJoKPgElWRTWRHTjTwobmu"
+    },
+    {
+      "name": "#6_花氏邸_全景（昼）_R1.png",
+      "time": "昼",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/1qaS3-EzFU4sb4q9kInVwS21ce4pUpoL4/view",
+      "drive_id": "1qaS3-EzFU4sb4q9kInVwS21ce4pUpoL4"
+    },
+    {
+      "name": "#6_花氏邸_全景（昼）_R2.png",
+      "time": "昼",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/1P_5eco1v5dwggu2S7XFBluewoG4yte2y/view",
+      "drive_id": "1P_5eco1v5dwggu2S7XFBluewoG4yte2y"
+    },
+    {
+      "name": "#6_花氏邸_全景（夕方）_R2.png",
+      "time": "夕方",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/1eqKswiGejWMlpYZlfsVbMayy-3FKDCwh/view",
+      "drive_id": "1eqKswiGejWMlpYZlfsVbMayy-3FKDCwh"
+    },
+    {
+      "name": "#6_花氏邸_全景（浅夕）_R2.png",
+      "time": "浅夕",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/1KHUfakdUy3bznep0qlv2wW0KEB4JqHKA/view",
+      "drive_id": "1KHUfakdUy3bznep0qlv2wW0KEB4JqHKA"
+    },
+    {
+      "name": "#6_花氏邸_屋敷の入口_（昼）_幕あり_R2.png",
+      "time": "昼",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/1n8uq-SXLpdKwHprGUXt8_VReb8A31nP8/view",
+      "drive_id": "1n8uq-SXLpdKwHprGUXt8_VReb8A31nP8"
+    },
+    {
+      "name": "#6_花氏邸_屋敷の入口_（昼）_幕なし_R2.png",
+      "time": "昼",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/1ejBvYd1cOF_zpRaLfRaJDCEKnieajt1l/view",
+      "drive_id": "1ejBvYd1cOF_zpRaLfRaJDCEKnieajt1l"
+    }
+  ]
+}

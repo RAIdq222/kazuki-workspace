@@ -16,7 +16,7 @@
 - 入力画像を渡すフラグ名はCLIバージョンで違うため --image-flag で変更可（既定 --image）。
   必ず一度 `higgsfield generate create gpt_image_2 --help` で確認すること。
 - まず --dry-run で「prepだけ実行＋叩くhiggsfieldコマンドを表示」して確認するのを推奨。
-- 美術ボードは v1 ではプロンプト文（場所/時間/構成物の手掛かり）として参照する。色は参照しない。
+- プロンプトは genzu_fix.prompt（GLOBAL/SCENE/CUT の3層アセンブリ）に委譲する。色は参照しない。
 - 束カット(016_026 等)は同じPSD=同じ原図なので、ファイル単位で1回だけ生成する。
 """
 from __future__ import annotations
@@ -30,50 +30,30 @@ import sys
 import time
 import urllib.request
 
-from . import image_aspect, psd_export, frame, ledger
-
-
-# 美術ボード/シーン名から場面ヒント（時代・場所・時間）を抽出してプロンプトへ。
-def _scene_hint(board: str, scene: str) -> str:
-    b = os.path.splitext(board)[0] if board else ""
-    parts = []
-    if scene:
-        parts.append(re.sub(r"c\d.*$", "", scene))  # "森_夜c053～206" -> "森_夜"
-    if b:
-        parts.append(b)
-    return " / ".join(p for p in parts if p)
+from . import image_aspect, psd_export, frame, ledger, prompt as promptlib
 
 
 def build_prompt(board: str, scene: str, prompt_override: str | None = None,
-                 board_as_image: bool = False) -> str:
+                 registry=None, cut: str = "") -> str:
+    """カット別 EN プロンプト（GPT Image 2 入力用）を返す。
+
+    層構造の組み立ては genzu_fix.prompt（3層アセンブリ）に委譲する。
+    JP（確認用）も併せて欲しい場合は build_prompt_pair を使う。
+    """
     if prompt_override:
         return prompt_override
-    hint = _scene_hint(board, scene)
-    if board_as_image:
-        # 2枚目に美術ボード画像を渡す前提の文面（構図は1枚目、時代/構成は2枚目を参照）
-        ref = (" You are given TWO images. IMAGE 1 is the rough background layout to redraw — "
-               "keep ITS exact composition, framing and position. IMAGE 2 is the art board for "
-               "this scene — use it ONLY as reference for the era, architecture, structures, "
-               "props and how things are drawn; do NOT copy its colors and do NOT change the "
-               "layout to match it. Output stays black-and-white line art.")
-        ctx = ref + (f" Scene: {hint}." if hint else "")
-    else:
-        ctx = (f" Scene/era reference (from the assigned art board — match its period, "
-               f"architecture and structural elements, NOT its color): {hint}." if hint else "")
-    return (
-        "Redraw this rough background layout sheet as a CLEAN black-and-white line "
-        "drawing for anime art (haikei genzu). KEEP REGISTRATION: keep the EXACT same "
-        "framing, composition, position and scale as the input — every structure must "
-        "stay where it is; do not zoom, pan, shift, or re-center. Output: monochrome ink "
-        "line art only, no color, no grey fills, hand-drawn line quality. Colored areas in "
-        "the input are placeholder fills — render them as plain line art, not color. Remove "
-        "the production header at the top (tap holes, cut number, studio name) and all "
-        "handwritten notes, labels and marks, and remove any character/figure and the things "
-        "they carry or wear; reconstruct the plain environment behind them (keep furniture "
-        "and fixtures that belong to the room)." +
-        ctx +
-        " The blank margin bands are padding — leave them blank, do not extend artwork into them."
-    )
+    return promptlib.build(board, scene, registry=registry, cut=cut).en
+
+
+def build_prompt_pair(board: str, scene: str, prompt_override: str | None = None,
+                      registry=None, cut: str = "", cut_info_map=None) -> tuple[str, str | None]:
+    """(EN, JP) を返す。EN はモデル入力、JP は人の確認用。
+    cut_info_map があり当該カットの充足済み行が在れば situation/remove 込みで組む。
+    prompt_override がある場合は (override, None)。"""
+    if prompt_override:
+        return prompt_override, None
+    p = promptlib.build_for_cut(cut, board, scene, registry=registry, cut_info_map=cut_info_map)
+    return p.en, p.jp
 
 
 def _resolve(cmd: list[str]) -> list[str]:
@@ -182,7 +162,8 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
                 prompt_override: str | None, resolution: str, quality: str,
                 model: str, image_flag: str, dry: bool, include_book: bool = False,
                 header_top: int | None = None, board_path: str | None = None,
-                genzu_source: str = "base") -> dict:
+                genzu_source: str = "base", cut_num: str = "",
+                cut_info_map=None) -> dict:
     os.makedirs(out_dir, exist_ok=True)
     cut = os.path.splitext(os.path.basename(psd_path))[0]
     visible = os.path.join(out_dir, "visible.png")
@@ -205,7 +186,14 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
         region = frame.strip_header(visible, body, top_override=header_top)
     prep = image_aspect.build_input_image(body, inp, resolution=resolution)
     use_board = bool(board_path)
-    prompt = build_prompt(board, scene, prompt_override, board_as_image=use_board)
+    # プロンプトは genzu_fix.prompt（3層）に委譲。EN=モデル入力 / JP=確認用を出力先へ残す。
+    prompt, prompt_jp = build_prompt_pair(board, scene, prompt_override,
+                                          cut=cut_num, cut_info_map=cut_info_map)
+    with open(os.path.join(out_dir, "prompt.en.txt"), "w", encoding="utf-8") as f:
+        f.write(prompt)
+    if prompt_jp:
+        with open(os.path.join(out_dir, "prompt.jp.txt"), "w", encoding="utf-8") as f:
+            f.write(prompt_jp)
     print(f"    layer[{linfo['strategy']}]={linfo['layers']}  "
           f"crop={'no' if header_top is None else header_top}  board_img={'yes' if use_board else 'no'}  "
           f"input {prep.canvas_w}x{prep.canvas_h} ({prep.aspect_ratio})")
@@ -261,6 +249,8 @@ def main(argv=None) -> None:
                    help="ヘッダー帯の下端yを指定して切る（既定は切らない＝原図全域を入力）")
     p.add_argument("--boards-dir", default=None,
                    help="美術ボード画像のあるディレクトリ（再帰探索）。指定すると2枚目入力に渡す")
+    p.add_argument("--cut-info", default="runs/cut_scene_info_ep7.csv",
+                   help="カット別構造化情報CSV（situation/remove 込み）。在ればプロンプトに反映")
     a = p.parse_args(argv)
 
     # 美術ボード画像の索引（ファイル名→パス）
@@ -269,6 +259,11 @@ def main(argv=None) -> None:
         for root, _, files in os.walk(a.boards_dir):
             for f in files:
                 board_index.setdefault(f, os.path.join(root, f))
+
+    # カット別 situation/remove（conte 由来）を読み込み（無ければ空でフォールバック）
+    cut_info_map = promptlib.load_cut_info(a.cut_info)
+    if cut_info_map:
+        print(f"cut_scene_info: {len(cut_info_map)} カット読み込み（{a.cut_info}）")
 
     # PSDの実パスを genzu-dir 配下から探す索引（ファイル名→パス）
     index = {}
@@ -316,7 +311,8 @@ def main(argv=None) -> None:
         try:
             process_cut(psd, board_name, r.get("scene", ""), out_dir,
                         prompt_override, a.resolution, a.quality, a.model, a.image_flag,
-                        a.dry_run, a.include_book, a.header_top, board_path)
+                        a.dry_run, a.include_book, a.header_top, board_path,
+                        cut_num=r.get("cut", ""), cut_info_map=cut_info_map)
             ok += 1
         except Exception as e:
             print(f"    ! 失敗: {e}")
