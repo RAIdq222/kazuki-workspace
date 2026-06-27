@@ -24,13 +24,21 @@
 """
 from __future__ import annotations
 
+import base64
 import csv
 import json
 import os
 import re
+import urllib.request
 from dataclasses import dataclass, field
 
 from . import prompt as promptlib
+from . import psd_export
+
+# Anthropic REST（conte.py と同じ流儀＝標準ライブラリのみ・要 ANTHROPIC_API_KEY）
+DEFAULT_MODEL = "claude-opus-4-8"
+ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
+ANTHROPIC_VERSION = "2023-06-01"
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -352,7 +360,150 @@ def render_markdown(cut: str, integrated: dict) -> str:
 
 
 # ---------------------------------------------------------------------------
-# CLI（show=入力束と各役プロンプトを確認。実行は別ドライバ）
+# 実行ドライバ（run）— 原図PSD→PNG（ローカル）＋ Claude で観点1〜3＋統合を独立実行
+# ---------------------------------------------------------------------------
+def _resolve_psd(cut: str, genzu_dir: str, csv_path: str | None = None) -> str | None:
+    """cut番号→本体PSDを cut_board_map で引き、genzu_dir 配下を再帰探索（render_genzu と同手順）。"""
+    csv_path = csv_path or _p("runs", "cut_board_map_ep7.csv")
+    n = int(re.match(r"(\d+)", _norm(cut)).group(1))
+    cand: list[str] = []
+    for r in _read_csv(csv_path):
+        m = re.match(r"\s*(\d+)", r.get("cut", ""))
+        fn = (r.get("filename") or "").strip()
+        if m and int(m.group(1)) == n and fn and fn not in cand:
+            cand.append(fn)
+    cand.sort(key=lambda f: (f.count("_"), "bgonly" in f.lower(), len(f)))
+    names = cand or [f"shz_07_{n:03d}_genzu.psd"]
+    idx: dict[str, str] = {}
+    for root, _, files in os.walk(genzu_dir):
+        for f in files:
+            if f.lower().endswith(".psd"):
+                idx.setdefault(f, os.path.join(root, f))
+    for nm in names:
+        if nm in idx:
+            return idx[nm]
+    for f, p in idx.items():
+        if f"_{n:03d}_" in f or re.search(rf"_{n:03d}\b", f):
+            return p
+    return None
+
+
+def render_genzu_png(cut: str, genzu_dir: str, work: str = "work") -> tuple[str | None, str | None]:
+    """原図PSD→ base/visible PNG。コンソール＝/read-genzu と同じ psd_export を使う。"""
+    psd = _resolve_psd(cut, genzu_dir)
+    if not psd:
+        return None, None
+    n = int(re.match(r"(\d+)", _norm(cut)).group(1))
+    out = os.path.join(work, "_genzu_view", f"cut{n:03d}")
+    os.makedirs(out, exist_ok=True)
+    base = os.path.join(out, "genzu_base.png")
+    vis = os.path.join(out, "genzu_visible.png")
+    psd_export.export_background_layer(psd, base)
+    psd_export.export_visible_to_png(psd, vis, drop_text=False)
+    return base, vis
+
+
+def _parse_json_obj(text: str) -> dict:
+    """Claude応答から最初のJSONオブジェクトを取り出す（conte.parse_frames と同じ頑健さ）。"""
+    m = re.search(r"```(?:json)?\s*(.*?)```", text, re.S)
+    raw = m.group(1) if m else text
+    start = raw.find("{")
+    if start < 0:
+        return {}
+    depth = 0
+    for i in range(start, len(raw)):
+        if raw[i] == "{":
+            depth += 1
+        elif raw[i] == "}":
+            depth -= 1
+            if depth == 0:
+                try:
+                    return json.loads(raw[start:i + 1])
+                except json.JSONDecodeError:
+                    return {}
+    return {}
+
+
+def _anthropic_call(role_in: dict, model: str, api_key: str, max_tokens: int = 4096) -> dict:
+    """1役分（system＋許可入力＋画像＋schema）を Claude に渡し JSON を返す。役ごとに独立リクエスト。"""
+    content: list[dict] = []
+    for img in role_in.get("images", []):
+        with open(img, "rb") as fh:
+            b64 = base64.standard_b64encode(fh.read()).decode("ascii")
+        media = "image/png" if img.lower().endswith(".png") else "image/jpeg"
+        content.append({"type": "image",
+                        "source": {"type": "base64", "media_type": media, "data": b64}})
+    instr = (role_in["text"] + "\n\n出力は次のJSONスキーマに厳密に従い、**JSONのみ**返す"
+             "（前後に説明文を付けない）:\n" + json.dumps(role_in["schema"], ensure_ascii=False))
+    content.append({"type": "text", "text": instr})
+    body = {"model": model, "max_tokens": max_tokens, "system": role_in["system"],
+            "messages": [{"role": "user", "content": content}]}
+    req = urllib.request.Request(
+        ANTHROPIC_URL, data=json.dumps(body).encode("utf-8"),
+        headers={"x-api-key": api_key, "anthropic-version": ANTHROPIC_VERSION,
+                 "content-type": "application/json"}, method="POST")
+    with urllib.request.urlopen(req) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    text = "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
+    return _parse_json_obj(text)
+
+
+def run(cut: str, genzu_dir: str | None = None, model: str = DEFAULT_MODEL,
+        out_dir: str | None = None, context: int = 2, dry_run: bool = False) -> dict:
+    """1カットの場面理解を通しで実行。観点1〜3を**役ごとに独立リクエスト**で回し統合する。
+    genzu_dir があれば原図PSD→PNGを起こして観点1/3へ渡す。無ければ観点1は保留。"""
+    out_dir = out_dir or _p("runs", "scene_understanding")
+    b = assemble(cut, context=context)
+    if genzu_dir:
+        base, vis = render_genzu_png(cut, genzu_dir)
+        if base:
+            b.genzu_base_png, b.genzu_visible_png, b.genzu_pending = base, vis, False
+            print(f"原図: {base}")
+        else:
+            print(f"原図: PSDが {genzu_dir} に見つからず（観点1は保留）")
+
+    plan = ["step0(コンテのみ)",
+            ("観点1(原図)" if not b.genzu_pending else "観点1=保留(原図未着)"),
+            "観点2(コンテのみ)", "観点3(原図＋ボード＋設定)", "統合"]
+    print("実行計画:", " → ".join(plan))
+    if dry_run:
+        print("[dry-run] APIは叩かない。各役の入力ルーティングは show で確認可。")
+        return {"cut": _norm(cut), "dry_run": True, "genzu_pending": b.genzu_pending}
+
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise SystemExit("ANTHROPIC_API_KEY が未設定です（conte extract と同じ）。")
+
+    step0 = _anthropic_call(step0_inputs(b), model, api_key).get("scene_line", "")
+    print(f"step0: {step0}")
+    k1 = (_anthropic_call(role_inputs("kanten1", b, step0), model, api_key)
+          if not b.genzu_pending else {"status": "未実行", "reason": "原図PNG未着"})
+    k2 = _anthropic_call(role_inputs("kanten2", b, step0), model, api_key)
+    k3 = _anthropic_call(role_inputs("kanten3", b, step0), model, api_key)
+
+    ii = integrate_inputs(b, step0, k1, k2, k3)
+    if b.genzu_pending:
+        ii["text"] += ("\n\n※観点1(原図忠実)は原図PNG未着のため未実行。"
+                       "原図に依存する判断は確定せず『要・原図確認』アラートに倒すこと。")
+    integrated = _anthropic_call(ii, model, api_key)
+
+    n = int(re.match(r"(\d+)", _norm(cut)).group(1))
+    os.makedirs(out_dir, exist_ok=True)
+    record = {"cut": _norm(cut), "scene": b.scene, "model": model, "step0": step0,
+              "genzu_pending": b.genzu_pending,
+              "kanten1": k1, "kanten2": k2, "kanten3": k3, "integrated": integrated}
+    with open(os.path.join(out_dir, f"cut{n:03d}.json"), "w", encoding="utf-8") as f:
+        json.dump(record, f, ensure_ascii=False, indent=2)
+    md = render_markdown(_norm(cut), integrated)
+    with open(os.path.join(out_dir, f"cut{n:03d}.md"), "w", encoding="utf-8") as f:
+        f.write(md)
+    print(f"\n書き出し: {out_dir}/cut{n:03d}.{{json,md}}")
+    print("\n" + md)
+    return record
+
+
+# ---------------------------------------------------------------------------
+# CLI（show=入力束と各役プロンプトを確認 / run=通しで実行）
 # ---------------------------------------------------------------------------
 def _show(cut: str) -> None:
     b = assemble(cut)
@@ -376,9 +527,22 @@ def main(argv=None) -> None:
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("show", help="1カットの入力束と各役プロンプトを表示")
     s.add_argument("--cut", required=True)
+
+    r = sub.add_parser("run", help="1カットを通しで実行（観点1〜3＋統合）")
+    r.add_argument("--cut", required=True)
+    r.add_argument("--genzu-dir", default=None, help="原図PSDの探索ルート（例 ..\\00.原図）。"
+                                                     "無ければ観点1は保留")
+    r.add_argument("--model", default=DEFAULT_MODEL)
+    r.add_argument("--out", default=None, help="出力先（既定 runs/scene_understanding）")
+    r.add_argument("--context", type=int, default=2, help="絵コンテの前後参照本数")
+    r.add_argument("--dry-run", action="store_true", help="APIを叩かず実行計画だけ表示")
+
     a = ap.parse_args(argv)
     if a.cmd == "show":
         _show(a.cut)
+    elif a.cmd == "run":
+        run(a.cut, genzu_dir=a.genzu_dir, model=a.model, out_dir=a.out,
+            context=a.context, dry_run=a.dry_run)
 
 
 if __name__ == "__main__":
