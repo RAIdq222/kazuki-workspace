@@ -444,6 +444,11 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
  .cmpSlider{position:relative;display:inline-block;line-height:0;cursor:ew-resize;user-select:none;touch-action:none;border:1px solid #eee}
  .cmpSlider .cmpimg{display:block;max-width:90vw;max-height:82vh}
  .cmpSlider .cmptop{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain}
+ .cmpOverlay{position:relative;display:inline-block;line-height:0;border:1px solid #eee;background:#fff}
+ .cmpOverlay .cmpimg{display:block;max-width:90vw;max-height:76vh}
+ .cmpOverlay .cmptop{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain}
+ .cmpops{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px}
+ .cmpops input[type=range]{flex:1}
  .cmpdiv{position:absolute;top:0;bottom:0;width:0;border-left:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.45);pointer-events:none}
  .cmpdiv::after{content:"◂▸";position:absolute;top:50%;left:-11px;transform:translateY(-50%);background:#1a5fb4;color:#fff;font-size:10px;padding:2px 3px;border-radius:3px}
  .cmptag{position:absolute;top:6px;font-size:11px;color:#fff;background:rgba(0,0,0,.55);padding:1px 6px;border-radius:4px;pointer-events:none}
@@ -470,8 +475,9 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
   <div class="bar" style="margin-bottom:8px;align-items:center">
     <b id="cmpTitle"></b><span class="grow"></span>
     <span class="cmptabs"><button id="cmpBside" onclick="setCmpMode('side')">横並び</button>
-      <button id="cmpBslide" onclick="setCmpMode('slider')">スライダー比較</button></span>
-    <button onclick="swapCmp()" title="左右（原図↔生成結果）を入れ替え">⇄ 左右入替</button>
+      <button id="cmpBslide" onclick="setCmpMode('slider')">スライダー比較</button>
+      <button id="cmpBover" onclick="setCmpMode('overlay')">重ね合わせ</button></span>
+    <button onclick="swapCmp()" title="原図↔生成結果を入れ替え">⇄ 入替</button>
     <button onclick="document.getElementById('cmp').style.display='none'">閉じる</button></div>
   <div id="cmpSide" class="cmpSide">
     <figure><figcaption id="cmpCapA">原図（前）</figcaption><img id="cmpSideA" onclick="lb(this.src)"></figure>
@@ -481,7 +487,12 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
     <img id="cmpImgA" class="cmpimg cmptop">
     <span class="cmptag" id="cmpTagL" style="left:6px">原図</span><span class="cmptag" id="cmpTagR" style="right:6px">生成結果</span>
     <div id="cmpDiv" class="cmpdiv"></div></div>
-  <div class="muted" style="margin-top:6px">スライダー比較: 画像の上でマウスを左右に動かすと境界が移動（左=原図 / 右=生成結果）。</div>
+  <div id="cmpOverlay" class="cmpOverlay" style="display:none">
+    <img id="cmpOvB" class="cmpimg"><img id="cmpOvA" class="cmpimg cmptop"></div>
+  <div id="cmpOpsRow" class="cmpops" style="display:none">透過
+    <input type="range" id="cmpOpacity" min="0" max="100" value="50" oninput="cmpOpac(this.value)">
+    <span id="cmpOpacVal">50%</span><span class="muted" id="cmpOpacTag"></span></div>
+  <div class="muted" style="margin-top:6px">スライダー: 画像上でマウス左右で境界移動。重ね合わせ: 透過スライダーで原図と生成結果を重ねて確認。</div>
 </div></div>
 
 <div class="ov" id="gmodal"><div class="box">
@@ -518,20 +529,27 @@ function lb(src){const im=$('#lbimg');im.onerror=null;im.src=src;$('#lb').style.
 function unit(id){return UNITS.find(u=>u.id===id);}
 // 生成前後比較（通常=横並び / スライダー比較）
 function setCmpMode(m){CMPMODE=m;try{localStorage.setItem('cmpmode',m)}catch(e){}
-  const slider=m==='slider';
-  $('#cmpSide').style.display=slider?'none':'flex';
+  const side=m==='side',slider=m==='slider',over=m==='overlay';
+  $('#cmpSide').style.display=side?'flex':'none';
   $('#cmpSlider').style.display=slider?'inline-block':'none';
-  $('#cmpBside').classList.toggle('on',!slider);$('#cmpBslide').classList.toggle('on',slider);
-  if(slider)setSplit(50);}
+  $('#cmpOverlay').style.display=over?'inline-block':'none';
+  $('#cmpOpsRow').style.display=over?'flex':'none';
+  $('#cmpBside').classList.toggle('on',side);$('#cmpBslide').classList.toggle('on',slider);
+  $('#cmpBover').classList.toggle('on',over);
+  if(slider)setSplit(50);
+  if(over)cmpOpac($('#cmpOpacity').value);}
+function cmpOpac(v){$('#cmpOvA').style.opacity=(v/100);$('#cmpOpacVal').textContent=v+'%';}
 function setSplit(pct){pct=Math.max(0,Math.min(100,pct));
   $('#cmpImgA').style.clipPath='inset(0 '+(100-pct)+'% 0 0)';$('#cmpDiv').style.left=pct+'%';}
 function cmpMove(e){const r=$('#cmpSlider').getBoundingClientRect();
   if(r.width)setSplit((e.clientX-r.left)/r.width*100);}
 function applyCmp(){const g=CMPSRC.g,r=CMPSRC.r,left=CMPSWAP?r:g,right=CMPSWAP?g:r;
   $('#cmpSideA').src=left;$('#cmpSideB').src=right;$('#cmpImgA').src=left;$('#cmpImgB').src=right;
+  $('#cmpOvB').src=left;$('#cmpOvA').src=right;
   const la=CMPSWAP?'生成結果（後）':'原図（前）',lb2=CMPSWAP?'原図（前）':'生成結果（後）';
   $('#cmpCapA').textContent=la;$('#cmpCapB').textContent=lb2;
-  $('#cmpTagL').textContent=CMPSWAP?'生成結果':'原図';$('#cmpTagR').textContent=CMPSWAP?'原図':'生成結果';}
+  $('#cmpTagL').textContent=CMPSWAP?'生成結果':'原図';$('#cmpTagR').textContent=CMPSWAP?'原図':'生成結果';
+  $('#cmpOpacTag').textContent='下:'+(CMPSWAP?'生成結果':'原図')+' ／ 上:'+(CMPSWAP?'原図':'生成結果');}
 function swapCmp(){CMPSWAP=!CMPSWAP;applyCmp();}
 function openCmp(id){const u=unit(id);if(!u)return;
   if(!u.has_result){lb('/img/'+id+'/genzu?t='+Date.now());return;}

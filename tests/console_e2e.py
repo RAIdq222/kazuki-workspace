@@ -131,12 +131,24 @@ def main():
             left25 = page.evaluate("()=>document.querySelector('#cmpDiv').style.left")
             check("境界が移動(≈25%)", left25 not in ("", "50%") and float(left25.replace("%", "")) < 40)
 
+            # 重ね合わせ（透過スライダー）
+            page.evaluate("setCmpMode('overlay')")
+            check("重ね合わせモード表示", page.locator("#cmpOverlay").is_visible())
+            check("透過スライダー表示", page.locator("#cmpOpsRow").is_visible())
+            page.evaluate("cmpOpac(20)")
+            op20 = page.evaluate("()=>document.querySelector('#cmpOvA').style.opacity")
+            check("透過20%反映", abs(float(op20) - 0.20) < 0.01)
+            page.evaluate("cmpOpac(80)")
+            op80 = page.evaluate("()=>document.querySelector('#cmpOvA').style.opacity")
+            check("透過80%反映", abs(float(op80) - 0.80) < 0.01)
+            page.evaluate("setCmpMode('slider')")
+
             # ② 左右入替
-            page.click("text=左右入替")
+            page.click("text=入替")
             top_after = page.get_attribute("#cmpImgA", "src") or ""
             check("②入替で上=結果に", "/result" in top_after)
             check("②タグ左が生成結果", page.inner_text("#cmpTagL") == "生成結果")
-            page.click("text=左右入替")  # 元に戻す
+            page.click("text=入替")  # 元に戻す
 
             page.evaluate("()=>document.querySelector('#cmp').style.display='none'")
 
