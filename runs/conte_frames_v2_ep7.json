@@ -1,0 +1,310 @@
+{
+  "frames": [
+    {
+      "cut_label": "",
+      "action": "",
+      "dialogue": "",
+      "se": "",
+      "time": "",
+      "characters": [],
+      "confidence": "low",
+      "notes": "提供された2枚の画像は橋（アーチ橋）の構造物の写真であり、絵コンテのカット番号・picture（手描きの絵）やaction/dialogue/time欄（鉛筆の手書き）は含まれていません。OCR対象となる絵コンテの文字情報が確認できないため、各欄を埋めることができません。絵コンテの該当画像を再度ご提供ください。",
+      "_page": "page_001.png",
+      "_row": 0
+    },
+    {
+      "cut_label": "",
+      "action": "",
+      "dialogue": "",
+      "se": "",
+      "time": "31+12",
+      "characters": [
+        "苗"
+      ],
+      "confidence": "low",
+      "notes": "これはオープニング/タイトルクレジット画面であり、通常の絵コンテのカット欄(scene/action/dialogue/time)ではない。画像1はタイトル「尚善」第七話「借屍環魂 後編」とスタッフクレジット(監督:川崎逸朗、助監督:松川朋弘、シナリオ:川崎逸朗、絵コンテ:頂真司、キャラクターデザイン:長田絵里、演出:曽根利幸、制作進行:石井小也香)およびカット数集計(アバン22cut 102+0、Apart 160cut 681+06、Bpart 118cut 548+06、TOTAL 300cut 13xx)。画像2の絵は苗ちゃんと思われる笑顔の少女。右下の「31+12」はTOTAL尺の一部の可能性。action/dialogue欄に該当する手書き指示は存在しない。",
+      "_page": "page_001.png",
+      "_row": 1
+    },
+    {
+      "cut_label": "",
+      "action": "",
+      "dialogue": "",
+      "se": "",
+      "time": "",
+      "characters": [],
+      "confidence": "low",
+      "notes": "提供された2枚の画像はいずれも絵コンテのカット内容（scene欄のカット番号・picture、action/dialogue/time欄）を判読できる情報を含んでいません。1枚目は格子状の黒い線画パターンと右に角丸の黒い形、2枚目も同様の抽象的な黒線・赤い帯状の画像で、手書きの文字（カット番号・action・dialogue・time）が確認できません。OCR対象の絵コンテ画像ではない可能性が高く、読み取れる文字がないため全項目を空としました。",
+      "_page": "page_001.png",
+      "_row": 2
+    },
+    {
+      "cut_label": "",
+      "action": "",
+      "dialogue": "",
+      "se": "",
+      "time": "",
+      "characters": [],
+      "confidence": "low",
+      "notes": "提供された画像は黒い装飾的なバー（チェッカー柄）と赤い印鑑風の「決定稿」の文字のみで、絵コンテのscene欄・カット番号・picture・action/dialogue/time欄が含まれていません。OCR対象となる手書きのコンテ内容が確認できないため、いずれの欄も読み取り不可です。",
+      "_page": "page_001.png",
+      "_row": 3
+    },
+    {
+      "cut_label": "",
+      "action": "",
+      "dialogue": "",
+      "se": "",
+      "time": "",
+      "characters": [],
+      "confidence": "low",
+      "notes": "画像はほぼ白紙でカット番号・action・dialogue・time欄に判読可能な手書き文字が確認できない。画像1には罫線とごく薄いトンボ/ガイド線、画像2にも枠線と薄いガイド線のみが見える。文字情報を抽出できないため全項目空欄。",
+      "_page": "page_002.png",
+      "_row": 0
+    },
+    {
+      "cut_label": "7",
+      "action": "",
+      "dialogue": "",
+      "se": "",
+      "time": "",
+      "characters": [],
+      "confidence": "high",
+      "notes": "画像1はサブタイトル表紙ページ。「尚善 #7」「借屍環魂 後編」と読める。これはカット番号ではなくエピソードタイトル扉。画像2のaction/dialogue/time欄は全て空欄。",
+      "_page": "page_002.png",
+      "_row": 1
+    },
+    {
+      "cut_label": "22",
+      "action": "7cut + #6 BANK\nAll. → 兼用\n(327+12) + #6 BANK (64+12)→兼用\n(742+12)",
+      "dialogue": "",
+      "se": "",
+      "time": "160",
+      "characters": [],
+      "confidence": "low",
+      "notes": "画像はカット22のBANK（流用）指定メモと思われる。「7cut」「#6 BANK」「All兼用」は比較的読めるが、括弧内の数値(327+12 / 64+12 / 742+12)や上部の「102+0」「681+6」は計算メモの可能性が高く確信度が低い。time欄は「160cm(t)」とも読め、尺なのかフィルム長(cm)なのか不明。action/dialogueの明確な区別が困難。全体に作画注記であり通常の芝居・セリフ欄は存在しない可能性がある。",
+      "_page": "page_002.png",
+      "_row": 2
+    },
+    {
+      "cut_label": "",
+      "action": "",
+      "dialogue": "",
+      "se": "",
+      "time": "",
+      "characters": [],
+      "confidence": "low",
+      "notes": "画像は赤ペンによる修正書き込み（数字・「cut」表記）が主で、scene欄のカット番号・鉛筆のaction/dialogueが判読できない。赤字は『118（114 cut→訂正）』『300（28? cut→訂正）』『548+6（608+12を取り消し）』『1331+12（1389+12を取り消し）』のようなカット数・尺の集計修正と思われる。本文情報が読み取れないため全項目保留。",
+      "_page": "page_002.png",
+      "_row": 3
+    },
+    {
+      "cut_label": "",
+      "action": "#21のBANK",
+      "dialogue": "",
+      "se": "",
+      "time": "",
+      "characters": [],
+      "confidence": "medium",
+      "notes": "scene欄のカット番号は読み取れず。右上赤字「300af」と黒字「298af」（トータル尺の修正メモ）。赤丸囲み「△ BANKこと 含む(?)」、下段に黒字「BANK= 21」と読める。BANK流用指定の可能性が高い。afはカット数(コマ?)の単位と思われるが不確実。dialogue・se欄は空。",
+      "_page": "page_002.png",
+      "_row": 4
+    },
+    {
+      "cut_label": "",
+      "action": "",
+      "dialogue": "ブリ ニニから?",
+      "se": "",
+      "time": "",
+      "characters": [],
+      "confidence": "low",
+      "notes": "画像1には楕円で囲まれた手書き文字「ブリ ニニから?」のような書き込みがあるが判読困難。左下に下向き矢印（△・PANまたは次カットへの指示の可能性）あり。画像2(action/dialogue/time欄)はほぼ空白で文字情報を確認できず。カット番号も読み取れない。",
+      "_page": "page_003.png",
+      "_row": 0
+    },
+    {
+      "cut_label": "1",
+      "action": "夜空に月　流れる雲",
+      "dialogue": "",
+      "se": "",
+      "time": "1+12",
+      "characters": [],
+      "confidence": "medium",
+      "notes": "action欄冒頭に△記号。time欄は『1+12』(1秒12コマ)と判読。3行目は『流れる雲』と推定。絵は月と雲の星空シーンで場所範囲001–002『星空』と整合。dialogue/se欄は空欄。",
+      "_page": "page_003.png",
+      "_row": 1
+    },
+    {
+      "cut_label": "",
+      "action": "「フレームイン」してくる 一匹の蝶 △A.C.",
+      "dialogue": "",
+      "se": "",
+      "time": "4+12",
+      "characters": [],
+      "confidence": "medium",
+      "notes": "action欄1行目「フレームイン してくる」、2行目「一匹の蝶」と推定（崩し字）。最下部の囲み「A.C.」はアクションカット指定。time欄は「4+12」（4 1/2は分数読みで誤り）。picture上で蝶と紐状の物体（瓢箪の紐か）が確認できる。",
+      "_page": "page_003.png",
+      "_row": 2
+    },
+    {
+      "cut_label": "2",
+      "action": "",
+      "dialogue": "",
+      "se": "バサバサ！(羽ばたき音)",
+      "time": "",
+      "characters": [],
+      "confidence": "low",
+      "notes": "画像1は蝶/鳥のような羽ばたく被写体を描いたpicture。画像2下部のaction欄に手書き文字があるが崩れており、効果音的な「バサバサ！」と読めるが確信度は低い。time欄・dialogue欄は空欄に見える。コマ右下に小さく「2」のページ/カット番号らしき記載あり。",
+      "_page": "page_003.png",
+      "_row": 3
+    },
+    {
+      "cut_label": "3",
+      "action": "",
+      "dialogue": "OK.",
+      "se": "",
+      "time": "",
+      "characters": [],
+      "confidence": "medium",
+      "notes": "画像1には人物の手・指のような描写と弧を描く線、円で囲んだ「A」記号がある。dialogue欄に相当する手書きは画像2左コマの「鱗物が舞う」のような崩し字だが判読困難。「OK.」は絵の中の書き込み。画像2の文字は「鱗（？）物が舞う」と推測されるが確信は低い。time欄は読み取れず（右端コマの数字「4」は次カット番号の可能性）。",
+      "_page": "page_003.png",
+      "_row": 4
+    },
+    {
+      "cut_label": "3",
+      "action": "印をいくつか組んで",
+      "dialogue": "",
+      "se": "バッ バッ バッ……",
+      "time": "2+12",
+      "characters": [
+        "尚善"
+      ],
+      "confidence": "medium",
+      "notes": "画像1のカット番号は「3」と読める。action欄は「印をいくつか組んで」。SE「バッ バッ バッ…」は手の動きの効果音。time欄は「2+12」と推定（崩れあり）。右上の楕円囲み記号は指示マークの可能性。人物は印を組む手の所作と装束から尚善と推定だが確証は低め。",
+      "_page": "page_004.png",
+      "_row": 0
+    },
+    {
+      "cut_label": "4",
+      "action": "↑じわPAN UP うすく目を開く。",
+      "dialogue": "……",
+      "se": "",
+      "time": "",
+      "characters": [
+        "沈公子"
+      ],
+      "confidence": "medium",
+      "notes": "action欄上部に「↑じわPAN UP」、下に「うすく目を開く。」と読める。右欄に丸囲みで「沈公子」とあり台詞は「‥‥」(無言/間)。time欄は数字「2」がカット枠番号と思われ尺表記は確認できず。沈公子の眼のアップ作画と整合。",
+      "_page": "page_004.png",
+      "_row": 1
+    },
+    {
+      "cut_label": "5",
+      "action": "室内にただよう\nケムリ.",
+      "dialogue": "",
+      "se": "",
+      "time": "",
+      "characters": [],
+      "confidence": "medium",
+      "notes": "action欄の冒頭は「室内にただようケムリ」と読める。その下に枠囲みの文字（「BG TB」または背景指定らしき記号）があるが崩れていて判読困難。time欄(右端)は「4」または記号のみで秒+コマ表記が不明。cut_labelは絵の左上の手書きを5と判断。場所は274-289の道観・食堂(夕)の可能性。",
+      "_page": "page_004.png",
+      "_row": 2
+    },
+    {
+      "cut_label": "6",
+      "action": "同/離れ.外。扉に錠をかける老宗爺の手もと。",
+      "dialogue": "",
+      "se": "ガチャリ…",
+      "time": "1",
+      "characters": [
+        "黄爺"
+      ],
+      "confidence": "low",
+      "notes": "action欄の「老宗爺」は人名候補に該当が無く、画像から手元で錠をかける描写。用語集の黄爺(こうじい)を想定したが筆跡は「老宗爺」に近く確証なし。「離れ」の読みも不確実。time欄は「1」のみで秒+コマか不明。",
+      "_page": "page_004.png",
+      "_row": 3
+    },
+    {
+      "cut_label": "7",
+      "action": "←PAN! �民・築地で。",
+      "dialogue": "（沈公子）儀式が終わるまでは、誰もこの中に入らない方が、いいですね？",
+      "se": "",
+      "time": "",
+      "characters": [
+        "沈公子"
+      ],
+      "confidence": "low",
+      "notes": "action欄の「釈・築地で」は判読困難で推測を含む。dialogueの話者表記は丸囲み文字で「沈公子」と推定したが確信は低い。台詞は花家の建物（復活の儀の部屋）の文脈に合致。time欄は読み取れず空。",
+      "_page": "page_004.png",
+      "_row": 4
+    },
+    {
+      "cut_label": "",
+      "action": "土下座をね\n（花家事）と密\n○連れて家人たちも。\n（一列作成にコピペ）",
+      "dialogue": "花家事人（皆）\n沈公子さま、本当に\nありがとうございます\nこの恩は一生\n忘れません！",
+      "se": "",
+      "time": "",
+      "characters": [
+        "沈公子",
+        "花家主人"
+      ],
+      "confidence": "low",
+      "notes": "手書きが崩れており全体に不確実。左欄「土下座をね」「連れて家人たちも」「一列作成にコピペ」は作画指示と推測。丸囲み「花家事」は花家の家人/花家事人を指す可能性。「と密」は不確実。右欄の宛名「花家事人（皆）」は花家の家人たちと解釈。time欄・se欄は記載が確認できず空。画面では小さな人物群が土下座しており、奥に立つ白装束＝花家主人らしき人物、右上の矢印はT.U.または注目指示の可能性。",
+      "_page": "page_005.png",
+      "_row": 0
+    },
+    {
+      "cut_label": "",
+      "action": "とびおりて、片膝をつく",
+      "dialogue": "",
+      "se": "(足音━━━",
+      "time": "",
+      "characters": [],
+      "confidence": "medium",
+      "notes": "action欄に「(沈公子)」を丸囲みした演出指示らしき記載あり。崩し字のため断定不可。time欄は明確な数値読み取れず。右欄に「/3」の記載あり（ページ番号か）。SE「足音」は丸囲み記号付き。人物は絵から飛び降りて着地する芝居だが人名特定できず",
+      "_page": "page_005.png",
+      "_row": 1
+    },
+    {
+      "cut_label": "8",
+      "action": "手を取る沈公子\n頭を上げる花家妻",
+      "dialogue": "沈公子「奥様もお身体には気をつけて。」\n花家妻「重ね重ねありがとうございます…」",
+      "se": "",
+      "time": "",
+      "characters": [
+        "沈公子",
+        "花家妻"
+      ],
+      "confidence": "medium",
+      "notes": "右の人物はターバン状の頭巾で「花家妻（李おばさん）」と推定。dialogue欄の人名表記は「花家妻」と読んだが用語集の正式名は『花家妻（李おばさん）』。time欄は本切り出しに無し。",
+      "_page": "page_005.png",
+      "_row": 2
+    },
+    {
+      "cut_label": "6",
+      "action": "",
+      "dialogue": "",
+      "se": "",
+      "time": "",
+      "characters": [],
+      "confidence": "low",
+      "notes": "画像2のaction/dialogue欄はほぼ空白で、中央の縦線（カメラ振り/PAN等の指示線の可能性）と判読困難な走り書きのみ。右下の『6』はカット番号と推測。time欄に明確な秒+コマ表記は確認できず。画像1には人物の横顔が2つ描かれ、下向きの矢印（次カットへcontinue=芝居が続く、の可能性）があるが、人名を特定できる文字情報はなし。",
+      "_page": "page_005.png",
+      "_row": 3
+    },
+    {
+      "cut_label": "9",
+      "action": "何PUUP！\n↓\nTB:送り（上→下）\n（花家主人）へ",
+      "dialogue": "それでは失礼\nいたします\n何かあれば私の宿で",
+      "se": "",
+      "time": "",
+      "characters": [
+        "花家主人"
+      ],
+      "confidence": "low",
+      "notes": "action欄は崩し字が強く判読困難。「TB:送り（上→下）」はトラックバックのカメラ送り指示と推測。冒頭「何PUUP！」は不確実。右欄上部に「沈公子？(GAS?)」のような書き込みがあるが判読不能。dialogue欄も大意の推測を含む。time欄は本切り出しでは確認できず空。",
+      "_page": "page_005.png",
+      "_row": 4
+    }
+  ]
+}
