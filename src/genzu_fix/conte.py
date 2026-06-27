@@ -418,6 +418,7 @@ def main(argv=None) -> None:
     rv.add_argument("--pages-dir", default=None, help="conte render のページ画像ディレクトリ（あれば画像埋め込み）")
     rv.add_argument("--out", default="work/conte_review.html")
     rv.add_argument("--only-uncertain", action="store_true", help="OCR不確実のカットだけ表示")
+    rv.add_argument("--no-open", action="store_true", help="生成後にブラウザを自動で開かない")
 
     io_ = sub.add_parser("init-overrides", help="訂正レイヤーCSVの空テンプレを作る")
     io_.add_argument("--overrides", default=OVERRIDES_CSV)
@@ -436,7 +437,20 @@ def main(argv=None) -> None:
         frames = json.load(open(a.frames, encoding="utf-8")).get("frames", [])
         merge(frames, a.cut_info, a.out, a.overwrite)
     elif a.cmd == "review":
-        review_html(a.raw, a.overrides, a.pages_dir, a.out, a.only_uncertain)
+        out = review_html(a.raw, a.overrides, a.pages_dir, a.out, a.only_uncertain)
+        ap_ = os.path.abspath(out)
+        if not a.pages_dir or not os.path.isdir(a.pages_dir) or not os.listdir(a.pages_dir):
+            print("※ ページ画像なし＝テキストのみ。手描き原文と照合するには先に "
+                  "`conte render --pdf <pdf> --out work/conte_pages` を実行し --pages-dir に渡す。"
+                  "（render には pip install pymupdf が必要）")
+        print(f"開く: {ap_}")
+        if not a.no_open:
+            try:
+                import webbrowser
+                webbrowser.open("file:///" + ap_.replace("\\", "/"))
+                print("→ 既定ブラウザで開きました（開かない場合は上のパスを直接開く）")
+            except Exception:
+                print("→ 自動オープン不可。上のパスをブラウザで開いてください。")
     elif a.cmd == "init-overrides":
         ensure_overrides_template(a.overrides)
 
