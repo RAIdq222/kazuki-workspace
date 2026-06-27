@@ -256,6 +256,137 @@ def merge(frames: list[dict], cut_info_csv: str, out_csv: str | None = None,
 
 
 # ---------------------------------------------------------------------------
+# 4. 訂正レイヤー（raw=機械読みは不変。人手の訂正は別CSVに置き、読む側で重ねる）
+#    目的: OCR誤読は避けられない前提で「どこで間違えたか確認」「手軽に直す」を支える。
+# ---------------------------------------------------------------------------
+RAW_CSV = "runs/conte_raw_ep7.csv"
+OVERRIDES_CSV = "runs/conte_overrides_ep7.csv"
+OVERRIDE_FIELDS = ("action", "dialogue", "se", "time")
+
+
+def load_overrides(overrides_csv: str = OVERRIDES_CSV) -> dict[str, dict]:
+    """cut 正規化キー → {field: 訂正値} 。空セルは“訂正なし”として無視。"""
+    ov: dict[str, dict] = {}
+    if not os.path.exists(overrides_csv):
+        return ov
+    with open(overrides_csv, encoding="utf-8-sig") as f:
+        for r in csv.DictReader(f):
+            k = _cut_key(r.get("cut", ""))
+            if not k:
+                continue
+            fixes = {fld: (r.get(fld) or "").strip()
+                     for fld in OVERRIDE_FIELDS if (r.get(fld) or "").strip()}
+            if fixes:
+                ov[k] = fixes
+    return ov
+
+
+def load_corrected(raw_csv: str = RAW_CSV, overrides_csv: str = OVERRIDES_CSV) -> list[dict]:
+    """raw コンテに訂正レイヤーを重ねた行を返す。各行に _corrected(訂正したフィールド名のリスト)と
+    _orig_<field>(元のOCR値) を付す。raw ファイルには一切書き込まない。"""
+    rows: list[dict] = []
+    if os.path.exists(raw_csv):
+        with open(raw_csv, encoding="utf-8-sig") as f:
+            rows = list(csv.DictReader(f))
+    ov = load_overrides(overrides_csv)
+    for r in rows:
+        k = _cut_key(r.get("cut", ""))
+        r["_corrected"] = []
+        for fld, val in ov.get(k, {}).items():
+            if val != (r.get(fld) or ""):
+                r["_orig_" + fld] = r.get(fld, "")
+                r[fld] = val
+                r["_corrected"].append(fld)
+    return rows
+
+
+def _page_image(pages_dir: str | None, page: str) -> str | None:
+    """page 番号に対応する画像をいくつかの命名規則で探す。"""
+    if not pages_dir or not str(page).strip():
+        return None
+    m = re.match(r"\s*(\d+)", str(page))
+    if not m:
+        return None
+    n = int(m.group(1))
+    for name in (f"page_{n:03d}.png", f"page_{n}.png", f"p{n}.png", f"page_{n:03d}.jpg"):
+        p = os.path.join(pages_dir, name)
+        if os.path.exists(p):
+            return p
+    return None
+
+
+def review_html(raw_csv: str = RAW_CSV, overrides_csv: str = OVERRIDES_CSV,
+                pages_dir: str | None = None, out_html: str = "work/conte_review.html",
+                only_uncertain: bool = False) -> str:
+    """「ページ画像 ↔ OCRテキスト ↔ 訂正」を並べたレビューHTMLを書き出す。
+    pages_dir を渡すと conte render のページ画像を埋め込み、手描き原文と読みを目視照合できる。"""
+    rows = load_corrected(raw_csv, overrides_csv)
+    if only_uncertain:
+        rows = [r for r in rows if str(r.get("uncertain", "")).lower() == "true"]
+    by_page: dict[str, list[dict]] = {}
+    for r in rows:
+        by_page.setdefault((r.get("page") or "").strip() or "（ページ不明）", []).append(r)
+
+    def esc(s):
+        return (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+    H = ["<!doctype html><meta charset='utf-8'><title>conte review</title>",
+         "<style>body{font:14px/1.6 sans-serif;margin:20px}"
+         "h2{border-bottom:2px solid #888;margin-top:32px}"
+         ".cut{border:1px solid #ccc;border-radius:6px;padding:8px 12px;margin:8px 0}"
+         ".unc{background:#fff7e6;border-color:#f0b400}"
+         ".fix{background:#e6ffed;border-color:#2da44e}"
+         ".lbl{color:#888;font-size:12px}.cor{color:#2da44e;font-weight:bold}"
+         ".was{color:#999;text-decoration:line-through}"
+         "img{max-width:520px;border:1px solid #ddd;display:block;margin:6px 0}"
+         "table{border-collapse:collapse}td{vertical-align:top;padding:4px 10px}</style>"]
+    H.append("<h1>絵コンテ OCR レビュー</h1>")
+    H.append(f"<p class='lbl'>raw=<code>{esc(raw_csv)}</code> / 訂正=<code>{esc(overrides_csv)}</code>。"
+             "🟡=OCR不確実 / 🟢=訂正済み。<b>直し方</b>: "
+             f"<code>{esc(overrides_csv)}</code> に該当 cut の行を作り、直したい列"
+             "(action/dialogue/se/time)に正しい値を書く（空欄は無視）。保存して再実行で反映。</p>")
+    for page, items in by_page.items():
+        H.append(f"<h2>page {esc(page)}</h2>")
+        img = _page_image(pages_dir, page)
+        if img:
+            rel = os.path.relpath(img, os.path.dirname(os.path.abspath(out_html)) or ".")
+            H.append(f"<img src='{esc(rel)}' alt='page {esc(page)}'>")
+        for r in items:
+            cls = "cut fix" if r.get("_corrected") else (
+                "cut unc" if str(r.get("uncertain", "")).lower() == "true" else "cut")
+            badge = "🟢" if r.get("_corrected") else (
+                "🟡" if str(r.get("uncertain", "")).lower() == "true" else "")
+            H.append(f"<div class='{cls}'><b>cut {esc(r.get('cut',''))}</b> {badge} "
+                     f"<span class='lbl'>src={esc(r.get('src',''))} time={esc(r.get('time',''))}</span>")
+            for fld in ("action", "dialogue", "se"):
+                val = esc(r.get(fld, ""))
+                if fld in r.get("_corrected", []):
+                    H.append(f"<div><span class='lbl'>{fld}</span> "
+                             f"<span class='was'>{esc(r.get('_orig_'+fld,''))}</span> → "
+                             f"<span class='cor'>{val}</span></div>")
+                elif val:
+                    H.append(f"<div><span class='lbl'>{fld}</span> {val}</div>")
+            H.append("</div>")
+    os.makedirs(os.path.dirname(out_html) or ".", exist_ok=True)
+    with open(out_html, "w", encoding="utf-8") as f:
+        f.write("\n".join(H))
+    print(f"wrote {out_html}: {len(rows)} cuts"
+          + (f"（pages_dir={pages_dir} 画像埋め込み）" if pages_dir else "（画像なし＝テキストのみ）"))
+    return out_html
+
+
+def ensure_overrides_template(overrides_csv: str = OVERRIDES_CSV) -> None:
+    """訂正CSVが無ければ空テンプレ（ヘッダのみ）を作る。"""
+    if os.path.exists(overrides_csv):
+        print(f"既存: {overrides_csv}")
+        return
+    os.makedirs(os.path.dirname(overrides_csv) or ".", exist_ok=True)
+    with open(overrides_csv, "w", encoding="utf-8-sig", newline="") as f:
+        csv.writer(f).writerow(["cut", *OVERRIDE_FIELDS, "note"])
+    print(f"作成: {overrides_csv}（cut と直したい列だけ書けばよい。空欄は無視）")
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 def main(argv=None) -> None:
@@ -281,6 +412,16 @@ def main(argv=None) -> None:
     m.add_argument("--out", default=None, help="未指定なら cut-info を上書き")
     m.add_argument("--overwrite", action="store_true", help="既存の situation/remove も上書き")
 
+    rv = sub.add_parser("review", help="OCR読み↔ページ画像↔訂正 を並べたレビューHTMLを出力")
+    rv.add_argument("--raw", default=RAW_CSV)
+    rv.add_argument("--overrides", default=OVERRIDES_CSV)
+    rv.add_argument("--pages-dir", default=None, help="conte render のページ画像ディレクトリ（あれば画像埋め込み）")
+    rv.add_argument("--out", default="work/conte_review.html")
+    rv.add_argument("--only-uncertain", action="store_true", help="OCR不確実のカットだけ表示")
+
+    io_ = sub.add_parser("init-overrides", help="訂正レイヤーCSVの空テンプレを作る")
+    io_.add_argument("--overrides", default=OVERRIDES_CSV)
+
     a = ap.parse_args(argv)
     if a.cmd == "render":
         render(a.pdf, a.out, a.dpi, a.first, a.last)
@@ -294,6 +435,10 @@ def main(argv=None) -> None:
     elif a.cmd == "merge":
         frames = json.load(open(a.frames, encoding="utf-8")).get("frames", [])
         merge(frames, a.cut_info, a.out, a.overwrite)
+    elif a.cmd == "review":
+        review_html(a.raw, a.overrides, a.pages_dir, a.out, a.only_uncertain)
+    elif a.cmd == "init-overrides":
+        ensure_overrides_template(a.overrides)
 
 
 if __name__ == "__main__":

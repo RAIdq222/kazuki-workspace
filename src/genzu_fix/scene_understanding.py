@@ -235,8 +235,10 @@ def assemble(cut: str, context: int = 2) -> Bundle:
     cut = _norm(cut)
     b = Bundle(cut=cut)
 
-    # 絵コンテ（cut＋前後 context 本）
-    rows = _read_csv(_p("runs", "conte_raw_ep7.csv"))
+    # 絵コンテ（cut＋前後 context 本）。raw に人手の訂正レイヤーを重ねて読む。
+    from . import conte as contelib
+    rows = contelib.load_corrected(
+        _p("runs", "conte_raw_ep7.csv"), _p("runs", "conte_overrides_ep7.csv"))
     by_num = {}
     for r in rows:
         m = re.match(r"\s*(\d+)", r.get("cut", ""))
@@ -248,7 +250,8 @@ def assemble(cut: str, context: int = 2) -> Bundle:
             r = by_num[n]
             b.conte.append({"cut": r.get("cut"), "self": n == cn,
                             "action": r.get("action", ""), "dialogue": r.get("dialogue", ""),
-                            "se": r.get("se", ""), "uncertain": r.get("uncertain", "")})
+                            "se": r.get("se", ""), "uncertain": r.get("uncertain", ""),
+                            "corrected": list(r.get("_corrected", []))})
 
     # ボード（cut_board_map → board_manifest）
     for r in _read_csv(_p("runs", "cut_board_map_ep7.csv")):
@@ -305,7 +308,8 @@ def _conte_block(b: Bundle) -> str:
         tag = "▶このカット" if c["self"] else f"  cut{c['cut']}"
         lines.append(f"{tag}: 動き『{c['action']}』  セリフ『{c['dialogue']}』"
                      + (f" SE『{c['se']}』" if c['se'] else "")
-                     + (" ※OCR不確実" if str(c['uncertain']).lower() == "true" else ""))
+                     + (f" ※訂正済({'/'.join(c['corrected'])})" if c.get("corrected") else
+                        (" ※OCR不確実" if str(c['uncertain']).lower() == "true" else "")))
     return "\n".join(lines) or "(絵コンテ該当なし)"
 
 
