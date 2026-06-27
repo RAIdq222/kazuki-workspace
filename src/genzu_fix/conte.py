@@ -326,8 +326,12 @@ def _crop_b64(img, box):
 
 def _extraction_prompt_page(glossary: str) -> str:
     return (
-        "あなたは日本の商業アニメ絵コンテを読む専門家です。これから**1ページ分のコマを上から順に**渡します。\n"
-        "各コマは2枚: 「左」= scene欄のカット番号＋picture(絵)、「右」= action/dialogue/time欄(鉛筆の手書き)。\n\n"
+        "あなたは日本の商業アニメ絵コンテを読む専門家です。これから**1ページ分**を渡します。\n"
+        "1枚目=『ページ上部ヘッダ』(左上の『No.◯』=用紙通し番号 と 表頭 scene/picture/action/dialogue/time)。\n"
+        "2枚目以降=各コマを上から順に「左」= scene欄のカット番号＋picture(絵)、「右」= action/dialogue/time欄。\n\n"
+        "【ページ種別の判定（最初に行う）】\n"
+        "・ヘッダに『No.◯』と表頭(scene/picture/action/...)があれば**絵コンテ本編ページ**＝カットを読む。\n"
+        "・『No.』も表頭も無いページ(タイトルカード/計算メモ/前付け)は**カットでない → cuts:[] を返す**。\n\n"
         "このページに含まれる全カットを、上から順に JSON 配列で返してください。\n"
         "【最重要・番号ずれ防止】\n"
         "・カット番号は作品を通して**連番で増えていく**。上から順にコマを見て、丸囲み数字が新しく現れたら"
@@ -399,6 +403,15 @@ def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.js
         sx = int(split * img.width)
         print(f"  {os.path.basename(pp)}: {len(bands)}コマ検出 split={split:.2f}")
         crops = []  # ページ全コマを順に並べて1リクエストで関連付けさせる
+        # 1枚目=ページ上部ヘッダ（No.◯ と 表頭）。前付けページの判定に使う。
+        hdr_y = bands[0][0] if bands else int(img.height * 0.10)
+        hb, hc = _crop_b64(img, (0, 0, img.width, max(hdr_y, 1)))
+        if debug_crops:
+            d0 = os.path.join(debug_crops, os.path.splitext(os.path.basename(pp))[0])
+            os.makedirs(d0, exist_ok=True)
+            hc.save(os.path.join(d0, "header.png"))
+        else:
+            crops.append(("ページ上部ヘッダ(No.と表頭)", hb))
         for i, (y0, y1) in enumerate(bands):
             lb, lc = _crop_b64(img, (0, y0, sx, y1))            # scene番号(継続縦棒) + picture
             rb, rc = _crop_b64(img, (sx, y0, img.width, y1))    # action + dialogue + time
