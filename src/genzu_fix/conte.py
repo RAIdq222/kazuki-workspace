@@ -192,6 +192,12 @@ def _cut_key(label: str) -> str:
     return (m.group(1) + m.group(2).upper()) if m else s
 
 
+def _cut_num(label: str):
+    """カット番号の整数部（連番引き継ぎ用）。'259B'->259, 'title'->None。"""
+    m = re.match(r"\s*0*(\d+)", str(label or ""))
+    return int(m.group(1)) if m else None
+
+
 def merge(frames: list[dict], cut_info_csv: str, out_csv: str | None = None,
           overwrite: bool = False) -> dict:
     """frames を cut 番号で突き合わせ、cut_info_csv の situation/remove を埋める。
@@ -333,6 +339,7 @@ def _extraction_prompt_page(glossary: str) -> str:
         "・カット番号と本文が隣り合うコマにまたがる場合も、レイアウトと連番性から正しく1つにまとめる。\n"
         "・番号が読めないコマは、前後のカット番号の連番から補ってよい(その旨 notes に記す)。\n"
         "・番号も本文も無い空コマ(リード/つなぎ/白紙)は出力に含めない。\n"
+        "・**タイトルカード/計算メモ(○○cut+△△cut 等の集計)/前付けなどカットでないページは cuts を空配列[]で返す**。\n"
         "・手書きは崩れている。推測で埋めず、確信の範囲を書き、不確実は confidence を下げ notes に書く。\n\n"
         "【文脈＝誤読防止に必ず使う】\n" + glossary + "\n\n"
         "出力(前後に説明文を付けない、JSONのみ):\n"
@@ -385,6 +392,7 @@ def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.js
     glossary = load_glossary(glossary_path)
     prompt = _extraction_prompt_page(glossary)
     all_frames = []
+    last_cut = 0  # 前ページまでの最後のカット番号（連番をページ越しに引き継ぐ）
     for pp in page_paths:
         img = Image.open(pp)
         bands, split = detect_grid(img.convert("L"))
@@ -404,11 +412,16 @@ def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.js
             crops.append((f"コマ{i} 右(本文)", rb))
         if debug_crops:
             continue
-        cuts = _vision_page(crops, prompt, model, api_key)
+        ctx = (prompt + f"\n【継続情報】前ページまでの最後のカット番号は {last_cut}。"
+               "このページのカットはそれ以降の連番。ページに描かれた丸番号を優先し、無い所だけ連番で補完。")
+        cuts = _vision_page(crops, ctx, model, api_key)
         for j, fr in enumerate(cuts):
             fr["_page"] = os.path.basename(pp)
             fr["_idx"] = j
             all_frames.append(fr)
+            n = _cut_num(fr.get("cut_label", ""))
+            if n is not None:
+                last_cut = max(last_cut, n)
             print(f"    cut={fr.get('cut_label','')!r} conf={fr.get('confidence','')} "
                   f"action={(fr.get('action','') or '')[:28]}")
     if debug_crops:
