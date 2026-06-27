@@ -334,7 +334,7 @@ def _extraction_prompt_page(glossary: str) -> str:
         "・手書きは崩れている。推測で埋めず、確信の範囲を書き、不確実は confidence を下げ notes に書く。\n\n"
         "【文脈＝誤読防止に必ず使う】\n" + glossary + "\n\n"
         "出力(前後に説明文を付けない、JSONのみ):\n"
-        '{"cuts":[{"cut_label":"カット番号(例 8, 16A)。補完したら notes に明記",'
+        '{"cuts":[{"cut_label":"カット番号。差し込みは英字枝番つき 例 8 / 16A / 259B(Bを落とさない)。補完したら notes に明記",'
         '"action":"action欄。カメラ用語は上の正規形に寄せる",'
         '"dialogue":"dialogue欄","se":"効果音があれば",'
         '"time":"time欄。秒+コマ表記(例 4+12)。分数読みは誤り",'
