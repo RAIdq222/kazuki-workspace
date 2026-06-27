@@ -353,7 +353,8 @@ def _extraction_prompt_page(glossary: str) -> str:
         "または空にして notes に『要確認』と記す。場面(場所・時代)に合わない人物名は選ばない。\n\n"
         "【文脈＝誤読防止に必ず使う】\n" + glossary + "\n\n"
         "出力(前後に説明文を付けない、JSONのみ):\n"
-        '{"cuts":[{"cut_label":"カット番号。差し込みは英字枝番つき 例 8 / 16A / 259B(Bを落とさない)。補完したら notes に明記",'
+        '{"cuts":[{"cut_label":"カット番号(整数)。**続き(縦棒/番号なし)のコマに枝番を振らず直前カットに統合**。'
+        '英字枝番(259B等)は用紙に明示的に英字が描かれた差し込みカットのときだけ。補完したら notes に明記",'
         '"action":"action欄。カメラ用語は上の正規形に寄せる",'
         '"dialogue":"dialogue欄","se":"効果音があれば",'
         '"time":"time欄。秒+コマ表記(例 4+12)。分数読みは誤り",'
@@ -595,7 +596,10 @@ def consolidate(frames_json: str = "runs/conte_frames_v2_ep7.json",
     by: dict[str, dict] = {}
     rank = {"high": 3, "medium": 2, "low": 1, "": 1}
     for fr in frames:
-        k = _cut_key(fr.get("cut_label", ""))
+        # 枝番(英字/-cont)は基数に統合＝「続き」は同一カット。明示的枝番カットは人手で後付けする方針。
+        raw = _cut_key(fr.get("cut_label", ""))
+        nn = _cut_num(raw)
+        k = str(nn) if nn is not None else raw
         if not k or k == "-":
             continue
         if k not in by:
