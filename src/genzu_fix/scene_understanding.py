@@ -26,9 +26,11 @@ from __future__ import annotations
 
 import base64
 import csv
+import io
 import json
 import os
 import re
+import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
 
@@ -424,13 +426,33 @@ def _parse_json_obj(text: str) -> dict:
     return {}
 
 
-def _anthropic_call(role_in: dict, model: str, api_key: str, max_tokens: int = 4096) -> dict:
+def _encode_image(path: str, max_edge: int = 1568) -> tuple[str, str]:
+    """画像を長辺 max_edge 以下に縮小して (media_type, base64) を返す。
+    原図PNGは大きく、そのまま送るとVision呼び出しが遅い（Anthropicも内部で1568へ縮小する）。"""
+    try:
+        from PIL import Image
+        im = Image.open(path)
+        w, h = im.size
+        if max(w, h) > max_edge:
+            s = max_edge / max(w, h)
+            im = im.convert("RGB").resize((max(1, int(w * s)), max(1, int(h * s))))
+        else:
+            im = im.convert("RGB")
+        buf = io.BytesIO()
+        im.save(buf, format="PNG", optimize=True)
+        return "image/png", base64.standard_b64encode(buf.getvalue()).decode("ascii")
+    except Exception:  # PIL不在/壊れ等は原本をそのまま送る
+        with open(path, "rb") as fh:
+            b64 = base64.standard_b64encode(fh.read()).decode("ascii")
+        return ("image/png" if path.lower().endswith(".png") else "image/jpeg"), b64
+
+
+def _anthropic_call(role_in: dict, model: str, api_key: str,
+                    max_tokens: int = 4096, timeout: int = 180) -> dict:
     """1役分（system＋許可入力＋画像＋schema）を Claude に渡し JSON を返す。役ごとに独立リクエスト。"""
     content: list[dict] = []
     for img in role_in.get("images", []):
-        with open(img, "rb") as fh:
-            b64 = base64.standard_b64encode(fh.read()).decode("ascii")
-        media = "image/png" if img.lower().endswith(".png") else "image/jpeg"
+        media, b64 = _encode_image(img)
         content.append({"type": "image",
                         "source": {"type": "base64", "media_type": media, "data": b64}})
     instr = (role_in["text"] + "\n\n出力は次のJSONスキーマに厳密に従い、**JSONのみ**返す"
@@ -442,8 +464,14 @@ def _anthropic_call(role_in: dict, model: str, api_key: str, max_tokens: int = 4
         ANTHROPIC_URL, data=json.dumps(body).encode("utf-8"),
         headers={"x-api-key": api_key, "anthropic-version": ANTHROPIC_VERSION,
                  "content-type": "application/json"}, method="POST")
-    with urllib.request.urlopen(req) as resp:
-        data = json.loads(resp.read().decode("utf-8"))
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", "replace")[:500]
+        raise SystemExit(f"Anthropic APIエラー {e.code}: {detail}")
+    except urllib.error.URLError as e:
+        raise SystemExit(f"Anthropic API 接続失敗: {e.reason}（ネット/プロキシ要確認）")
     text = "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
     return _parse_json_obj(text)
 
@@ -474,18 +502,31 @@ def run(cut: str, genzu_dir: str | None = None, model: str = DEFAULT_MODEL,
     if not api_key:
         raise SystemExit("ANTHROPIC_API_KEY が未設定です（conte extract と同じ）。")
 
-    step0 = _anthropic_call(step0_inputs(b), model, api_key).get("scene_line", "")
-    print(f"step0: {step0}")
-    k1 = (_anthropic_call(role_inputs("kanten1", b, step0), model, api_key)
-          if not b.genzu_pending else {"status": "未実行", "reason": "原図PNG未着"})
-    k2 = _anthropic_call(role_inputs("kanten2", b, step0), model, api_key)
-    k3 = _anthropic_call(role_inputs("kanten3", b, step0), model, api_key)
+    def _step(label, fn):
+        print(f"  … {label} 実行中", flush=True)
+        r = fn()
+        print(f"  ✓ {label} 完了", flush=True)
+        return r
+
+    step0 = _step("step0(コンテ要約)",
+                  lambda: _anthropic_call(step0_inputs(b), model, api_key)).get("scene_line", "")
+    print(f"step0: {step0}", flush=True)
+    if b.genzu_pending:
+        k1 = {"status": "未実行", "reason": "原図PNG未着"}
+        print("  － 観点1(原図) スキップ（原図未着）", flush=True)
+    else:
+        k1 = _step("観点1(原図/画像Vision)",
+                   lambda: _anthropic_call(role_inputs("kanten1", b, step0), model, api_key))
+    k2 = _step("観点2(コンテ)",
+               lambda: _anthropic_call(role_inputs("kanten2", b, step0), model, api_key))
+    k3 = _step("観点3(原図＋ボード＋設定)",
+               lambda: _anthropic_call(role_inputs("kanten3", b, step0), model, api_key))
 
     ii = integrate_inputs(b, step0, k1, k2, k3)
     if b.genzu_pending:
         ii["text"] += ("\n\n※観点1(原図忠実)は原図PNG未着のため未実行。"
                        "原図に依存する判断は確定せず『要・原図確認』アラートに倒すこと。")
-    integrated = _anthropic_call(ii, model, api_key)
+    integrated = _step("統合(裁定)", lambda: _anthropic_call(ii, model, api_key))
 
     n = int(re.match(r"(\d+)", _norm(cut)).group(1))
     os.makedirs(out_dir, exist_ok=True)
