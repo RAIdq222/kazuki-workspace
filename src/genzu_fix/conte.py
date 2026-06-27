@@ -585,6 +585,58 @@ def ensure_overrides_template(overrides_csv: str = OVERRIDES_CSV) -> None:
     print(f"作成: {overrides_csv}（cut と直したい列だけ書けばよい。空欄は無視）")
 
 
+def consolidate(frames_json: str = "runs/conte_frames_v2_ep7.json",
+                out_csv: str = "runs/conte_v2_ep7.csv") -> int:
+    """extract2 の frames を cut 番号で統合（跨り/重複を1カットに結合）して per-cut CSV を書く。
+    列: cut, action, dialogue, se, time, characters, confidence, notes。これが新しいコンテ読みの正。"""
+    with open(frames_json, encoding="utf-8") as f:
+        frames = json.load(f).get("frames", [])
+    order: list[str] = []
+    by: dict[str, dict] = {}
+    rank = {"high": 3, "medium": 2, "low": 1, "": 1}
+    for fr in frames:
+        k = _cut_key(fr.get("cut_label", ""))
+        if not k or k == "-":
+            continue
+        if k not in by:
+            by[k] = {"cut": k, "action": [], "dialogue": [], "se": [], "time": [],
+                     "characters": [], "confidence": "high", "notes": []}
+            order.append(k)
+        r = by[k]
+        for col in ("action", "dialogue", "se", "time"):
+            v = (fr.get(col) or "").strip()
+            if v and v not in r[col]:
+                r[col].append(v)
+        for c in fr.get("characters") or []:
+            if c and c not in r["characters"]:
+                r["characters"].append(c)
+        if fr.get("notes"):
+            r["notes"].append(fr["notes"].strip())
+        # 結合カットの confidence は最も低いものに合わせる（保守的）
+        if rank.get((fr.get("confidence") or "").lower(), 1) < rank.get(r["confidence"], 3):
+            r["confidence"] = (fr.get("confidence") or "").lower()
+    # 番号順（枝番は数値→英字でソート）
+    def sk(k):
+        m = re.match(r"(\d+)([A-Za-z]*)", k)
+        return (int(m.group(1)), m.group(2)) if m else (10**9, k)
+    rows = []
+    for k in sorted(by, key=sk):
+        r = by[k]
+        rows.append({"cut": k,
+                     "action": " / ".join(r["action"]), "dialogue": " / ".join(r["dialogue"]),
+                     "se": " / ".join(r["se"]), "time": " / ".join(r["time"]),
+                     "characters": "、".join(r["characters"]),
+                     "confidence": r["confidence"], "notes": " ｜ ".join(r["notes"])})
+    os.makedirs(os.path.dirname(out_csv) or ".", exist_ok=True)
+    with open(out_csv, "w", encoding="utf-8-sig", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=["cut", "action", "dialogue", "se", "time",
+                                          "characters", "confidence", "notes"])
+        w.writeheader()
+        w.writerows(rows)
+    print(f"wrote {out_csv}: {len(rows)} cuts（{len(frames)} frames を統合）")
+    return len(rows)
+
+
 def _looks_garbled(s: str) -> bool:
     """意味が通らなそうな読みの簡易判定（人名でなく本文の崩れ向け）。"""
     s = (s or "").strip()
@@ -719,6 +771,10 @@ def main(argv=None) -> None:
     io_ = sub.add_parser("init-overrides", help="訂正レイヤーCSVの空テンプレを作る")
     io_.add_argument("--overrides", default=OVERRIDES_CSV)
 
+    cs = sub.add_parser("consolidate", help="extract2のframesをcut番号で統合しper-cut CSVに")
+    cs.add_argument("--frames", default="runs/conte_frames_v2_ep7.json")
+    cs.add_argument("--out", default="runs/conte_v2_ep7.csv")
+
     r2 = sub.add_parser("review2", help="extract2のframesを confidence/notesで色分けレビュー(🔴要チェック)")
     r2.add_argument("--frames", default="runs/conte_frames_v2_ep7.json")
     r2.add_argument("--overrides", default=OVERRIDES_CSV)
@@ -766,6 +822,8 @@ def main(argv=None) -> None:
                 print("→ 自動オープン不可。上のパスをブラウザで開いてください。")
     elif a.cmd == "init-overrides":
         ensure_overrides_template(a.overrides)
+    elif a.cmd == "consolidate":
+        consolidate(a.frames, a.out)
     elif a.cmd == "review2":
         out = review_v2(a.frames, a.overrides, a.pages_dir, a.out, a.only_flagged)
         ap_ = os.path.abspath(out)
