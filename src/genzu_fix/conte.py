@@ -403,6 +403,17 @@ def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.js
             raise RuntimeError("ANTHROPIC_API_KEY が未設定です。")
     glossary = load_glossary(glossary_path)
     prompt = _extraction_prompt_page(glossary)
+    # 正規の枝番カット一覧を cut_board_map から注入＝枝番の位置をモデルに教える(捏造防止/読み落とし防止)
+    ref = "runs/cut_board_map_ep7.csv"
+    if os.path.exists(ref):
+        with open(ref, encoding="utf-8-sig") as rf:
+            br = sorted({_cut_key(r.get("cut", "")) for r in csv.DictReader(rf)
+                         if re.search(r"[A-Za-z]$", _cut_key(r.get("cut", "")))},
+                        key=lambda x: (int(re.match(r"\d+", x).group()), x))
+        if br:
+            prompt += ("\n【このエピソードに実在する枝番カット】" + " / ".join(br) +
+                       "。**これらの位置では用紙の丸番号の英字(A/B)を必ず読む**。"
+                       "リストに無いコマに枝番を振らない（続きは直前カットに統合）。")
     all_frames = []
     last_cut = 0  # 前ページまでの最後のカット番号（連番をページ越しに引き継ぐ）
     for pp in page_paths:
@@ -695,10 +706,16 @@ def _looks_garbled(s: str) -> bool:
     return len(s) >= 2 and jp == 0
 
 
+EP7_SPEAKERS = ["SE", "M(モノローグ)", "ナレーション", "尚善", "道然", "呂仁", "黄爺さん",
+                "芦花婆さん", "苗", "苗(子供)", "近所の男の子", "沈公子", "花家妻", "花家爺",
+                "花家主人", "家来"]
+
+
 def review_v2(csv_path: str = "runs/conte_v2_ep7.csv", pages_dir: str | None = None,
               out_html: str = "work/conte_review2.html", only_flagged: bool = False) -> str:
     """運用向けコンテ・エディタ。conte_v2 CSV を読み、ページ画像(左・固定)と各カットの編集欄(右)を並置。
-    cut番号も編集可／台詞・SEは種別プルダウン＋行追加／カット削除・挿入／『訂正済みコンテ全体』を書き出す。
+    絵コンテ構成 action→dialogue→time を維持。dialogueは話者(誰のセリフか)を選んで複数行入力。
+    cut番号も編集可／カット削除・挿入／『訂正済みコンテ全体』を書き出す。
     途中保存(<csv>.corrected.csv)があればそれを開く。色=confidence(🔴low/🟡medium/通常high)。"""
     cor = os.path.splitext(csv_path)[0] + ".corrected.csv"
     src = cor if os.path.exists(cor) else csv_path
@@ -724,23 +741,24 @@ def review_v2(csv_path: str = "runs/conte_v2_ep7.csv", pages_dir: str | None = N
         ".hd{display:flex;align-items:center;gap:6px;margin-bottom:2px}"
         "label{display:flex;gap:6px;align-items:baseline;margin:2px 0}"
         ".f{flex:1;border:1px solid #cbd5e1;border-radius:4px;padding:1px 6px;min-height:1.35em;background:#fff}"
-        ".f:focus{outline:2px solid #4493f8;background:#fffef0}.f.ch{background:#fff7d6;border-color:#f0b400}"
+        ".f:focus{outline:2px solid #4493f8;background:#fffef0}"
         ".cutno{flex:0 0 56px;text-align:center;font-weight:bold}"
-        ".audio{margin:2px 0}.line{display:flex;gap:5px;align-items:center;margin:2px 0}"
-        ".ty{flex:0 0 64px}.atext{flex:1}"
-        ".mini{font-size:11px;padding:1px 7px;cursor:pointer}.add{margin-left:70px}"
+        ".dia{margin:2px 0}.dlbl{color:#888;font-size:11px}"
+        ".line{display:flex;gap:5px;align-items:center;margin:2px 0 2px 44px}"
+        ".spk{flex:0 0 110px}.dtext{flex:1}"
+        ".mini{font-size:11px;padding:1px 7px;cursor:pointer}.add{margin-left:44px}"
         "#bar{position:fixed;bottom:0;left:0;right:0;background:#1f2328;color:#fff;padding:8px 14px;"
         "display:flex;gap:12px;align-items:center;z-index:9}#bar button{font-size:14px;padding:6px 14px;cursor:pointer}")
 
     js = r"""
 function val(e){return e?e.innerText.trim():'';}
-function mark(e){e.classList.toggle('ch', e.innerText.trim()!==(e.dataset.orig||''));}
-function lineHTML(ty,txt){
- return "<div class='line'><select class='ty'><option"+(ty=='SE'?' selected':'')+">SE</option>"
-  +"<option"+(ty!='SE'?' selected':'')+">セリフ</option></select>"
-  +"<span class='f atext' contenteditable='true'>"+(txt||'')+"</span>"
+function spkOpts(){return SPEAKERS.map(function(s){return "<option value='"+s+"'>";}).join('');}
+function lineHTML(spk,txt){
+ return "<div class='line'><input class='spk' list='speakers' placeholder='話者/SE' value=\""
+  +(spk||'').replace(/"/g,'&quot;')+"\">"
+  +"<span class='f dtext' contenteditable='true'>"+(txt||'')+"</span>"
   +"<button class='mini' onclick='delLine(this)'>×</button></div>";}
-function addLine(btn){btn.insertAdjacentHTML('beforebegin', lineHTML('セリフ',''));}
+function addLine(btn){btn.insertAdjacentHTML('beforebegin', lineHTML('',''));}
 function delLine(x){x.parentElement.remove();}
 function delCut(btn){if(confirm('このカットを削除しますか？'))btn.closest('.cut').remove();}
 function cutHTML(page){
@@ -749,38 +767,41 @@ function cutHTML(page){
   +"<button class='mini' onclick='insCut(this)'>＋カット</button>"
   +"<button class='mini' onclick='delCut(this)'>🗑</button></div>"
   +"<label><span class='lbl'>action</span><span class='f' data-field='action' contenteditable='true'></span></label>"
+  +"<div class='dia'><span class='dlbl'>dialogue（話者＋セリフ）</span>"+lineHTML('','')
+  +"<button class='mini add' onclick='addLine(this)'>＋行</button></div>"
   +"<label><span class='lbl'>time</span><span class='f' data-field='time' contenteditable='true'></span></label>"
-  +"<div class='audio'><span class='lbl'>音/台詞</span>"+lineHTML('セリフ','')
-  +"<button class='mini add' onclick='addLine(this)'>＋行</button></div></div>";}
+  +"</div>";}
 function insCut(btn){var c=btn.closest('.cut');c.insertAdjacentHTML('afterend',cutHTML(c.dataset.page||''));}
 function exportCSV(){
- var R=[['cut','page','action','dialogue','se','time']];
+ var R=[['cut','page','action','dialogue','time']];
  document.querySelectorAll('.cut').forEach(function(c){
   var cut=val(c.querySelector('.cutno')); if(!cut) return;
   var action=val(c.querySelector("[data-field='action']"));
   var time=val(c.querySelector("[data-field='time']"));
-  var se=[],dl=[];
+  var dl=[];
   c.querySelectorAll('.line').forEach(function(ln){
-   var ty=ln.querySelector('.ty').value, tx=val(ln.querySelector('.atext'));
-   if(tx)(ty=='SE'?se:dl).push(tx);});
-  R.push([cut, c.dataset.page||'', action, dl.join(' / '), se.join(' / '), time]);});
+   var spk=ln.querySelector('.spk').value.trim(), tx=val(ln.querySelector('.dtext'));
+   if(tx) dl.push(spk? spk+'：'+tx : tx);});
+  R.push([cut, c.dataset.page||'', action, dl.join(' / '), time]);});
  var s=R.map(function(r){return r.map(function(x){return '"'+(x||'').replace(/"/g,'""')+'"';}).join(',');}).join('\r\n');
  var b=new Blob(['﻿'+s],{type:'text/csv'});var a=document.createElement('a');
  a.href=URL.createObjectURL(b);a.download='conte_v2_ep7.corrected.csv';a.click();}
 """
+    js = "var SPEAKERS=" + json.dumps(EP7_SPEAKERS, ensure_ascii=False) + ";\n" + js
 
-    def line_html(ty, txt):
-        s1 = " selected" if ty == "SE" else ""
-        s2 = " selected" if ty != "SE" else ""
-        return (f"<div class='line'><select class='ty'><option{s1}>SE</option>"
-                f"<option{s2}>セリフ</option></select>"
-                f"<span class='f atext' contenteditable='true'>{esc(txt)}</span>"
+    def line_html(spk, txt):
+        return (f"<div class='line'><input class='spk' list='speakers' placeholder='話者/SE' "
+                f"value=\"{esc(spk).replace(chr(34), '&quot;')}\">"
+                f"<span class='f dtext' contenteditable='true'>{esc(txt)}</span>"
                 f"<button class='mini' onclick='delLine(this)'>×</button></div>")
 
+    datalist = "<datalist id='speakers'>" + "".join(
+        f"<option value='{esc(s)}'>" for s in EP7_SPEAKERS) + "</datalist>"
     H = [f"<!doctype html><meta charset='utf-8'><title>conte editor</title><style>{css}</style>",
-         f"<script>{js}</script>", "<h1>絵コンテ 編集（訂正済みコンテを書き出す）</h1>",
-         "<p class='lbl'>左=ページ画像／右=各カット。cut番号・action・time を直接編集、台詞/SEは種別プルダウン＋『＋行』。"
-         "カットの『🗑』削除／『＋カット』下に挿入。下の💾で <b>conte_v2_ep7.corrected.csv</b> を書き出し、runs/ に置けば正データ。</p>"]
+         f"<script>{js}</script>", datalist, "<h1>絵コンテ 編集（訂正済みコンテを書き出す）</h1>",
+         "<p class='lbl'>左=ページ画像／右=各カット(action→dialogue→time)。dialogueは話者を選び『＋行』で複数。"
+         "cut番号・action・time も編集可。『🗑』削除／『＋カット』挿入。"
+         "下の💾で <b>conte_v2_ep7.corrected.csv</b> を書き出し、runs/ に置けば正データ。</p>"]
     n_flag = 0
     for page, items in by_page.items():
         cuts_html = []
@@ -793,9 +814,12 @@ function exportCSV(){
                 n_flag += 1
             cls = "red" if flagged else ("yel" if conf == "medium" else "hi")
             lines = [("SE", t) for t in (r.get("se") or "").split(" / ") if t.strip()]
-            lines += [("セリフ", t) for t in (r.get("dialogue") or "").split(" / ") if t.strip()]
+            for t in (r.get("dialogue") or "").split(" / "):
+                if t.strip():
+                    sp, _, tx = t.partition("：")
+                    lines.append((sp, tx) if tx else ("", t.strip()))
             if not lines:
-                lines = [("セリフ", "")]
+                lines = [("", "")]
             note = f"<div class='note'>⚠ {esc(r.get('notes',''))}</div>" if r.get("notes") else ""
             cuts_html.append(
                 f"<div class='cut {cls}' data-page='{esc(page)}'>"
@@ -806,11 +830,11 @@ function exportCSV(){
                 f"<button class='mini' onclick='delCut(this)'>🗑</button></div>"
                 f"<label><span class='lbl'>action</span>"
                 f"<span class='f' data-field='action' contenteditable='true'>{esc(r.get('action',''))}</span></label>"
+                f"<div class='dia'><span class='dlbl'>dialogue（話者＋セリフ）</span>"
+                + "".join(line_html(sp, tx) for sp, tx in lines)
+                + "<button class='mini add' onclick='addLine(this)'>＋行</button></div>"
                 f"<label><span class='lbl'>time</span>"
                 f"<span class='f' data-field='time' contenteditable='true'>{esc(r.get('time',''))}</span></label>"
-                f"<div class='audio'><span class='lbl'>音/台詞</span>"
-                + "".join(line_html(t, x) for t, x in lines)
-                + "<button class='mini add' onclick='addLine(this)'>＋行</button></div>"
                 + note + "</div>")
         if not cuts_html:
             continue
@@ -824,11 +848,11 @@ function exportCSV(){
                  + "".join(cuts_html) + "</div></div>")
     H.append("<div id='bar'><button onclick='exportCSV()'>💾 訂正済みコンテを書き出す</button>"
              "<span class='lbl'>※ ダウンロードした conte_v2_ep7.corrected.csv を runs/ に保存→これが正データ。"
-             "再開は review2 --csv runs/conte_v2_ep7.csv（corrected があれば自動で続きから）</span></div>")
+             "再開は同じコマンドで（corrected を自動で続きから）</span></div>")
     os.makedirs(os.path.dirname(out_html) or ".", exist_ok=True)
     with open(out_html, "w", encoding="utf-8") as f:
         f.write("\n".join(H))
-    print(f"wrote {out_html}: {len(rows)} cuts（{'corrected読込' if src==cor else 'baseline'}）/ 要チェック {n_flag}")
+    print(f"wrote {out_html}: {len(rows)} cuts（{'corrected読込' if src == cor else 'baseline'}）/ 要チェック {n_flag}")
     return out_html
 
 
