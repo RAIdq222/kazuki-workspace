@@ -585,6 +585,94 @@ def ensure_overrides_template(overrides_csv: str = OVERRIDES_CSV) -> None:
     print(f"作成: {overrides_csv}（cut と直したい列だけ書けばよい。空欄は無視）")
 
 
+def _looks_garbled(s: str) -> bool:
+    """意味が通らなそうな読みの簡易判定（人名でなく本文の崩れ向け）。"""
+    s = (s or "").strip()
+    if not s:
+        return False
+    if "�" in s or "??" in s:
+        return True
+    # 記号・読点だけ/極端に短い断片
+    jp = sum(1 for c in s if "ぁ" <= c <= "ん" or "ァ" <= c <= "ヶ" or "一" <= c <= "龥")
+    return len(s) >= 2 and jp == 0
+
+
+def review_v2(frames_json: str = "runs/conte_frames_v2_ep7.json",
+              overrides_csv: str = OVERRIDES_CSV, pages_dir: str | None = None,
+              out_html: str = "work/conte_review2.html", only_flagged: bool = False) -> str:
+    """extract2 の frames を confidence/notes で色分けレビュー。
+    🔴=要チェック(low/崩れ/notesに要確認) / 🟡=medium / 通常=high / 🟢=訂正済。ページ画像と並置。"""
+    with open(frames_json, encoding="utf-8") as f:
+        frames = json.load(f).get("frames", [])
+    ov = load_overrides(overrides_csv)
+    by_page: dict[str, list[dict]] = {}
+    for fr in frames:
+        by_page.setdefault(fr.get("_page", "（ページ不明）"), []).append(fr)
+
+    def esc(s):
+        return str(s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+    H = ["<!doctype html><meta charset='utf-8'><title>conte review2</title>",
+         "<style>body{font:14px/1.6 sans-serif;margin:20px}h2{border-bottom:2px solid #888;margin-top:28px}"
+         ".cut{border:1px solid #ccc;border-radius:6px;padding:8px 12px;margin:8px 0}"
+         ".red{background:#ffebe9;border-color:#cf222e}.yel{background:#fff7e6;border-color:#f0b400}"
+         ".grn{background:#e6ffed;border-color:#2da44e}.lbl{color:#888;font-size:12px}"
+         ".note{color:#cf222e;font-size:12px}.cor{color:#2da44e;font-weight:bold}"
+         "img{max-width:560px;border:1px solid #ddd;display:block;margin:6px 0}</style>",
+         "<h1>絵コンテ 読みレビュー（extract2）</h1>",
+         "<p class='lbl'>🔴=要チェック(confidence低/崩れ/要確認) 🟡=中 通常=高 🟢=訂正済。"
+         f"直すには <code>{esc(overrides_csv)}</code> に cut 行を作り action/dialogue/se/time を上書き。</p>"]
+    n_flag = 0
+    for page, items in by_page.items():
+        rows = []
+        for fr in items:
+            cut = fr.get("cut_label", "")
+            fixes = ov.get(_cut_key(cut), {})
+            corrected = []
+            for fld in OVERRIDE_FIELDS:
+                if fixes.get(fld):
+                    fr[fld] = fixes[fld]
+                    corrected.append(fld)
+            conf = (fr.get("confidence") or "").lower()
+            notes = fr.get("notes", "")
+            # 赤＝本当に怪しい所だけ: 低confidence または 日本語が読めない崩れ。
+            # （notesの「推測/判読」はほぼ毎カット出るので赤トリガにしない＝表示のみ）
+            flagged = conf == "low" or _looks_garbled(fr.get("action", ""))
+            if only_flagged and not (flagged or corrected):
+                continue
+            cls = "grn" if corrected else ("red" if flagged else ("yel" if conf == "medium" else ""))
+            badge = "🟢" if corrected else ("🔴" if flagged else ("🟡" if conf == "medium" else "🟦"))
+            if flagged and not corrected:
+                n_flag += 1
+            body = [f"<div class='cut {cls}'><b>cut {esc(cut)}</b> {badge} "
+                    f"<span class='lbl'>conf={esc(conf)}</span>"]
+            for fld in ("action", "dialogue", "se", "time"):
+                if fr.get(fld):
+                    tag = "cor" if fld in corrected else "lbl"
+                    body.append(f"<div><span class='lbl'>{fld}</span> "
+                                f"<span class='{tag}'>{esc(fr.get(fld))}</span></div>")
+            if fr.get("characters"):
+                body.append(f"<div class='lbl'>characters: {esc('、'.join(fr.get('characters')))}</div>")
+            if notes:
+                body.append(f"<div class='note'>⚠ {esc(notes)}</div>")
+            body.append("</div>")
+            rows.append("".join(body))
+        if not rows:
+            continue
+        H.append(f"<h2>{esc(page)}</h2>")
+        if pages_dir:
+            p = os.path.join(pages_dir, page)
+            if os.path.exists(p):
+                rel = os.path.relpath(p, os.path.dirname(os.path.abspath(out_html)) or ".")
+                H.append(f"<img src='{esc(rel)}' alt='{esc(page)}'>")
+        H.extend(rows)
+    os.makedirs(os.path.dirname(out_html) or ".", exist_ok=True)
+    with open(out_html, "w", encoding="utf-8") as f:
+        f.write("\n".join(H))
+    print(f"wrote {out_html}: {len(frames)} cuts / 要チェック {n_flag} 件")
+    return out_html
+
+
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
@@ -631,6 +719,14 @@ def main(argv=None) -> None:
     io_ = sub.add_parser("init-overrides", help="訂正レイヤーCSVの空テンプレを作る")
     io_.add_argument("--overrides", default=OVERRIDES_CSV)
 
+    r2 = sub.add_parser("review2", help="extract2のframesを confidence/notesで色分けレビュー(🔴要チェック)")
+    r2.add_argument("--frames", default="runs/conte_frames_v2_ep7.json")
+    r2.add_argument("--overrides", default=OVERRIDES_CSV)
+    r2.add_argument("--pages-dir", default=None)
+    r2.add_argument("--out", default="work/conte_review2.html")
+    r2.add_argument("--only-flagged", action="store_true", help="要チェック/訂正済のカットだけ表示")
+    r2.add_argument("--no-open", action="store_true")
+
     a = ap.parse_args(argv)
     if a.cmd == "render":
         render(a.pdf, a.out, a.dpi, a.first, a.last)
@@ -670,6 +766,16 @@ def main(argv=None) -> None:
                 print("→ 自動オープン不可。上のパスをブラウザで開いてください。")
     elif a.cmd == "init-overrides":
         ensure_overrides_template(a.overrides)
+    elif a.cmd == "review2":
+        out = review_v2(a.frames, a.overrides, a.pages_dir, a.out, a.only_flagged)
+        ap_ = os.path.abspath(out)
+        print(f"開く: {ap_}")
+        if not a.no_open:
+            try:
+                import webbrowser
+                webbrowser.open("file:///" + ap_.replace("\\", "/"))
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":
