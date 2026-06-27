@@ -185,16 +185,17 @@ def extract(image_paths: list[str], out_json: str, model: str = DEFAULT_MODEL,
 # ---------------------------------------------------------------------------
 # 3. merge : frames → cut_scene_info_ep7.csv の situation/remove
 # ---------------------------------------------------------------------------
-def _cut_key(label: str) -> str:
-    """カット番号の正規化キー（前ゼロを落とす。枝番は保持）。例 '015'->'15', '016A'->'16A'。"""
-    s = (label or "").strip()
+def _cut_key(label) -> str:
+    """カット番号の正規化キー（前ゼロを落とす。枝番は保持）。例 '015'->'15', '016A'->'16A'。
+    モデルが int で返す場合があるため文字列化に頑健にする。"""
+    s = ("" if label is None else str(label)).strip()
     m = re.match(r"0*(\d+)([A-Za-z]?)$", s)
     return (m.group(1) + m.group(2).upper()) if m else s
 
 
-def _cut_num(label: str):
-    """カット番号の整数部（連番引き継ぎ用）。'259B'->259, 'title'->None。"""
-    m = re.match(r"\s*0*(\d+)", str(label or ""))
+def _cut_num(label):
+    """カット番号の整数部（連番引き継ぎ用）。'259B'->259, 'title'->None。int/None でも可。"""
+    m = re.match(r"\s*0*(\d+)", "" if label is None else str(label))
     return int(m.group(1)) if m else None
 
 
