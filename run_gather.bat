@@ -1,35 +1,43 @@
 @echo off
-rem ==== ep7 原図の受け渡し: gather → commit → push をワンクリック (Windows) ====
-rem リポジトリ直下(kazuki-workspace)に置いて実行する。
-rem 原図フォルダがリポジトリの一つ上(..\00.原図)にある前提。違う場合は GENZU を書き換える。
-rem 対象カットは scripts\gather_handoff_ep7.py の既定(15,23,47,53,207,240,257,274,293,294)。
-
-setlocal
-cd /d "%~dp0"
 chcp 65001 >nul
+rem ===== ep7 genzu handoff: gather -> commit -> push (one click) =====
+rem Run from repo root (kazuki-workspace).
+rem GENZU defaults to ..\00.原図 (one level above the repo). Edit if different.
+rem Target cuts are the default set in scripts\gather_handoff_ep7.py.
+
+setlocal enabledelayedexpansion
+cd /d "%~dp0"
 
 set "GENZU=..\00.原図"
 set "CONTE="
 
 if not exist "%GENZU%" (
-  echo [!] 原図フォルダが見つかりません: %GENZU%
-  echo     run_gather.bat の GENZU を実際のフルパスに書き換えてください。
+  echo [!] genzu folder not found: %GENZU%
+  echo     Edit GENZU in run_gather.bat to the real full path.
   pause & exit /b 1
 )
 
-echo === 原図を handoff/ep7 へ書き出し中（大きいPSDは数分かかることがあります）===
+echo === Exporting genzu to handoff/ep7 (large PSDs may take minutes) ===
 if "%CONTE%"=="" (
   python "%~dp0scripts\gather_handoff_ep7.py" --genzu-dir "%GENZU%"
 ) else (
   python "%~dp0scripts\gather_handoff_ep7.py" --genzu-dir "%GENZU%" --conte-dir "%CONTE%"
 )
 
-echo.
-echo === git で受け渡し（commit / push）===
+rem --- ensure a git identity exists (commit fails otherwise) ---
+set "GEMAIL="
+for /f "tokens=*" %%i in ('git config user.email 2^>nul') do set "GEMAIL=%%i"
+if not defined GEMAIL (
+  echo Setting a local git identity (was unset)...
+  git config user.email "kuroe@creatorsx.jp"
+  git config user.name "kuroe"
+)
+
+echo === git add / commit / push ===
 git add handoff/ep7
-git commit -m "data: ep7 10カットの原図受け渡し"
+git commit -m "data: ep7 genzu handoff (10 cuts)"
 git push
 
 echo.
-echo 完了。別セッションで git pull すれば handoff/ep7/cut<NN>/genzu*.png を読めます。
+echo Done. Other sessions: git pull, then read handoff/ep7/cutNNN/genzu_visible.png
 pause
