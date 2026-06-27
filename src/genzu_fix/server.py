@@ -33,6 +33,7 @@ STATE_LOCK = threading.Lock()
 PROJ_LOCK = threading.Lock()
 JOBS = {}
 JOBS_LOCK = threading.Lock()
+OVERVIEWS = {}              # "<work>#<ep>" -> {synopsis, scenes, note}
 
 WORK_NAMES = {"shz": "尚善"}
 
@@ -287,6 +288,36 @@ def create_app():
             out += [unit_view(p, u) for u in p["units"].values()]
         return jsonify(out)
 
+    @app.get("/api/overview")
+    def api_overview():
+        key = request.args.get("key", "")
+        proj = PROJECTS.get(key) or next(
+            (p for p in PROJECTS.values() if p["group"] == key), None)
+        if not proj:
+            return jsonify({"error": "not found"}), 404
+        ov = OVERVIEWS.get(proj["key"]) or OVERVIEWS.get(proj["group"]) or {}
+        # 美術ボードの「登場回数」= そのボードが当たっているカット数で集計（多い順）。
+        from collections import Counter
+        cnt = Counter()
+        for u in proj["units"].values():
+            b = STATE.get(u["id"], {}).get("board", u["board"])
+            if b:
+                cnt[b] += len(u["cuts"]) or 1
+        boards = [{"board": b, "cuts": n, "has_img": b in proj["board_idx"]}
+                  for b, n in cnt.most_common()]
+        return jsonify({"key": proj["key"], "synopsis": ov.get("synopsis", ""),
+                        "scenes": ov.get("scenes", []), "note": ov.get("note", ""),
+                        "boards": boards})
+
+    @app.get("/board-img")
+    def board_img():
+        proj = PROJECTS.get(request.args.get("key", ""))
+        name = request.args.get("name", "")
+        p = proj["board_idx"].get(name) if proj else None
+        if not p or not os.path.exists(p):
+            return "", 404
+        return send_file(os.path.abspath(p))
+
     @app.get("/api/unit/<uid>")
     def api_unit(uid):
         proj, u = _find_unit(uid)
@@ -403,6 +434,17 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
  .pbar>i{display:block;height:100%;background:#1a7f37}
  .grow{flex:1}
  main{padding:12px}
+ .ovbox{background:#fff;border:1px solid #ddd;border-radius:10px;padding:10px 12px;margin-bottom:12px}
+ .ovbox summary{font-weight:700;color:#1a5fb4;cursor:pointer}
+ .ovbox .synopsis{margin:8px 0;font-size:13px;line-height:1.6}
+ .ovbox .scenes{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+ .ovbox .scenes span{background:#eef2f8;border-radius:6px;padding:2px 8px;font-size:11px;color:#345}
+ .ovbox .mbtitle{font-size:12px;color:#666;margin:6px 0 4px}
+ .mboards{display:flex;flex-wrap:wrap;gap:10px}
+ .mboards figure{margin:0;width:140px} .mboards figcaption{font-size:10px;color:#555;margin-top:2px;line-height:1.3}
+ .mboards img{width:140px;height:90px;object-fit:cover;border:1px solid #ddd;border-radius:6px;cursor:zoom-in;background:#fafafa}
+ .mboards .noimg{width:140px;height:90px;border:1px dashed #ccc;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:10px;text-align:center;padding:4px}
+ .ovbox .note{font-size:10px;color:#999;margin-top:8px}
  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px}
  .card{background:#fff;border:1px solid #ddd;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px}
  .card.reject{border-color:#d1242f} .card.accepted{border-color:#1a7f37} .card.running{border-color:#bf8700;box-shadow:0 0 0 2px #ffe6a8}
@@ -466,7 +508,7 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
    <button onclick="rescan()">フォルダ再取得</button><button onclick="refresh()">更新</button>
  </div>
 </header>
-<main><div class="grid" id="grid"></div></main>
+<main><section id="ovbox"></section><div class="grid" id="grid"></div></main>
 
 <div class="ov" id="lb" onclick="this.style.display='none'"><div class="box"><img id="lbimg"></div></div>
 <div id="bpop"><img id="bpopImg"><div class="cap" id="bpopCap"></div></div>
@@ -585,7 +627,26 @@ async function refresh(){
   const a=new Set(UNITS.filter(u=>u.group===GROUP).map(u=>u.assignee));
   const sel=$('#fAssignee'),c=sel.value;
   sel.innerHTML='<option value="">全部</option>'+[...a].sort().map(x=>`<option ${x===c?'selected':''}>${x}</option>`).join('');
+  renderOverview(cur);
   render();
+}
+async function renderOverview(cur){
+  const box=$('#ovbox'); if(!cur){box.innerHTML='';return;}
+  let o; try{o=await (await fetch('/api/overview?key='+encodeURIComponent(cur.key))).json();}catch(e){box.innerHTML='';return;}
+  if(o.error){box.innerHTML='';return;}
+  const scenes=(o.scenes||[]).map(s=>`<span>${esc(s.label)} <b>c${esc(s.cuts)}</b></span>`).join('');
+  const top=(o.boards||[]).slice(0,8);
+  const mb=top.map(b=>{
+    const u='/board-img?key='+encodeURIComponent(cur.key)+'&name='+encodeURIComponent(b.board);
+    const cap=esc(b.board)+' ×'+b.cuts;
+    return `<figure>${b.has_img?`<img loading="lazy" src="${u}" onclick="lb('${u}')">`:`<div class="noimg">${esc(b.board)}</div>`}<figcaption>${cap}</figcaption></figure>`;
+  }).join('');
+  box.innerHTML=`<details class="ovbox" open><summary>話数概要 — ${esc(cur.group)}</summary>
+    ${o.synopsis?`<p class="synopsis">${esc(o.synopsis)}</p>`:'<p class="synopsis muted">（あらすじ未登録）</p>'}
+    ${scenes?`<div class="scenes">${scenes}</div>`:''}
+    <div class="mbtitle">主要シーンの美術ボード（登場カット数が多い順）</div>
+    ${mb?`<div class="mboards">${mb}</div>`:'<div class="muted">ボード未割当 / 画像なし</div>'}
+    ${o.note?`<div class="note">${esc(o.note)}</div>`:''}</details>`;
 }
 function render(){
   const fa=$('#fAssignee').value,fs=$('#fStatus').value,fr=$('#fResult').checked;
@@ -673,6 +734,7 @@ def main(argv=None):
     p.add_argument("--csv", default="runs/cut_board_map_ep7.csv")
     p.add_argument("--boards-dir", default=None)
     p.add_argument("--boards-json", default="runs/boards_ep7.json")
+    p.add_argument("--overview-json", default="runs/ep_overview.json")
     p.add_argument("--work", default="尚善")
     p.add_argument("--ep", default="07")
     p.add_argument("--resolution", default="2k")
@@ -686,6 +748,7 @@ def main(argv=None):
     CFG.update(dict(out=a.out, csv=a.csv, boards_json=a.boards_json,
                     resolution=a.resolution, quality=a.quality, model=a.model,
                     image_flag=a.image_flag, include_book=a.include_book, header_top=a.header_top))
+    OVERVIEWS.update(_load_json(a.overview_json, {}))
     global STATE
     STATE = _load_json(_state_path(), {})
     # 既定プロジェクト（起動引数のCSV）

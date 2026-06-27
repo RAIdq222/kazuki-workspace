@@ -102,6 +102,19 @@ def main():
                 code = urllib.request.urlopen(f"{base}/img/testcut01/{which}").status
                 check(f"/img/{which}=200", code == 200)
 
+            # 話数概要パネル＋主要ボード（登場回数）
+            import json as _json
+            import urllib.parse
+            ov = _json.loads(urllib.request.urlopen(
+                base + "/api/overview?key=" + urllib.parse.quote("テスト#01")).read())
+            check("overview boardsにBoardA", any(b["board"] == "BoardA.png" for b in ov["boards"]))
+            check("overview has_img=true", ov["boards"][0]["has_img"] is True)
+            page.wait_for_selector("#ovbox .mboards", timeout=5000)
+            check("概要パネル描画", page.locator("#ovbox .ovbox").count() >= 1)
+            check("主要ボード画像表示", page.locator("#ovbox .mboards img").count() >= 1)
+            mbsrc = page.get_attribute("#ovbox .mboards img", "src") or ""
+            check("ボード画像=/board-img", "/board-img" in mbsrc)
+
             # 比較を開く（横並びが既定）
             page.evaluate("setCmpMode('side')")
             page.locator("text=前後比較").first.click()
