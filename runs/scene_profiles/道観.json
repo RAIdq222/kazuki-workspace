@@ -1,9 +1,18 @@
 {
   "key": "道観",
-  "_note": "ドラフト：美術ボード #6_山の中道教の寺院… を確認して確定すること",
+  "_note": "考証確定：クライアント参考資料『6話_原作65~84話』より、道観=南岩宮(武当山南岩)。",
   "match": [
     "道観"
   ],
+  "grounding": {
+    "en": "The Daoist temple is modeled on Nanyan Palace (南岩宮) at the Southern Cliff of Wudang Mountain (武当山), Hubei, China: halls built onto a sheer cliff opening to the sky with a deep ravine below, surrounded by mountain peaks. Era is Northern-and-Southern-Dynasties at base, but props span several periods per the client reference (see props_by_era).",
+    "jp": "道観は中国 湖北省・武当山『南岩』の南岩宮が下敷き。断崖に張り付く堂宇、空へ開け足下に深い谷、周囲に峰々。時代は南北朝を基調に、小物は参考資料の年代指定に従い複数時代が混在。",
+    "props_by_era": [
+      "衣紋掛け＝明代", "燭台『銅雁足灯』＝戦国", "食卓・青磁の碗・畳(ベッド)＝南北朝",
+      "食器・提梁盒＝清代", "香炉・蓮形香炉・ドアロック＝年代指定なし"
+    ],
+    "source": "handoff/ep7/assets/6話_原作65~84話_捧げられし少女参考資料_20250226.txt"
+  },
   "place": {
     "en": "a Daoist temple compound in the mountains",
     "jp": "山中の道教寺院（道観）の境内・建屋"
