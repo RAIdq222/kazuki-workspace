@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import base64
 import csv
+import io
 import json
 import os
 import re
@@ -256,6 +257,152 @@ def merge(frames: list[dict], cut_info_csv: str, out_csv: str | None = None,
 
 
 # ---------------------------------------------------------------------------
+# 3.5 extract2 : コマ単位・高解像度・用語集注入のOCR（精度版）
+#   旧 extract はページ丸ごと低解像度で読むため手書きが潰れた。表の罫線を検出して
+#   1カット＝1リクエストで「左=scene番号+picture / 右=action+dialogue+time」を大きく送る。
+#   登場人物・絵コンテ用語（runs/conte_glossary_ep7.md）をプロンプトに差し込み誤読を抑える。
+# ---------------------------------------------------------------------------
+GLOSSARY_MD = "runs/conte_glossary_ep7.md"
+
+
+def load_glossary(path: str = GLOSSARY_MD) -> str:
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+    return "（用語集なし）"
+
+
+def _cluster(idxs, gap: int = 6):
+    """連続/近接インデックスを束ね、各クラスタの中心を返す。"""
+    out = []
+    if len(idxs) == 0:
+        return out
+    s = p = idxs[0]
+    for x in idxs[1:]:
+        if x - p > gap:
+            out.append((s + p) // 2)
+            s = x
+        p = x
+    out.append((s + p) // 2)
+    return out
+
+
+def detect_grid(gray, row_thresh: float = 0.35, col_thresh: float = 0.30,
+                min_band_frac: float = 0.04):
+    """グレースケール配列から、行バンド[(y0,y1)] と picture|action 縦境界(0..1) を返す。"""
+    import numpy as np
+    a = np.asarray(gray)
+    h, w = a.shape
+    dark = (a < 128).astype(np.float32)
+    hlines = _cluster(np.where(dark.mean(axis=1) > row_thresh)[0])
+    bands = [(hlines[i], hlines[i + 1]) for i in range(len(hlines) - 1)
+             if hlines[i + 1] - hlines[i] > h * min_band_frac]
+    vlines = _cluster(np.where(dark.mean(axis=0) > col_thresh)[0])
+    # picture|action 境界 = 0.5*w に最も近い縦罫線（無ければ 0.5）
+    split = 0.5
+    if vlines:
+        cx = min(vlines, key=lambda x: abs(x - 0.5 * w))
+        if 0.35 * w < cx < 0.65 * w:
+            split = cx / w
+    return bands, split
+
+
+def _crop_b64(img, box):
+    """PIL画像を box=(l,t,r,b) で切り PNG base64 を返す。小さければ拡大して可読性確保。"""
+    c = img.crop(box).convert("RGB")
+    if c.width < 1100:
+        s = 1100 / c.width
+        c = c.resize((int(c.width * s), int(c.height * s)))
+    buf = io.BytesIO()
+    c.save(buf, format="PNG")
+    return base64.standard_b64encode(buf.getvalue()).decode("ascii"), c
+
+
+def _extraction_prompt_v2(glossary: str) -> str:
+    return (
+        "あなたは日本の商業アニメ絵コンテを読む専門家です。渡す2枚は**1つのカット（コマ）**の切り出し:\n"
+        "・画像1(左)= scene欄のカット番号 ＋ picture(手描きの絵)。\n"
+        "・画像2(右)= action / dialogue / time 欄(鉛筆の手書き)。\n"
+        "手書きは崩れています。読めない所は推測で埋めず、確信の範囲を書き、不確実は confidence を下げる。\n\n"
+        "【文脈＝誤読防止に必ず使う】\n" + glossary + "\n\n"
+        "次をJSONで返す(前後に説明文なし):\n"
+        '{"cut_label":"scene欄のカット番号。読めねば\\"\\"",'
+        '"action":"action欄。カメラ用語は上の正規形に寄せる",'
+        '"dialogue":"dialogue欄","se":"効果音があれば",'
+        '"time":"time欄。秒+コマ表記(例 4+12)。分数読みは誤り",'
+        '"characters":["登場人物リストの正式名。誤読は正す(例 芦龍→芦花)"],'
+        '"confidence":"high|medium|low","notes":"不確実箇所/保留"}\n'
+        "pictureは動き・対象の判別に使ってよいが、actionは文字として読む。"
+    )
+
+
+def _vision_cut(left_b64: str, right_b64: str, prompt: str,
+                model: str, api_key: str, max_tokens: int = 1500) -> dict:
+    body = {"model": model, "max_tokens": max_tokens,
+            "messages": [{"role": "user", "content": [
+                {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": left_b64}},
+                {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": right_b64}},
+                {"type": "text", "text": prompt}]}]}
+    req = urllib.request.Request(
+        ANTHROPIC_URL, data=json.dumps(body).encode("utf-8"),
+        headers={"x-api-key": api_key, "anthropic-version": ANTHROPIC_VERSION,
+                 "content-type": "application/json"}, method="POST")
+    with urllib.request.urlopen(req, timeout=180) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    text = "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
+    m = re.search(r"\{.*\}", text, re.S)
+    try:
+        return json.loads(m.group(0)) if m else {}
+    except json.JSONDecodeError:
+        return {}
+
+
+def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.json",
+             model: str = DEFAULT_MODEL, api_key: str | None = None,
+             glossary_path: str = GLOSSARY_MD, debug_crops: str | None = None) -> list[dict]:
+    """ページPNG群を、表の行検出→カット単位2枚切り→用語集付きOCR で読む。
+    debug_crops を指定すると API を叩かず、各カットの左右クロップを保存して切り出しを目視確認できる。"""
+    from PIL import Image
+    if not debug_crops:
+        api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
+        if not api_key:
+            raise RuntimeError("ANTHROPIC_API_KEY が未設定です。")
+    glossary = load_glossary(glossary_path)
+    prompt = _extraction_prompt_v2(glossary)
+    all_frames = []
+    for pp in page_paths:
+        img = Image.open(pp)
+        bands, split = detect_grid(img.convert("L"))
+        sx = int(split * img.width)
+        print(f"  {os.path.basename(pp)}: {len(bands)}カット band検出 split={split:.2f}")
+        for i, (y0, y1) in enumerate(bands):
+            left_box = (0, y0, sx, y1)            # scene番号 + picture
+            right_box = (sx, y0, img.width, y1)   # action + dialogue + time
+            lb, lc = _crop_b64(img, left_box)
+            rb, rc = _crop_b64(img, right_box)
+            if debug_crops:
+                d = os.path.join(debug_crops, os.path.splitext(os.path.basename(pp))[0])
+                os.makedirs(d, exist_ok=True)
+                lc.save(os.path.join(d, f"row{i:02d}_left.png"))
+                rc.save(os.path.join(d, f"row{i:02d}_right.png"))
+                continue
+            fr = _vision_cut(lb, rb, prompt, model, api_key)
+            fr["_page"] = os.path.basename(pp)
+            fr["_row"] = i
+            all_frames.append(fr)
+            print(f"    row{i:02d}: cut={fr.get('cut_label','')!r} "
+                  f"conf={fr.get('confidence','')} action={fr.get('action','')[:24]}")
+    if debug_crops:
+        print(f"[debug] 左右クロップを {debug_crops} に保存（APIは未実行）。中身を確認して罫線/列がズレてなければ本実行。")
+        return []
+    os.makedirs(os.path.dirname(out_json) or ".", exist_ok=True)
+    with open(out_json, "w", encoding="utf-8") as f:
+        json.dump({"frames": all_frames}, f, ensure_ascii=False, indent=2)
+    print(f"wrote {out_json}: {len(all_frames)} frames")
+    return all_frames
+
+
+# ---------------------------------------------------------------------------
 # 4. 訂正レイヤー（raw=機械読みは不変。人手の訂正は別CSVに置き、読む側で重ねる）
 #    目的: OCR誤読は避けられない前提で「どこで間違えたか確認」「手軽に直す」を支える。
 # ---------------------------------------------------------------------------
@@ -406,6 +553,15 @@ def main(argv=None) -> None:
     e.add_argument("--out", default="runs/conte_frames_ep7.json")
     e.add_argument("--model", default=DEFAULT_MODEL)
 
+    e2 = sub.add_parser("extract2", help="コマ単位・高解像度・用語集注入の高精度OCR")
+    e2.add_argument("--pages-dir", required=True, help="render の出力ディレクトリ")
+    e2.add_argument("--out", default="runs/conte_frames_v2_ep7.json")
+    e2.add_argument("--model", default=DEFAULT_MODEL)
+    e2.add_argument("--glossary", default=GLOSSARY_MD)
+    e2.add_argument("--debug-crops", default=None,
+                    help="指定するとAPIを叩かず左右クロップを保存（切り出し確認用）")
+    e2.add_argument("--first-page", type=int, default=None, help="先頭Nページだけ（試走用）")
+
     m = sub.add_parser("merge", help="frames JSON を cut_scene_info の situation/remove へ反映")
     m.add_argument("--frames", default="runs/conte_frames_ep7.json")
     m.add_argument("--cut-info", default="runs/cut_scene_info_ep7.csv")
@@ -433,6 +589,15 @@ def main(argv=None) -> None:
         if not imgs:
             sys.exit(f"ページ画像が見つかりません: {a.pages_dir}")
         extract(imgs, a.out, a.model)
+    elif a.cmd == "extract2":
+        imgs = sorted(os.path.join(a.pages_dir, f)
+                      for f in os.listdir(a.pages_dir)
+                      if f.lower().endswith((".png", ".jpg", ".jpeg")))
+        if a.first_page:
+            imgs = imgs[:a.first_page]
+        if not imgs:
+            sys.exit(f"ページ画像が見つかりません: {a.pages_dir}")
+        extract2(imgs, a.out, a.model, glossary_path=a.glossary, debug_crops=a.debug_crops)
     elif a.cmd == "merge":
         frames = json.load(open(a.frames, encoding="utf-8")).get("frames", [])
         merge(frames, a.cut_info, a.out, a.overwrite)
