@@ -71,7 +71,9 @@ KANTEN1_SYSTEM = (
 KANTEN2_SYSTEM = (
     "あなたは『演出の役』。絵コンテの内容と前後カットのつながりから、芝居として正しい形を主張する。\n"
     "・**原図が何を描いているかは一旦置く**（原図は見ていない）。\n"
-    "・このカットの主体は何か。\n"
+    "・絵コンテは手描きのOCR読み取りで**誤読が多い（uncertain）**。人名・固有名は確信度が低い前提で扱い、"
+    "読み取り名を実在の登場人物と決めつけない。確信が持てない要素は basis に『OCR不確実』と明記する。\n"
+    "・このカットの主体は何か（背景カットでは人物でなく“その場所・空間”が主体になりうる）。\n"
     "・主体に従属して、妥当なカメラ（寄り／アングル／フォーカス対象の高さ）はどうあるべきか。\n"
     "・芝居として画面に映るべきもの／映る必要のないものは何か。\n"
     "・カメラは fix か動きがあるか（絵コンテの指定を読む）。\n"
@@ -100,7 +102,13 @@ INTEGRATE_SYSTEM = (
     "  ・構成物は、カットの主体と被らず、描き込みを増やしすぎない解を選ぶ。曖昧な所は断定しない。\n"
     "  ・精査しても割れる／原図と絵コンテが矛盾／どちらの解釈もありうる → 無理に決めず、"
     "**判断が割れたアラート箇所として人間確認にまわす**。\n"
-    "出力は (a) 概要版3行以内（主体・カメラワーク等）、(b) 詳細版、(c) アラート（簡潔に対応すべき内容）。"
+    "【入力健全性の最優先チェック】\n"
+    "  ・観点1が『背景作画線が無い／指示メモ・タップ穴だけ』と報告、または原図がBGonlyなのに人物が主体に"
+    "なっている場合は、**レイヤー誤読＝入力が壊れている疑い**を最優先のアラート『要・原図確認』とし、"
+    "下流（主体・カメラ・構成物）は確定させず暫定に留める。壊れた入力の上に自信ある結論を作らないこと。\n"
+    "  ・人名など固有名はOCR誤読を疑い、実在キャラと断定しない。\n"
+    "出力は (a) 概要版3行以内（主体・カメラワーク等。未確定なら『未確定』と書く）、(b) 詳細版、"
+    "(c) アラート（簡潔に対応すべき内容）。"
 )
 
 # ---------------------------------------------------------------------------
@@ -191,6 +199,9 @@ class Bundle:
     genzu_base_png: str | None = None
     genzu_visible_png: str | None = None
     genzu_pending: bool = True
+    genzu_filename: str = ""          # cut_board_map の PSD ファイル名
+    bg_only: bool = False             # *_BGonly.psd ＝背景のみ（人物は別セル）
+    extract_info: dict | None = None  # export_background_layer の strategy/layers
     # 絵コンテ（cut＋前後）
     conte: list[dict] = field(default_factory=list)
     # 美術ボード
@@ -244,6 +255,8 @@ def assemble(cut: str, context: int = 2) -> Bundle:
         if _norm(r.get("cut", "")) == cut:
             b.board_name = (r.get("board") or "").strip()
             b.scene = r.get("scene", "")
+            b.genzu_filename = (r.get("filename") or "").strip()
+            b.bg_only = "bgonly" in b.genzu_filename.lower()
             break
     for r in _read_csv(_p("runs", "board_manifest_ep7.csv")):
         if (r.get("board") or "").strip() == b.board_name:
@@ -311,6 +324,12 @@ def role_inputs(role: str, b: Bundle, step0: str) -> dict:
     """role ∈ {kanten1,kanten2,kanten3}。各役に**許可された入力だけ**を返す。
     画像（原図/ボード）は images に絶対パスで入れる（ドライバが添付する）。"""
     shared = f"[共有シーン要約] {step0}\n[カット] cut{b.cut}（{b.scene}）"
+    if b.bg_only:
+        shared += (f"\n[重要] 原図ファイルは {b.genzu_filename}＝**背景のみ(BGonly)**。"
+                   "人物・キャラは別セルに分かれ本図には描かれない。主体を人物にしないこと。")
+    if b.extract_info and b.extract_info.get("strategy") == "fallback":
+        shared += ("\n[警告] 原図の背景作画レイヤーを特定できずフォールバック合成。"
+                   "画にタップ穴・指示メモしか無い場合は『背景作画が取れていない』と報告し、推測で背景を創作しない。")
     if role == "kanten1":
         return {"system": KANTEN1_SYSTEM, "schema": SCHEMA_KANTEN1,
                 "text": shared + "\n（原図PNGのみを見て報告。コンテ/ボード/設定は与えない）",
@@ -390,19 +409,21 @@ def _resolve_psd(cut: str, genzu_dir: str, csv_path: str | None = None) -> str |
     return None
 
 
-def render_genzu_png(cut: str, genzu_dir: str, work: str = "work") -> tuple[str | None, str | None]:
-    """原図PSD→ base/visible PNG。コンソール＝/read-genzu と同じ psd_export を使う。"""
+def render_genzu_png(cut: str, genzu_dir: str,
+                     work: str = "work") -> tuple[str | None, str | None, dict | None]:
+    """原図PSD→ base/visible PNG。コンソール＝/read-genzu と同じ psd_export を使う。
+    戻り: (base_png, visible_png, info)。info=export_background_layer の strategy/layers。"""
     psd = _resolve_psd(cut, genzu_dir)
     if not psd:
-        return None, None
+        return None, None, None
     n = int(re.match(r"(\d+)", _norm(cut)).group(1))
     out = os.path.join(work, "_genzu_view", f"cut{n:03d}")
     os.makedirs(out, exist_ok=True)
     base = os.path.join(out, "genzu_base.png")
     vis = os.path.join(out, "genzu_visible.png")
-    psd_export.export_background_layer(psd, base)
+    _, _, info = psd_export.export_background_layer(psd, base)
     psd_export.export_visible_to_png(psd, vis, drop_text=False)
-    return base, vis
+    return base, vis, info
 
 
 def _parse_json_obj(text: str) -> dict:
@@ -483,10 +504,18 @@ def run(cut: str, genzu_dir: str | None = None, model: str = DEFAULT_MODEL,
     out_dir = out_dir or _p("runs", "scene_understanding")
     b = assemble(cut, context=context)
     if genzu_dir:
-        base, vis = render_genzu_png(cut, genzu_dir)
+        base, vis, info = render_genzu_png(cut, genzu_dir)
         if base:
             b.genzu_base_png, b.genzu_visible_png, b.genzu_pending = base, vis, False
+            b.extract_info = info
             print(f"原図: {base}")
+            print(f"  レイヤー抽出: strategy={info.get('strategy')} layers={info.get('layers')}"
+                  if info else "  レイヤー抽出: info無し")
+            if info and info.get("strategy") == "fallback":
+                print("  ⚠️ strategy=fallback ＝ BG/LO/背景 のどれにも一致せず。"
+                      "指示・タップ穴だけ拾った誤読の恐れ大。--layers で要確認。")
+            if b.bg_only:
+                print(f"  ℹ️ {b.genzu_filename} は BGonly＝背景のみ。人物は別セル（主体を人物にしない）。")
         else:
             print(f"原図: PSDが {genzu_dir} に見つからず（観点1は保留）")
 
