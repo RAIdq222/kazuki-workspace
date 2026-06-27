@@ -637,6 +637,38 @@ def consolidate(frames_json: str = "runs/conte_frames_v2_ep7.json",
     return len(rows)
 
 
+def corrections_report(baseline_csv: str = "runs/conte_v2_ep7.baseline.csv",
+                       overrides_csv: str = OVERRIDES_CSV,
+                       out_md: str = "runs/conte_corrections_report.md") -> int:
+    """ベースライン(OCRの読み)と overrides(人手の訂正)を突き合わせ、OCR→訂正 の差分を出す。
+    誤読パターンの抽出＝OCR精度改善のヒント用。フィールド単位で old→new を一覧。"""
+    base: dict[str, dict] = {}
+    if os.path.exists(baseline_csv):
+        with open(baseline_csv, encoding="utf-8-sig") as f:
+            for r in csv.DictReader(f):
+                base[_cut_key(r.get("cut", ""))] = r
+    ov = load_overrides(overrides_csv)
+    rows = []
+    for cut, fixes in ov.items():
+        b = base.get(cut, {})
+        for fld, newv in fixes.items():
+            oldv = (b.get(fld) or "").strip()
+            if newv != oldv:
+                rows.append((cut, fld, oldv, newv))
+    rows.sort(key=lambda r: (re.match(r"\d+", r[0]) and int(re.match(r"\d+", r[0]).group()) or 0, r[1]))
+    H = [f"# 絵コンテ OCR→訂正 差分（{len(rows)}件）",
+         "> ベースライン(OCR) と overrides(人手訂正) の差。誤読パターンの抽出用。", "",
+         "| cut | 欄 | OCRの読み | 訂正後 |", "|---|---|---|---|"]
+    for cut, fld, oldv, newv in rows:
+        e = lambda s: (s or "").replace("|", "\\|").replace("\n", " ")
+        H.append(f"| {cut} | {fld} | {e(oldv)} | {e(newv)} |")
+    os.makedirs(os.path.dirname(out_md) or ".", exist_ok=True)
+    with open(out_md, "w", encoding="utf-8") as f:
+        f.write("\n".join(H))
+    print(f"wrote {out_md}: OCR→訂正 {len(rows)}件")
+    return len(rows)
+
+
 def _looks_garbled(s: str) -> bool:
     """意味が通らなそうな読みの簡易判定（人名でなく本文の崩れ向け）。"""
     s = (s or "").strip()
@@ -804,6 +836,11 @@ def main(argv=None) -> None:
     cs.add_argument("--frames", default="runs/conte_frames_v2_ep7.json")
     cs.add_argument("--out", default="runs/conte_v2_ep7.csv")
 
+    cr = sub.add_parser("corrections-report", help="OCR(baseline)→人手訂正(overrides)の差分を出す")
+    cr.add_argument("--baseline", default="runs/conte_v2_ep7.baseline.csv")
+    cr.add_argument("--overrides", default=OVERRIDES_CSV)
+    cr.add_argument("--out", default="runs/conte_corrections_report.md")
+
     r2 = sub.add_parser("review2", help="extract2のframesを confidence/notesで色分けレビュー(🔴要チェック)")
     r2.add_argument("--frames", default="runs/conte_frames_v2_ep7.json")
     r2.add_argument("--overrides", default=OVERRIDES_CSV)
@@ -853,6 +890,8 @@ def main(argv=None) -> None:
         ensure_overrides_template(a.overrides)
     elif a.cmd == "consolidate":
         consolidate(a.frames, a.out)
+    elif a.cmd == "corrections-report":
+        corrections_report(a.baseline, a.overrides, a.out)
     elif a.cmd == "review2":
         out = review_v2(a.frames, a.overrides, a.pages_dir, a.out, a.only_flagged)
         ap_ = os.path.abspath(out)
