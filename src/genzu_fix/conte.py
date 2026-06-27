@@ -318,43 +318,56 @@ def _crop_b64(img, box):
     return base64.standard_b64encode(buf.getvalue()).decode("ascii"), c
 
 
-def _extraction_prompt_v2(glossary: str) -> str:
+def _extraction_prompt_page(glossary: str) -> str:
     return (
-        "あなたは日本の商業アニメ絵コンテを読む専門家です。渡す2枚は**1つのカット（コマ）**の切り出し:\n"
-        "・画像1(左)= scene欄のカット番号 ＋ picture(手描きの絵)。\n"
-        "・画像2(右)= action / dialogue / time 欄(鉛筆の手書き)。\n"
-        "手書きは崩れています。読めない所は推測で埋めず、確信の範囲を書き、不確実は confidence を下げる。\n\n"
+        "あなたは日本の商業アニメ絵コンテを読む専門家です。これから**1ページ分のコマを上から順に**渡します。\n"
+        "各コマは2枚: 「左」= scene欄のカット番号＋picture(絵)、「右」= action/dialogue/time欄(鉛筆の手書き)。\n\n"
+        "このページに含まれる全カットを、上から順に JSON 配列で返してください。\n"
+        "【最重要・番号ずれ防止】\n"
+        "・**scene欄(左)に縦棒『｜』だけがあり丸囲み数字が無いコマは、直前のカットの『続き』(同一カット)**。\n"
+        "  これは新しいカット番号ではない。縦棒を数字『1』と読み間違えないこと。\n"
+        "  その続きコマの本文(action/dialogue/time)は、**直前のカットに統合**して1カットにまとめる。\n"
+        "・丸で囲まれた数字(①②③/1,2,3)だけが本物のカット番号。1カットが複数コマに跨ることがある。\n"
+        "・カット番号と本文が隣り合うコマにまたがる場合も、レイアウトと連番性から正しく1つにまとめる。\n"
+        "・番号が読めないコマは、前後のカット番号の連番から補ってよい(その旨 notes に記す)。\n"
+        "・番号も本文も無い空コマ(リード/つなぎ/白紙)は出力に含めない。\n"
+        "・手書きは崩れている。推測で埋めず、確信の範囲を書き、不確実は confidence を下げ notes に書く。\n\n"
         "【文脈＝誤読防止に必ず使う】\n" + glossary + "\n\n"
-        "次をJSONで返す(前後に説明文なし):\n"
-        '{"cut_label":"scene欄のカット番号。読めねば\\"\\"",'
+        "出力(前後に説明文を付けない、JSONのみ):\n"
+        '{"cuts":[{"cut_label":"カット番号(例 8, 16A)。補完したら notes に明記",'
         '"action":"action欄。カメラ用語は上の正規形に寄せる",'
         '"dialogue":"dialogue欄","se":"効果音があれば",'
         '"time":"time欄。秒+コマ表記(例 4+12)。分数読みは誤り",'
         '"characters":["登場人物リストの正式名。誤読は正す(例 芦龍→芦花)"],'
-        '"confidence":"high|medium|low","notes":"不確実箇所/保留"}\n'
-        "pictureは動き・対象の判別に使ってよいが、actionは文字として読む。"
+        '"confidence":"high|medium|low","notes":"不確実箇所/番号補完/保留"}]}'
     )
 
 
-def _vision_cut(left_b64: str, right_b64: str, prompt: str,
-                model: str, api_key: str, max_tokens: int = 1500) -> dict:
+def _vision_page(crops: list[tuple], prompt: str, model: str, api_key: str,
+                 max_tokens: int = 4096) -> list[dict]:
+    """crops=[(label, b64), ...] を順に並べ、ページ全体を1リクエストでOCR。cuts配列を返す。"""
+    content = []
+    for label, b64 in crops:
+        content.append({"type": "text", "text": f"【{label}】"})
+        content.append({"type": "image",
+                        "source": {"type": "base64", "media_type": "image/png", "data": b64}})
+    content.append({"type": "text", "text": prompt})
     body = {"model": model, "max_tokens": max_tokens,
-            "messages": [{"role": "user", "content": [
-                {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": left_b64}},
-                {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": right_b64}},
-                {"type": "text", "text": prompt}]}]}
+            "messages": [{"role": "user", "content": content}]}
     req = urllib.request.Request(
         ANTHROPIC_URL, data=json.dumps(body).encode("utf-8"),
         headers={"x-api-key": api_key, "anthropic-version": ANTHROPIC_VERSION,
                  "content-type": "application/json"}, method="POST")
-    with urllib.request.urlopen(req, timeout=180) as resp:
+    with urllib.request.urlopen(req, timeout=240) as resp:
         data = json.loads(resp.read().decode("utf-8"))
     text = "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
     m = re.search(r"\{.*\}", text, re.S)
+    if not m:
+        return []
     try:
-        return json.loads(m.group(0)) if m else {}
+        return json.loads(m.group(0)).get("cuts", [])
     except json.JSONDecodeError:
-        return {}
+        return []
 
 
 def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.json",
@@ -368,30 +381,34 @@ def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.js
         if not api_key:
             raise RuntimeError("ANTHROPIC_API_KEY が未設定です。")
     glossary = load_glossary(glossary_path)
-    prompt = _extraction_prompt_v2(glossary)
+    prompt = _extraction_prompt_page(glossary)
     all_frames = []
     for pp in page_paths:
         img = Image.open(pp)
         bands, split = detect_grid(img.convert("L"))
         sx = int(split * img.width)
-        print(f"  {os.path.basename(pp)}: {len(bands)}カット band検出 split={split:.2f}")
+        print(f"  {os.path.basename(pp)}: {len(bands)}コマ検出 split={split:.2f}")
+        crops = []  # ページ全コマを順に並べて1リクエストで関連付けさせる
         for i, (y0, y1) in enumerate(bands):
-            left_box = (0, y0, sx, y1)            # scene番号 + picture
-            right_box = (sx, y0, img.width, y1)   # action + dialogue + time
-            lb, lc = _crop_b64(img, left_box)
-            rb, rc = _crop_b64(img, right_box)
+            lb, lc = _crop_b64(img, (0, y0, sx, y1))            # scene番号(継続縦棒) + picture
+            rb, rc = _crop_b64(img, (sx, y0, img.width, y1))    # action + dialogue + time
             if debug_crops:
                 d = os.path.join(debug_crops, os.path.splitext(os.path.basename(pp))[0])
                 os.makedirs(d, exist_ok=True)
                 lc.save(os.path.join(d, f"row{i:02d}_left.png"))
                 rc.save(os.path.join(d, f"row{i:02d}_right.png"))
                 continue
-            fr = _vision_cut(lb, rb, prompt, model, api_key)
+            crops.append((f"コマ{i} 左(番号+絵)", lb))
+            crops.append((f"コマ{i} 右(本文)", rb))
+        if debug_crops:
+            continue
+        cuts = _vision_page(crops, prompt, model, api_key)
+        for j, fr in enumerate(cuts):
             fr["_page"] = os.path.basename(pp)
-            fr["_row"] = i
+            fr["_idx"] = j
             all_frames.append(fr)
-            print(f"    row{i:02d}: cut={fr.get('cut_label','')!r} "
-                  f"conf={fr.get('confidence','')} action={fr.get('action','')[:24]}")
+            print(f"    cut={fr.get('cut_label','')!r} conf={fr.get('confidence','')} "
+                  f"action={(fr.get('action','') or '')[:28]}")
     if debug_crops:
         print(f"[debug] 左右クロップを {debug_crops} に保存（APIは未実行）。中身を確認して罫線/列がズレてなければ本実行。")
         return []
