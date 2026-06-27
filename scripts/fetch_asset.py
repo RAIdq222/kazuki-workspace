@@ -30,7 +30,9 @@ _SRC = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
 
-IMG_EXT = (".png", ".jpg", ".jpeg")
+COPY_EXT = (".png", ".jpg", ".jpeg")
+RASTER_EXT = (".tif", ".tiff", ".bmp", ".webp", ".gif")  # PILでPNG化
+PSD_EXT = (".psd", ".psb")
 
 
 def _convert_one(path: str, out_dir: str) -> list[str]:
@@ -38,24 +40,32 @@ def _convert_one(path: str, out_dir: str) -> list[str]:
     ext = os.path.splitext(path)[1].lower()
     os.makedirs(out_dir, exist_ok=True)
     made: list[str] = []
-    if ext == ".psd":
-        from genzu_fix import psd_export
-        out = os.path.join(out_dir, base + ".png")
-        w, h = psd_export.export_visible_to_png(path, out, drop_text=False)
-        print(f"  PSD→PNG: {out}  {w}x{h}")
-        made.append(out)
-    elif ext == ".pdf":
-        from genzu_fix import conte
-        sub = os.path.join(out_dir, base)
-        pages = conte.render(path, sub, dpi=200)
-        made.extend(pages)
-    elif ext in IMG_EXT:
-        out = os.path.join(out_dir, os.path.basename(path))
-        shutil.copy2(path, out)
-        print(f"  画像コピー: {out}")
-        made.append(out)
-    else:
-        print(f"  スキップ（CLIで変換不可）: {path}")
+    try:
+        if ext in PSD_EXT:
+            from genzu_fix import psd_export
+            out = os.path.join(out_dir, base + ".png")
+            w, h = psd_export.export_visible_to_png(path, out, drop_text=False)
+            print(f"  PSD→PNG: {out}  {w}x{h}")
+            made.append(out)
+        elif ext == ".pdf":
+            from genzu_fix import conte
+            pages = conte.render(path, os.path.join(out_dir, base), dpi=200)
+            made.extend(pages)
+        elif ext in COPY_EXT:
+            out = os.path.join(out_dir, os.path.basename(path))
+            shutil.copy2(path, out)
+            print(f"  画像コピー: {out}")
+            made.append(out)
+        elif ext in RASTER_EXT:
+            from PIL import Image
+            out = os.path.join(out_dir, base + ".png")
+            Image.open(path).convert("RGB").save(out)
+            print(f"  画像→PNG: {out}")
+            made.append(out)
+        else:
+            print(f"  スキップ（未対応形式 {ext or '?'}）: {path}")
+    except Exception as e:
+        print(f"  変換失敗 {path}: {e}")
     return made
 
 
@@ -66,6 +76,8 @@ def main(argv=None) -> int:
     p.add_argument("--out", default=os.path.join("handoff", "ep7", "assets"),
                    help="出力先（既定 handoff/ep7/assets。git対象に置くこと）")
     p.add_argument("--recursive", action="store_true", help="フォルダを再帰的に処理")
+    p.add_argument("--list", action="store_true", dest="list_only",
+                   help="変換せず中身(ファイル/サブフォルダ)を一覧表示するだけ")
     a = p.parse_args(argv)
 
     if not os.path.exists(a.src):
@@ -73,14 +85,30 @@ def main(argv=None) -> int:
         return 1
 
     targets: list[str] = []
+    subdirs: list[str] = []
     if os.path.isfile(a.src):
         targets = [a.src]
     else:
-        for root, _, files in os.walk(a.src):
+        for root, dirs, files in os.walk(a.src):
             for f in files:
                 targets.append(os.path.join(root, f))
             if not a.recursive:
+                subdirs = [os.path.join(root, d) for d in dirs]
                 break
+
+    # 中身が見えるよう、見つけたファイルを常に列挙（拡張子別）
+    if not targets:
+        print(f"直下にファイルなし: {a.src}")
+        if subdirs:
+            print("サブフォルダがあります（--recursive で潜れます）:")
+            for d in subdirs:
+                print(f"  [dir] {d}")
+        return 1
+    if a.list_only:
+        print(f"{a.src} の中身（{len(targets)}件）:")
+        for t in sorted(targets):
+            print(f"  {os.path.splitext(t)[1].lower() or '(無)':6} {t}")
+        return 0
 
     made: list[str] = []
     for t in sorted(targets):
@@ -89,7 +117,8 @@ def main(argv=None) -> int:
 
     print(f"\n変換 {len(made)} 件 → {a.out}")
     if made:
-        print("次: git add -f " + a.out + " && git commit -m \"data: ローカル資産取り込み\" && git push")
+        print(f"次: git add -f {a.out} && git commit -m \"data: ローカル資産取り込み\" && "
+              "git push origin HEAD:claude/great-edison-bk5g8c")
     return 0 if made else 1
 
 
