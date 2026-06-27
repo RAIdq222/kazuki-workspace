@@ -695,91 +695,123 @@ def _looks_garbled(s: str) -> bool:
     return len(s) >= 2 and jp == 0
 
 
-def review_v2(frames_json: str = "runs/conte_frames_v2_ep7.json",
-              overrides_csv: str = OVERRIDES_CSV, pages_dir: str | None = None,
+def review_v2(csv_path: str = "runs/conte_v2_ep7.csv", pages_dir: str | None = None,
               out_html: str = "work/conte_review2.html", only_flagged: bool = False) -> str:
-    """運用向けレビュー: ページ画像（左・固定）と各カットの編集可能フィールド（右）を左右に並べ、
-    全カット表示・その場編集・『訂正CSV書き出し』ボタン付き。色=confidence(🔴low/🟡medium/通常high/🟢訂正済)。
-    only_flagged=True で要チェックのみ。"""
-    with open(frames_json, encoding="utf-8") as f:
-        frames = json.load(f).get("frames", [])
-    ov = load_overrides(overrides_csv)
-    by_page: dict[str, list[dict]] = {}
-    for fr in frames:
-        by_page.setdefault(fr.get("_page", "（ページ不明）"), []).append(fr)
+    """運用向けコンテ・エディタ。conte_v2 CSV を読み、ページ画像(左・固定)と各カットの編集欄(右)を並置。
+    cut番号も編集可／台詞・SEは種別プルダウン＋行追加／カット削除・挿入／『訂正済みコンテ全体』を書き出す。
+    途中保存(<csv>.corrected.csv)があればそれを開く。色=confidence(🔴low/🟡medium/通常high)。"""
+    cor = os.path.splitext(csv_path)[0] + ".corrected.csv"
+    src = cor if os.path.exists(cor) else csv_path
+    with open(src, encoding="utf-8-sig") as f:
+        rows = list(csv.DictReader(f))
 
     def esc(s):
         return str(s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
-    def attr(s):
-        return esc(s).replace('"', "&quot;").replace("\n", "&#10;")
+    by_page: dict[str, list[dict]] = {}
+    for r in rows:
+        by_page.setdefault((r.get("page") or "（ページ不明）").strip(), []).append(r)
 
     css = (
-        "body{font:14px/1.55 sans-serif;margin:0;padding:0 16px 80px}"
-        "h2{margin:24px 0 6px}.page{display:flex;gap:16px;align-items:flex-start;"
-        "border-top:2px solid #ccc;padding-top:8px}"
-        ".pimg{flex:0 0 48%;position:sticky;top:8px;align-self:flex-start}"
-        ".pimg img{width:100%;border:1px solid #ddd}"
-        ".cuts{flex:1 1 52%}"
-        ".cut{border:1px solid #ccc;border-left-width:6px;border-radius:5px;padding:6px 10px;margin:6px 0}"
+        "body{font:14px/1.5 sans-serif;margin:0;padding:0 14px 70px}h2{margin:20px 0 4px}"
+        ".page{display:flex;gap:14px;align-items:flex-start;border-top:2px solid #ccc;padding-top:6px}"
+        ".pimg{flex:0 0 46%;position:sticky;top:6px;align-self:flex-start}.pimg img{width:100%;border:1px solid #ddd}"
+        ".cuts{flex:1 1 54%}"
+        ".cut{border:1px solid #ccc;border-left-width:6px;border-radius:5px;padding:5px 9px;margin:6px 0}"
         ".red{border-left-color:#cf222e;background:#fff5f4}.yel{border-left-color:#f0b400;background:#fffdf5}"
-        ".hi{border-left-color:#2da44e}.grn{border-left-color:#2da44e;background:#f2fff6}"
+        ".hi{border-left-color:#2da44e}"
         ".lbl{color:#888;font-size:11px;margin-right:4px}.note{color:#b35900;font-size:11px;margin-top:2px}"
+        ".hd{display:flex;align-items:center;gap:6px;margin-bottom:2px}"
         "label{display:flex;gap:6px;align-items:baseline;margin:2px 0}"
-        ".f{flex:1;border:1px solid #cbd5e1;border-radius:4px;padding:2px 6px;min-height:1.4em;background:#fff}"
+        ".f{flex:1;border:1px solid #cbd5e1;border-radius:4px;padding:1px 6px;min-height:1.35em;background:#fff}"
         ".f:focus{outline:2px solid #4493f8;background:#fffef0}.f.ch{background:#fff7d6;border-color:#f0b400}"
-        "#bar{position:fixed;bottom:0;left:0;right:0;background:#1f2328;color:#fff;padding:8px 16px;"
-        "display:flex;gap:12px;align-items:center;z-index:9}"
-        "#bar button{font-size:14px;padding:6px 14px;cursor:pointer}"
-        ".cl{font-size:12px;font-weight:bold}")
-    js = (
-        "function csv(only){let R=[['cut','action','dialogue','se','time','note']];"
-        "document.querySelectorAll('.cut').forEach(c=>{let cut=c.dataset.cut,ch=false,v={};"
-        "c.querySelectorAll('.f').forEach(e=>{let f=e.dataset.field,o=e.dataset.orig,t=e.innerText.trim();"
-        "if(t!==o){ch=true;v[f]=t;}});"
-        "if(ch)R.push([cut,v.action||'',v.dialogue||'',v.se||'',v.time||'','']);});"
-        "if(R.length<2){alert('編集された箇所がありません');return;}"
-        "let s=R.map(r=>r.map(x=>'\"'+(x||'').replace(/\"/g,'\"\"')+'\"').join(',')).join('\\r\\n');"
-        "let b=new Blob(['\\ufeff'+s],{type:'text/csv'});let a=document.createElement('a');"
-        "a.href=URL.createObjectURL(b);a.download='conte_overrides_ep7.csv';a.click();}"
-        "function mark(e){e.classList.toggle('ch',e.innerText.trim()!==e.dataset.orig);"
-        "let n=document.querySelectorAll('.f.ch').length;document.getElementById('cnt').innerText=n;}")
-    H = [f"<!doctype html><meta charset='utf-8'><title>conte review2</title><style>{css}</style>",
-         f"<script>{js}</script>",
-         "<h1>絵コンテ 読みレビュー（編集可）</h1>",
-         "<p class='lbl'>左=ページ画像／右=各カット。色◧ 🔴low 🟡medium 通常high 🟢訂正済。"
-         "右の欄を直接書き換え→下のボタンで <b>conte_overrides_ep7.csv</b> を書き出し、runs/ に置けば反映。</p>"]
+        ".cutno{flex:0 0 56px;text-align:center;font-weight:bold}"
+        ".audio{margin:2px 0}.line{display:flex;gap:5px;align-items:center;margin:2px 0}"
+        ".ty{flex:0 0 64px}.atext{flex:1}"
+        ".mini{font-size:11px;padding:1px 7px;cursor:pointer}.add{margin-left:70px}"
+        "#bar{position:fixed;bottom:0;left:0;right:0;background:#1f2328;color:#fff;padding:8px 14px;"
+        "display:flex;gap:12px;align-items:center;z-index:9}#bar button{font-size:14px;padding:6px 14px;cursor:pointer}")
+
+    js = r"""
+function val(e){return e?e.innerText.trim():'';}
+function mark(e){e.classList.toggle('ch', e.innerText.trim()!==(e.dataset.orig||''));}
+function lineHTML(ty,txt){
+ return "<div class='line'><select class='ty'><option"+(ty=='SE'?' selected':'')+">SE</option>"
+  +"<option"+(ty!='SE'?' selected':'')+">セリフ</option></select>"
+  +"<span class='f atext' contenteditable='true'>"+(txt||'')+"</span>"
+  +"<button class='mini' onclick='delLine(this)'>×</button></div>";}
+function addLine(btn){btn.insertAdjacentHTML('beforebegin', lineHTML('セリフ',''));}
+function delLine(x){x.parentElement.remove();}
+function delCut(btn){if(confirm('このカットを削除しますか？'))btn.closest('.cut').remove();}
+function cutHTML(page){
+ return "<div class='cut hi' data-page='"+page+"'><div class='hd'><span class='lbl'>cut</span>"
+  +"<span class='f cutno' contenteditable='true'></span>"
+  +"<button class='mini' onclick='insCut(this)'>＋カット</button>"
+  +"<button class='mini' onclick='delCut(this)'>🗑</button></div>"
+  +"<label><span class='lbl'>action</span><span class='f' data-field='action' contenteditable='true'></span></label>"
+  +"<label><span class='lbl'>time</span><span class='f' data-field='time' contenteditable='true'></span></label>"
+  +"<div class='audio'><span class='lbl'>音/台詞</span>"+lineHTML('セリフ','')
+  +"<button class='mini add' onclick='addLine(this)'>＋行</button></div></div>";}
+function insCut(btn){var c=btn.closest('.cut');c.insertAdjacentHTML('afterend',cutHTML(c.dataset.page||''));}
+function exportCSV(){
+ var R=[['cut','page','action','dialogue','se','time']];
+ document.querySelectorAll('.cut').forEach(function(c){
+  var cut=val(c.querySelector('.cutno')); if(!cut) return;
+  var action=val(c.querySelector("[data-field='action']"));
+  var time=val(c.querySelector("[data-field='time']"));
+  var se=[],dl=[];
+  c.querySelectorAll('.line').forEach(function(ln){
+   var ty=ln.querySelector('.ty').value, tx=val(ln.querySelector('.atext'));
+   if(tx)(ty=='SE'?se:dl).push(tx);});
+  R.push([cut, c.dataset.page||'', action, dl.join(' / '), se.join(' / '), time]);});
+ var s=R.map(function(r){return r.map(function(x){return '"'+(x||'').replace(/"/g,'""')+'"';}).join(',');}).join('\r\n');
+ var b=new Blob(['﻿'+s],{type:'text/csv'});var a=document.createElement('a');
+ a.href=URL.createObjectURL(b);a.download='conte_v2_ep7.corrected.csv';a.click();}
+"""
+
+    def line_html(ty, txt):
+        s1 = " selected" if ty == "SE" else ""
+        s2 = " selected" if ty != "SE" else ""
+        return (f"<div class='line'><select class='ty'><option{s1}>SE</option>"
+                f"<option{s2}>セリフ</option></select>"
+                f"<span class='f atext' contenteditable='true'>{esc(txt)}</span>"
+                f"<button class='mini' onclick='delLine(this)'>×</button></div>")
+
+    H = [f"<!doctype html><meta charset='utf-8'><title>conte editor</title><style>{css}</style>",
+         f"<script>{js}</script>", "<h1>絵コンテ 編集（訂正済みコンテを書き出す）</h1>",
+         "<p class='lbl'>左=ページ画像／右=各カット。cut番号・action・time を直接編集、台詞/SEは種別プルダウン＋『＋行』。"
+         "カットの『🗑』削除／『＋カット』下に挿入。下の💾で <b>conte_v2_ep7.corrected.csv</b> を書き出し、runs/ に置けば正データ。</p>"]
     n_flag = 0
     for page, items in by_page.items():
         cuts_html = []
-        for fr in items:
-            cut = fr.get("cut_label", "")
-            fixes = ov.get(_cut_key(cut), {})
-            corrected = [fld for fld in OVERRIDE_FIELDS if fixes.get(fld)]
-            for fld in corrected:
-                fr[fld] = fixes[fld]
-            conf = (fr.get("confidence") or "").lower()
-            notes = fr.get("notes", "")
-            flagged = conf == "low" or _looks_garbled(fr.get("action", ""))
-            if only_flagged and not (flagged or corrected):
+        for r in items:
+            conf = (r.get("confidence") or "").lower()
+            flagged = conf == "low" or _looks_garbled(r.get("action", ""))
+            if only_flagged and not flagged:
                 continue
-            cls = "grn" if corrected else ("red" if flagged else ("yel" if conf == "medium" else "hi"))
-            if flagged and not corrected:
+            if flagged:
                 n_flag += 1
-            fields = []
-            for fld in ("action", "dialogue", "se", "time"):
-                val = fr.get(fld, "")
-                fields.append(
-                    f"<label><span class='lbl'>{fld}</span>"
-                    f"<span class='f' contenteditable='true' data-field='{fld}' "
-                    f"data-orig=\"{attr(val)}\" oninput='mark(this)'>{esc(val)}</span></label>")
-            chars = ("<div class='lbl'>登場: " + esc('、'.join(fr.get('characters'))) + "</div>"
-                     if fr.get("characters") else "")
-            note = f"<div class='note'>⚠ {esc(notes)}</div>" if notes else ""
+            cls = "red" if flagged else ("yel" if conf == "medium" else "hi")
+            lines = [("SE", t) for t in (r.get("se") or "").split(" / ") if t.strip()]
+            lines += [("セリフ", t) for t in (r.get("dialogue") or "").split(" / ") if t.strip()]
+            if not lines:
+                lines = [("セリフ", "")]
+            note = f"<div class='note'>⚠ {esc(r.get('notes',''))}</div>" if r.get("notes") else ""
             cuts_html.append(
-                f"<div class='cut {cls}' data-cut=\"{attr(cut)}\">"
-                f"<span class='cl'>cut {esc(cut)}</span> <span class='lbl'>conf={esc(conf)}</span>"
-                + "".join(fields) + chars + note + "</div>")
+                f"<div class='cut {cls}' data-page='{esc(page)}'>"
+                f"<div class='hd'><span class='lbl'>cut</span>"
+                f"<span class='f cutno' contenteditable='true'>{esc(r.get('cut',''))}</span>"
+                f"<span class='lbl'>conf={esc(conf)}</span>"
+                f"<button class='mini' onclick='insCut(this)'>＋カット</button>"
+                f"<button class='mini' onclick='delCut(this)'>🗑</button></div>"
+                f"<label><span class='lbl'>action</span>"
+                f"<span class='f' data-field='action' contenteditable='true'>{esc(r.get('action',''))}</span></label>"
+                f"<label><span class='lbl'>time</span>"
+                f"<span class='f' data-field='time' contenteditable='true'>{esc(r.get('time',''))}</span></label>"
+                f"<div class='audio'><span class='lbl'>音/台詞</span>"
+                + "".join(line_html(t, x) for t, x in lines)
+                + "<button class='mini add' onclick='addLine(this)'>＋行</button></div>"
+                + note + "</div>")
         if not cuts_html:
             continue
         img = ""
@@ -790,13 +822,13 @@ def review_v2(frames_json: str = "runs/conte_frames_v2_ep7.json",
                 img = f"<div class='pimg'><img src='{esc(rel)}' alt='{esc(page)}'></div>"
         H.append(f"<h2>{esc(page)}</h2><div class='page'>{img}<div class='cuts'>"
                  + "".join(cuts_html) + "</div></div>")
-    H.append("<div id='bar'>編集した欄: <span id='cnt'>0</span> 件　"
-             "<button onclick='csv()'>💾 訂正CSVを書き出す</button>"
-             "<span class='lbl'>※ ダウンロードした conte_overrides_ep7.csv を runs/ に置けば反映</span></div>")
+    H.append("<div id='bar'><button onclick='exportCSV()'>💾 訂正済みコンテを書き出す</button>"
+             "<span class='lbl'>※ ダウンロードした conte_v2_ep7.corrected.csv を runs/ に保存→これが正データ。"
+             "再開は review2 --csv runs/conte_v2_ep7.csv（corrected があれば自動で続きから）</span></div>")
     os.makedirs(os.path.dirname(out_html) or ".", exist_ok=True)
     with open(out_html, "w", encoding="utf-8") as f:
         f.write("\n".join(H))
-    print(f"wrote {out_html}: {len(frames)} cuts / 要チェック {n_flag} 件（全カット表示・編集可）")
+    print(f"wrote {out_html}: {len(rows)} cuts（{'corrected読込' if src==cor else 'baseline'}）/ 要チェック {n_flag}")
     return out_html
 
 
@@ -855,12 +887,12 @@ def main(argv=None) -> None:
     cr.add_argument("--overrides", default=OVERRIDES_CSV)
     cr.add_argument("--out", default="runs/conte_corrections_report.md")
 
-    r2 = sub.add_parser("review2", help="extract2のframesを confidence/notesで色分けレビュー(🔴要チェック)")
-    r2.add_argument("--frames", default="runs/conte_frames_v2_ep7.json")
-    r2.add_argument("--overrides", default=OVERRIDES_CSV)
+    r2 = sub.add_parser("review2", help="コンテ編集エディタ(ページ画像と並置・cut番号/台詞編集・訂正済CSV書出し)")
+    r2.add_argument("--csv", default="runs/conte_v2_ep7.csv",
+                    help="編集元(corrected があれば自動でそれを開く)")
     r2.add_argument("--pages-dir", default=None)
     r2.add_argument("--out", default="work/conte_review2.html")
-    r2.add_argument("--only-flagged", action="store_true", help="要チェック/訂正済のカットだけ表示")
+    r2.add_argument("--only-flagged", action="store_true", help="要チェックのカットだけ表示")
     r2.add_argument("--no-open", action="store_true")
 
     a = ap.parse_args(argv)
@@ -907,7 +939,7 @@ def main(argv=None) -> None:
     elif a.cmd == "corrections-report":
         corrections_report(a.baseline, a.overrides, a.out)
     elif a.cmd == "review2":
-        out = review_v2(a.frames, a.overrides, a.pages_dir, a.out, a.only_flagged)
+        out = review_v2(a.csv, a.pages_dir, a.out, a.only_flagged)
         ap_ = os.path.abspath(out)
         print(f"開く: {ap_}")
         if not a.no_open:
