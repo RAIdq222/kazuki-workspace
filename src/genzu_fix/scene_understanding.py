@@ -86,7 +86,9 @@ KANTEN3_SYSTEM = (
     "・建築・什器・様式はどうあるべきか。\n"
     "・**美術ボードは構図の参照には使わない**（様式・語彙の参照に限る）。\n"
     "・設定資料に該当什器の設定があれば**それを一次資料**とする。無ければボードを様式の語彙として使う。\n"
-    "・各項目について出典（設定資料=一次 / ボード=語彙）を明示する。\n"
+    "・入力に【考証・一次資料】（実在地・年代指定など出典付き）があれば、**それを最優先の根拠**として"
+    "引用し、建築様式・小物の年代をそれに合わせる（例: 道観=南岩宮/武当山南岩、小物は年代指定に従う）。\n"
+    "・各項目について出典（考証=一次資料 / 設定=一次 / ボード=語彙）を明示する。\n"
     "芝居（絵コンテ）は見ていない前提で、様式・考証の観点だけで述べること。"
 )
 
@@ -216,6 +218,7 @@ class Bundle:
     structures: str = ""
     era: str = ""
     profile: dict | None = None
+    grounding: dict | None = None     # scene_profile の grounding（一次資料の考証: 出典・年代）
 
 
 def _norm(cut: str) -> str:
@@ -288,6 +291,15 @@ def assemble(cut: str, context: int = 2) -> Bundle:
             b.profile = dict(prof.__dict__)
     except Exception:
         pass
+    # scene_profile JSON を直接読み、grounding（一次資料の考証）を観点3へ渡す
+    # （SceneProfile dataclass は grounding を保持しないため）
+    if b.scene_key:
+        gp = _p("runs", "scene_profiles", f"{b.scene_key}.json")
+        if os.path.exists(gp):
+            try:
+                b.grounding = json.load(open(gp, encoding="utf-8")).get("grounding")
+            except Exception:
+                b.grounding = None
 
     # 原図（handoff にあれば差す。無ければ pending）
     base = _p("handoff", "ep7", f"cut{cn:03d}", "genzu.png")
@@ -321,6 +333,14 @@ def _settei_block(b: Bundle) -> str:
             v = b.profile.get(k) if isinstance(b.profile, dict) else None
             if v:
                 out.append(f"profile.{k}: {v}")
+    if b.grounding:  # 一次資料の考証（出典付き）。様式判断の一次根拠として渡す。
+        g = b.grounding
+        if g.get("jp"):
+            out.append(f"[考証・一次資料] {g['jp']}")
+        if g.get("props_by_era"):
+            out.append("小物の年代: " + "、".join(g["props_by_era"]))
+        if g.get("source"):
+            out.append(f"出典: {g['source']}")
     return "\n".join(out)
 
 
