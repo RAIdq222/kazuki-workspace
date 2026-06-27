@@ -340,6 +340,9 @@ def _extraction_prompt_page(glossary: str) -> str:
         "・**scene欄(左)に縦棒『｜』だけがあり丸囲み数字が無いコマは、直前のカットの『続き』(同一カット)**。\n"
         "  これは新しいカット番号ではない。縦棒を数字『1』と読み間違えないこと。\n"
         "  その続きコマの本文(action/dialogue/time)は、**直前のカットに統合**して1カットにまとめる。\n"
+        "・各カットに **numbered** を付ける: そのカットの scene欄に丸囲みのカット番号が実際に描かれていれば true、"
+        "縦棒/番号なしの続きコマなら false。**ページ最初のコマが続き(丸番号なし)なら numbered=false** とし、"
+        "前ページの最後のカットの続きとして扱う(新番号にしない)。\n"
         "・丸で囲まれた数字(①②③/1,2,3)だけが本物のカット番号。1カットが複数コマに跨ることがある。\n"
         "・**1カットが複数コマに跨る場合は、本文(action/dialogue/time)を結合して1エントリにまとめる**。"
         "同じカット番号で複数のエントリを作らない。\n"
@@ -359,6 +362,7 @@ def _extraction_prompt_page(glossary: str) -> str:
         '"action":"action欄。カメラ用語は上の正規形に寄せる",'
         '"dialogue":"dialogue欄","se":"効果音があれば",'
         '"time":"time欄。秒+コマ表記(例 4+12)。分数読みは誤り",'
+        '"numbered":"丸囲みのカット番号が実際に描かれていれば true、続きコマ(縦棒/番号なし)なら false",'
         '"characters":["本文に書かれた人名を忠実に。実在しない誤読名のみ実在名に正す(例 芦龍→芦花)。'
         '書かれた字数字形に合わない名前を当てず、短い名を長い正式名に拡張しない。曖昧は空+notesに要確認"],'
         '"confidence":"high|medium|low","notes":"不確実箇所/番号補完/保留"}]}'
@@ -390,6 +394,38 @@ def _vision_page(crops: list[tuple], prompt: str, model: str, api_key: str,
         return json.loads(m.group(0)).get("cuts", [])
     except json.JSONDecodeError:
         return []
+
+
+def _attach_continuations(frames: list[dict]) -> list[dict]:
+    """決定的な番号付け: numbered=false(丸番号が描かれていない続きコマ)を直前カットへ統合する。
+    これでページまたぎの続きが必ず直前カットにつながる（モデルの番号推測に依存しない）。
+    numbered キーが無い旧データは cut_label の有無で判定（後方互換）。"""
+    rank = {"high": 3, "medium": 2, "low": 1, "": 1}
+    out: list[dict] = []
+    for fr in frames:
+        nb = fr.get("numbered")
+        if nb is None:
+            has_num = _cut_num(fr.get("cut_label")) is not None
+        else:
+            has_num = bool(nb) and _cut_num(fr.get("cut_label")) is not None
+        if has_num or not out:
+            out.append(fr)
+            continue
+        prev = out[-1]  # 続きコマ → 直前カットへ統合
+        for k in ("action", "dialogue", "se", "time"):
+            a, b = (prev.get(k) or "").strip(), (fr.get(k) or "").strip()
+            if b and b not in a:
+                prev[k] = (a + " / " + b) if a else b
+        pc = prev.get("characters") or []
+        for c in fr.get("characters") or []:
+            if c and c not in pc:
+                pc.append(c)
+        prev["characters"] = pc
+        if fr.get("notes"):
+            prev["notes"] = ((prev.get("notes", "") + " ｜ " + fr["notes"]).strip(" ｜"))
+        if rank.get((fr.get("confidence") or "").lower(), 1) < rank.get((prev.get("confidence") or "").lower(), 3):
+            prev["confidence"] = (fr.get("confidence") or "").lower()
+    return out
 
 
 def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.json",
@@ -460,6 +496,7 @@ def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.js
     if debug_crops:
         print(f"[debug] 左右クロップを {debug_crops} に保存（APIは未実行）。中身を確認して罫線/列がズレてなければ本実行。")
         return []
+    all_frames = _attach_continuations(all_frames)
     os.makedirs(os.path.dirname(out_json) or ".", exist_ok=True)
     with open(out_json, "w", encoding="utf-8") as f:
         json.dump({"frames": all_frames}, f, ensure_ascii=False, indent=2)
