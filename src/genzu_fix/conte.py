@@ -594,17 +594,27 @@ def consolidate(frames_json: str = "runs/conte_frames_v2_ep7.json",
         frames = json.load(f).get("frames", [])
     order: list[str] = []
     by: dict[str, dict] = {}
+    # 正規のカット一覧(枝番含む)を cut_board_map から読み、これをホワイトリストにする。
+    valid = set()
+    ref = "runs/cut_board_map_ep7.csv"
+    if os.path.exists(ref):
+        with open(ref, encoding="utf-8-sig") as rf:
+            for rr in csv.DictReader(rf):
+                valid.add(_cut_key(rr.get("cut", "")))
     rank = {"high": 3, "medium": 2, "low": 1, "": 1}
     for fr in frames:
-        # 枝番(英字/-cont)は基数に統合＝「続き」は同一カット。明示的枝番カットは人手で後付けする方針。
+        # 正規の枝番(123A/295B 等)は保持。OCRが続きに勝手につけた枝番(14B/131-cont等)だけ基数に統合。
         raw = _cut_key(fr.get("cut_label", ""))
-        nn = _cut_num(raw)
-        k = str(nn) if nn is not None else raw
+        if re.search(r"[A-Za-z]$", raw) and raw not in valid:
+            nn = _cut_num(raw)
+            k = str(nn) if nn is not None else raw
+        else:
+            k = raw
         if not k or k == "-":
             continue
         if k not in by:
-            by[k] = {"cut": k, "action": [], "dialogue": [], "se": [], "time": [],
-                     "characters": [], "confidence": "high", "notes": []}
+            by[k] = {"cut": k, "page": fr.get("_page", ""), "action": [], "dialogue": [],
+                     "se": [], "time": [], "characters": [], "confidence": "high", "notes": []}
             order.append(k)
         r = by[k]
         for col in ("action", "dialogue", "se", "time"):
@@ -626,14 +636,14 @@ def consolidate(frames_json: str = "runs/conte_frames_v2_ep7.json",
     rows = []
     for k in sorted(by, key=sk):
         r = by[k]
-        rows.append({"cut": k,
+        rows.append({"cut": k, "page": r["page"],
                      "action": " / ".join(r["action"]), "dialogue": " / ".join(r["dialogue"]),
                      "se": " / ".join(r["se"]), "time": " / ".join(r["time"]),
                      "characters": "、".join(r["characters"]),
                      "confidence": r["confidence"], "notes": " ｜ ".join(r["notes"])})
     os.makedirs(os.path.dirname(out_csv) or ".", exist_ok=True)
     with open(out_csv, "w", encoding="utf-8-sig", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=["cut", "action", "dialogue", "se", "time",
+        w = csv.DictWriter(f, fieldnames=["cut", "page", "action", "dialogue", "se", "time",
                                           "characters", "confidence", "notes"])
         w.writeheader()
         w.writerows(rows)
