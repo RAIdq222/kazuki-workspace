@@ -35,6 +35,29 @@ RASTER_EXT = (".tif", ".tiff", ".bmp", ".webp", ".gif")  # PILでPNG化
 PSD_EXT = (".psd", ".psb")
 
 
+def _pdf_ingest(path: str, out_dir: str, base: str, min_text: int = 80) -> list[str]:
+    """PDFはまずテキスト抽出（打ち込み＝シナリオ等）。テキストが乏しいスキャンPDFは画像化。"""
+    try:
+        import fitz  # PyMuPDF
+    except ImportError:
+        raise RuntimeError("PyMuPDF が必要です: pip install pymupdf")
+    doc = fitz.open(path)
+    texts = [(i + 1, doc.load_page(i).get_text("text")) for i in range(doc.page_count)]
+    total = sum(len(t) for _, t in texts)
+    os.makedirs(out_dir, exist_ok=True)
+    if total >= min_text:  # 打ち込みPDF → テキスト
+        out = os.path.join(out_dir, base + ".txt")
+        with open(out, "w", encoding="utf-8") as f:
+            for n, t in texts:
+                f.write(f"\n===== page {n} =====\n{t}")
+        print(f"  PDF→テキスト: {out}  ({doc.page_count}ページ, {total}文字)")
+        return [out]
+    # スキャンPDF（文字なし）→ ページ画像
+    from genzu_fix import conte
+    print(f"  PDF→画像（テキスト乏しい＝スキャン, {doc.page_count}ページ）")
+    return conte.render(path, os.path.join(out_dir, base), dpi=200)
+
+
 def _convert_one(path: str, out_dir: str) -> list[str]:
     base = os.path.splitext(os.path.basename(path))[0]
     ext = os.path.splitext(path)[1].lower()
@@ -48,9 +71,7 @@ def _convert_one(path: str, out_dir: str) -> list[str]:
             print(f"  PSD→PNG: {out}  {w}x{h}")
             made.append(out)
         elif ext == ".pdf":
-            from genzu_fix import conte
-            pages = conte.render(path, os.path.join(out_dir, base), dpi=200)
-            made.extend(pages)
+            made.extend(_pdf_ingest(path, out_dir, base))
         elif ext in COPY_EXT:
             out = os.path.join(out_dir, os.path.basename(path))
             shutil.copy2(path, out)
