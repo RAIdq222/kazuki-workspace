@@ -296,7 +296,11 @@ def _cluster(idxs, gap: int = 6):
 
 def detect_grid(gray, row_thresh: float = 0.35, col_thresh: float = 0.30,
                 min_band_frac: float = 0.04):
-    """グレースケール配列から、行バンド[(y0,y1)] と picture|action 縦境界(0..1) を返す。"""
+    """グレースケール配列から、行バンド[(y0,y1)] と列境界(0..1) を返す。
+    返り値 (bands, split, cols)：
+      split = picture|action 境界（後方互換のため単独でも返す）
+      cols  = {"pic_act":~0.50, "act_dia":~0.70, "dia_time":~0.90} 各列の縦境界(0..1)。
+              用紙の縦罫線が拾えない時は DANGUN 標準比率にフォールバック。"""
     import numpy as np
     a = np.asarray(gray)
     h, w = a.shape
@@ -305,13 +309,22 @@ def detect_grid(gray, row_thresh: float = 0.35, col_thresh: float = 0.30,
     bands = [(hlines[i], hlines[i + 1]) for i in range(len(hlines) - 1)
              if hlines[i + 1] - hlines[i] > h * min_band_frac]
     vlines = _cluster(np.where(dark.mean(axis=0) > col_thresh)[0])
-    # picture|action 境界 = 0.5*w に最も近い縦罫線（無ければ 0.5）
-    split = 0.5
-    if vlines:
-        cx = min(vlines, key=lambda x: abs(x - 0.5 * w))
-        if 0.35 * w < cx < 0.65 * w:
-            split = cx / w
-    return bands, split
+
+    def nearest(ratio, lo, hi, default):
+        """ratio*w に最も近い縦罫線を [lo,hi]*w の範囲で拾う。無ければ default。"""
+        if vlines:
+            cx = min(vlines, key=lambda x: abs(x - ratio * w))
+            if lo * w < cx < hi * w:
+                return cx / w
+        return default
+
+    split = nearest(0.50, 0.35, 0.65, 0.50)                  # picture|action
+    cols = {
+        "pic_act": split,
+        "act_dia": nearest(0.70, 0.60, 0.80, 0.70),          # action|dialogue
+        "dia_time": nearest(0.90, 0.82, 0.97, 0.90),         # dialogue|time
+    }
+    return bands, split, cols
 
 
 def _crop_b64(img, box):
@@ -329,7 +342,13 @@ def _extraction_prompt_page(glossary: str) -> str:
     return (
         "あなたは日本の商業アニメ絵コンテを読む専門家です。これから**1ページ分**を渡します。\n"
         "1枚目=『ページ上部ヘッダ』(左上の『No.◯』=用紙通し番号 と 表頭 scene/picture/action/dialogue/time)。\n"
-        "2枚目以降=各コマを上から順に「左」= scene欄のカット番号＋picture(絵)、「右」= action/dialogue/time欄。\n\n"
+        "2枚目以降=各コマを上から順に**列ごとに4枚**渡す: \n"
+        "  「左(番号+絵)」= scene欄のカット番号＋picture(絵)、\n"
+        "  「action欄」= ト書き(動き・カメラ指示)だけが入った画像、\n"
+        "  「dialogue欄(セリフのみ)」= セリフだけが入った画像、\n"
+        "  「time欄」= 尺だけが入った画像。\n"
+        "**各画像はその列の中身だけを抜き出してある。ラベルの列以外の内容を絶対に混ぜない**"
+        "(例: 『action欄』画像の文字を dialogue に入れない。『dialogue欄』にはセリフ以外を入れない)。\n\n"
         "【ページ種別の判定（最初に行う）】\n"
         "・ヘッダに『No.◯』と表頭(scene/picture/action/...)があれば**絵コンテ本編ページ**＝カットを読む。\n"
         "・『No.』も表頭も無いページ(タイトルカード/計算メモ/前付け)は**カットでない → cuts:[] を返す**。\n\n"
@@ -359,8 +378,12 @@ def _extraction_prompt_page(glossary: str) -> str:
         "出力(前後に説明文を付けない、JSONのみ):\n"
         '{"cuts":[{"cut_label":"カット番号(整数)。**続き(縦棒/番号なし)のコマに枝番を振らず直前カットに統合**。'
         '英字枝番(259B等)は用紙に明示的に英字が描かれた差し込みカットのときだけ。補完したら notes に明記",'
-        '"action":"action欄。カメラ用語は上の正規形に寄せる",'
-        '"dialogue":"dialogue欄","se":"効果音があれば",'
+        '"action":"action欄(ト書き=動き/カメラ指示)。カメラ用語は上の正規形に寄せる。'
+        'action欄画像の文字はすべて action に入れ、dialogue へ移さない",'
+        '"dialogue":"dialogue欄=**登場人物が発する話し言葉(セリフ)だけ**。'
+        'M(モノローグ)/ナレーションはセリフ扱い。'
+        'OK/A.P./承認印・サイン・演出メモ・ト書き・効果音はセリフではない→dialogueに入れない(空でよい)",'
+        '"se":"効果音があれば",'
         '"time":"time欄。秒+コマ表記(例 4+12)。分数読みは誤り",'
         '"numbered":"丸囲みのカット番号が実際に描かれていれば true、続きコマ(縦棒/番号なし)なら false",'
         '"characters":["本文に書かれた人名を忠実に。実在しない誤読名のみ実在名に正す(例 芦龍→芦花)。'
@@ -455,9 +478,12 @@ def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.js
     last_cut = 0  # 前ページまでの最後のカット番号（連番をページ越しに引き継ぐ）
     for pp in page_paths:
         img = Image.open(pp)
-        bands, split = detect_grid(img.convert("L"))
-        sx = int(split * img.width)
-        print(f"  {os.path.basename(pp)}: {len(bands)}コマ検出 split={split:.2f}")
+        bands, split, cols = detect_grid(img.convert("L"))
+        sx = int(cols["pic_act"] * img.width)    # picture|action
+        ax = int(cols["act_dia"] * img.width)    # action|dialogue
+        dx = int(cols["dia_time"] * img.width)   # dialogue|time
+        print(f"  {os.path.basename(pp)}: {len(bands)}コマ検出 "
+              f"列境界 pic|act={cols['pic_act']:.2f} act|dia={cols['act_dia']:.2f} dia|time={cols['dia_time']:.2f}")
         crops = []  # ページ全コマを順に並べて1リクエストで関連付けさせる
         # 1枚目=ページ上部ヘッダ（No.◯ と 表頭）。前付けページの判定に使う。
         hdr_y = bands[0][0] if bands else int(img.height * 0.10)
@@ -469,16 +495,23 @@ def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.js
         else:
             crops.append(("ページ上部ヘッダ(No.と表頭)", hb))
         for i, (y0, y1) in enumerate(bands):
-            lb, lc = _crop_b64(img, (0, y0, sx, y1))            # scene番号(継続縦棒) + picture
-            rb, rc = _crop_b64(img, (sx, y0, img.width, y1))    # action + dialogue + time
+            lb, lc = _crop_b64(img, (0, y0, sx, y1))             # scene番号(継続縦棒) + picture
+            ab, ac = _crop_b64(img, (sx, y0, ax, y1))            # action欄のみ
+            db, dc = _crop_b64(img, (ax, y0, dx, y1))            # dialogue欄のみ
+            tb, tc = _crop_b64(img, (dx, y0, img.width, y1))     # time欄のみ
             if debug_crops:
                 d = os.path.join(debug_crops, os.path.splitext(os.path.basename(pp))[0])
                 os.makedirs(d, exist_ok=True)
-                lc.save(os.path.join(d, f"row{i:02d}_left.png"))
-                rc.save(os.path.join(d, f"row{i:02d}_right.png"))
+                lc.save(os.path.join(d, f"row{i:02d}_1left.png"))
+                ac.save(os.path.join(d, f"row{i:02d}_2action.png"))
+                dc.save(os.path.join(d, f"row{i:02d}_3dialogue.png"))
+                tc.save(os.path.join(d, f"row{i:02d}_4time.png"))
                 continue
+            # 各列を別画像で渡す → モデルが列をまたいで取り違えられない（action枠の文字をdialogueに入れない）
             crops.append((f"コマ{i} 左(番号+絵)", lb))
-            crops.append((f"コマ{i} 右(本文)", rb))
+            crops.append((f"コマ{i} action欄", ab))
+            crops.append((f"コマ{i} dialogue欄(セリフのみ)", db))
+            crops.append((f"コマ{i} time欄", tb))
         if debug_crops:
             continue
         ctx = (prompt + f"\n【継続情報】前ページまでの最後のカット番号は {last_cut}。"
