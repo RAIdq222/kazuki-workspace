@@ -29,6 +29,7 @@
 | 話数概要 | `runs/ep_overview.json` |
 | 設計ノート | `docs/design-notes.md`（§20=レジスト解決の根拠） |
 | プロンプト設計 | `docs/prompt-design.md` ＋ `runs/scene_profiles/`（great-edison主管） |
+| コンテOCRの全体像/判断 | `docs/conte-ocr-overview.md`（パイプライン・列幾何・verifyの読み方） |
 | 受け渡し依頼/回答 | `runs/handoff_DATA_README.md` `docs/handoff-prompt-design.md` |
 | ローカル実行手順 | `docs/local-cli-runbook.md` |
 | TODO | `docs/TODO.md` |
