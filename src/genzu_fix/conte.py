@@ -499,9 +499,12 @@ def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.js
             os.makedirs(d0, exist_ok=True)
             ov = img.convert("RGB").copy()
             dr = ImageDraw.Draw(ov)
+            lw = max(8, img.width // 250)  # 高解像度でも見えるよう太め
             for x, c in ((sx, (255, 0, 0)), (ax, (0, 160, 0)), (dx, (0, 0, 255))):
-                dr.line([(x, 0), (x, img.height)], fill=c, width=4)
-            ov.save(os.path.join(d0, "_columns_overlay.png"))
+                dr.line([(x, 0), (x, img.height)], fill=c, width=lw)
+            ovp = os.path.join(d0, "_columns_overlay.png")
+            ov.save(ovp)
+            print(f"    [overlay] {ovp}  赤=pic|act({sx}px) 緑=act|dia({ax}px) 青=dia|time({dx}px)")
         crops = []  # ページ全コマを順に並べて1リクエストで関連付けさせる
         # 1枚目=ページ上部ヘッダ（No.◯ と 表頭）。前付けページの判定に使う。
         hdr_y = bands[0][0] if bands else int(img.height * 0.10)
@@ -545,7 +548,9 @@ def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.js
             print(f"    cut={fr.get('cut_label','')!r} conf={fr.get('confidence','')} "
                   f"action={(fr.get('action','') or '')[:28]}")
     if debug_crops:
-        print(f"[debug] 左右クロップを {debug_crops} に保存（APIは未実行）。中身を確認して罫線/列がズレてなければ本実行。")
+        print(f"[debug] 列クロップと _columns_overlay.png を {debug_crops} に保存（APIは未実行）。"
+              "各ページの _columns_overlay.png を開き、赤/緑/青の線が用紙の縦罫線に乗っているか確認。"
+              "ズレていれば --cols 0.xx,0.yy,0.zz で固定してから本実行。")
         return []
     all_frames = _attach_continuations(all_frames)
     os.makedirs(os.path.dirname(out_json) or ".", exist_ok=True)
