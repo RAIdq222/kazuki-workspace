@@ -31,6 +31,9 @@ import urllib.request
 DEFAULT_MODEL = "claude-opus-4-8"
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
 ANTHROPIC_VERSION = "2023-06-01"
+# ep7 DANGUN コンテ用紙の列境界比率（pic|act, act|dia, dia|time）。
+# 本編ページのオーバーレイで目視確認済み（表紙=表なしは cuts:[] になるので無関係）。
+EP7_COLS = "0.50,0.70,0.90"
 
 # 抽出の指示（コンテのコマ枠 No./scene/picture/action/dialogue/time を読む）。
 # 背景美術の原図修正が目的なので、出力は「背景に何が要るか(situation)」と
@@ -989,8 +992,9 @@ def main(argv=None) -> None:
     e2.add_argument("--glossary", default=GLOSSARY_MD)
     e2.add_argument("--debug-crops", default=None,
                     help="指定するとAPIを叩かず列クロップ＋列境界オーバーレイを保存（切り出し確認用）")
-    e2.add_argument("--cols", default=None,
-                    help="列境界を固定（自動検出を無効化）。比率3つ pic|act,act|dia,dia|time 例: 0.50,0.70,0.90")
+    e2.add_argument("--cols", default=EP7_COLS,
+                    help=f"列境界の固定比率 pic|act,act|dia,dia|time（既定={EP7_COLS}＝ep7 DANGUN用紙で目視確認済）。"
+                         "用紙が違う場合のみ変更。'auto' で自動検出に戻す")
     e2.add_argument("--first-page", type=int, default=None, help="先頭Nページだけ（試走用）")
 
     m = sub.add_parser("merge", help="frames JSON を cut_scene_info の situation/remove へ反映")
@@ -1046,12 +1050,12 @@ def main(argv=None) -> None:
         if not imgs:
             sys.exit(f"ページ画像が見つかりません: {a.pages_dir}")
         cols_override = None
-        if a.cols:
+        if a.cols and a.cols.lower() != "auto":
             try:
                 cols_override = [float(x) for x in a.cols.split(",")]
                 assert len(cols_override) == 3
             except (ValueError, AssertionError):
-                sys.exit("--cols は比率3つ（例 0.50,0.70,0.90）で指定してください。")
+                sys.exit("--cols は比率3つ（例 0.50,0.70,0.90）または 'auto' を指定してください。")
         extract2(imgs, a.out, a.model, glossary_path=a.glossary,
                  debug_crops=a.debug_crops, cols_override=cols_override)
     elif a.cmd == "merge":
