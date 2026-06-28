@@ -766,6 +766,66 @@ def consolidate(frames_json: str = "runs/conte_frames_v2_ep7.json",
     return len(rows)
 
 
+def verify(csv_path: str = "runs/conte_v2_ep7.csv") -> int:
+    """構造不変条件を機械チェックする（API不要・決定論）。再OCR後に通して、列の取り違え/
+    枝番の崩れ/欠番を目視でなく自動で洗い出す。corrected があればそちらを優先して読む。
+    返り値=異常件数（0なら構造的にクリーン）。"""
+    cor = os.path.splitext(csv_path)[0] + ".corrected.csv"
+    src = cor if os.path.exists(cor) else csv_path
+    with open(src, encoding="utf-8-sig") as f:
+        rows = list(csv.DictReader(f))
+    # action由来とみなすトークン（dialogue/timeに出たら列取り違えの疑い）
+    cam = ("OK", "A.P.", "AP", "承認", "サイン", "PAN", "T.U", "T.B", "TU", "TB", "F.I", "F.O",
+           "O.L", "FIX", "BANK", "兼用", "BOOK", "BG", "全尺", "じわ", "AC", "A.C", "△")
+    # time欄の正当形：秒+コマ / 整数 / 空 を ' / ' 連結したもの。括弧は許容。
+    time_ok = re.compile(r"^[\s（(]*\d+\s*\+\s*\d+[\s)）]*$|^\s*\d+\s*$")
+    issues: list[str] = []
+
+    def cell(r, k):
+        return (r.get(k) or "").strip()
+
+    for r in rows:
+        cut, page = cell(r, "cut"), cell(r, "page")
+        tag = f"cut {cut}（{page}）"
+        # 1) time欄に秒+コマ以外（＝action文字の漏れ）が無いか
+        for piece in [p for p in cell(r, "time").split(" / ") if p.strip()]:
+            if not time_ok.match(piece):
+                issues.append(f"[time混入] {tag}: time='{piece}'（秒+コマでない＝action漏れ疑い）")
+        # 2) dialogue欄に承認印/カメラ用語（＝セリフでない）が無いか
+        dia = cell(r, "dialogue")
+        hit = [t for t in cam if t in dia]
+        if hit:
+            issues.append(f"[dialogue混入] {tag}: dialogue='{dia[:40]}' に {hit}（セリフでない）")
+
+    # 3) 枝番の整合（cut_board_map の正規枝番だけが存在するか）
+    valid_branch = set()
+    ref = "runs/cut_board_map_ep7.csv"
+    if os.path.exists(ref):
+        with open(ref, encoding="utf-8-sig") as rf:
+            for rr in csv.DictReader(rf):
+                k = _cut_key(rr.get("cut", ""))
+                if re.search(r"[A-Za-z]$", k):
+                    valid_branch.add(k)
+    seen_branch = {cell(r, "cut") for r in rows if re.search(r"[A-Za-z]$", cell(r, "cut"))}
+    for b in sorted(seen_branch - valid_branch):
+        issues.append(f"[枝番] 想定外の枝番 {b}（正規一覧に無い→続きの取り違え疑い）")
+    for b in sorted(valid_branch - seen_branch):
+        issues.append(f"[枝番] 正規枝番 {b} が欠落（読み落とし疑い）")
+
+    # 4) 欠番（1..max の連番で抜けている数字）
+    nums = sorted({_cut_num(cell(r, "cut")) for r in rows if _cut_num(cell(r, "cut")) is not None})
+    if nums:
+        missing = [n for n in range(1, nums[-1] + 1) if n not in nums]
+        if missing:
+            issues.append(f"[欠番] {len(missing)}件: {missing[:40]}{' …' if len(missing) > 40 else ''}")
+
+    print(f"verify {src}: {len(rows)} cuts / 異常 {len(issues)} 件"
+          + ("（構造的にクリーン）" if not issues else ""))
+    for s in issues:
+        print("  " + s)
+    return len(issues)
+
+
 def corrections_report(baseline_csv: str = "runs/conte_v2_ep7.baseline.csv",
                        overrides_csv: str = OVERRIDES_CSV,
                        out_md: str = "runs/conte_corrections_report.md") -> int:
@@ -1018,6 +1078,10 @@ def main(argv=None) -> None:
     cs.add_argument("--frames", default="runs/conte_frames_v2_ep7.json")
     cs.add_argument("--out", default="runs/conte_v2_ep7.csv")
 
+    vf = sub.add_parser("verify", help="構造不変条件を機械チェック(列取り違え/枝番/欠番)。API不要")
+    vf.add_argument("--csv", default="runs/conte_v2_ep7.csv",
+                    help="検査対象(corrected があれば自動でそれを優先)")
+
     cr = sub.add_parser("corrections-report", help="OCR(baseline)→人手訂正(overrides)の差分を出す")
     cr.add_argument("--baseline", default="runs/conte_v2_ep7.baseline.csv")
     cr.add_argument("--overrides", default=OVERRIDES_CSV)
@@ -1080,6 +1144,8 @@ def main(argv=None) -> None:
         ensure_overrides_template(a.overrides)
     elif a.cmd == "consolidate":
         consolidate(a.frames, a.out)
+    elif a.cmd == "verify":
+        verify(a.csv)
     elif a.cmd == "corrections-report":
         corrections_report(a.baseline, a.overrides, a.out)
     elif a.cmd == "review2":
