@@ -409,7 +409,7 @@ def _extraction_prompt_page(glossary: str) -> str:
 
 
 def _vision_page(crops: list[tuple], prompt: str, model: str, api_key: str,
-                 max_tokens: int = 4096) -> list[dict]:
+                 max_tokens: int = 8192) -> list[dict]:
     """crops=[(label, b64), ...] を順に並べ、ページ全体を1リクエストでOCR。cuts配列を返す。"""
     import time as _time
     content = []
@@ -453,12 +453,24 @@ def _vision_page(crops: list[tuple], prompt: str, model: str, api_key: str,
                 continue
             raise
     text = "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
+    stop = data.get("stop_reason", "")
+    if stop == "max_tokens":
+        print(f"    [api] !! 応答が max_tokens({max_tokens})で打ち切られJSONが壊れた可能性。"
+              "max_tokensを上げる必要あり。", flush=True)
     m = re.search(r"\{.*\}", text, re.S)
     if not m:
+        print(f"    [api] !! 応答にJSONが見つからない（stop={stop}）。モデル応答の冒頭:\n"
+              f"        {text[:400]!r}", flush=True)
         return []
     try:
-        return json.loads(m.group(0)).get("cuts", [])
-    except json.JSONDecodeError:
+        cuts = json.loads(m.group(0)).get("cuts", [])
+        if not cuts:
+            print(f"    [api] !! cuts=空（stop={stop}）。モデル応答の冒頭:\n        {text[:400]!r}",
+                  flush=True)
+        return cuts
+    except json.JSONDecodeError as e:
+        print(f"    [api] !! JSON解析失敗({e}, stop={stop})。応答の冒頭:\n        {text[:400]!r}",
+              flush=True)
         return []
 
 
