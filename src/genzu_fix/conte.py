@@ -295,12 +295,14 @@ def _cluster(idxs, gap: int = 6):
 
 
 def detect_grid(gray, row_thresh: float = 0.35, col_thresh: float = 0.30,
-                min_band_frac: float = 0.04):
+                min_band_frac: float = 0.04, cols_override=None):
     """グレースケール配列から、行バンド[(y0,y1)] と列境界(0..1) を返す。
     返り値 (bands, split, cols)：
       split = picture|action 境界（後方互換のため単独でも返す）
       cols  = {"pic_act":~0.50, "act_dia":~0.70, "dia_time":~0.90} 各列の縦境界(0..1)。
-              用紙の縦罫線が拾えない時は DANGUN 標準比率にフォールバック。"""
+              用紙の縦罫線から拾い、拾えない時のみ DANGUN 標準比率にフォールバック。
+      cols_override=[pic_act, act_dia, dia_time] を渡すと検出せずその比率で固定する
+      （フォームは全ページ同一なので、一度目視で合わせたら固定するのが確実）。"""
     import numpy as np
     a = np.asarray(gray)
     h, w = a.shape
@@ -308,6 +310,9 @@ def detect_grid(gray, row_thresh: float = 0.35, col_thresh: float = 0.30,
     hlines = _cluster(np.where(dark.mean(axis=1) > row_thresh)[0])
     bands = [(hlines[i], hlines[i + 1]) for i in range(len(hlines) - 1)
              if hlines[i + 1] - hlines[i] > h * min_band_frac]
+    if cols_override:
+        pa, ad, dt = cols_override
+        return bands, pa, {"pic_act": pa, "act_dia": ad, "dia_time": dt, "_src": "override"}
     vlines = _cluster(np.where(dark.mean(axis=0) > col_thresh)[0])
 
     def nearest(ratio, lo, hi, default):
@@ -323,6 +328,7 @@ def detect_grid(gray, row_thresh: float = 0.35, col_thresh: float = 0.30,
         "pic_act": split,
         "act_dia": nearest(0.70, 0.60, 0.80, 0.70),          # action|dialogue
         "dia_time": nearest(0.90, 0.82, 0.97, 0.90),         # dialogue|time
+        "_src": "auto", "_nvlines": len(vlines),
     }
     return bands, split, cols
 
@@ -453,10 +459,13 @@ def _attach_continuations(frames: list[dict]) -> list[dict]:
 
 def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.json",
              model: str = DEFAULT_MODEL, api_key: str | None = None,
-             glossary_path: str = GLOSSARY_MD, debug_crops: str | None = None) -> list[dict]:
-    """ページPNG群を、表の行検出→カット単位2枚切り→用語集付きOCR で読む。
-    debug_crops を指定すると API を叩かず、各カットの左右クロップを保存して切り出しを目視確認できる。"""
-    from PIL import Image
+             glossary_path: str = GLOSSARY_MD, debug_crops: str | None = None,
+             cols_override=None) -> list[dict]:
+    """ページPNG群を、表の行検出→列ごと(番号+絵/action/dialogue/time)に切り出し→用語集付きOCR で読む。
+    フィールドは「文字がどの列にあるか」で機械的に決まる（モデルに割り当てを選ばせない）。
+    debug_crops を指定すると API を叩かず、各列クロップ＋列境界オーバーレイを保存して切り出しを目視確認できる。
+    cols_override=[pic_act, act_dia, dia_time]（0..1）で列境界を固定できる。"""
+    from PIL import Image, ImageDraw
     if not debug_crops:
         api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
         if not api_key:
@@ -478,12 +487,21 @@ def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.js
     last_cut = 0  # 前ページまでの最後のカット番号（連番をページ越しに引き継ぐ）
     for pp in page_paths:
         img = Image.open(pp)
-        bands, split, cols = detect_grid(img.convert("L"))
+        bands, split, cols = detect_grid(img.convert("L"), cols_override=cols_override)
         sx = int(cols["pic_act"] * img.width)    # picture|action
         ax = int(cols["act_dia"] * img.width)    # action|dialogue
         dx = int(cols["dia_time"] * img.width)   # dialogue|time
-        print(f"  {os.path.basename(pp)}: {len(bands)}コマ検出 "
-              f"列境界 pic|act={cols['pic_act']:.2f} act|dia={cols['act_dia']:.2f} dia|time={cols['dia_time']:.2f}")
+        print(f"  {os.path.basename(pp)}: {len(bands)}コマ検出 列境界[{cols.get('_src','auto')}] "
+              f"pic|act={cols['pic_act']:.3f} act|dia={cols['act_dia']:.3f} dia|time={cols['dia_time']:.3f}")
+        if debug_crops:
+            # 列境界をページ全体に重ね描き＝切り位置を一目で検証できる（API前に確認する核心）
+            d0 = os.path.join(debug_crops, os.path.splitext(os.path.basename(pp))[0])
+            os.makedirs(d0, exist_ok=True)
+            ov = img.convert("RGB").copy()
+            dr = ImageDraw.Draw(ov)
+            for x, c in ((sx, (255, 0, 0)), (ax, (0, 160, 0)), (dx, (0, 0, 255))):
+                dr.line([(x, 0), (x, img.height)], fill=c, width=4)
+            ov.save(os.path.join(d0, "_columns_overlay.png"))
         crops = []  # ページ全コマを順に並べて1リクエストで関連付けさせる
         # 1枚目=ページ上部ヘッダ（No.◯ と 表頭）。前付けページの判定に使う。
         hdr_y = bands[0][0] if bands else int(img.height * 0.10)
@@ -965,7 +983,9 @@ def main(argv=None) -> None:
     e2.add_argument("--model", default=DEFAULT_MODEL)
     e2.add_argument("--glossary", default=GLOSSARY_MD)
     e2.add_argument("--debug-crops", default=None,
-                    help="指定するとAPIを叩かず左右クロップを保存（切り出し確認用）")
+                    help="指定するとAPIを叩かず列クロップ＋列境界オーバーレイを保存（切り出し確認用）")
+    e2.add_argument("--cols", default=None,
+                    help="列境界を固定（自動検出を無効化）。比率3つ pic|act,act|dia,dia|time 例: 0.50,0.70,0.90")
     e2.add_argument("--first-page", type=int, default=None, help="先頭Nページだけ（試走用）")
 
     m = sub.add_parser("merge", help="frames JSON を cut_scene_info の situation/remove へ反映")
@@ -1020,7 +1040,15 @@ def main(argv=None) -> None:
             imgs = imgs[:a.first_page]
         if not imgs:
             sys.exit(f"ページ画像が見つかりません: {a.pages_dir}")
-        extract2(imgs, a.out, a.model, glossary_path=a.glossary, debug_crops=a.debug_crops)
+        cols_override = None
+        if a.cols:
+            try:
+                cols_override = [float(x) for x in a.cols.split(",")]
+                assert len(cols_override) == 3
+            except (ValueError, AssertionError):
+                sys.exit("--cols は比率3つ（例 0.50,0.70,0.90）で指定してください。")
+        extract2(imgs, a.out, a.model, glossary_path=a.glossary,
+                 debug_crops=a.debug_crops, cols_override=cols_override)
     elif a.cmd == "merge":
         frames = json.load(open(a.frames, encoding="utf-8")).get("frames", [])
         merge(frames, a.cut_info, a.out, a.overwrite)
