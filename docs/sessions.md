@@ -6,10 +6,13 @@
 ## 並行ブランチの地図
 | ブランチ | 役割 | 主な成果物 |
 |---|---|---|
+| **`main`（トランク）** | 全部入りの基準。新セッションはここから | 下記すべてを統合 |
 | `claude/stoic-hopper-bezfdl` | ツール/コンソール/受け渡し基盤 | `src/genzu_fix/server.py`, `run_*.bat`, `scripts/render_genzu.py`, `scripts/gather_handoff_ep7.py`, `.claude/skills/read-genzu`, `CLAUDE.md` |
-| `claude/great-edison-bk5g8c` | プロンプト設計/品質/シーン分析 | `src/genzu_fix/prompt.py`, `runs/scene_profiles/`, `docs/prompt-design.md`, `runs/cut_scene_info_ep7.csv` |
+| `claude/great-edison-bk5g8c` | プロンプト設計/品質/シーン分析/コンテOCR | `src/genzu_fix/prompt.py` `conte.py` `scene_understanding.py`, `runs/scene_profiles/`, `runs/conte_v2_ep7.csv`, `scripts/fetch_asset.py` |
 
-相手の成果を使うときは `git fetch origin <branch>` → 必要ファイルを参照（または merge）。
+- 新セッションは **`main` から開始**（Web UIのブランチ欄を main に）。作業は feature ブランチ→ main へマージ。
+- 相手の成果を使うときは `git fetch origin <branch>` → 必要ファイルを参照（または merge）。
+- 2026-06 時点: main は great-edison の最新(d74b542系)＝stoic-hopperのマージを内包する superset から作成。
 
 ## 確定した決定
 - レジストずれ＝入力=出力グリッドで解決。原図はフレームで切らない（ヘッダはプロンプト除去）。
