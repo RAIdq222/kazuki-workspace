@@ -661,11 +661,15 @@ def consolidate(frames_json: str = "runs/conte_frames_v2_ep7.json",
             k = raw
         if not k or k == "-":
             continue
-        if k not in by:
-            by[k] = {"cut": k, "page": fr.get("_page", ""), "action": [], "dialogue": [],
-                     "se": [], "time": [], "characters": [], "confidence": "high", "notes": []}
-            order.append(k)
-        r = by[k]
+        # ページをまたいで番号統合しない（同番号でも別ページは別カット＝番号衝突。真の続きは
+        # numbered=false で _attach_continuations が既に統合済み）。キーに page を含める。
+        page = fr.get("_page", "")
+        gk = (page, k)
+        if gk not in by:
+            by[gk] = {"cut": k, "page": page, "action": [], "dialogue": [],
+                      "se": [], "time": [], "characters": [], "confidence": "high", "notes": []}
+            order.append(gk)
+        r = by[gk]
         def _s(x):  # モデルが int 等で返すことがあるため文字列化に頑健化
             return ("" if x is None else str(x)).strip()
         for col in ("action", "dialogue", "se", "time"):
@@ -684,14 +688,11 @@ def consolidate(frames_json: str = "runs/conte_frames_v2_ep7.json",
         # 結合カットの confidence は最も低いものに合わせる（保守的）
         if rank.get((fr.get("confidence") or "").lower(), 1) < rank.get(r["confidence"], 3):
             r["confidence"] = (fr.get("confidence") or "").lower()
-    # 番号順（枝番は数値→英字でソート）
-    def sk(k):
-        m = re.match(r"(\d+)([A-Za-z]*)", k)
-        return (int(m.group(1)), m.group(2)) if m else (10**9, k)
+    # 出力はページ→出現順（order=挿入順）を保つ。番号でソートするとページまたぎが崩れるため。
     rows = []
-    for k in sorted(by, key=sk):
-        r = by[k]
-        rows.append({"cut": k, "page": r["page"],
+    for gk in order:
+        r = by[gk]
+        rows.append({"cut": r["cut"], "page": r["page"],
                      "action": " / ".join(r["action"]), "dialogue": " / ".join(r["dialogue"]),
                      "se": " / ".join(r["se"]), "time": " / ".join(r["time"]),
                      "characters": "、".join(r["characters"]),
