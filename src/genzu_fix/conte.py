@@ -507,6 +507,12 @@ def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.js
         api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
         if not api_key:
             raise RuntimeError("ANTHROPIC_API_KEY が未設定です。")
+        api_key = api_key.strip().strip('"').strip("'")  # 引用符の付け間違いを許容
+        if not api_key.isascii():
+            raise RuntimeError(
+                "ANTHROPIC_API_KEY に非ASCII文字が含まれています。プレースホルダ（例『（あなたの鍵）』）を"
+                "そのまま設定していませんか？ 本物の鍵（sk-ant-… のASCII文字列）を "
+                "`set ANTHROPIC_API_KEY=sk-ant-...` で設定してください。")
     glossary = load_glossary(glossary_path)
     prompt = _extraction_prompt_page(glossary)
     # 正規の枝番カット一覧を cut_board_map から注入＝枝番の位置をモデルに教える(捏造防止/読み落とし防止)
