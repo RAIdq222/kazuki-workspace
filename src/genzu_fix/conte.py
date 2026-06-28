@@ -666,15 +666,21 @@ def consolidate(frames_json: str = "runs/conte_frames_v2_ep7.json",
                      "se": [], "time": [], "characters": [], "confidence": "high", "notes": []}
             order.append(k)
         r = by[k]
+        def _s(x):  # モデルが int 等で返すことがあるため文字列化に頑健化
+            return ("" if x is None else str(x)).strip()
         for col in ("action", "dialogue", "se", "time"):
-            v = (fr.get(col) or "").strip()
+            v = _s(fr.get(col))
             if v and v not in r[col]:
                 r[col].append(v)
-        for c in fr.get("characters") or []:
-            if c and c not in r["characters"]:
-                r["characters"].append(c)
-        if fr.get("notes"):
-            r["notes"].append(fr["notes"].strip())
+        chars = fr.get("characters") or []
+        if not isinstance(chars, list):
+            chars = [chars]
+        for c in chars:
+            cs = _s(c)
+            if cs and cs not in r["characters"]:
+                r["characters"].append(cs)
+        if _s(fr.get("notes")):
+            r["notes"].append(_s(fr.get("notes")))
         # 結合カットの confidence は最も低いものに合わせる（保守的）
         if rank.get((fr.get("confidence") or "").lower(), 1) < rank.get(r["confidence"], 3):
             r["confidence"] = (fr.get("confidence") or "").lower()
