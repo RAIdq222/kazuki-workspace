@@ -25,6 +25,7 @@ import json
 import os
 import re
 import sys
+import urllib.error
 import urllib.request
 
 # Vision 既定モデル（手描き日本語の読みに強い順で opus を既定に）
@@ -336,12 +337,18 @@ def detect_grid(gray, row_thresh: float = 0.35, col_thresh: float = 0.30,
     return bands, split, cols
 
 
-def _crop_b64(img, box):
-    """PIL画像を box=(l,t,r,b) で切り PNG base64 を返す。小さければ拡大して可読性確保。"""
+def _crop_b64(img, box, min_w: int = 1100, max_edge: int = 1568):
+    """PIL画像を box=(l,t,r,b) で切り PNG base64 を返す。
+    小さければ拡大して可読性確保。ただし長辺は max_edge(=Anthropic推奨上限)で頭打ち
+    （巨大画像によるAPI 400/トークン浪費を防ぐ）。"""
     c = img.crop(box).convert("RGB")
-    if c.width < 1100:
-        s = 1100 / c.width
-        c = c.resize((int(c.width * s), int(c.height * s)))
+    if c.width < min_w:                                   # 可読性のため最低幅まで拡大
+        s = min_w / max(c.width, 1)
+        c = c.resize((max(int(c.width * s), 1), max(int(c.height * s), 1)))
+    longest = max(c.width, c.height)
+    if longest > max_edge:                                # 大きすぎる場合は長辺を上限に縮小
+        s = max_edge / longest
+        c = c.resize((max(int(c.width * s), 1), max(int(c.height * s), 1)))
     buf = io.BytesIO()
     c.save(buf, format="PNG")
     return base64.standard_b64encode(buf.getvalue()).decode("ascii"), c
@@ -404,6 +411,7 @@ def _extraction_prompt_page(glossary: str) -> str:
 def _vision_page(crops: list[tuple], prompt: str, model: str, api_key: str,
                  max_tokens: int = 4096) -> list[dict]:
     """crops=[(label, b64), ...] を順に並べ、ページ全体を1リクエストでOCR。cuts配列を返す。"""
+    import time as _time
     content = []
     for label, b64 in crops:
         content.append({"type": "text", "text": f"【{label}】"})
@@ -412,12 +420,38 @@ def _vision_page(crops: list[tuple], prompt: str, model: str, api_key: str,
     content.append({"type": "text", "text": prompt})
     body = {"model": model, "max_tokens": max_tokens,
             "messages": [{"role": "user", "content": content}]}
-    req = urllib.request.Request(
-        ANTHROPIC_URL, data=json.dumps(body).encode("utf-8"),
-        headers={"x-api-key": api_key, "anthropic-version": ANTHROPIC_VERSION,
-                 "content-type": "application/json"}, method="POST")
-    with urllib.request.urlopen(req, timeout=240) as resp:
-        data = json.loads(resp.read().decode("utf-8"))
+    payload = json.dumps(body).encode("utf-8")
+    nb = len(crops)
+    print(f"    [api] 画像{nb}枚 / 送信 {len(payload)/1_048_576:.1f}MB", flush=True)
+    # 画像点数の上限(Anthropic=100枚/リクエスト)を超えていれば、原因を明示して早期に止める
+    if nb > 100:
+        raise RuntimeError(f"画像が{nb}枚で上限(100枚/リクエスト)超過。コマ数が多すぎる可能性。"
+                           "列分割で 1コマ=4枚のため、25コマ超で超える。ページ分割が必要。")
+    for attempt in range(4):
+        req = urllib.request.Request(
+            ANTHROPIC_URL, data=payload,
+            headers={"x-api-key": api_key, "anthropic-version": ANTHROPIC_VERSION,
+                     "content-type": "application/json"}, method="POST")
+        try:
+            with urllib.request.urlopen(req, timeout=300) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+            break
+        except urllib.error.HTTPError as e:
+            err = e.read().decode("utf-8", "replace")
+            # 400(リクエスト不正)は再試行しても無駄＝中身を見せて即停止
+            if e.code in (429, 500, 502, 503, 529) and attempt < 3:
+                wait = 2 ** (attempt + 1)
+                print(f"    [api] HTTP {e.code} 再試行 {attempt+1}/3（{wait}s後）", flush=True)
+                _time.sleep(wait)
+                continue
+            raise RuntimeError(f"Anthropic API HTTP {e.code}: {err[:1000]}") from None
+        except urllib.error.URLError as e:
+            if attempt < 3:
+                wait = 2 ** (attempt + 1)
+                print(f"    [api] 通信失敗 {e.reason} 再試行 {attempt+1}/3（{wait}s後）", flush=True)
+                _time.sleep(wait)
+                continue
+            raise
     text = "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
     m = re.search(r"\{.*\}", text, re.S)
     if not m:
