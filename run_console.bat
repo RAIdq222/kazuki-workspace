@@ -10,7 +10,7 @@ chcp 65001 >nul
 
 set "GENZU=..\00.原図"
 set "OUT=..\10.生成結果"
-set "BOARDS="
+if not defined BOARDS set "BOARDS=..\01.美術ボード\01.美術ボード"
 set "PORT=8765"
 
 if not exist "%GENZU%" (
