@@ -365,7 +365,8 @@ def create_app():
                   for b, n in cnt.most_common()]
         return jsonify({"key": proj["key"], "synopsis": ov.get("synopsis", ""),
                         "scenes": ov.get("scenes", []), "note": ov.get("note", ""),
-                        "boards": boards})
+                        "boards": boards, "boards_dir": proj.get("boards_dir") or "",
+                        "board_count": len(proj.get("board_idx") or {})})
 
     @app.get("/board-img")
     def board_img():
@@ -693,15 +694,20 @@ async function renderOverview(cur){
   if(o.error){box.innerHTML='';return;}
   const scenes=(o.scenes||[]).map(s=>`<span>${esc(s.label)} <b>c${esc(s.cuts)}</b></span>`).join('');
   const top=(o.boards||[]).slice(0,8);
+  const T=Date.now();
   const mb=top.map(b=>{
-    const u='/board-img?key='+encodeURIComponent(cur.key)+'&name='+encodeURIComponent(b.board);
+    const u='/board-img?key='+encodeURIComponent(cur.key)+'&name='+encodeURIComponent(b.board)+'&t='+T;
     const cap=esc(b.board)+' ×'+b.cuts;
     return `<figure>${b.has_img?`<img loading="lazy" src="${u}" onclick="lb('${u}')">`:`<div class="noimg">${esc(b.board)}</div>`}<figcaption>${cap}</figcaption></figure>`;
   }).join('');
+  const nimg=(o.boards||[]).filter(b=>b.has_img).length;
+  const diag=(o.board_count>0)
+    ? `<span class="muted">索引 ${o.board_count}枚 ・ 画像一致 ${nimg}/${(o.boards||[]).length} ・ ${esc(o.boards_dir)}</span>`
+    : `<span style="color:#d1242f">⚠ ボードフォルダを読めていません（${o.boards_dir?esc(o.boards_dir):'--boards-dir 未指定'}）。run_console.bat の BOARDS を確認</span>`;
   box.innerHTML=`<details class="ovbox" open><summary>話数概要 — ${esc(cur.group)}</summary>
     ${o.synopsis?`<p class="synopsis">${esc(o.synopsis)}</p>`:'<p class="synopsis muted">（あらすじ未登録）</p>'}
     ${scenes?`<div class="scenes">${scenes}</div>`:''}
-    <div class="mbtitle">主要シーンの美術ボード（登場カット数が多い順）</div>
+    <div class="mbtitle">主要シーンの美術ボード（登場カット数が多い順）　${diag}</div>
     ${mb?`<div class="mboards">${mb}</div>`:'<div class="muted">ボード未割当 / 画像なし</div>'}
     ${o.note?`<div class="note">${esc(o.note)}</div>`:''}</details>`;
 }
