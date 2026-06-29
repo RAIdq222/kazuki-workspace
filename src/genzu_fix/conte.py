@@ -316,7 +316,14 @@ def detect_grid(gray, row_thresh: float = 0.35, col_thresh: float = 0.30,
              if hlines[i + 1] - hlines[i] > h * min_band_frac]
     if cols_override:
         pa, ad, dt = cols_override
-        return bands, pa, {"pic_act": pa, "act_dia": ad, "dia_time": dt, "_src": "override"}
+        # scene(番号)|picture 境界は固定指定に含めず常に検出（無ければ0.10）。番号欄の切り出し用。
+        vl = _cluster(np.where(((np.asarray(gray) < 128).astype(np.float32)).mean(axis=0) > col_thresh)[0])
+        sp = 0.10
+        if vl:
+            cx = min(vl, key=lambda x: abs(x - 0.10 * w))
+            if 0.05 * w < cx < 0.18 * w:
+                sp = cx / w
+        return bands, pa, {"scene_pic": sp, "pic_act": pa, "act_dia": ad, "dia_time": dt, "_src": "override"}
     vlines = _cluster(np.where(dark.mean(axis=0) > col_thresh)[0])
 
     def nearest(ratio, lo, hi, default):
@@ -329,6 +336,7 @@ def detect_grid(gray, row_thresh: float = 0.35, col_thresh: float = 0.30,
 
     split = nearest(0.50, 0.35, 0.65, 0.50)                  # picture|action
     cols = {
+        "scene_pic": nearest(0.10, 0.05, 0.18, 0.10),        # scene(番号)|picture
         "pic_act": split,
         "act_dia": nearest(0.70, 0.60, 0.80, 0.70),          # action|dialogue
         "dia_time": nearest(0.90, 0.82, 0.97, 0.90),         # dialogue|time
@@ -358,8 +366,9 @@ def _extraction_prompt_page(glossary: str) -> str:
     return (
         "あなたは日本の商業アニメ絵コンテを読む専門家です。これから**1ページ分**を渡します。\n"
         "1枚目=『ページ上部ヘッダ』(左上の『No.◯』=用紙通し番号 と 表頭 scene/picture/action/dialogue/time)。\n"
-        "2枚目以降=各コマを上から順に**列ごとに4枚**渡す: \n"
-        "  「左(番号+絵)」= scene欄のカット番号＋picture(絵)、\n"
+        "2枚目以降=各コマを上から順に**列ごとに5枚**渡す: \n"
+        "  「scene番号欄」= そのコマの**カット番号（丸囲み数字）か、縦棒｜か、空白**だけが入った画像、\n"
+        "  「picture(絵)」= 絵だけが入った画像、\n"
         "  「action欄」= ト書き(動き・カメラ指示)だけが入った画像、\n"
         "  「dialogue欄(セリフのみ)」= セリフだけが入った画像、\n"
         "  「time欄」= 尺だけが入った画像。\n"
@@ -369,16 +378,19 @@ def _extraction_prompt_page(glossary: str) -> str:
         "・ヘッダに『No.◯』と表頭(scene/picture/action/...)があれば**絵コンテ本編ページ**＝カットを読む。\n"
         "・『No.』も表頭も無いページ(タイトルカード/計算メモ/前付け)は**カットでない → cuts:[] を返す**。\n\n"
         "このページに含まれる全カットを、上から順に JSON 配列で返してください。\n"
-        "【最重要・番号ずれ防止】\n"
-        "・カット番号は作品を通して**連番で増えていく**。上から順にコマを見て、丸囲み数字が新しく現れたら"
-        "次のカット、現れないコマは現在のカットの続き。番号補完は『直前カット+1』を基本とする。\n"
-        "・**scene欄(左)に縦棒『｜』だけがあり丸囲み数字が無いコマは、直前のカットの『続き』(同一カット)**。\n"
-        "  これは新しいカット番号ではない。縦棒を数字『1』と読み間違えないこと。\n"
-        "  その続きコマの本文(action/dialogue/time)は、**直前のカットに統合**して1カットにまとめる。\n"
-        "・各カットに **numbered** を付ける: そのカットの scene欄に丸囲みのカット番号が実際に描かれていれば true、"
-        "縦棒/番号なしの続きコマなら false。**ページ最初のコマが続き(丸番号なし)なら numbered=false** とし、"
-        "前ページの最後のカットの続きとして扱う(新番号にしない)。\n"
-        "・丸で囲まれた数字(①②③/1,2,3)だけが本物のカット番号。1カットが複数コマに跨ることがある。\n"
+        "【最重要・番号ずれ防止（scene番号欄の画像だけで番号を判定する）】\n"
+        "・各コマの **scene番号欄** 画像を見て、次の3通りに**必ず分類**する:\n"
+        "  (1) **丸囲み数字**(①②③ / 丸で囲まれた 1,2,3…)がある → これが**そのカットの番号**。"
+        "**読めた数字をそのまま cut_label にする**。自分の走る連番(直前+1)で上書きしない。\n"
+        "  (2) **縦棒『｜』だけ**(丸囲み数字なし) → **直前カットの続き(同一カット)**。numbered=false。"
+        "新しい番号を振らず、本文(action/dialogue/time)を直前カットに統合する。縦棒を数字『1』と読み間違えない。\n"
+        "  (3) **空白**(番号も縦棒もない) → 直前カットの続き。numbered=false。\n"
+        "・各カットに **scene_mark** を付ける: 丸囲み数字なら読めた数字の文字列(例『2』)、縦棒なら『｜』、空白なら空。\n"
+        "・各カットに **numbered** を付ける: scene番号欄に丸囲み数字があれば true、縦棒/空白なら false。\n"
+        "・**ページ最初のコマが縦棒/空白(丸番号なし)なら numbered=false**＝前ページ最後のカットの続き(新番号にしない)。\n"
+        "・**番号は『丸囲み数字を読む』のが第一。連番は数字が読めない時の補完にだけ使う**。"
+        "丸囲み②が見えているのに走る連番を優先して『3』等にしてはいけない(縦棒コマを1カットと誤算した時に起きる典型ミス)。\n"
+        "・丸で囲まれた数字だけが本物のカット番号。1カットが複数コマに跨ることがある。\n"
         "・**1カットが複数コマに跨る場合は、本文(action/dialogue/time)を結合して1エントリにまとめる**。"
         "同じカット番号で複数のエントリを作らない。\n"
         "・カット番号と本文が隣り合うコマにまたがる場合も、レイアウトと連番性から正しく1つにまとめる。\n"
@@ -401,6 +413,7 @@ def _extraction_prompt_page(glossary: str) -> str:
         'OK/A.P./承認印・サイン・演出メモ・ト書き・効果音はセリフではない→dialogueに入れない(空でよい)",'
         '"se":"効果音があれば",'
         '"time":"time欄。秒+コマ表記(例 4+12)。分数読みは誤り",'
+        '"scene_mark":"scene番号欄の見たまま: 丸囲み数字なら数字(例『2』)、縦棒なら『｜』、空白なら空",'
         '"numbered":"丸囲みのカット番号が実際に描かれていれば true、続きコマ(縦棒/番号なし)なら false",'
         '"characters":["本文に書かれた人名を忠実に。実在しない誤読名のみ実在名に正す(例 芦龍→芦花)。'
         '書かれた字数字形に合わない名前を当てず、短い名を長い正式名に拡張しない。曖昧は空+notesに要確認"],'
@@ -426,7 +439,7 @@ def _vision_page(crops: list[tuple], prompt: str, model: str, api_key: str,
     # 画像点数の上限(Anthropic=100枚/リクエスト)を超えていれば、原因を明示して早期に止める
     if nb > 100:
         raise RuntimeError(f"画像が{nb}枚で上限(100枚/リクエスト)超過。コマ数が多すぎる可能性。"
-                           "列分割で 1コマ=4枚のため、25コマ超で超える。ページ分割が必要。")
+                           "列分割で 1コマ=5枚のため、約20コマ超で超える。ページ分割が必要。")
     for attempt in range(4):
         req = urllib.request.Request(
             ANTHROPIC_URL, data=payload,
@@ -543,11 +556,13 @@ def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.js
     for pp in page_paths:
         img = Image.open(pp)
         bands, split, cols = detect_grid(img.convert("L"), cols_override=cols_override)
+        spx = int(cols.get("scene_pic", 0.10) * img.width)   # scene(番号)|picture
         sx = int(cols["pic_act"] * img.width)    # picture|action
         ax = int(cols["act_dia"] * img.width)    # action|dialogue
         dx = int(cols["dia_time"] * img.width)   # dialogue|time
         print(f"  {os.path.basename(pp)}: {len(bands)}コマ検出 列境界[{cols.get('_src','auto')}] "
-              f"pic|act={cols['pic_act']:.3f} act|dia={cols['act_dia']:.3f} dia|time={cols['dia_time']:.3f}")
+              f"scene|pic={cols.get('scene_pic',0.10):.3f} pic|act={cols['pic_act']:.3f} "
+              f"act|dia={cols['act_dia']:.3f} dia|time={cols['dia_time']:.3f}")
         if debug_crops:
             # 列境界をページ全体に重ね描き＝切り位置を一目で検証できる（API前に確認する核心）
             d0 = os.path.join(debug_crops, os.path.splitext(os.path.basename(pp))[0])
@@ -555,11 +570,12 @@ def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.js
             ov = img.convert("RGB").copy()
             dr = ImageDraw.Draw(ov)
             lw = max(8, img.width // 250)  # 高解像度でも見えるよう太め
-            for x, c in ((sx, (255, 0, 0)), (ax, (0, 160, 0)), (dx, (0, 0, 255))):
+            for x, c in ((spx, (255, 140, 0)), (sx, (255, 0, 0)), (ax, (0, 160, 0)), (dx, (0, 0, 255))):
                 dr.line([(x, 0), (x, img.height)], fill=c, width=lw)
             ovp = os.path.join(d0, "_columns_overlay.png")
             ov.save(ovp)
-            print(f"    [overlay] {ovp}  赤=pic|act({sx}px) 緑=act|dia({ax}px) 青=dia|time({dx}px)")
+            print(f"    [overlay] {ovp}  橙=scene|pic({spx}px) 赤=pic|act({sx}px) "
+                  f"緑=act|dia({ax}px) 青=dia|time({dx}px)")
         crops = []  # ページ全コマを順に並べて1リクエストで関連付けさせる
         # 1枚目=ページ上部ヘッダ（No.◯ と 表頭）。前付けページの判定に使う。
         hdr_y = bands[0][0] if bands else int(img.height * 0.10)
@@ -571,20 +587,24 @@ def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.js
         else:
             crops.append(("ページ上部ヘッダ(No.と表頭)", hb))
         for i, (y0, y1) in enumerate(bands):
-            lb, lc = _crop_b64(img, (0, y0, sx, y1))             # scene番号(継続縦棒) + picture
+            nb, nc = _crop_b64(img, (0, y0, spx, y1))            # scene番号欄のみ(丸数字 or 縦棒)
+            pb, pc = _crop_b64(img, (spx, y0, sx, y1))           # picture(絵)のみ
             ab, ac = _crop_b64(img, (sx, y0, ax, y1))            # action欄のみ
             db, dc = _crop_b64(img, (ax, y0, dx, y1))            # dialogue欄のみ
             tb, tc = _crop_b64(img, (dx, y0, img.width, y1))     # time欄のみ
             if debug_crops:
                 d = os.path.join(debug_crops, os.path.splitext(os.path.basename(pp))[0])
                 os.makedirs(d, exist_ok=True)
-                lc.save(os.path.join(d, f"row{i:02d}_1left.png"))
-                ac.save(os.path.join(d, f"row{i:02d}_2action.png"))
-                dc.save(os.path.join(d, f"row{i:02d}_3dialogue.png"))
-                tc.save(os.path.join(d, f"row{i:02d}_4time.png"))
+                nc.save(os.path.join(d, f"row{i:02d}_1scene.png"))
+                pc.save(os.path.join(d, f"row{i:02d}_2picture.png"))
+                ac.save(os.path.join(d, f"row{i:02d}_3action.png"))
+                dc.save(os.path.join(d, f"row{i:02d}_4dialogue.png"))
+                tc.save(os.path.join(d, f"row{i:02d}_5time.png"))
                 continue
-            # 各列を別画像で渡す → モデルが列をまたいで取り違えられない（action枠の文字をdialogueに入れない）
-            crops.append((f"コマ{i} 左(番号+絵)", lb))
+            # 番号欄を単独で渡す → 丸数字か縦棒(継続)かの判定が絵に紛れず安定する。
+            # 各本文列も別画像 → 列をまたいだ取り違えが起きない。
+            crops.append((f"コマ{i} scene番号欄(丸数字 or 縦棒)", nb))
+            crops.append((f"コマ{i} picture(絵)", pb))
             crops.append((f"コマ{i} action欄", ab))
             crops.append((f"コマ{i} dialogue欄(セリフのみ)", db))
             crops.append((f"コマ{i} time欄", tb))
@@ -596,12 +616,20 @@ def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.js
         for j, fr in enumerate(cuts):
             fr["_page"] = os.path.basename(pp)
             fr["_idx"] = j
+            # scene_mark（番号欄の見たまま）から numbered を決定的に導く＝モデルの自己矛盾を防ぐ。
+            # 丸数字あり→新カット(true)、縦棒｜/空白→続き(false)。scene_mark未出力なら従来通り。
+            mark = fr.get("scene_mark")
+            if mark is not None:
+                m = str(mark)
+                # 半角/全角数字 or 丸囲み数字(①〜 U+2460..U+24FF)があれば新カット。縦棒｜/空白は続き。
+                fr["numbered"] = (bool(re.search(r"[0-9０-９]", m))
+                                  or any("①" <= ch <= "⓿" for ch in m))
             all_frames.append(fr)
             n = _cut_num(fr.get("cut_label", ""))
             if n is not None:
                 last_cut = max(last_cut, n)
-            print(f"    cut={fr.get('cut_label','')!r} conf={fr.get('confidence','')} "
-                  f"action={(fr.get('action','') or '')[:28]}")
+            print(f"    cut={fr.get('cut_label','')!r} mark={fr.get('scene_mark','')!r} "
+                  f"conf={fr.get('confidence','')} action={(fr.get('action','') or '')[:24]}")
     if debug_crops:
         print(f"[debug] 列クロップと _columns_overlay.png を {debug_crops} に保存（APIは未実行）。"
               "各ページの _columns_overlay.png を開き、赤/緑/青の線が用紙の縦罫線に乗っているか確認。"
