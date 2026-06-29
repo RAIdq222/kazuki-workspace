@@ -23,6 +23,7 @@ import subprocess
 import sys
 import threading
 import time
+import unicodedata
 
 from . import batch, psd_export, naming
 
@@ -70,6 +71,50 @@ def _index_dir(d, exts):
     return idx
 
 
+# 美術ボードとして拾う拡張子（PSD/TIFF も含める＝表示時にPNG化）。
+_BOARD_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".psd", ".psb", ".tif", ".tiff")
+
+
+def _norm_board(name):
+    """ボード名を表記ゆれ込みで照合するための正規化キー（拡張子無視・全半角統一・空白除去）。"""
+    stem = os.path.splitext(name or "")[0]
+    return "".join(unicodedata.normalize("NFKC", stem).lower().split())
+
+
+def _board_src(proj, name):
+    """ボード名 → 実ファイルパス。完全一致 → 正規化一致（拡張子/全半角/空白ゆれを吸収）。"""
+    if not name or not proj:
+        return None
+    idx = proj.get("board_idx") or {}
+    if name in idx:
+        return idx[name]
+    return (proj.get("board_norm") or {}).get(_norm_board(name))
+
+
+def _board_png(proj, name):
+    """ブラウザ表示用PNGパスを返す。PSD/TIFF は out/_board_cache/ にPNG化してキャッシュ。"""
+    src = _board_src(proj, name)
+    if not src or not os.path.exists(src):
+        return None
+    ext = os.path.splitext(src)[1].lower()
+    if ext in (".png", ".jpg", ".jpeg", ".webp"):
+        return src
+    cache = os.path.join(CFG.get("out", "."), "_board_cache")
+    os.makedirs(cache, exist_ok=True)
+    out = os.path.join(cache, _norm_board(name) + ".png")
+    if os.path.exists(out) and os.path.getmtime(out) >= os.path.getmtime(src):
+        return out
+    try:
+        if ext in (".psd", ".psb"):
+            psd_export.export_visible_to_png(src, out, bg=(255, 255, 255))
+        else:  # tif/tiff
+            from PIL import Image
+            Image.open(src).convert("RGB").save(out)
+    except Exception:
+        return None
+    return out if os.path.exists(out) else None
+
+
 def _units_from_csv(csv_path):
     units = {}
     if not (csv_path and os.path.exists(csv_path)):
@@ -112,15 +157,22 @@ def _make_project(key, work, ep, genzu_dir, boards_dir=None, csv_path=None, sour
         units = _units_from_csv(csv_path)
     else:
         units = _units_from_folder(genzu_dir)
-    board_idx = _index_dir(boards_dir, (".png", ".jpg", ".jpeg"))
+    board_idx = _index_dir(boards_dir, _BOARD_EXTS)
+    # 正規化キー（拡張子/全半角/空白ゆれ吸収）→ パス。PSDを先に書きPNG等を後で上書き＝軽いPNG優先。
+    board_norm = {}
+    for fn, path in sorted(board_idx.items(),
+                           key=lambda kv: 0 if kv[0].lower().endswith((".psd", ".psb", ".tif", ".tiff")) else 1):
+        board_norm[_norm_board(fn)] = path
     boards_opts = sorted(board_idx.keys())
     if not boards_opts and CFG.get("boards_json") and os.path.exists(CFG["boards_json"]):
         boards_opts = _load_json(CFG["boards_json"], [])
+    if boards_dir:
+        print(f"[boards] {boards_dir}: {len(board_idx)} 枚 索引（{key}）")
     return {
         "key": key, "work": work, "ep": ep, "group": f"{work} #{ep}",
         "genzu_dir": genzu_dir, "boards_dir": boards_dir, "csv": csv_path, "source": source,
         "units": units, "psd_idx": _index_dir(genzu_dir, (".psd",)),
-        "board_idx": board_idx, "boards_opts": boards_opts,
+        "board_idx": board_idx, "board_norm": board_norm, "boards_opts": boards_opts,
     }
 
 
@@ -207,7 +259,7 @@ def _run_generate(uid):
         return
     st = STATE.setdefault(uid, {})
     board = st.get("board", u["board"])
-    board_path = proj["board_idx"].get(board) if (proj.get("boards_dir") and board) else None
+    board_path = _board_png(proj, board) if (proj.get("boards_dir") and board) else None
     try:
         log("prep→生成→finish 実行中…")
         batch.process_cut(psd, board, u["scene"], _unit_dir(uid), st.get("prompt") or None,
@@ -309,7 +361,7 @@ def create_app():
             b = STATE.get(u["id"], {}).get("board", u["board"])
             if b:
                 cnt[b] += len(u["cuts"]) or 1
-        boards = [{"board": b, "cuts": n, "has_img": b in proj["board_idx"]}
+        boards = [{"board": b, "cuts": n, "has_img": _board_src(proj, b) is not None}
                   for b, n in cnt.most_common()]
         return jsonify({"key": proj["key"], "synopsis": ov.get("synopsis", ""),
                         "scenes": ov.get("scenes", []), "note": ov.get("note", ""),
@@ -318,8 +370,7 @@ def create_app():
     @app.get("/board-img")
     def board_img():
         proj = PROJECTS.get(request.args.get("key", ""))
-        name = request.args.get("name", "")
-        p = proj["board_idx"].get(name) if proj else None
+        p = _board_png(proj, request.args.get("name", "")) if proj else None
         if not p or not os.path.exists(p):
             return "", 404
         return send_file(os.path.abspath(p))
@@ -410,7 +461,7 @@ def create_app():
             p = _result_path(uid)
         elif which == "board":
             board = STATE.get(uid, {}).get("board", u["board"])
-            p = proj["board_idx"].get(board) if board else None
+            p = _board_png(proj, board) if board else None
         else:
             p = None
         if not p or not os.path.exists(p):
