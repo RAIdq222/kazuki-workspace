@@ -158,10 +158,10 @@ def _make_project(key, work, ep, genzu_dir, boards_dir=None, csv_path=None, sour
     else:
         units = _units_from_folder(genzu_dir)
     board_idx = _index_dir(boards_dir, _BOARD_EXTS)
-    # 正規化キー（拡張子/全半角/空白ゆれ吸収）→ パス。PNG等を優先して上書き。
+    # 正規化キー（拡張子/全半角/空白ゆれ吸収）→ パス。PSDを先に書きPNG等を後で上書き＝軽いPNG優先。
     board_norm = {}
     for fn, path in sorted(board_idx.items(),
-                           key=lambda kv: kv[0].lower().endswith((".psd", ".psb", ".tif", ".tiff"))):
+                           key=lambda kv: 0 if kv[0].lower().endswith((".psd", ".psb", ".tif", ".tiff")) else 1):
         board_norm[_norm_board(fn)] = path
     boards_opts = sorted(board_idx.keys())
     if not boards_opts and CFG.get("boards_json") and os.path.exists(CFG["boards_json"]):
