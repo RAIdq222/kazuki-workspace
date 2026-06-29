@@ -366,31 +366,36 @@ def _extraction_prompt_page(glossary: str) -> str:
     return (
         "あなたは日本の商業アニメ絵コンテを読む専門家です。これから**1ページ分**を渡します。\n"
         "1枚目=『ページ上部ヘッダ』(左上の『No.◯』=用紙通し番号 と 表頭 scene/picture/action/dialogue/time)。\n"
-        "2枚目以降=各コマを上から順に**列ごとに5枚**渡す: \n"
-        "  「scene番号欄」= そのコマの**カット番号（丸囲み数字）か、縦棒｜か、空白**だけが入った画像、\n"
+        "2枚目=『scene番号欄・ページ全体』= **このページの番号欄(左端の列)を上から下まで丸ごと1枚**にしたもの。\n"
+        "  ここに全コマの『丸囲み数字 / 縦棒｜ / 空白』が縦に並ぶ。**丸で囲まれた数字**と**ただの縦線**は"
+        "  並べて見比べれば区別できる。**どのコマが新カット(丸数字あり)で、どのコマが続き(縦棒/空白)かは、この1枚で判断する**。\n"
+        "3枚目以降=各コマを上から順に**列ごとに4枚**渡す: \n"
         "  「picture(絵)」= 絵だけが入った画像、\n"
         "  「action欄」= ト書き(動き・カメラ指示)だけが入った画像、\n"
         "  「dialogue欄(セリフのみ)」= セリフだけが入った画像、\n"
         "  「time欄」= 尺だけが入った画像。\n"
         "**各画像はその列の中身だけを抜き出してある。ラベルの列以外の内容を絶対に混ぜない**"
-        "(例: 『action欄』画像の文字を dialogue に入れない。『dialogue欄』にはセリフ以外を入れない)。\n\n"
+        "(例: 『action欄』画像の文字を dialogue に入れない。『dialogue欄』にはセリフ以外を入れない)。\n"
+        "**『scene番号欄・ページ全体』の上からN番目の行と、3枚目以降のN番目のコマ(picture/action/...)は同じコマ**。"
+        "番号欄の全体画像で各コマの番号有無を決め、本文は各コマの画像から読む。\n\n"
         "【ページ種別の判定（最初に行う）】\n"
         "・ヘッダに『No.◯』と表頭(scene/picture/action/...)があれば**絵コンテ本編ページ**＝カットを読む。\n"
         "・『No.』も表頭も無いページ(タイトルカード/計算メモ/前付け)は**カットでない → cuts:[] を返す**。\n\n"
         "このページに含まれる全カットを、上から順に JSON 配列で返してください。\n"
-        "【最重要・番号ずれ防止（scene番号欄の画像だけで番号を判定する）】\n"
+        "【最重要・番号ずれ防止（『scene番号欄・ページ全体』の画像で判定する）】\n"
         "・**新カットの境目は scene番号欄に番号が書かれているか否か、それだけで決める**。"
         "番号があれば新カット、無ければ直前カットの続き。"
         "**絵や動きが変わった/別の芝居に見える等の“内容”で勝手に新カットを起こさない**。"
         "(例: 番号の無いコマに『鱗粉が舞う』等の新しいト書きがあっても、それは直前カットの続き)。\n"
-        "・各コマの **scene番号欄** 画像を見て、次の3通りに**必ず分類**する:\n"
-        "  (1) **丸囲み数字**(①②③ / 丸で囲まれた 1,2,3…)がある → これが**そのカットの番号**。"
-        "**読めた数字をそのまま cut_label にする**。自分の走る連番(直前+1)で上書きしない。\n"
-        "  (2) **縦棒『｜』だけ**(丸囲み数字なし) → **直前カットの続き(同一カット)**。numbered=false。"
-        "新しい番号を振らず、本文(action/dialogue/time)を直前カットに統合する。縦棒を数字『1』と読み間違えない。\n"
-        "  (3) **空白**(番号も縦棒もない) → 直前カットの続き。numbered=false。\n"
+        "・**『scene番号欄・ページ全体』の1枚を上から下へ見て、各コマ(行)を次の3通りに必ず分類する**。"
+        "丸数字と縦棒は、この1枚で並べて見比べれば区別できる:\n"
+        "  (1) **丸囲み数字**(①②③ / 丸で囲まれた 1,2,3…)がある → **新カット**。"
+        "**読めた数字をそのまま cut_label にする**(走る連番で上書きしない)。\n"
+        "  (2) **縦棒『｜』だけ**(丸で囲まれていない短い縦線) → **直前カットの続き**。numbered=false。"
+        "新しい番号を振らず、本文を直前カットに統合する。縦棒を数字と読み間違えない。\n"
+        "  (3) **空白** → 直前カットの続き。numbered=false。\n"
         "・各カットに **scene_mark** を付ける: 丸囲み数字なら読めた数字の文字列(例『2』)、縦棒なら『｜』、空白なら空。\n"
-        "・各カットに **numbered** を付ける: scene番号欄に丸囲み数字があれば true、縦棒/空白なら false。\n"
+        "・各カットに **numbered** を付ける: 丸囲み数字があれば true、縦棒/空白なら false。\n"
         "・**ページ最初のコマが縦棒/空白(丸番号なし)なら numbered=false**＝前ページ最後のカットの続き(新番号にしない)。\n"
         "・**番号は『丸囲み数字を読む』のが第一。連番は数字が読めない時の補完にだけ使う**。"
         "丸囲み②が見えているのに走る連番を優先して『3』等にしてはいけない(縦棒コマを1カットと誤算した時に起きる典型ミス)。\n"
@@ -584,14 +589,19 @@ def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.js
         # 1枚目=ページ上部ヘッダ（No.◯ と 表頭）。前付けページの判定に使う。
         hdr_y = bands[0][0] if bands else int(img.height * 0.10)
         hb, hc = _crop_b64(img, (0, 0, img.width, max(hdr_y, 1)))
+        # 2枚目=scene番号欄をページ全体で1枚（丸数字と縦棒を並べて見分けさせる）
+        y_top = bands[0][0] if bands else 0
+        y_bot = bands[-1][1] if bands else img.height
+        scb, scc = _crop_b64(img, (0, y_top, spx, y_bot), min_w=300, max_edge=4000)
         if debug_crops:
             d0 = os.path.join(debug_crops, os.path.splitext(os.path.basename(pp))[0])
             os.makedirs(d0, exist_ok=True)
             hc.save(os.path.join(d0, "header.png"))
+            scc.save(os.path.join(d0, "scene_column_full.png"))
         else:
             crops.append(("ページ上部ヘッダ(No.と表頭)", hb))
+            crops.append((f"scene番号欄・ページ全体(上から{len(bands)}コマ分。丸数字=新カット/縦棒・空白=続き)", scb))
         for i, (y0, y1) in enumerate(bands):
-            nb, nc = _crop_b64(img, (0, y0, spx, y1))            # scene番号欄のみ(丸数字 or 縦棒)
             pb, pc = _crop_b64(img, (spx, y0, sx, y1))           # picture(絵)のみ
             ab, ac = _crop_b64(img, (sx, y0, ax, y1))            # action欄のみ
             db, dc = _crop_b64(img, (ax, y0, dx, y1))            # dialogue欄のみ
@@ -599,15 +609,12 @@ def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.js
             if debug_crops:
                 d = os.path.join(debug_crops, os.path.splitext(os.path.basename(pp))[0])
                 os.makedirs(d, exist_ok=True)
-                nc.save(os.path.join(d, f"row{i:02d}_1scene.png"))
-                pc.save(os.path.join(d, f"row{i:02d}_2picture.png"))
-                ac.save(os.path.join(d, f"row{i:02d}_3action.png"))
-                dc.save(os.path.join(d, f"row{i:02d}_4dialogue.png"))
-                tc.save(os.path.join(d, f"row{i:02d}_5time.png"))
+                pc.save(os.path.join(d, f"row{i:02d}_1picture.png"))
+                ac.save(os.path.join(d, f"row{i:02d}_2action.png"))
+                dc.save(os.path.join(d, f"row{i:02d}_3dialogue.png"))
+                tc.save(os.path.join(d, f"row{i:02d}_4time.png"))
                 continue
-            # 番号欄を単独で渡す → 丸数字か縦棒(継続)かの判定が絵に紛れず安定する。
-            # 各本文列も別画像 → 列をまたいだ取り違えが起きない。
-            crops.append((f"コマ{i} scene番号欄(丸数字 or 縦棒)", nb))
+            # 番号はページ全体の番号欄で判定済み。各本文列は別画像→列の取り違えが起きない。
             crops.append((f"コマ{i} picture(絵)", pb))
             crops.append((f"コマ{i} action欄", ab))
             crops.append((f"コマ{i} dialogue欄(セリフのみ)", db))
