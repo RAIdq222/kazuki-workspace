@@ -592,7 +592,8 @@ def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.js
         # 2枚目=scene番号欄をページ全体で1枚（丸数字と縦棒を並べて見分けさせる）
         y_top = bands[0][0] if bands else 0
         y_bot = bands[-1][1] if bands else img.height
-        scb, scc = _crop_b64(img, (0, y_top, spx, y_bot), min_w=300, max_edge=4000)
+        # 多画像リクエストでは各画像の縦横とも2000px以下が必須。番号欄ストリップも1980pxに収める。
+        scb, scc = _crop_b64(img, (0, y_top, spx, y_bot), min_w=240, max_edge=1980)
         if debug_crops:
             d0 = os.path.join(debug_crops, os.path.splitext(os.path.basename(pp))[0])
             os.makedirs(d0, exist_ok=True)
