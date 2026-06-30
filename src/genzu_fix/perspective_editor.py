@@ -213,6 +213,7 @@ PAGE = r"""<!DOCTYPE html>
   </div>
   <div class="grp">
     <button id="savepng" class="pri">PNG保存（場所を選ぶ）</button>
+    <button id="savepngtr">透過PNG（線だけ）</button>
     <button id="savejson">JSON保存</button>
     <button id="reset" class="warn">リセット</button>
   </div>
@@ -499,11 +500,11 @@ function download(blob,name){const u=URL.createObjectURL(blob);const a=document.
 
 // 焼き込みPNGを「ブラウザ側でフル解像度生成」する（サーバ非依存＝固まらない・確実に中身入り）。
 // 画面表示と同じ見た目を、原寸キャンバスに描く。線幅は表示→原寸の倍率(1/scale)で換算。
-function renderFullCanvas(){
+function renderFullCanvas(withImage){
   const W=S.iw,H=S.ih;
   const c=document.createElement('canvas'); c.width=W; c.height=H;
   const x=c.getContext('2d');
-  x.drawImage(S.img,0,0,W,H);
+  if(withImage!==false) x.drawImage(S.img,0,0,W,H);   // false=透過(線だけ)
   const sc=1/Math.max(S.view.scale,1e-6);
   const LW=Math.max(2,S.lw*sc), GW=Math.max(1,LW*0.5), CR=(6+S.lw*1.4)*sc, DR=(3+S.lw*0.9)*sc;
   const FS=Math.max(11,Math.round((12+S.lw*1.6)*sc));
@@ -557,10 +558,19 @@ async function saveBlobPicker(blob,name,types,label){
 async function savePNG(){
   if(!S.path){setMsg('先に画像を開いてください');return;}
   let blob;
-  try{ blob=dataURLtoBlob(renderFullCanvas().toDataURL('image/png')); }
+  try{ blob=dataURLtoBlob(renderFullCanvas(true).toDataURL('image/png')); }
   catch(e){ setMsg('PNG生成失敗: '+(e.message||e)); return; }
   await saveBlobPicker(blob, baseName()+'.perspective.png',
     [{description:'PNG画像',accept:{'image/png':['.png']}}], 'PNG');
+}
+// 線だけ（アイレベル・パースガイド・人物垂直線）を透過背景で保存
+async function savePNGLines(){
+  if(!S.path){setMsg('先に画像を開いてください');return;}
+  let blob;
+  try{ blob=dataURLtoBlob(renderFullCanvas(false).toDataURL('image/png')); }
+  catch(e){ setMsg('透過PNG生成失敗: '+(e.message||e)); return; }
+  await saveBlobPicker(blob, baseName()+'.perspective_lines.png',
+    [{description:'PNG画像(透過)',accept:{'image/png':['.png']}}], '透過PNG');
 }
 async function saveJSON(){
   if(!S.path){setMsg('先に画像を開いてください');return;}
@@ -592,6 +602,7 @@ $('addvpv').onclick=()=>addVP(true);
 $('addchar').onclick=addChar;
 $('del').onclick=delSel;
 $('savepng').onclick=savePNG;
+$('savepngtr').onclick=savePNGLines;
 $('savejson').onclick=saveJSON;
 $('reset').onclick=reset;
 $('snap').onchange=e=>{S.snap=e.target.checked;applySnap();draw();};

@@ -169,6 +169,23 @@ def main():
             png_path = di.value.path()
             check("PNG保存(ダウンロード)", di.value.suggested_filename.endswith(".perspective.png"))
             check("PNGが空でない(>0KB)", bool(png_path) and os.path.getsize(png_path) > 1000)
+            # 透過PNG（線だけ）保存：中身があり、背景が透明であること
+            with page.expect_download() as dt:
+                page.click("#savepngtr")
+            trp = dt.value.path()
+            check("透過PNGファイル名", dt.value.suggested_filename.endswith(".perspective_lines.png"))
+            check("透過PNGが空でない(>0)", bool(trp) and os.path.getsize(trp) > 200)
+            if trp:
+                from PIL import Image as _Im
+                im = _Im.open(trp).convert("RGBA")
+                check("透過PNGはRGBA", im.mode == "RGBA")
+                # 四隅は完全透明（背景が描かれていない）
+                corners = [im.getpixel((0, 0)), im.getpixel((im.width - 1, 0)),
+                           im.getpixel((0, im.height - 1)), im.getpixel((im.width - 1, im.height - 1))]
+                check("四隅が透明", all(px[3] == 0 for px in corners))
+                # 線が存在する=不透明ピクセルがある（alphaの最大>0）
+                check("線(不透明画素)が存在", im.getchannel("A").getextrema()[1] > 0)
+
             with page.expect_download() as dj:
                 page.click("#savejson")
             jobj = json.load(open(dj.value.path(), encoding="utf-8"))
