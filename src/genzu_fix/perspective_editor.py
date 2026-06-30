@@ -182,8 +182,10 @@ PAGE = r"""<!DOCTYPE html>
   #msg{position:absolute;left:10px;bottom:10px;background:rgba(0,0,0,.6);padding:6px 10px;border-radius:6px;color:#cfd3da;max-width:60vw}
   #hint{color:var(--muted);font-size:12px}
   .pill{font-size:11px;color:var(--muted);background:#15161a;border:1px solid var(--line);border-radius:10px;padding:2px 8px}
+  #topbar{position:sticky;top:0;z-index:30;background:var(--panel)}
 </style></head>
 <body>
+<div id="topbar">
 <header>
   <div class="grp">
     <button id="open" class="pri">ファイルを開く…</button>
@@ -223,6 +225,7 @@ PAGE = r"""<!DOCTYPE html>
   <span><i style="background:var(--vert)"></i>人物の鉛直線</span>
   <span><i style="background:var(--axis)"></i>人物の体軸(頭→足)</span>
   <span class="pill" id="info">未読込</span>
+</div>
 </div>
 <div id="wrap"><canvas id="cv"></canvas><div id="msg">「ファイルを開く…」か画像をドラッグ&ドロップ。アイレベルを掴んで画像の外へカーソルを出すと傾けられます（消失点も連動）。空白ドラッグで上下移動。</div></div>
 
