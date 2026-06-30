@@ -279,7 +279,7 @@ function resize(){
   if(S.iw) fitView();
   draw();
 }
-function drawFan(vx,vy,r,density){
+function drawFan(x,vx,vy,r,density){
   const inside = vx>=r.x0&&vx<=r.x1&&vy>=r.y0&&vy<=r.y1;
   let amin,amax;
   if(inside){amin=0;amax=Math.PI*2;}
@@ -289,13 +289,13 @@ function drawFan(vx,vy,r,density){
     if(amax-amin>Math.PI){angs=angs.map(a=>a<0?a+2*Math.PI:a);amin=Math.min(...angs);amax=Math.max(...angs);}
   }
   const big=(r.x1-r.x0)+(r.y1-r.y0);
-  ctx.beginPath();
+  x.beginPath();
   for(let k=0;k<=density;k++){
     const a=amin+(amax-amin)*k/Math.max(1,density);
     const seg=clipSeg(vx,vy,vx+Math.cos(a)*big*3,vy+Math.sin(a)*big*3,r);
-    if(seg){ctx.moveTo(seg[0],seg[1]);ctx.lineTo(seg[2],seg[3]);}
+    if(seg){x.moveTo(seg[0],seg[1]);x.lineTo(seg[2],seg[3]);}
   }
-  ctx.stroke();
+  x.stroke();
 }
 function cross(x,y,col,rad,w){
   ctx.strokeStyle=col;ctx.lineWidth=w||2;
@@ -313,7 +313,7 @@ function draw(){
   const LW=S.lw, GW=Math.max(1,S.lw*0.5), CR=6+S.lw*1.4, DR=3+S.lw*0.9;
   // パースガイド（やや濃いめ）
   ctx.save();ctx.globalAlpha=0.6;
-  S.vps.forEach(v=>{const [sx,sy]=n2s(v.x,v.y);ctx.strokeStyle=C.GUIDE;ctx.lineWidth=GW;drawFan(sx,sy,r,S.density);});
+  S.vps.forEach(v=>{const [sx,sy]=n2s(v.x,v.y);ctx.strokeStyle=C.GUIDE;ctx.lineWidth=GW;drawFan(ctx,sx,sy,r,S.density);});
   ctx.restore();
   // 傾け中: 半透明の水平基準線（アイレベル中央の高さに）
   if(S.drag&&S.drag.type==='horizon'&&S.drag.rotating){
@@ -493,45 +493,78 @@ function annotation(){
 function baseName(){return S.name?S.name.replace(/\.[^.]+$/,''):'perspective';}
 function download(blob,name){const u=URL.createObjectURL(blob);const a=document.createElement('a');
   a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);}
-// PNGをサーバで生成して blob を返す（固まり防止に60秒タイムアウト）
-async function renderBlob(){
-  const ctl=new AbortController(); const to=setTimeout(()=>ctl.abort(), 60000);
-  try{
-    const r=await fetch('/api/render',{method:'POST',headers:{'content-type':'application/json'},
-      body:JSON.stringify({path:S.path,annotation:annotation(),line_scale:S.lw/4,guides:S.density}),signal:ctl.signal});
-    if(!r.ok){let e='';try{e=(await r.json()).error;}catch(_){}; throw new Error(e||('HTTP '+r.status));}
-    return await r.blob();
-  } finally { clearTimeout(to); }
+
+// 焼き込みPNGを「ブラウザ側でフル解像度生成」する（サーバ非依存＝固まらない・確実に中身入り）。
+// 画面表示と同じ見た目を、原寸キャンバスに描く。線幅は表示→原寸の倍率(1/scale)で換算。
+function renderFullCanvas(){
+  const W=S.iw,H=S.ih;
+  const c=document.createElement('canvas'); c.width=W; c.height=H;
+  const x=c.getContext('2d');
+  x.drawImage(S.img,0,0,W,H);
+  const sc=1/Math.max(S.view.scale,1e-6);
+  const LW=Math.max(2,S.lw*sc), GW=Math.max(1,LW*0.5), CR=(6+S.lw*1.4)*sc, DR=(3+S.lw*0.9)*sc;
+  const FS=Math.max(11,Math.round((12+S.lw*1.6)*sc));
+  const P=(nx,ny)=>[nx*W,ny*H];
+  const r={x0:0,y0:0,x1:W,y1:H};
+  const lbl=(px,py,t,col)=>{x.font=FS+'px system-ui';x.lineWidth=Math.max(3,LW);x.strokeStyle='rgba(0,0,0,.85)';x.strokeText(t,px,py);x.fillStyle=col;x.fillText(t,px,py);};
+  // ガイド
+  x.save();x.globalAlpha=0.6;x.strokeStyle=C.GUIDE;x.lineWidth=GW;
+  S.vps.forEach(v=>{const [vx,vy]=P(v.x,v.y);drawFan(x,vx,vy,r,S.density);});
+  x.restore();
+  // アイレベル
+  const [ax,ay]=P(0,S.horizon.ya),[bx,by]=P(1,S.horizon.yb);
+  const seg=clipSeg(ax,ay,bx,by,r);
+  if(seg){x.strokeStyle=C.EYE;x.lineWidth=LW;x.beginPath();x.moveTo(seg[0],seg[1]);x.lineTo(seg[2],seg[3]);x.stroke();lbl(seg[0]+6*sc,seg[1]-6*sc,'EYE LEVEL / アイレベル',C.EYE);}
+  // 消失点
+  S.vps.forEach((v,i)=>{const [vx,vy]=P(v.x,v.y);const col=v.vertical?C.VPV:C.VP;
+    x.strokeStyle=col;x.lineWidth=LW;
+    x.beginPath();x.moveTo(vx-CR,vy);x.lineTo(vx+CR,vy);x.moveTo(vx,vy-CR);x.lineTo(vx,vy+CR);x.stroke();
+    x.beginPath();x.arc(vx,vy,CR,0,Math.PI*2);x.stroke();
+    lbl(vx+CR+4*sc,vy-CR,(v.vertical?'VVP':'VP')+(i+1),col);});
+  // 人物の垂直線
+  S.chars.forEach((c2,i)=>{const [hx,hy]=P(c2.head.x,c2.head.y),[fx,fy]=P(c2.foot.x,c2.foot.y);
+    x.strokeStyle=C.VERT;x.lineWidth=LW;x.beginPath();
+    x.moveTo(fx,Math.min(hy,fy)-Math.abs(fy-hy)*0.12-6*sc);x.lineTo(fx,Math.max(hy,fy)+6*sc);x.stroke();
+    x.strokeStyle=C.AXIS;x.lineWidth=Math.max(1.5,LW*0.8);x.setLineDash([10*sc,7*sc]);x.beginPath();x.moveTo(hx,hy);x.lineTo(fx,fy);x.stroke();x.setLineDash([]);
+    x.fillStyle=C.AXIS;x.beginPath();x.arc(hx,hy,DR,0,Math.PI*2);x.fill();
+    x.fillStyle=C.VERT;x.beginPath();x.arc(fx,fy,DR,0,Math.PI*2);x.fill();
+    lbl(fx+DR+3*sc,hy-8*sc,c2.name||('人物'+letter(i)),C.VERT);});
+  return c;
 }
-// 「ファイルを開く」と同じノリの保存ウィンドウ。
-// 重要: showSaveFilePicker は“クリック操作中”に呼ぶ必要があるので、
-// 先にダイアログを出してハンドルを得てから中身(blob)を作る。
-// 対応ブラウザ(Chrome/Edge)はネイティブの保存ウィンドウ、非対応はダウンロードへ。
-async function saveVia(blobMaker, name, types, label){
-  if(!S.path){setMsg('先に画像を開いてください');return;}
+// dataURL を同期で Blob 化（await を挟まずに作るので showSaveFilePicker のユーザ操作が切れない）
+function dataURLtoBlob(url){const i=url.indexOf(',');const bin=atob(url.slice(i+1));
+  const arr=new Uint8Array(bin.length);for(let k=0;k<bin.length;k++)arr[k]=bin.charCodeAt(k);
+  return new Blob([arr],{type:'image/png'});}
+
+// blob は呼ぶ前に作っておく（空ファイル防止）。ピッカーはクリック操作中に開く。
+async function saveBlobPicker(blob,name,types,label){
   if(window.showSaveFilePicker){
     let handle;
-    try{ handle=await window.showSaveFilePicker({suggestedName:name, types}); }
+    try{ handle=await window.showSaveFilePicker({suggestedName:name,types}); }
     catch(e){ if(e&&e.name==='AbortError'){setMsg('保存をキャンセルしました');return;} handle=null; }
     if(handle){
-      setMsg(label+'を生成中…');
-      let blob; try{ blob=await blobMaker(); }catch(e){ setMsg(label+'生成失敗: '+(e.message||e)); return; }
       try{ const w=await handle.createWritable(); await w.write(blob); await w.close(); }
       catch(e){ setMsg(label+'書込失敗: '+(e.message||e)); return; }
-      setMsg(label+'を保存しました。'); return;
+      setMsg(label+'を保存しました ('+Math.max(1,Math.round(blob.size/1024))+'KB)。'); return;
     }
   }
-  // 非対応ブラウザ(Firefox等): ダウンロードへ
-  setMsg(label+'を生成中…');
-  let blob; try{ blob=await blobMaker(); }catch(e){ setMsg(label+'生成失敗: '+(e.message||e)); return; }
-  download(blob, name);
+  download(blob,name);
   setMsg(label+'をダウンロードしました（保存先の指定はChrome/Edgeで可能）。');
 }
-function savePNG(){ return saveVia(renderBlob, baseName()+'.perspective.png',
-  [{description:'PNG画像',accept:{'image/png':['.png']}}], 'PNG'); }
-function saveJSON(){ return saveVia(
-  async()=>new Blob([JSON.stringify(annotation(),null,2)],{type:'application/json'}),
-  baseName()+'.perspective.json', [{description:'JSON',accept:{'application/json':['.json']}}], 'JSON'); }
+async function savePNG(){
+  if(!S.path){setMsg('先に画像を開いてください');return;}
+  let blob;
+  try{ blob=dataURLtoBlob(renderFullCanvas().toDataURL('image/png')); }
+  catch(e){ setMsg('PNG生成失敗: '+(e.message||e)); return; }
+  await saveBlobPicker(blob, baseName()+'.perspective.png',
+    [{description:'PNG画像',accept:{'image/png':['.png']}}], 'PNG');
+}
+async function saveJSON(){
+  if(!S.path){setMsg('先に画像を開いてください');return;}
+  const blob=new Blob([JSON.stringify(annotation(),null,2)],{type:'application/json'});
+  await saveBlobPicker(blob, baseName()+'.perspective.json',
+    [{description:'JSON',accept:{'application/json':['.json']}}], 'JSON');
+}
 function addVP(vertical){const x=0.5,y=vertical?0.12:horizonYat(0.5);S.vps.push({x,y,vertical});S.sel={type:'vp',i:S.vps.length-1};draw();}
 function addChar(){const i=S.chars.length;S.chars.push({name:'人物'+letter(i),head:{x:0.45,y:0.35},foot:{x:0.45,y:0.85}});S.sel={type:'char',i};draw();}
 function delSel(){if(!S.sel)return;if(S.sel.type==='vp')S.vps.splice(S.sel.i,1);if(S.sel.type==='char')S.chars.splice(S.sel.i,1);S.sel=null;draw();}

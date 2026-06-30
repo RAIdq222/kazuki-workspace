@@ -162,10 +162,13 @@ def main():
             check("ガイド密度がPNGに反映(4≠30)", r4.body() != r30.body())
 
             # 保存: showSaveFilePicker は headless で出せないので無効化し、ダウンロード経路を検証。
+            # PNGはブラウザ側でフル解像度生成（サーバ非依存）。0KBにならないことを担保する。
             page.evaluate("() => { window.showSaveFilePicker = undefined; }")
             with page.expect_download() as di:
                 page.click("#savepng")
+            png_path = di.value.path()
             check("PNG保存(ダウンロード)", di.value.suggested_filename.endswith(".perspective.png"))
+            check("PNGが空でない(>0KB)", bool(png_path) and os.path.getsize(png_path) > 1000)
             with page.expect_download() as dj:
                 page.click("#savejson")
             jobj = json.load(open(dj.value.path(), encoding="utf-8"))
