@@ -32,9 +32,31 @@ from . import perspective
 
 CONFIG = {"image": ""}
 
+# ネイティブのファイル選択ダイアログを別プロセスで開く（Flask のワーカスレッドから
+# Tk を直接触ると不安定なので subprocess に分離。日本語パスのため UTF-8 で出力）。
+_PICK_SNIPPET = (
+    "import sys\n"
+    "try: sys.stdout.reconfigure(encoding='utf-8')\n"
+    "except Exception: pass\n"
+    "import tkinter as tk\n"
+    "from tkinter import filedialog\n"
+    "r = tk.Tk(); r.withdraw(); r.attributes('-topmost', True)\n"
+    "p = filedialog.askopenfilename(title='画像を選択', "
+    "filetypes=[('画像', '*.png *.jpg *.jpeg *.webp *.bmp *.gif'), "
+    "('すべて', '*.*')])\n"
+    "print(p or '')\n"
+)
+
 
 def _ok(path: str) -> bool:
     return bool(path) and os.path.isfile(path)
+
+
+def _img_info(path: str) -> dict:
+    with Image.open(path) as im:
+        w, h = im.size
+    return {"ok": True, "path": os.path.abspath(path),
+            "name": os.path.basename(path), "width": w, "height": h}
 
 
 def create_app():
@@ -55,12 +77,46 @@ def create_app():
         if not _ok(path):
             return jsonify({"error": f"画像が見つかりません: {path}"}), 404
         try:
-            with Image.open(path) as im:
-                w, h = im.size
+            return jsonify(_img_info(path))
         except Exception as e:
             return jsonify({"error": f"画像を開けません: {e}"}), 400
-        return jsonify({"ok": True, "path": os.path.abspath(path),
-                        "name": os.path.basename(path), "width": w, "height": h})
+
+    @app.get("/api/pick")
+    def api_pick():
+        """サーバ機(=ブラウザと同じPC)でネイティブのファイル選択ダイアログを出す。"""
+        import subprocess
+        try:
+            out = subprocess.run([sys.executable, "-c", _PICK_SNIPPET],
+                                 capture_output=True, timeout=600)
+        except Exception as e:
+            return jsonify({"error": f"ダイアログ起動失敗: {e}"}), 500
+        raw = (out.stdout or b"").decode("utf-8", "replace")
+        lines = [ln.strip() for ln in raw.splitlines() if ln.strip()]
+        path = lines[-1] if lines else ""
+        if not path:
+            return jsonify({"cancelled": True})
+        if not _ok(path):
+            return jsonify({"error": f"選択が無効: {path}"}), 400
+        try:
+            return jsonify(_img_info(path))
+        except Exception as e:
+            return jsonify({"error": f"画像を開けません: {e}"}), 400
+
+    @app.post("/api/upload")
+    def api_upload():
+        """ドラッグ&ドロップ等のファイルを受け取り work/_uploads に保存してパスを返す。"""
+        f = request.files.get("file")
+        if not f or not f.filename:
+            return jsonify({"error": "ファイルがありません"}), 400
+        name = os.path.basename(f.filename)
+        up_dir = os.path.join("work", "_uploads")
+        os.makedirs(up_dir, exist_ok=True)
+        dst = os.path.join(up_dir, name)
+        f.save(dst)
+        try:
+            return jsonify(_img_info(dst))
+        except Exception as e:
+            return jsonify({"error": f"画像を開けません: {e}"}), 400
 
     @app.get("/image")
     def image():
@@ -161,8 +217,8 @@ PAGE = r"""<!DOCTYPE html>
 <body>
 <header>
   <div class="grp">
-    <input id="path" type="text" placeholder="画像ファイルのパス（例 C:\...\cut.png）">
-    <button id="open" class="pri">開く</button>
+    <button id="open" class="pri">ファイルを開く…</button>
+    <input id="path" type="text" placeholder="またはパスを貼って Enter / 画像をD&D">
   </div>
   <div class="grp">
     <select id="method"><option value="cv">cv</option><option value="vision">vision</option><option value="hybrid">hybrid</option></select>
@@ -194,7 +250,7 @@ PAGE = r"""<!DOCTYPE html>
   <span><i style="background:var(--axis)"></i>人物の体軸(頭→足)</span>
   <span class="pill" id="info">未読込</span>
 </div>
-<div id="wrap"><canvas id="cv"></canvas><div id="msg">画像パスを入れて「開く」。アイレベル/消失点をドラッグ。空白部ドラッグでアイレベル移動。</div></div>
+<div id="wrap"><canvas id="cv"></canvas><div id="msg">「ファイルを開く…」か画像をドラッグ&ドロップ。アイレベルを掴んで画像の外へカーソルを出すと傾けられます（消失点も連動）。空白ドラッグで上下移動。</div></div>
 
 <script>
 const C = {
@@ -329,8 +385,25 @@ function distToSeg(px,py,x0,y0,x1,y1){const dx=x1-x0,dy=y1-y0,l2=dx*dx+dy*dy;
   let t=l2?((px-x0)*dx+(py-y0)*dy)/l2:0; t=Math.max(0,Math.min(1,t));
   return Math.hypot(px-(x0+t*dx),py-(y0+t*dy));}
 
-function clampN(v){return Math.max(-2,Math.min(3,v));}
+function clampN(v){return Math.max(-2,Math.min(3,v));}     // アイレベルy等
+function clampW(v){return Math.max(-12,Math.min(12,v));}    // 消失点は画角外も許容
 function applySnap(){ if(S.snap){S.vps.forEach(v=>{if(!v.vertical)v.y=horizonYat(v.x);});} }
+
+// 点 (sx,sy) をピボット Ps まわりに回転（screen座標）
+function rotPt(sx,sy,Ps,c,s){const dx=sx-Ps[0],dy=sy-Ps[1];return [Ps[0]+dx*c-dy*s, Ps[1]+dx*s+dy*c];}
+// アイレベルを delta だけ回転し、消失点も一緒に回す（screen Ps まわり）
+function rotateHorizon(delta,Ps){
+  const c=Math.cos(delta),s=Math.sin(delta);
+  let A=n2s(0,S.horizon.ya), B=n2s(1,S.horizon.yb);
+  A=rotPt(A[0],A[1],Ps,c,s); B=rotPt(B[0],B[1],Ps,c,s);
+  const r=imgRect();
+  const dx=B[0]-A[0], m=Math.abs(dx)<1e-6?0:(B[1]-A[1])/dx;
+  const yl=A[1]+m*(r.x0-A[0]), yr=A[1]+m*(r.x1-A[0]);
+  const nyl=s2n(r.x0,yl)[1], nyr=s2n(r.x1,yr)[1];
+  if(Math.abs(nyr-nyl)>1.5) return;   // 急すぎ(ほぼ垂直)は無視
+  S.horizon.ya=clampN(nyl); S.horizon.yb=clampN(nyr);
+  S.vps.forEach(v=>{const sp=n2s(v.x,v.y);const rp=rotPt(sp[0],sp[1],Ps,c,s);const np=s2n(rp[0],rp[1]);v.x=clampW(np[0]);v.y=clampW(np[1]);});
+}
 
 // ---- マウス ----
 let dragStart=null;
@@ -338,20 +411,41 @@ cv.addEventListener('mousedown',e=>{
   if(!S.img)return; const m=mouse(e);
   const h=hit(m.x,m.y);
   S.sel = (h&&(h.type==='vp'||h.type==='char'))?{type:h.type,i:h.i}:S.sel;
-  if(h){S.drag=h; dragStart={m, horizon:{...S.horizon}};}
-  else{S.drag={type:'horizon',sub:'body'}; dragStart={m,horizon:{...S.horizon}}; S.sel=null;}
+  S.drag = h || {type:'horizon',sub:'body'};
+  if(!h) S.sel=null;
+  S.drag.lastY=m.y; S.drag.lastX=m.x; S.drag.rotating=false;
+  dragStart={m, horizon:{...S.horizon}};
   draw();
 });
 window.addEventListener('mousemove',e=>{
   if(!S.drag||!S.img)return; const m=mouse(e); const [nx,ny]=s2n(m.x,m.y);
   const d=S.drag;
-  if(d.type==='vp'){const v=S.vps[d.i]; v.x=clampN(nx); v.y=(S.snap&&!v.vertical)?horizonYat(v.x):clampN(ny);}
+  if(d.type==='vp'){const v=S.vps[d.i]; v.x=clampW(nx); v.y=(S.snap&&!v.vertical)?horizonYat(v.x):clampW(ny);}
   else if(d.type==='char'){const c=S.chars[d.i]; c[d.sub].x=clampN(nx); c[d.sub].y=clampN(ny);}
   else if(d.type==='horizon'){
-    if(d.sub==='a'){S.horizon.ya=clampN(ny);}
-    else if(d.sub==='b'){S.horizon.yb=clampN(ny);}
-    else{const dy=(m.y-dragStart.m.y)/(S.ih*S.view.scale); S.horizon.ya=clampN(dragStart.horizon.ya+dy); S.horizon.yb=clampN(dragStart.horizon.yb+dy);}
-    applySnap();
+    if(d.sub==='a'){S.horizon.ya=clampN(ny);applySnap();}
+    else if(d.sub==='b'){S.horizon.yb=clampN(ny);applySnap();}
+    else{
+      const r=imgRect();
+      const inside = m.x>=r.x0&&m.x<=r.x1&&m.y>=r.y0&&m.y<=r.y1;
+      if(inside){
+        // 画像内 → 平行移動（傾き保持・消失点も一緒に上下）
+        const dy=(m.y-d.lastY)/(S.ih*S.view.scale);
+        S.horizon.ya=clampN(S.horizon.ya+dy); S.horizon.yb=clampN(S.horizon.yb+dy);
+        S.vps.forEach(v=>v.y=clampW(v.y+dy));
+        d.rotating=false; applySnap();
+      } else {
+        // 画像の外 → 傾ける（回転）。ピボット=アイレベル中央。消失点も連動回転。
+        if(!d.rotating){d.rotating=true; d.pivotN={x:0.5,y:(S.horizon.ya+S.horizon.yb)/2}; d.prevAng=null;}
+        const Ps=n2s(d.pivotN.x,d.pivotN.y);
+        const ang=Math.atan2(m.y-Ps[1],m.x-Ps[0]);
+        if(d.prevAng===null){d.prevAng=ang;}
+        const delta=ang-d.prevAng; d.prevAng=ang;
+        if(delta) rotateHorizon(delta,Ps);
+        applySnap();
+      }
+    }
+    d.lastY=m.y; d.lastX=m.x;
   }
   draw();
 });
@@ -361,18 +455,36 @@ window.addEventListener('keydown',e=>{if((e.key==='Delete'||e.key==='Backspace')
 
 // ---- 操作 ----
 function setMsg(t){$('msg').textContent=t;}
-async function openPath(){
-  const path=$('path').value.trim(); if(!path){setMsg('パスを入力してください');return;}
-  setMsg('読込中…');
-  const r=await fetch('/api/open?path='+encodeURIComponent(path));
-  const j=await r.json(); if(!r.ok){setMsg('エラー: '+(j.error||r.status));return;}
+function openInfo(j){
   const img=new Image();
   img.onload=()=>{S.img=img;S.iw=j.width;S.ih=j.height;S.path=j.path;S.name=j.name;
     S.horizon={ya:0.5,yb:0.5};S.vps=[];S.chars=[];S.sel=null;
+    $('path').value=j.path;
     $('info').textContent=`${j.name}  ${j.width}×${j.height}`;
-    fitView();draw();setMsg('読込完了。アイレベル/消失点を配置、または「自動推定」。');};
+    fitView();draw();setMsg('読込完了。アイレベル/消失点を配置、または「自動推定」。画面外ドラッグで傾け可。');};
   img.onerror=()=>setMsg('画像の表示に失敗');
   img.src='/image?path='+encodeURIComponent(j.path);
+}
+async function openTyped(){
+  const path=$('path').value.trim(); if(!path){setMsg('「ファイルを開く…」で選択するか、パスを貼ってEnter');return;}
+  setMsg('読込中…');
+  const r=await fetch('/api/open?path='+encodeURIComponent(path));
+  const j=await r.json(); if(!r.ok){setMsg('エラー: '+(j.error||r.status));return;}
+  openInfo(j);
+}
+async function pickFile(){
+  setMsg('ファイル選択ダイアログを開いています…（サーバ機の画面に出ます）');
+  let r,j; try{r=await fetch('/api/pick');j=await r.json();}catch(e){setMsg('ダイアログ取得失敗: '+e);return;}
+  if(j.cancelled){setMsg('キャンセルしました');return;}
+  if(!r.ok||j.error){setMsg('エラー: '+(j.error||r.status));return;}
+  openInfo(j);
+}
+async function uploadFile(file){
+  setMsg('読込中… '+file.name);
+  const fd=new FormData(); fd.append('file',file);
+  const r=await fetch('/api/upload',{method:'POST',body:fd});
+  const j=await r.json(); if(!r.ok){setMsg('アップロード失敗: '+(j.error||r.status));return;}
+  openInfo(j);
 }
 async function auto(){
   if(!S.path){setMsg('先に画像を開いてください');return;}
@@ -412,9 +524,19 @@ function addChar(){const i=S.chars.length;S.chars.push({name:'人物'+letter(i),
 function delSel(){if(!S.sel)return;if(S.sel.type==='vp')S.vps.splice(S.sel.i,1);if(S.sel.type==='char')S.chars.splice(S.sel.i,1);S.sel=null;draw();}
 function reset(){S.horizon={ya:0.5,yb:0.5};S.vps=[];S.chars=[];S.sel=null;draw();setMsg('リセットしました');}
 
-$('open').onclick=openPath;
-$('path').addEventListener('keydown',e=>{if(e.key==='Enter')openPath();});
+$('open').onclick=pickFile;
+$('path').addEventListener('keydown',e=>{if(e.key==='Enter')openTyped();});
 $('auto').onclick=auto;
+// ドラッグ&ドロップで開く
+const wrap=document.getElementById('wrap');
+['dragenter','dragover'].forEach(ev=>wrap.addEventListener(ev,e=>{e.preventDefault();e.stopPropagation();if(e.dataTransfer)e.dataTransfer.dropEffect='copy';wrap.style.outline='3px dashed #2563eb';wrap.style.outlineOffset='-6px';}));
+['dragleave'].forEach(ev=>wrap.addEventListener(ev,e=>{e.preventDefault();wrap.style.outline='';}));
+wrap.addEventListener('drop',e=>{e.preventDefault();e.stopPropagation();wrap.style.outline='';
+  const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+  if(f){ if(f.type&&f.type.indexOf('image')!==0){setMsg('画像ファイルをドロップしてください: '+f.name);return;} uploadFile(f);} });
+// ブラウザがファイルを開いて遷移するのを全体で抑止
+window.addEventListener('dragover',e=>e.preventDefault());
+window.addEventListener('drop',e=>e.preventDefault());
 $('addvp').onclick=()=>addVP(false);
 $('addvpv').onclick=()=>addVP(true);
 $('addchar').onclick=addChar;
@@ -425,7 +547,7 @@ $('snap').onchange=e=>{S.snap=e.target.checked;applySnap();draw();};
 $('density').oninput=e=>{S.density=+e.target.value;$('dval').textContent=e.target.value;draw();};
 window.addEventListener('resize',resize);
 resize();
-fetch('/api/config').then(r=>r.json()).then(j=>{if(j.image){$('path').value=j.image;openPath();}});
+fetch('/api/config').then(r=>r.json()).then(j=>{if(j.image){$('path').value=j.image;openTyped();}});
 </script>
 </body></html>
 """

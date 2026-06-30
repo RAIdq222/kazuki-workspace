@@ -87,13 +87,21 @@ def main():
             page.on("pageerror", lambda e: errs.append(str(e)))
             page.goto(base, wait_until="networkidle")
 
-            # 画像を開く
+            # 画像を開く（パスを貼って Enter。#open はネイティブダイアログ起動なのでテストでは使わない）
             page.fill("#path", img)
-            page.click("#open")
+            page.press("#path", "Enter")
             page.wait_for_function(
                 "() => document.getElementById('info').textContent.includes('1200')",
                 timeout=8000)
             check("画像読込(寸法表示)", "1200" in page.text_content("#info"))
+
+            # アップロード(ドラッグ&ドロップ相当)エンドポイント
+            up = page.request.post(base + "/api/upload", multipart={
+                "file": {"name": "up.png", "mimeType": "image/png",
+                         "buffer": open(img, "rb").read()}})
+            uj = up.json()
+            check("/api/upload ok", up.ok and uj.get("width") == 1200)
+            check("uploadはwork/_uploadsに保存", "work" in (uj.get("path", "")))
 
             # 自動推定(cv) → 消失点が1つ以上入る
             page.select_option("#method", "cv")
@@ -123,6 +131,28 @@ def main():
             # 密度スライダ反映
             page.eval_on_selector("#density", "el=>{el.value=30;el.dispatchEvent(new Event('input'))}")
             check("ガイド密度反映", page.evaluate("() => window.S.density") == 30)
+
+            # アイレベルを掴んで画像の外へドラッグ → 傾く（消失点も連動）
+            page.evaluate("() => { window.S.horizon={ya:0.5,yb:0.5}; "
+                          "window.S.vps.forEach(v=>{if(!v.vertical)v.y=0.5;}); draw(); }")
+            geo = page.evaluate("""() => {
+                const cvEl=document.getElementById('cv'); const b=cvEl.getBoundingClientRect();
+                const nx=0.15, ny=window.horizonYat(nx); const p=window.n2s(nx,ny);
+                const r=window.imgRect();
+                return {gx:b.left+p[0], gy:b.top+p[1], outX:b.left+r.x1+90, outY:b.top+r.y1+140};
+            }""")
+            vp_before = page.evaluate("() => { const v=window.S.vps.find(v=>!v.vertical); return v?v.y:null; }")
+            page.mouse.move(geo["gx"], geo["gy"])
+            page.mouse.down()
+            page.mouse.move(geo["gx"] + 20, geo["gy"] + 4)         # まず画像内で掴む
+            page.mouse.move(geo["outX"], geo["outY"], steps=10)    # 画像外へ → 回転
+            page.mouse.up()
+            tilt = page.evaluate("() => Math.abs(window.S.horizon.ya - window.S.horizon.yb)")
+            print(f"    傾き(|ya-yb|) = {tilt:.3f}")
+            check("画面外ドラッグでアイレベルが傾く", tilt > 0.02)
+            if vp_before is not None:
+                vp_after = page.evaluate("() => { const v=window.S.vps.find(v=>!v.vertical); return v.y; }")
+                check("消失点がアイレベルに連動", abs(vp_after - vp_before) > 0.01)
 
             # 保存 → JSON/PNG が出来る
             page.click("#save")
