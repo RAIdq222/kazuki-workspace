@@ -26,6 +26,7 @@
 | パイプライン本体 | `src/genzu_fix/`（`psd_export` `image_aspect` `frame` `batch` `prompt` `server`） |
 | パース注釈（アイレベル/消失点/キャラ垂直線） | `src/genzu_fix/perspective.py` ／ ラッパ `scripts/draw_perspective.py`（vision/cv/hybrid 比較） |
 | パース編集エディタ(Flask/キャンバス) | `src/genzu_fix/perspective_editor.py` ／ 起動は `run_perspective_editor.bat` / `run_perspective_editor.py`（手置き＋自動推定でパース線） |
+| パース線 Photoshopプラグイン(UXP) | `photoshop/uxp-perspective/`（手置きパース線をPSDに透過レイヤーで追加・最小プロト・実機未検証/READMEに読込手順） |
 | 作業コンソール(Flask) | `src/genzu_fix/server.py` ／ 起動は `run_console.bat` / `run_console.py` |
 | カット表・索引 | `runs/cut_board_map_ep7.csv`(245行/217原図) `runs/genzu_index_ep7.csv` |
 | 話数概要 | `runs/ep_overview.json` |
