@@ -25,6 +25,7 @@
 |---|---|
 | パイプライン本体 | `src/genzu_fix/`（`psd_export` `image_aspect` `frame` `batch` `prompt` `server`） |
 | パース注釈（アイレベル/消失点/キャラ垂直線） | `src/genzu_fix/perspective.py` ／ ラッパ `scripts/draw_perspective.py`（vision/cv/hybrid 比較） |
+| パース編集エディタ(Flask/キャンバス) | `src/genzu_fix/perspective_editor.py` ／ 起動は `run_perspective_editor.bat` / `run_perspective_editor.py`（手置き＋自動推定でパース線） |
 | 作業コンソール(Flask) | `src/genzu_fix/server.py` ／ 起動は `run_console.bat` / `run_console.py` |
 | カット表・索引 | `runs/cut_board_map_ep7.csv`(245行/217原図) `runs/genzu_index_ep7.csv` |
 | 話数概要 | `runs/ep_overview.json` |
@@ -58,6 +59,16 @@
   `hybrid`(Visionのキャラ＋CVで消失点を最小二乗精密化)。既定 `--method all` で
   `work/_perspective/<stem>/` に各オーバーレイPNG＋JSON＋`compare.png` を出す。
   vision/hybrid は `ANTHROPIC_API_KEY` が要る（cv は不要）。
+- **パースを手で詰める/直す（エディタ）** → `python run_perspective_editor.py`（既定 :8770）。
+  「ファイルを開く…」(ブラウザの `<input type=file>`) か画像のドラッグ&ドロップで開く
+  （どちらも内部で `/api/upload`→`work/_uploads` に保存しサーバ側パスを得る＝自動推定/保存に使う）。
+  アイレベル・消失点をドラッグで配置すると消失点へ収束するパースガイドを自動描画
+  （1点〜複数消失点＝ジブリ風にも対応、鉛直消失点/人物垂直線も可）。アイレベルを掴んで
+  画像の外へカーソルを出すと傾けられる（消失点も連動回転、傾け中は半透明の水平基準線を表示し
+  誤差1°未満は自動で水平へ補正）。線の太さ・ガイド密度はスライダ（生成参照用に太め既定）。
+  「自動推定(cv/vision/hybrid)」で初期値を流し込み微調整→保存はブラウザのダウンロード:
+  「PNG保存」=`/api/render` がフルレゾの焼き込みPNG（太さ・密度を反映）、「JSON保存」=正規化座標。
+  **背景がキャラ想定のパースと食い違う時は手置きで正す**。
 
 ## 5. 規約
 - **src レイアウト**。`python -m genzu_fix.*` には PYTHONPATH=src が要るので、ランチャ

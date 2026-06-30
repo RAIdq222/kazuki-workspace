@@ -185,6 +185,79 @@ def point_line_distance(pt: tuple[float, float],
     return abs(a * pt[0] + b * pt[1] + c) / math.hypot(a, b)
 
 
+def _letter(i: int) -> str:
+    """0→A, 1→B, ... 25→Z, 26→AA（キャラ/縦線の連番ラベル）。"""
+    s, i = "", i + 1
+    while i > 0:
+        i, r = divmod(i - 1, 26)
+        s = chr(65 + r) + s
+    return s
+
+
+def estimate_horizon_y(recede: list[tuple[float, float, float, int]],
+                       size: tuple[int, int],
+                       y_prior: float | None = None,
+                       tol: float | None = None) -> float | None:
+    """奥行き線の総当たり交点の **y が集中する高さ** = 地平線(アイレベル)を返す。
+
+    透視の核心: 2 点透視でも複数の消失点はすべて同じ地平線（=同じ y）に乗る。
+    よって交点の x はばらけても y は地平線に収束する。投票数で重み付けした
+    1D ヒストグラムの最頻ビンを取り、その近傍で加重平均して精密化する。
+    VP の個数や x から切り離すことで、偽VP・スピード線による傾きを避ける。
+
+    y_prior/tol を与えると（hybrid 用）その近傍の交点だけを使って局所精密化する。
+    返値は解析寸ピクセルの y。推定できなければ None。
+    """
+    w, h = size
+    if len(recede) < 2:
+        return None
+    ys: list[float] = []
+    ws: list[float] = []
+    for i in range(len(recede)):
+        a1, b1, c1, v1 = recede[i]
+        for j in range(i + 1, len(recede)):
+            a2, b2, c2, v2 = recede[j]
+            p = intersect((a1, b1, c1), (a2, b2, c2))
+            if p is None:
+                continue
+            x, y = p
+            if not (-1.5 * w <= x <= 2.5 * w and -1.0 * h <= y <= 2.0 * h):
+                continue
+            if y_prior is not None and tol is not None and abs(y - y_prior) > tol:
+                continue
+            ys.append(y)
+            ws.append(math.sqrt(max(v1, 1) * max(v2, 1)))
+    if len(ys) < 2:
+        return None
+    ya = np.array(ys, dtype=float)
+    wa = np.array(ws, dtype=float)
+    binw = max(h / 40.0, 1.0)
+    lo = float(ya.min())
+    nb = max(1, int((ya.max() - lo) / binw) + 1)
+    idx = np.clip(((ya - lo) / binw).astype(int), 0, nb - 1)
+    hist = np.zeros(nb)
+    np.add.at(hist, idx, wa)
+    peak = int(hist.argmax())
+    sel = (idx >= peak - 1) & (idx <= peak + 1)
+    if wa[sel].sum() <= 0:
+        return float(np.average(ya, weights=wa))
+    return float(np.average(ya[sel], weights=wa[sel]))
+
+
+def _snap_horizontal(eye: "EyeLevel | None",
+                     threshold_deg: float = 4.0) -> "EyeLevel | None":
+    """ほぼ水平なアイレベルは水平に丸める（アニメ背景はロール無しが既定）。"""
+    if eye is None:
+        return None
+    (ax, ay), (bx, by) = eye.a, eye.b
+    dx, dy = bx - ax, by - ay
+    if abs(dx) < 1e-9:
+        return eye
+    if abs(math.degrees(math.atan2(dy, dx))) <= threshold_deg:
+        return EyeLevel.horizontal((ay + by) / 2.0)
+    return eye
+
+
 # ---------------------------------------------------------------------------
 # 入出力ヘルパ
 # ---------------------------------------------------------------------------
@@ -310,21 +383,18 @@ def detect_cv(path: str, max_dim: int = 1100) -> PerspectiveResult:
 
     # 消失点: 奥行き線の総当たり交点を 2D ヒストでクラスタ → 上位を VP に
     vp_px = _cluster_vanishing_points(recede, (w, h), max_vps=2)
-    eye_y = None
     for i, (vx, vy, weight) in enumerate(vp_px):
         nx, ny = _norm((vx / scale, vy / scale), W, H)
         res.vanishing_points.append(
             VanishingPoint(nx, ny, label=f"VP{i+1}", axis="other"))
-    if vp_px:
-        # アイレベル: VP が 2 つ以上なら 2 点を結ぶ、1 つなら水平線
-        if len(vp_px) >= 2:
-            (x1, y1, _), (x2, y2, _) = vp_px[0], vp_px[1]
-            a1 = _norm((x1 / scale, y1 / scale), W, H)
-            a2 = _norm((x2 / scale, y2 / scale), W, H)
-            res.eye_level = EyeLevel(a1, a2)
-        else:
-            vy = vp_px[0][1]
-            res.eye_level = EyeLevel.horizontal((vy / scale) / H)
+
+    # アイレベル(地平線)は VP の x/個数から切り離し、奥行き線交点の y が
+    # 集中する高さで水平に引く（2点透視でも複数VPは同じ地平線=同じyに乗る）。
+    hy = estimate_horizon_y(recede, (w, h))
+    if hy is None and vp_px:
+        hy = vp_px[0][1]
+    if hy is not None:
+        res.eye_level = EyeLevel.horizontal((hy / scale) / H)
 
     # キャラ垂直線: CV では人物を識別できないので「強い縦線」を最大3本返す
     vert.sort(key=lambda t: t[2], reverse=True)
@@ -337,11 +407,11 @@ def detect_cv(path: str, max_dim: int = 1100) -> PerspectiveResult:
         head = _norm((x_top / scale, 0.0), W, H)
         foot = _norm((x_bot / scale, H), W, H)
         res.characters.append(
-            CharacterVertical(name=f"vert{i+1}", head=head, foot=foot))
+            CharacterVertical(name=f"縦線{_letter(i)}", head=head, foot=foot))
 
     res.notes = (f"CV: lines={len(peaks)} recede={len(recede)} "
-                 f"vert={len(vert)} vps={len(vp_px)}. "
-                 f"※CVは人物識別不可のため characters は強い縦線です。")
+                 f"vert={len(vert)} vps={len(vp_px)} horizon_y={'有' if hy else '無'}. "
+                 f"※CVは人物識別不可のため characters は強い縦線(縦線A/B/C)です。")
     return res
 
 
@@ -412,10 +482,10 @@ VISION_SYSTEM = (
 VISION_PROMPT = (
     "この画像のパースを解析し、次の JSON だけを出力してください（前後に説明文を書かない）。\n"
     "座標は必ず正規化: x=左0..右1, y=上0..下1。消失点は画角外なら 0..1 を外れた値で構いません。\n"
-    "アイレベルは透視の収束高さに置く一本の直線で、left(x=0付近)とright(x=1付近)の2点で表す"
-    "（水平なら両点の y を同じに）。\n"
+    "アイレベルは透視の収束高さに置く一本の直線で、left(x=0付近)とright(x=1付近)の2点で表す。"
+    "カメラが意図的に傾いて(ダッチアングル)いない限り水平＝両点の y を同じにすること。\n"
     "キャラクターは画面内の人物ごとに1つ。head=頭頂、foot=足元の接地点。"
-    "name は分かれば役名、不明なら『人物1』等。人物がいなければ空配列。\n"
+    "name は画面左から順に『人物A』『人物B』…で構わない。人物がいなければ空配列。\n"
     "消失点は確信のあるものだけ（無ければ空配列）。\n\n"
     "{\n"
     '  "eye_level": {"a": [x, y], "b": [x, y]},\n'
@@ -492,17 +562,21 @@ def _result_from_vision_obj(obj: dict, path: str, method: str = "vision"
     res = PerspectiveResult(method, W, H, image_path=os.path.abspath(path))
     el = obj.get("eye_level")
     if el and "a" in el and "b" in el:
-        res.eye_level = EyeLevel(tuple(el["a"]), tuple(el["b"]))
+        # ほぼ水平なら水平に丸める（ロール無し前提でブレを抑える）
+        res.eye_level = _snap_horizontal(EyeLevel(tuple(el["a"]), tuple(el["b"])))
     for v in obj.get("vanishing_points", []) or []:
         if "x" in v and "y" in v:
             res.vanishing_points.append(
                 VanishingPoint(float(v["x"]), float(v["y"]),
                                v.get("label", "VP"), v.get("axis", "other")))
+    # キャラ名は当てにならない（Vision の推測が外れる）ので 人物A/B/C に固定する。
+    ci = 0
     for c in obj.get("characters", []) or []:
         if "head" in c and "foot" in c:
             res.characters.append(
-                CharacterVertical(c.get("name", "人物"),
+                CharacterVertical(f"人物{_letter(ci)}",
                                   tuple(c["head"]), tuple(c["foot"])))
+            ci += 1
     res.notes = obj.get("notes", "")
     return res
 
@@ -532,12 +606,13 @@ def detect_hybrid(path: str, model: str = DEFAULT_MODEL,
     h, w = gray.shape
     xs, ys = _edge_points(gray)
     peaks = _hough_lines(xs, ys, (h, w))
-    recede = []
+    recede = []  # (a, b, c, votes)
     for rho, theta, v in peaks:
         deg = math.degrees(theta)
         if abs(deg) < 8 or abs(abs(deg) - 90) < 8:
             continue
-        recede.append(line_from_rho_theta(rho, theta))
+        a, b, c = line_from_rho_theta(rho, theta)
+        recede.append((a, b, c, v))
 
     refined: list[VanishingPoint] = []
     seeds = vis.vanishing_points or []
@@ -545,9 +620,9 @@ def detect_hybrid(path: str, model: str = DEFAULT_MODEL,
     for vp in seeds:
         seed_px = (vp.x * W * scale, vp.y * H * scale)  # 解析寸ピクセル
         near = [ln for ln in recede
-                if point_line_distance(seed_px, ln) < 0.12 * max(w, h)]
+                if point_line_distance(seed_px, ln[:3]) < 0.12 * max(w, h)]
         if len(near) >= 3:
-            p = least_squares_vp(near)
+            p = least_squares_vp([ln[:3] for ln in near])
             if p is not None and -3 * w <= p[0] <= 4 * w and -3 * h <= p[1] <= 4 * h:
                 nx, ny = _norm((p[0] / scale, p[1] / scale), W, H)
                 refined.append(VanishingPoint(nx, ny, vp.label, vp.axis))
@@ -558,8 +633,7 @@ def detect_hybrid(path: str, model: str = DEFAULT_MODEL,
 
     # Vision が VP を出さなかったときは CV 単独で補う
     if not refined:
-        cvp = _cluster_vanishing_points(
-            [(a, b, c, 1) for a, b, c in recede], (w, h), max_vps=2)
+        cvp = _cluster_vanishing_points(recede, (w, h), max_vps=2)
         for i, (vx, vy, _) in enumerate(cvp):
             nx, ny = _norm((vx / scale, vy / scale), W, H)
             refined.append(VanishingPoint(nx, ny, f"VP{i+1}", "other"))
@@ -568,14 +642,24 @@ def detect_hybrid(path: str, model: str = DEFAULT_MODEL,
 
     res.vanishing_points = refined
 
-    # アイレベル: 精密化後の VP に合わせて引き直す（無ければ Vision の値）
-    if len(refined) >= 2:
-        res.eye_level = EyeLevel((refined[0].x, refined[0].y),
-                                 (refined[1].x, refined[1].y))
-    elif len(refined) == 1:
-        res.eye_level = EyeLevel.horizontal(refined[0].y)
+    # アイレベル: Vision の地平線高さを事前分布に、その近傍の交点 y で精密化（水平で出す）。
+    # VP の x/個数や傾きには依存させない（偽VP・スピード線による傾きを避ける）。
+    prior_y = None
+    if vis.eye_level:
+        prior_y = ((vis.eye_level.a[1] + vis.eye_level.b[1]) / 2.0) * H * scale
+    hy = estimate_horizon_y(recede, (w, h), y_prior=prior_y,
+                            tol=(0.12 * h if prior_y is not None else None))
+    if hy is not None:
+        res.eye_level = EyeLevel.horizontal((hy / scale) / H)
+        used_notes.append("アイレベル: Vision近傍の交点yで精密化(水平)")
+    elif vis.eye_level:
+        res.eye_level = _snap_horizontal(vis.eye_level)
+        used_notes.append("アイレベル: Vision値を採用(水平化)")
     else:
-        res.eye_level = vis.eye_level
+        hy2 = estimate_horizon_y(recede, (w, h))
+        if hy2 is not None:
+            res.eye_level = EyeLevel.horizontal((hy2 / scale) / H)
+            used_notes.append("アイレベル: CV交点yのみ")
 
     res.notes = "Hybrid: " + "; ".join(used_notes) if used_notes else \
         "Hybrid: 精密化対象なし（Vision値を使用）"
@@ -649,6 +733,33 @@ def _clip_line_to_box(p, q, w, h):
     return ((x0 + t0 * dx, y0 + t0 * dy), (x0 + t1 * dx, y0 + t1 * dy))
 
 
+def _fan_segments(vx, vy, W, H, density):
+    """消失点 (vx,vy) から画像矩形を覆う扇状ガイド線分を density 本返す（エディタと同形）。
+
+    消失点が画角内なら全方位、画角外なら画像が張る角度範囲(コーン)に density 本。
+    """
+    inside = 0 <= vx <= W and 0 <= vy <= H
+    if inside:
+        amin, amax = 0.0, 2 * math.pi
+    else:
+        angs = [math.atan2(cy - vy, cx - vx)
+                for cx, cy in ((0, 0), (W, 0), (W, H), (0, H))]
+        amin, amax = min(angs), max(angs)
+        if amax - amin > math.pi:           # 角度の巻き込みを補正
+            angs = [a + 2 * math.pi if a < 0 else a for a in angs]
+            amin, amax = min(angs), max(angs)
+    big = (W + H) * 3
+    n = max(1, int(density))
+    segs = []
+    for k in range(n + 1):
+        a = amin + (amax - amin) * k / n
+        seg = _clip_line_to_box((vx, vy),
+                                (vx + math.cos(a) * big, vy + math.sin(a) * big), W, H)
+        if seg:
+            segs.append(seg)
+    return segs
+
+
 def _dashed_line(draw, p, q, color, width=2, dash=14, gap=9):
     x0, y0 = p
     x1, y1 = q
@@ -665,29 +776,30 @@ def _dashed_line(draw, p, q, color, width=2, dash=14, gap=9):
 
 
 def render(res: PerspectiveResult, src_path: str, out_path: str,
-           title: str | None = None) -> str:
-    """検出結果を元画像に重ねて PNG 保存。out_path を返す。"""
+           title: str | None = None, line_scale: float = 1.0,
+           guides: int = 14) -> str:
+    """検出結果を元画像に重ねて PNG 保存。out_path を返す。
+
+    生成の参照資料・指示に使うので線は太め。line_scale で太さ、guides で
+    消失点ごとのパースガイド本数（エディタの「ガイド密度」と同じ）を指定する。
+    """
     base = Image.open(src_path).convert("RGB")
     W, H = base.size
     over = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     draw = ImageDraw.Draw(over)
-    fs = max(14, int(min(W, H) * 0.022))
+    fs = max(16, int(min(W, H) * 0.026 * max(0.6, line_scale)))
     font = _font(fs)
-    lw = max(2, int(min(W, H) * 0.0028))
+    lw = max(3, int(min(W, H) * 0.0048 * line_scale))   # 主要線（太め）
+    gw = max(2, int(lw * 0.55))                          # ガイド線
 
     def P(pt):  # 正規化 → ピクセル
         return (pt[0] * W, pt[1] * H)
 
-    # --- 消失点へのガイド線（薄く先に） + 消失点マーカー
+    # --- 消失点へのガイド線（扇状・密度=guides、薄く先に） + 消失点マーカー
     for vp in res.vanishing_points:
         vx, vy = P((vp.x, vp.y))
-        # 周囲 16 方向へ薄いガイド（クリップして画面内だけ）
-        for ang in range(0, 360, 30):
-            far = (vx + math.cos(math.radians(ang)) * (W + H),
-                   vy + math.sin(math.radians(ang)) * (W + H))
-            seg = _clip_line_to_box((vx, vy), far, W, H)
-            if seg:
-                draw.line(seg, fill=COL_GUIDE + (70,), width=1)
+        for seg in _fan_segments(vx, vy, W, H, guides):
+            draw.line(seg, fill=COL_GUIDE + (110,), width=gw)
 
     # --- アイレベル（地平線）
     if res.eye_level:
@@ -731,7 +843,7 @@ def render(res: PerspectiveResult, src_path: str, out_path: str,
         _dashed_line(draw, (hx, hy), (fx, fy), COL_AXIS + (255,),
                      width=max(2, lw - 1))
         # 頭・足のドット
-        dr = max(4, int(min(W, H) * 0.006))
+        dr = max(5, int(min(W, H) * 0.008 * line_scale))
         draw.ellipse([hx - dr, hy - dr, hx + dr, hy + dr], fill=COL_AXIS + (255,))
         draw.ellipse([fx - dr, fy - dr, fx + dr, fy + dr], fill=COL_VERT + (255,))
         _text(draw, (fx + dr + 2, hy - fs), ch.name, font, COL_VERT)
