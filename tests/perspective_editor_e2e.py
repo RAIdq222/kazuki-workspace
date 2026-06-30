@@ -149,23 +149,8 @@ def main():
                 vp_after = page.evaluate("() => { const v=window.S.vps.find(v=>!v.vertical); return v.y; }")
                 check("消失点がアイレベルに連動", abs(vp_after - vp_before) > 0.01)
 
-            # 保存(ネイティブ): 選んだ保存先に焼き込みPNG＋JSONを書く（/api/save を直接検証）
+            # /api/render: フルレゾPNGを返す。ガイド密度がPNGに反映されるか回帰確認（4≠30）
             ann = page.evaluate("() => annotation()")
-            sdir = tempfile.mkdtemp(prefix="persp_save_")
-            sp = os.path.join(sdir, "mycut.perspective.png")
-            sv = page.request.post(base + "/api/save",
-                data=json.dumps({"path": img, "annotation": ann, "save_path": sp,
-                                 "line_scale": 1.0, "guides": 20}),
-                headers={"content-type": "application/json"})
-            check("save PNG書込", sv.ok and os.path.exists(sp))
-            jpath = os.path.join(sdir, "mycut.perspective.json")
-            check("save JSON書込", os.path.exists(jpath))
-            if os.path.exists(jpath):
-                jobj = json.load(open(jpath, encoding="utf-8"))
-                check("save JSON VP数", len(jobj.get("vanishing_points", [])) == n_vp + 2)
-                check("save JSON guide_density", "guide_density" in jobj)
-
-            # /api/render: ガイド密度がPNGに反映されるか回帰確認（4≠30）
             r4 = page.request.post(base + "/api/render",
                 data=json.dumps({"path": img, "annotation": ann, "line_scale": 1.0, "guides": 4}),
                 headers={"content-type": "application/json"})
@@ -176,21 +161,17 @@ def main():
                   and len(r4.body()) > 0)
             check("ガイド密度がPNGに反映(4≠30)", r4.body() != r30.body())
 
-            # ブラウザ保存フォールバック（ネイティブ不可時）。ピッカーは headless で出せないので
-            # 無効化して browserSave のダウンロード経路を直接検証する。
+            # 保存: showSaveFilePicker は headless で出せないので無効化し、ダウンロード経路を検証。
             page.evaluate("() => { window.showSaveFilePicker = undefined; }")
             with page.expect_download() as di:
-                page.evaluate("() => browserSave()")
-            check("フォールバックでPNGダウンロード", di.value.suggested_filename.endswith(".perspective.png"))
-
-            # 保存ボタンはクリックでJSが落ちずメッセージが更新される（ネイティブ/フォールバックどちらでも）
-            page.click("#save")
-            page.wait_for_function(
-                "() => { const t=document.getElementById('msg').textContent;"
-                " return t.includes('保存')||t.includes('ダウンロード'); }",
-                timeout=8000)
-            check("保存ボタンでメッセージ更新",
-                  ("保存" in page.text_content("#msg")) or ("ダウンロード" in page.text_content("#msg")))
+                page.click("#savepng")
+            check("PNG保存(ダウンロード)", di.value.suggested_filename.endswith(".perspective.png"))
+            with page.expect_download() as dj:
+                page.click("#savejson")
+            jobj = json.load(open(dj.value.path(), encoding="utf-8"))
+            check("JSON保存VP数", len(jobj.get("vanishing_points", [])) == n_vp + 2)
+            check("JSON保存chars数", len(jobj.get("characters", [])) == n_char0 + 1)
+            check("JSONに guide_density", "guide_density" in jobj)
 
             # 誤差1°未満は水平へ自動補正 / 1°以上は傾きを保持（状態を変えるので最後に）
             snap_lt1 = page.evaluate("""() => {

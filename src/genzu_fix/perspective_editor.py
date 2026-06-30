@@ -32,23 +32,6 @@ from . import perspective
 
 CONFIG = {"image": ""}
 
-# OSネイティブの「名前を付けて保存」ダイアログ（フォルダ移動＋ファイル名＋保存ボタン）。
-# Flask のワーカスレッドから Tk を直接触ると不安定なので subprocess に分離。
-# 日本語パスのため UTF-8 で出力。既定ファイル名は argv で渡す。
-_SAVE_SNIPPET = (
-    "import sys\n"
-    "try: sys.stdout.reconfigure(encoding='utf-8')\n"
-    "except Exception: pass\n"
-    "import tkinter as tk\n"
-    "from tkinter import filedialog\n"
-    "init = sys.argv[1] if len(sys.argv) > 1 else 'perspective.png'\n"
-    "r = tk.Tk(); r.withdraw(); r.attributes('-topmost', True)\n"
-    "p = filedialog.asksaveasfilename(title='保存先を選択（フォルダ・ファイル名）', "
-    "initialfile=init, defaultextension='.png', "
-    "filetypes=[('PNG画像', '*.png'), ('すべて', '*.*')])\n"
-    "print(p or '')\n"
-)
-
 
 def _ok(path: str) -> bool:
     return bool(path) and os.path.isfile(path)
@@ -110,62 +93,6 @@ def create_app():
         from flask import Response as _Resp
         return _Resp(data, mimetype="image/png", headers={
             "Content-Disposition": f'attachment; filename="{stem}.perspective.png"'})
-
-    def _dialog(snippet, *args):
-        """別プロセスで Tk ダイアログを開く。返値 (path, rc)。
-
-        rc==0 で正常終了（path 空=ユーザがキャンセル）。rc!=0 はダイアログ自体を
-        開けなかった（例: 画面無しの環境）→ 呼び出し側でブラウザ保存にフォールバック。
-        """
-        import subprocess
-        out = subprocess.run([sys.executable, "-c", snippet, *args],
-                             capture_output=True, timeout=600)
-        raw = (out.stdout or b"").decode("utf-8", "replace")
-        lines = [ln.strip() for ln in raw.splitlines() if ln.strip()]
-        return (lines[-1] if lines else ""), out.returncode
-
-    @app.get("/api/pick_save")
-    def api_pick_save():
-        """OSネイティブの保存先ダイアログ。返値 path（拡張子は保存時に .png/.json へ）。"""
-        initial = request.args.get("name", "perspective.png")
-        try:
-            path, rc = _dialog(_SAVE_SNIPPET, initial)
-        except Exception as e:
-            return jsonify({"error": f"ダイアログ起動失敗: {e}"}), 500
-        if rc != 0:
-            return jsonify({"error": "ダイアログを開けません"}), 500
-        if not path:
-            return jsonify({"cancelled": True})
-        return jsonify({"ok": True, "path": os.path.abspath(path)})
-
-    @app.post("/api/save")
-    def api_save():
-        """選んだ保存先に、焼き込みPNG（太さ・密度反映）＋座標JSONを書き出す。"""
-        b = request.json or {}
-        path = (b.get("path") or "").strip().strip('"')
-        ann = b.get("annotation") or {}
-        save_path = (b.get("save_path") or "").strip().strip('"')
-        if not _ok(path):
-            return jsonify({"error": "画像が見つかりません"}), 404
-        if not save_path:
-            return jsonify({"error": "save_path が必要です"}), 400
-        line_scale = float(b.get("line_scale", 1.0) or 1.0)
-        guides = int(b.get("guides", 14) or 14)
-        root, ext = os.path.splitext(save_path)
-        png_path = save_path if ext.lower() == ".png" else save_path + ".png"
-        json_path = root + ".json"
-        os.makedirs(os.path.dirname(png_path) or ".", exist_ok=True)
-        with open(json_path, "w", encoding="utf-8") as f:
-            json.dump(ann, f, ensure_ascii=False, indent=2)
-        try:
-            res = perspective.PerspectiveResult.from_json(ann)
-            perspective.render(res, path, png_path, title=None,
-                               line_scale=line_scale, guides=guides)
-        except Exception as e:
-            return jsonify({"ok": True, "json": os.path.abspath(json_path),
-                            "png_error": str(e)})
-        return jsonify({"ok": True, "png": os.path.abspath(png_path),
-                        "json": os.path.abspath(json_path)})
 
     @app.post("/api/upload")
     def api_upload():
@@ -283,7 +210,8 @@ PAGE = r"""<!DOCTYPE html>
     <span id="lval" class="pill">4</span>
   </div>
   <div class="grp">
-    <button id="save" class="pri">保存（場所と名前を選ぶ）</button>
+    <button id="savepng" class="pri">PNG保存（場所を選ぶ）</button>
+    <button id="savejson">JSON保存</button>
     <button id="reset" class="warn">リセット</button>
   </div>
 </header>
@@ -565,53 +493,45 @@ function annotation(){
 function baseName(){return S.name?S.name.replace(/\.[^.]+$/,''):'perspective';}
 function download(blob,name){const u=URL.createObjectURL(blob);const a=document.createElement('a');
   a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);}
-// 対応ブラウザ(Chrome/Edge)では保存先ダイアログ。非対応はダウンロードにフォールバック。
-// 返値: 'saved' / 'downloaded' / 'cancelled'
-async function saveBlob(blob,name,types){
-  if(window.showSaveFilePicker){
-    try{
-      const h=await window.showSaveFilePicker({suggestedName:name,types});
-      const w=await h.createWritable(); await w.write(blob); await w.close();
-      return 'saved';
-    }catch(e){ if(e&&e.name==='AbortError') return 'cancelled'; /* それ以外は↓へ */ }
-  }
-  download(blob,name); return 'downloaded';
+// PNGをサーバで生成して blob を返す（固まり防止に60秒タイムアウト）
+async function renderBlob(){
+  const ctl=new AbortController(); const to=setTimeout(()=>ctl.abort(), 60000);
+  try{
+    const r=await fetch('/api/render',{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({path:S.path,annotation:annotation(),line_scale:S.lw/4,guides:S.density}),signal:ctl.signal});
+    if(!r.ok){let e='';try{e=(await r.json()).error;}catch(_){}; throw new Error(e||('HTTP '+r.status));}
+    return await r.blob();
+  } finally { clearTimeout(to); }
 }
-// 主: サーバ側のOSネイティブ保存ダイアログ（フォルダ移動＋ファイル名＋保存ボタン）。
-// 同じPCで動くサーバがダイアログを出すので、ブラウザ種別を問わず確実に出る。
-// 返値 true=処理済(保存/キャンセル) / false=ダイアログ不可(→ブラウザ保存へ)
-async function nativeSave(){
-  let pr,pj;
-  try{pr=await fetch('/api/pick_save?name='+encodeURIComponent(baseName()+'.perspective.png'));pj=await pr.json();}
-  catch(e){return false;}
-  if(!pr.ok || pj.error) return false;          // ダイアログ不可 → フォールバック
-  if(pj.cancelled){setMsg('保存をキャンセルしました');return true;}
-  setMsg('保存中…');
-  const r=await fetch('/api/save',{method:'POST',headers:{'content-type':'application/json'},
-    body:JSON.stringify({path:S.path,annotation:annotation(),save_path:pj.path,line_scale:S.lw/4,guides:S.density})});
-  const j=await r.json(); if(!r.ok){setMsg('保存エラー: '+(j.error||r.status));return true;}
-  setMsg('保存しました → '+(j.png||'')+(j.json?('  ＋  '+j.json):'')+(j.png_error?(' (PNG失敗:'+j.png_error+')'):''));
-  return true;
-}
-// 副: ネイティブダイアログが使えない環境はブラウザの保存ダイアログ/ダウンロードへ
-async function browserSave(){
-  setMsg('PNGを生成中…');
-  const r=await fetch('/api/render',{method:'POST',headers:{'content-type':'application/json'},
-    body:JSON.stringify({path:S.path,annotation:annotation(),line_scale:S.lw/4,guides:S.density})});
-  if(!r.ok){let e='';try{e=(await r.json()).error;}catch(_){} setMsg('PNG生成失敗: '+(e||r.status));return;}
-  const png=await r.blob();
-  const r1=await saveBlob(png, baseName()+'.perspective.png',[{description:'PNG画像',accept:{'image/png':['.png']}}]);
-  if(r1==='cancelled'){setMsg('保存をキャンセルしました');return;}
-  const jb=new Blob([JSON.stringify(annotation(),null,2)],{type:'application/json'});
-  await saveBlob(jb, baseName()+'.perspective.json',[{description:'JSON',accept:{'application/json':['.json']}}]);
-  setMsg(r1==='saved'?'保存しました（PNG＋JSON）。':'ダウンロードしました（PNG＋JSON、ブラウザの保存先へ）。');
-}
-async function save(){
+// 「ファイルを開く」と同じノリの保存ウィンドウ。
+// 重要: showSaveFilePicker は“クリック操作中”に呼ぶ必要があるので、
+// 先にダイアログを出してハンドルを得てから中身(blob)を作る。
+// 対応ブラウザ(Chrome/Edge)はネイティブの保存ウィンドウ、非対応はダウンロードへ。
+async function saveVia(blobMaker, name, types, label){
   if(!S.path){setMsg('先に画像を開いてください');return;}
-  setMsg('保存先のダイアログを開いています…');
-  const handled=await nativeSave();
-  if(!handled) await browserSave();
+  if(window.showSaveFilePicker){
+    let handle;
+    try{ handle=await window.showSaveFilePicker({suggestedName:name, types}); }
+    catch(e){ if(e&&e.name==='AbortError'){setMsg('保存をキャンセルしました');return;} handle=null; }
+    if(handle){
+      setMsg(label+'を生成中…');
+      let blob; try{ blob=await blobMaker(); }catch(e){ setMsg(label+'生成失敗: '+(e.message||e)); return; }
+      try{ const w=await handle.createWritable(); await w.write(blob); await w.close(); }
+      catch(e){ setMsg(label+'書込失敗: '+(e.message||e)); return; }
+      setMsg(label+'を保存しました。'); return;
+    }
+  }
+  // 非対応ブラウザ(Firefox等): ダウンロードへ
+  setMsg(label+'を生成中…');
+  let blob; try{ blob=await blobMaker(); }catch(e){ setMsg(label+'生成失敗: '+(e.message||e)); return; }
+  download(blob, name);
+  setMsg(label+'をダウンロードしました（保存先の指定はChrome/Edgeで可能）。');
 }
+function savePNG(){ return saveVia(renderBlob, baseName()+'.perspective.png',
+  [{description:'PNG画像',accept:{'image/png':['.png']}}], 'PNG'); }
+function saveJSON(){ return saveVia(
+  async()=>new Blob([JSON.stringify(annotation(),null,2)],{type:'application/json'}),
+  baseName()+'.perspective.json', [{description:'JSON',accept:{'application/json':['.json']}}], 'JSON'); }
 function addVP(vertical){const x=0.5,y=vertical?0.12:horizonYat(0.5);S.vps.push({x,y,vertical});S.sel={type:'vp',i:S.vps.length-1};draw();}
 function addChar(){const i=S.chars.length;S.chars.push({name:'人物'+letter(i),head:{x:0.45,y:0.35},foot:{x:0.45,y:0.85}});S.sel={type:'char',i};draw();}
 function delSel(){if(!S.sel)return;if(S.sel.type==='vp')S.vps.splice(S.sel.i,1);if(S.sel.type==='char')S.chars.splice(S.sel.i,1);S.sel=null;draw();}
@@ -635,7 +555,8 @@ $('addvp').onclick=()=>addVP(false);
 $('addvpv').onclick=()=>addVP(true);
 $('addchar').onclick=addChar;
 $('del').onclick=delSel;
-$('save').onclick=save;
+$('savepng').onclick=savePNG;
+$('savejson').onclick=saveJSON;
 $('reset').onclick=reset;
 $('snap').onchange=e=>{S.snap=e.target.checked;applySnap();draw();};
 $('density').oninput=e=>{S.density=+e.target.value;$('dval').textContent=e.target.value;draw();};
