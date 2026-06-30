@@ -926,25 +926,37 @@ def verify(csv_path: str = "runs/conte_v2_ep7.csv") -> int:
     ocr_keys = [cell(r, "cut") for r in rows]
     ocr_set = set(ocr_keys)
 
+    partial = False
     if canon:
-        # (a) 正典にあるのにコンテに無い＝確実な読み落とし/番号ズレ。直前の正典カットの在処を案内。
-        miss = [c for c in canon if c not in ocr_set]
-        for c in miss:
-            i = canon.index(c)
-            near = next((canon[j] for j in range(i - 1, -1, -1) if canon[j] in ocr_set), None)
-            where = f"（{ocr_first_page.get(near,'?')} の cut{near} の後あたり）" if near else ""
-            issues.append(f"[正典欠落] cut {c} がコンテに無い{where}＝原図カットの読み落とし/番号ズレ")
+        have = sum(1 for c in canon if c in ocr_set)
+        # 全ページOCRできていない(部分データ)なら欠落が大量に出る→一行で要約＆警告し、列挙しない。
+        if have < len(canon) * 0.6:
+            partial = True
+            issues.append(
+                f"[要・全ページOCR] 正典カバレッジ {have}/{len(canon)} と極端に低い＝"
+                f"全ページOCRできていない可能性大（--first-page で一部だけ回した／途中で失敗）。"
+                f"`extract2`(--first-page無し)→`consolidate` で作り直してから verify を。")
+        else:
+            # (a) 正典にあるのにコンテに無い＝確実な読み落とし/番号ズレ。直前の正典カットの在処を案内。
+            miss = [c for c in canon if c not in ocr_set]
+            for c in miss:
+                i = canon.index(c)
+                near = next((canon[j] for j in range(i - 1, -1, -1) if canon[j] in ocr_set), None)
+                where = f"（{ocr_first_page.get(near,'?')} の cut{near} の後あたり）" if near else ""
+                issues.append(f"[正典欠落] cut {c} がコンテに無い{where}＝原図カットの読み落とし/番号ズレ")
         # (b) 想定外の枝番（正典に無い英字付き＝続きの取り違え）
-        for b in sorted({k for k in ocr_set if re.search(r"[A-Za-z]$", k)} - canon_set,
-                        key=lambda x: (int(re.match(r"\d+", x).group() or 0), x)):
-            issues.append(f"[枝番] 想定外の枝番 {b}（正典に無い→続きの取り違え疑い）"
-                          f"（{ocr_first_page.get(b,'?')}）")
+        if not partial:
+            for b in sorted({k for k in ocr_set if re.search(r"[A-Za-z]$", k)} - canon_set,
+                            key=lambda x: (int(re.match(r"\d+", x).group() or 0), x)):
+                issues.append(f"[枝番] 想定外の枝番 {b}（正典に無い→続きの取り違え疑い）"
+                              f"（{ocr_first_page.get(b,'?')}）")
     # (c) 重複（同じcut番号が複数行）＝ページまたぎの統合漏れ or 番号誤読。各ページを示す。
-    from collections import Counter
-    dup = {k: v for k, v in Counter(ocr_keys).items() if v > 1 and k}
-    for k in sorted(dup, key=lambda x: (int(re.match(r"\d+", x).group() or 0) if re.match(r"\d+", x) else 0, x)):
-        pgs = [cell(r, "page") for r in rows if cell(r, "cut") == k]
-        issues.append(f"[重複] cut {k} が{dup[k]}行（{pgs}）＝ページまたぎ統合漏れ or 番号誤読")
+    if not partial:
+        from collections import Counter
+        dup = {k: v for k, v in Counter(ocr_keys).items() if v > 1 and k}
+        for k in sorted(dup, key=lambda x: (int(re.match(r"\d+", x).group() or 0) if re.match(r"\d+", x) else 0, x)):
+            pgs = [cell(r, "page") for r in rows if cell(r, "cut") == k]
+            issues.append(f"[重複] cut {k} が{dup[k]}行（{pgs}）＝ページまたぎ統合漏れ or 番号誤読")
 
     cov = ""
     if canon:
