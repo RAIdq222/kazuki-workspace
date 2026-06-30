@@ -27,6 +27,7 @@
 | 作業コンソール(Flask) | `src/genzu_fix/server.py` ／ 起動は `run_console.bat` / `run_console.py` |
 | カット表・索引 | `runs/cut_board_map_ep7.csv`(245行/217原図) `runs/genzu_index_ep7.csv` |
 | 話数概要 | `runs/ep_overview.json` |
+| ロードマップ/現在地 | `docs/roadmap-genzu-prompt.md`（3観点→統合→プロンプトの進捗と次の一手） |
 | 設計ノート | `docs/design-notes.md`（§20=レジスト解決の根拠） |
 | プロンプト設計 | `docs/prompt-design.md` ＋ `runs/scene_profiles/`（great-edison主管） |
 | コンテOCRの全体像/判断 | `docs/conte-ocr-overview.md`（パイプライン・列幾何・verifyの読み方） |
