@@ -464,13 +464,15 @@ def _vision_page(crops: list[tuple], prompt: str, model: str, api_key: str,
                 _time.sleep(wait)
                 continue
             raise RuntimeError(f"Anthropic API HTTP {e.code}: {err[:1000]}") from None
-        except urllib.error.URLError as e:
+        except (urllib.error.URLError, TimeoutError, OSError) as e:
+            # 通信失敗・読み取りタイムアウト等は一時的なので再試行（TimeoutErrorはURLErrorに包まれず素で来る）
+            reason = getattr(e, "reason", e)
             if attempt < 3:
                 wait = 2 ** (attempt + 1)
-                print(f"    [api] 通信失敗 {e.reason} 再試行 {attempt+1}/3（{wait}s後）", flush=True)
+                print(f"    [api] 通信失敗/タイムアウト {reason} 再試行 {attempt+1}/3（{wait}s後）", flush=True)
                 _time.sleep(wait)
                 continue
-            raise
+            raise RuntimeError(f"通信失敗/タイムアウトが続いた: {reason}") from None
     text = "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
     stop = data.get("stop_reason", "")
     if stop == "max_tokens":
@@ -528,7 +530,7 @@ def _attach_continuations(frames: list[dict]) -> list[dict]:
 def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.json",
              model: str = DEFAULT_MODEL, api_key: str | None = None,
              glossary_path: str = GLOSSARY_MD, debug_crops: str | None = None,
-             cols_override=None) -> list[dict]:
+             cols_override=None, resume: bool = False) -> list[dict]:
     """ページPNG群を、表の行検出→列ごと(番号+絵/action/dialogue/time)に切り出し→用語集付きOCR で読む。
     フィールドは「文字がどの列にあるか」で機械的に決まる（モデルに割り当てを選ばせない）。
     debug_crops を指定すると API を叩かず、各列クロップ＋列境界オーバーレイを保存して切り出しを目視確認できる。
@@ -557,9 +559,33 @@ def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.js
             prompt += ("\n【このエピソードに実在する枝番カット】" + " / ".join(br) +
                        "。**これらの位置では用紙の丸番号の英字(A/B)を必ず読む**。"
                        "リストに無いコマに枝番を振らない（続きは直前カットに統合）。")
-    all_frames = []
+    import copy as _copy
+    ckpt = out_json + ".ckpt.json"
+    all_frames = []                 # 生フレーム(ページごと・_attach前)。再開・逐次保存の元。
+    done_pages: set = set()
     last_cut = 0  # 前ページまでの最後のカット番号（連番をページ越しに引き継ぐ）
+    if resume and os.path.exists(ckpt):
+        with open(ckpt, encoding="utf-8") as cf:
+            cd = json.load(cf)
+        all_frames = cd.get("frames_raw", [])
+        done_pages = set(cd.get("done_pages", []))
+        last_cut = cd.get("last_cut", 0)
+        print(f"[resume] {ckpt} から {len(done_pages)}ページ分を引き継ぎ（last_cut={last_cut}）")
+
+    def _save_progress():
+        with open(ckpt, "w", encoding="utf-8") as cf:
+            json.dump({"frames_raw": all_frames, "done_pages": sorted(done_pages),
+                       "last_cut": last_cut}, cf, ensure_ascii=False)
+        os.makedirs(os.path.dirname(out_json) or ".", exist_ok=True)
+        with open(out_json, "w", encoding="utf-8") as f:   # いつでも使える状態(=_attach済)を書く
+            json.dump({"frames": _attach_continuations(_copy.deepcopy(all_frames))},
+                      f, ensure_ascii=False, indent=2)
+
+    failed_pages: list = []
     for pp in page_paths:
+        if os.path.basename(pp) in done_pages:
+            print(f"  {os.path.basename(pp)}: 済（resumeでスキップ）")
+            continue
         img = Image.open(pp)
         bands, split, cols = detect_grid(img.convert("L"), cols_override=cols_override)
         spx = int(cols.get("scene_pic", 0.10) * img.width)   # scene(番号)|picture
@@ -625,7 +651,14 @@ def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.js
             continue
         ctx = (prompt + f"\n【継続情報】前ページまでの最後のカット番号は {last_cut}。"
                "このページのカットはそれ以降の連番。ページに描かれた丸番号を優先し、無い所だけ連番で補完。")
-        cuts = _vision_page(crops, ctx, model, api_key)
+        try:
+            cuts = _vision_page(crops, ctx, model, api_key)
+        except Exception as e:
+            # 1ページの失敗で全滅させない。記録してスキップ→--resume で後から埋める。
+            print(f"    !! {os.path.basename(pp)} 失敗: {str(e)[:200]} → スキップ（--resumeで再実行可）",
+                  flush=True)
+            failed_pages.append(os.path.basename(pp))
+            continue
         for j, fr in enumerate(cuts):
             fr["_page"] = os.path.basename(pp)
             fr["_idx"] = j
@@ -643,17 +676,22 @@ def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.js
                 last_cut = max(last_cut, n)
             print(f"    cut={fr.get('cut_label','')!r} mark={fr.get('scene_mark','')!r} "
                   f"conf={fr.get('confidence','')} action={(fr.get('action','') or '')[:24]}")
+        done_pages.add(os.path.basename(pp))
+        _save_progress()   # ページ単位で逐次保存＝途中で落ちても消えない
     if debug_crops:
         print(f"[debug] 列クロップと _columns_overlay.png を {debug_crops} に保存（APIは未実行）。"
               "各ページの _columns_overlay.png を開き、赤/緑/青の線が用紙の縦罫線に乗っているか確認。"
               "ズレていれば --cols 0.xx,0.yy,0.zz で固定してから本実行。")
         return []
-    all_frames = _attach_continuations(all_frames)
+    attached = _attach_continuations(_copy.deepcopy(all_frames))
     os.makedirs(os.path.dirname(out_json) or ".", exist_ok=True)
     with open(out_json, "w", encoding="utf-8") as f:
-        json.dump({"frames": all_frames}, f, ensure_ascii=False, indent=2)
-    print(f"wrote {out_json}: {len(all_frames)} frames")
-    return all_frames
+        json.dump({"frames": attached}, f, ensure_ascii=False, indent=2)
+    print(f"wrote {out_json}: {len(attached)} frames（生{len(all_frames)} / {len(done_pages)}ページ）")
+    if failed_pages:
+        print(f"!! 失敗ページ {len(failed_pages)}件: {failed_pages}")
+        print("   → 同じコマンドに --resume を付けて再実行すると、失敗/未処理ページだけ埋めます。")
+    return attached
 
 
 # ---------------------------------------------------------------------------
@@ -1199,6 +1237,8 @@ def main(argv=None) -> None:
                     help=f"列境界の固定比率 pic|act,act|dia,dia|time（既定={EP7_COLS}＝ep7 DANGUN用紙で目視確認済）。"
                          "用紙が違う場合のみ変更。'auto' で自動検出に戻す")
     e2.add_argument("--first-page", type=int, default=None, help="先頭Nページだけ（試走用）")
+    e2.add_argument("--resume", action="store_true",
+                    help="前回の途中まで(.ckpt)を引き継ぎ、未処理/失敗ページだけ実行する")
 
     m = sub.add_parser("merge", help="frames JSON を cut_scene_info の situation/remove へ反映")
     m.add_argument("--frames", default="runs/conte_frames_ep7.json")
@@ -1264,7 +1304,7 @@ def main(argv=None) -> None:
             except (ValueError, AssertionError):
                 sys.exit("--cols は比率3つ（例 0.50,0.70,0.90）または 'auto' を指定してください。")
         extract2(imgs, a.out, a.model, glossary_path=a.glossary,
-                 debug_crops=a.debug_crops, cols_override=cols_override)
+                 debug_crops=a.debug_crops, cols_override=cols_override, resume=a.resume)
     elif a.cmd == "merge":
         frames = json.load(open(a.frames, encoding="utf-8")).get("frames", [])
         merge(frames, a.cut_info, a.out, a.overwrite)
