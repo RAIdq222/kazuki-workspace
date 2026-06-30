@@ -493,19 +493,37 @@ function annotation(){
 function baseName(){return S.name?S.name.replace(/\.[^.]+$/,''):'perspective';}
 function download(blob,name){const u=URL.createObjectURL(blob);const a=document.createElement('a');
   a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);}
+// 対応ブラウザ(Chrome/Edge)では保存先ダイアログ。非対応はダウンロードにフォールバック。
+// 返値: 'saved' / 'downloaded' / 'cancelled'
+async function saveBlob(blob,name,types){
+  if(window.showSaveFilePicker){
+    try{
+      const h=await window.showSaveFilePicker({suggestedName:name,types});
+      const w=await h.createWritable(); await w.write(blob); await w.close();
+      return 'saved';
+    }catch(e){ if(e&&e.name==='AbortError') return 'cancelled'; /* それ以外は↓へ */ }
+  }
+  download(blob,name); return 'downloaded';
+}
 async function savePNG(){
   if(!S.path){setMsg('先に画像を開いてください');return;}
   setMsg('PNGを生成中…');
   const r=await fetch('/api/render',{method:'POST',headers:{'content-type':'application/json'},
     body:JSON.stringify({path:S.path,annotation:annotation(),line_scale:S.lw/4,guides:S.density})});
   if(!r.ok){let e='';try{e=(await r.json()).error;}catch(_){} setMsg('PNG生成失敗: '+(e||r.status));return;}
-  const blob=await r.blob(); download(blob, baseName()+'.perspective.png');
-  setMsg('PNGをダウンロードしました（ブラウザの保存先へ）。');
+  const blob=await r.blob();
+  const res=await saveBlob(blob, baseName()+'.perspective.png',
+    [{description:'PNG画像',accept:{'image/png':['.png']}}]);
+  setMsg(res==='cancelled'?'保存をキャンセルしました':
+    (res==='saved'?'PNGを保存しました。':'PNGをダウンロードしました（ブラウザの保存先へ）。'));
 }
-function saveJSON(){
+async function saveJSON(){
   if(!S.path){setMsg('先に画像を開いてください');return;}
   const blob=new Blob([JSON.stringify(annotation(),null,2)],{type:'application/json'});
-  download(blob, baseName()+'.perspective.json'); setMsg('JSONをダウンロードしました。');
+  const res=await saveBlob(blob, baseName()+'.perspective.json',
+    [{description:'JSON',accept:{'application/json':['.json']}}]);
+  setMsg(res==='cancelled'?'保存をキャンセルしました':
+    (res==='saved'?'JSONを保存しました。':'JSONをダウンロードしました。'));
 }
 function addVP(vertical){const x=0.5,y=vertical?0.12:horizonYat(0.5);S.vps.push({x,y,vertical});S.sel={type:'vp',i:S.vps.length-1};draw();}
 function addChar(){const i=S.chars.length;S.chars.push({name:'人物'+letter(i),head:{x:0.45,y:0.35},foot:{x:0.45,y:0.85}});S.sel={type:'char',i};draw();}

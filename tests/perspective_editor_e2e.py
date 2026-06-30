@@ -161,6 +161,10 @@ def main():
                   and len(r4.body()) > 0)
             check("ガイド密度がPNGに反映(4≠30)", r4.body() != r30.body())
 
+            # 保存ピッカー(showSaveFilePicker)はheadlessで出せないので無効化し、
+            # フォールバックのダウンロード経路を検証する。
+            page.evaluate("() => { window.showSaveFilePicker = undefined; }")
+
             # PNG保存ボタン → ブラウザのダウンロード
             with page.expect_download() as di:
                 page.click("#savepng")
