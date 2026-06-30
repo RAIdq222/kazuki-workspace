@@ -840,6 +840,23 @@ def consolidate(frames_json: str = "runs/conte_frames_v2_ep7.json",
         # 結合カットの confidence は最も低いものに合わせる（保守的）
         if rank.get((fr.get("confidence") or "").lower(), 1) < rank.get(r["confidence"], 3):
             r["confidence"] = (fr.get("confidence") or "").lower()
+    # ページまたぎ統合: 読み順で「直前グループと同じカット番号」が連続したら、それはページを跨いだ
+    #   同一カット（作者が次ページ頭に同じ番号を書き直す/続き）なので前グループへ統合する。
+    #   ページ内の同番号は既に1グループなので、連続同番号が起きるのはページ境界だけ＝安全。
+    #   非連続の同番号（間に別カットが挟まる＝番号誤読）は統合しない（verifyが検出）。
+    merged_order = []
+    for gk in order:
+        if merged_order and by[merged_order[-1]]["cut"] == by[gk]["cut"]:
+            a, b = by[merged_order[-1]], by[gk]
+            for col in ("action", "dialogue", "se", "time", "characters", "notes"):
+                for v in b[col]:
+                    if v and v not in a[col]:
+                        a[col].append(v)
+            if rank.get(b["confidence"], 1) < rank.get(a["confidence"], 3):
+                a["confidence"] = b["confidence"]
+            continue
+        merged_order.append(gk)
+    order = merged_order
     # 出力はページ→出現順（order=挿入順）を保つ。番号でソートするとページまたぎが崩れるため。
     rows = []
     for gk in order:
@@ -890,29 +907,50 @@ def verify(csv_path: str = "runs/conte_v2_ep7.csv") -> int:
         if hit:
             issues.append(f"[dialogue混入] {tag}: dialogue='{dia[:40]}' に {hit}（セリフでない）")
 
-    # 3) 枝番の整合（cut_board_map の正規枝番だけが存在するか）
-    valid_branch = set()
+    # 3-4) 正典(cut_board_map=原図のある245カット)との照合。
+    #   台本は番号が飛ぶ(原図なしカットは正典に無い)ので「1..maxの抜け」では測れない。
+    #   正典カットがコンテに全部あるか／重複していないか、で集計の正しさを測る。
+    canon = []                                  # 正典の順序付きカットキー
     ref = "runs/cut_board_map_ep7.csv"
     if os.path.exists(ref):
         with open(ref, encoding="utf-8-sig") as rf:
             for rr in csv.DictReader(rf):
                 k = _cut_key(rr.get("cut", ""))
-                if re.search(r"[A-Za-z]$", k):
-                    valid_branch.add(k)
-    seen_branch = {cell(r, "cut") for r in rows if re.search(r"[A-Za-z]$", cell(r, "cut"))}
-    for b in sorted(seen_branch - valid_branch):
-        issues.append(f"[枝番] 想定外の枝番 {b}（正規一覧に無い→続きの取り違え疑い）")
-    for b in sorted(valid_branch - seen_branch):
-        issues.append(f"[枝番] 正規枝番 {b} が欠落（読み落とし疑い）")
+                if k and k not in canon:
+                    canon.append(k)
+    canon_set = set(canon)
+    ocr_first_page = {}                          # OCRキー → 最初に現れたページ
+    for r in rows:
+        k = cell(r, "cut")
+        ocr_first_page.setdefault(k, cell(r, "page"))
+    ocr_keys = [cell(r, "cut") for r in rows]
+    ocr_set = set(ocr_keys)
 
-    # 4) 欠番（1..max の連番で抜けている数字）
-    nums = sorted({_cut_num(cell(r, "cut")) for r in rows if _cut_num(cell(r, "cut")) is not None})
-    if nums:
-        missing = [n for n in range(1, nums[-1] + 1) if n not in nums]
-        if missing:
-            issues.append(f"[欠番] {len(missing)}件: {missing[:40]}{' …' if len(missing) > 40 else ''}")
+    if canon:
+        # (a) 正典にあるのにコンテに無い＝確実な読み落とし/番号ズレ。直前の正典カットの在処を案内。
+        miss = [c for c in canon if c not in ocr_set]
+        for c in miss:
+            i = canon.index(c)
+            near = next((canon[j] for j in range(i - 1, -1, -1) if canon[j] in ocr_set), None)
+            where = f"（{ocr_first_page.get(near,'?')} の cut{near} の後あたり）" if near else ""
+            issues.append(f"[正典欠落] cut {c} がコンテに無い{where}＝原図カットの読み落とし/番号ズレ")
+        # (b) 想定外の枝番（正典に無い英字付き＝続きの取り違え）
+        for b in sorted({k for k in ocr_set if re.search(r"[A-Za-z]$", k)} - canon_set,
+                        key=lambda x: (int(re.match(r"\d+", x).group() or 0), x)):
+            issues.append(f"[枝番] 想定外の枝番 {b}（正典に無い→続きの取り違え疑い）"
+                          f"（{ocr_first_page.get(b,'?')}）")
+    # (c) 重複（同じcut番号が複数行）＝ページまたぎの統合漏れ or 番号誤読。各ページを示す。
+    from collections import Counter
+    dup = {k: v for k, v in Counter(ocr_keys).items() if v > 1 and k}
+    for k in sorted(dup, key=lambda x: (int(re.match(r"\d+", x).group() or 0) if re.match(r"\d+", x) else 0, x)):
+        pgs = [cell(r, "page") for r in rows if cell(r, "cut") == k]
+        issues.append(f"[重複] cut {k} が{dup[k]}行（{pgs}）＝ページまたぎ統合漏れ or 番号誤読")
 
-    print(f"verify {src}: {len(rows)} cuts / 異常 {len(issues)} 件"
+    cov = ""
+    if canon:
+        have = sum(1 for c in canon if c in ocr_set)
+        cov = f" / 正典カバレッジ {have}/{len(canon)}"
+    print(f"verify {src}: {len(rows)} cuts{cov} / 異常 {len(issues)} 件"
           + ("（構造的にクリーン）" if not issues else ""))
     for s in issues:
         print("  " + s)
