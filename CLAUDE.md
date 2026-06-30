@@ -24,6 +24,7 @@
 | 種類 | 場所 |
 |---|---|
 | パイプライン本体 | `src/genzu_fix/`（`psd_export` `image_aspect` `frame` `batch` `prompt` `server`） |
+| パース注釈（アイレベル/消失点/キャラ垂直線） | `src/genzu_fix/perspective.py` ／ ラッパ `scripts/draw_perspective.py`（vision/cv/hybrid 比較） |
 | 作業コンソール(Flask) | `src/genzu_fix/server.py` ／ 起動は `run_console.bat` / `run_console.py` |
 | カット表・索引 | `runs/cut_board_map_ep7.csv`(245行/217原図) `runs/genzu_index_ep7.csv` |
 | 話数概要 | `runs/ep_overview.json` |
@@ -52,6 +53,11 @@
 - **一括生成(担当別)** → `python -m genzu_fix.batch --genzu-dir <dir> --assignee <名>`（runbook参照）。
 - **原図/コンテをgitで配る**（PSDアクセスが無い相手向けの代替） → `scripts/gather_handoff_ep7.py`。
   PSDが手元にあるなら不要。
+- **画像にパース線を引く（アイレベル/消失点/キャラ垂直線）** → `python scripts/draw_perspective.py <画像>`。
+  3手法を比較できる: `cv`(numpyのみ・決定的・人物識別不可) / `vision`(Claude・ラフ線に強い) /
+  `hybrid`(Visionのキャラ＋CVで消失点を最小二乗精密化)。既定 `--method all` で
+  `work/_perspective/<stem>/` に各オーバーレイPNG＋JSON＋`compare.png` を出す。
+  vision/hybrid は `ANTHROPIC_API_KEY` が要る（cv は不要）。
 
 ## 5. 規約
 - **src レイアウト**。`python -m genzu_fix.*` には PYTHONPATH=src が要るので、ランチャ
