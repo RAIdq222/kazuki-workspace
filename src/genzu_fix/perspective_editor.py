@@ -47,6 +47,21 @@ _PICK_SNIPPET = (
     "print(p or '')\n"
 )
 
+# 保存先を選ぶダイアログ（asksaveasfilename）。既定名は呼び出し側から argv で渡す。
+_SAVE_SNIPPET = (
+    "import sys\n"
+    "try: sys.stdout.reconfigure(encoding='utf-8')\n"
+    "except Exception: pass\n"
+    "import tkinter as tk\n"
+    "from tkinter import filedialog\n"
+    "init = sys.argv[1] if len(sys.argv) > 1 else 'perspective.png'\n"
+    "r = tk.Tk(); r.withdraw(); r.attributes('-topmost', True)\n"
+    "p = filedialog.asksaveasfilename(title='保存先を選択', initialfile=init, "
+    "defaultextension='.png', "
+    "filetypes=[('PNG画像', '*.png'), ('すべて', '*.*')])\n"
+    "print(p or '')\n"
+)
+
 
 def _ok(path: str) -> bool:
     return bool(path) and os.path.isfile(path)
@@ -81,18 +96,29 @@ def create_app():
         except Exception as e:
             return jsonify({"error": f"画像を開けません: {e}"}), 400
 
+    def _dialog(snippet, *args):
+        """別プロセスで Tk ダイアログを開く。返値 (path, rc, stderr)。
+
+        rc==0 で正常終了（path 空=ユーザがキャンセル）。rc!=0 はダイアログ自体が
+        開けなかった（例: 画面無しの環境）→ 呼び出し側でフォールバックさせる。
+        """
+        import subprocess
+        out = subprocess.run([sys.executable, "-c", snippet, *args],
+                             capture_output=True, timeout=600)
+        raw = (out.stdout or b"").decode("utf-8", "replace")
+        lines = [ln.strip() for ln in raw.splitlines() if ln.strip()]
+        return (lines[-1] if lines else ""), out.returncode, \
+            (out.stderr or b"").decode("utf-8", "replace")
+
     @app.get("/api/pick")
     def api_pick():
         """サーバ機(=ブラウザと同じPC)でネイティブのファイル選択ダイアログを出す。"""
-        import subprocess
         try:
-            out = subprocess.run([sys.executable, "-c", _PICK_SNIPPET],
-                                 capture_output=True, timeout=600)
+            path, rc, err = _dialog(_PICK_SNIPPET)
         except Exception as e:
             return jsonify({"error": f"ダイアログ起動失敗: {e}"}), 500
-        raw = (out.stdout or b"").decode("utf-8", "replace")
-        lines = [ln.strip() for ln in raw.splitlines() if ln.strip()]
-        path = lines[-1] if lines else ""
+        if rc != 0:
+            return jsonify({"error": f"ダイアログを開けません: {err[-300:]}"}), 500
         if not path:
             return jsonify({"cancelled": True})
         if not _ok(path):
@@ -101,6 +127,20 @@ def create_app():
             return jsonify(_img_info(path))
         except Exception as e:
             return jsonify({"error": f"画像を開けません: {e}"}), 400
+
+    @app.get("/api/pick_save")
+    def api_pick_save():
+        """保存先を選ぶダイアログ。返値 path(拡張子は呼び出し側で .json/.png に振り直す)。"""
+        initial = request.args.get("name", "perspective.png")
+        try:
+            path, rc, err = _dialog(_SAVE_SNIPPET, initial)
+        except Exception as e:
+            return jsonify({"error": f"ダイアログ起動失敗: {e}"}), 500
+        if rc != 0:
+            return jsonify({"error": f"ダイアログを開けません: {err[-300:]}"}), 500
+        if not path:
+            return jsonify({"cancelled": True})
+        return jsonify({"ok": True, "path": os.path.abspath(path)})
 
     @app.post("/api/upload")
     def api_upload():
@@ -148,15 +188,23 @@ def create_app():
         if not _ok(path):
             return jsonify({"error": "画像が見つかりません"}), 404
         stem = os.path.splitext(os.path.basename(path))[0]
-        out_dir = b.get("out_dir") or os.path.join("work", "_perspective", stem)
+        line_scale = float(b.get("line_scale", 1.0) or 1.0)
+        # 保存先: ダイアログで選んだ save_path（拡張子を .json/.png に振り直す）優先。
+        save_path = (b.get("save_path") or "").strip().strip('"')
+        if save_path:
+            out_dir = os.path.dirname(save_path) or "."
+            base = os.path.splitext(os.path.basename(save_path))[0] or f"{stem}.edit"
+        else:
+            out_dir = b.get("out_dir") or os.path.join("work", "_perspective", stem)
+            base = f"{stem}.edit"
         os.makedirs(out_dir, exist_ok=True)
-        json_path = os.path.join(out_dir, f"{stem}.edit.json")
+        json_path = os.path.join(out_dir, f"{base}.json")
         with open(json_path, "w", encoding="utf-8") as f:
             json.dump(ann, f, ensure_ascii=False, indent=2)
         try:
             res = perspective.PerspectiveResult.from_json(ann)
-            png_path = os.path.join(out_dir, f"{stem}.edit.png")
-            perspective.render(res, path, png_path, title="EDIT")
+            png_path = os.path.join(out_dir, f"{base}.png")
+            perspective.render(res, path, png_path, title="EDIT", line_scale=line_scale)
         except Exception as e:
             return jsonify({"ok": True, "json": os.path.abspath(json_path),
                             "png_error": str(e)})
@@ -235,6 +283,9 @@ PAGE = r"""<!DOCTYPE html>
     <span id="hint">ガイド密度</span>
     <input id="density" type="range" min="3" max="40" value="14">
     <span id="dval" class="pill">14</span>
+    <span id="hint2">線の太さ</span>
+    <input id="lw" type="range" min="1" max="10" step="0.5" value="4">
+    <span id="lval" class="pill">4</span>
   </div>
   <div class="grp">
     <button id="save" class="pri">保存</button>
@@ -266,7 +317,7 @@ const S = {
   horizon:{ya:0.5, yb:0.5},     // 正規化 y（x=0 と x=1 の高さ）
   vps:[],                        // {x,y,vertical}
   chars:[],                      // {name, head:{x,y}, foot:{x,y}}
-  density:14, snap:true,
+  density:14, snap:true, lw:4,
   sel:null, drag:null,
 };
 window.S = S;   // デバッグ/テスト用に公開
@@ -323,43 +374,51 @@ function drawFan(vx,vy,r,density){
   }
   ctx.stroke();
 }
-function cross(x,y,col,rad){
-  ctx.strokeStyle=col;ctx.lineWidth=2;
+function cross(x,y,col,rad,w){
+  ctx.strokeStyle=col;ctx.lineWidth=w||2;
   ctx.beginPath();ctx.moveTo(x-rad,y);ctx.lineTo(x+rad,y);ctx.moveTo(x,y-rad);ctx.lineTo(x,y+rad);ctx.stroke();
   ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.stroke();
 }
 function dot(x,y,col,rad){ctx.fillStyle=col;ctx.beginPath();ctx.arc(x,y,rad,0,Math.PI*2);ctx.fill();}
-function label(x,y,t,col){ctx.font='13px system-ui';ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.85)';ctx.strokeText(t,x,y);ctx.fillStyle=col;ctx.fillText(t,x,y);}
+function label(x,y,t,col){const fs=Math.round(12+S.lw*1.6);ctx.font=fs+'px system-ui';ctx.lineWidth=Math.max(3,S.lw);ctx.strokeStyle='rgba(0,0,0,.85)';ctx.strokeText(t,x,y);ctx.fillStyle=col;ctx.fillText(t,x,y);}
 
 function draw(){
   ctx.clearRect(0,0,cv.clientWidth,cv.clientHeight);
   if(!S.img){return;}
   const r=imgRect();
   ctx.drawImage(S.img,r.x0,r.y0,r.x1-r.x0,r.y1-r.y0);
-  // パースガイド（薄く）
-  ctx.save();ctx.globalAlpha=0.5;
-  S.vps.forEach(v=>{const [sx,sy]=n2s(v.x,v.y);ctx.strokeStyle=C.GUIDE;ctx.lineWidth=1;drawFan(sx,sy,r,S.density);});
+  const LW=S.lw, GW=Math.max(1,S.lw*0.5), CR=6+S.lw*1.4, DR=3+S.lw*0.9;
+  // パースガイド（やや濃いめ）
+  ctx.save();ctx.globalAlpha=0.6;
+  S.vps.forEach(v=>{const [sx,sy]=n2s(v.x,v.y);ctx.strokeStyle=C.GUIDE;ctx.lineWidth=GW;drawFan(sx,sy,r,S.density);});
   ctx.restore();
+  // 傾け中: 半透明の水平基準線（アイレベル中央の高さに）
+  if(S.drag&&S.drag.type==='horizon'&&S.drag.rotating){
+    const my=(S.drag.pivotN?S.drag.pivotN.y:(S.horizon.ya+S.horizon.yb)/2);
+    const sy=n2s(0,my)[1];
+    ctx.save();ctx.globalAlpha=0.45;ctx.strokeStyle='#ffffff';ctx.lineWidth=Math.max(1,LW*0.6);
+    ctx.setLineDash([12,8]);ctx.beginPath();ctx.moveTo(r.x0,sy);ctx.lineTo(r.x1,sy);ctx.stroke();
+    ctx.setLineDash([]);ctx.restore();
+    label(r.x0+6,sy-6,'水平(0°)',  '#ffffff');
+  }
   // アイレベル
   const [ax,ay]=n2s(0,S.horizon.ya), [bx,by]=n2s(1,S.horizon.yb);
   const seg=clipSeg(ax,ay,bx,by,r);
-  if(seg){ctx.strokeStyle=C.EYE;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(seg[0],seg[1]);ctx.lineTo(seg[2],seg[3]);ctx.stroke();
+  if(seg){ctx.strokeStyle=C.EYE;ctx.lineWidth=LW;ctx.beginPath();ctx.moveTo(seg[0],seg[1]);ctx.lineTo(seg[2],seg[3]);ctx.stroke();
     label(seg[0]+6,seg[1]-6,'EYE LEVEL / アイレベル',C.EYE);}
   // 消失点
   S.vps.forEach((v,i)=>{const [sx,sy]=n2s(v.x,v.y);const col=v.vertical?C.VPV:C.VP;
-    cross(sx,sy,col,8);label(sx+11,sy-9,(v.vertical?'VVP':'VP')+(i+1),col);
-    if(S.sel&&S.sel.type==='vp'&&S.sel.i===i){ctx.strokeStyle=C.SEL;ctx.lineWidth=1;ctx.beginPath();ctx.arc(sx,sy,13,0,Math.PI*2);ctx.stroke();}});
+    cross(sx,sy,col,CR,LW);label(sx+CR+4,sy-CR,(v.vertical?'VVP':'VP')+(i+1),col);
+    if(S.sel&&S.sel.type==='vp'&&S.sel.i===i){ctx.strokeStyle=C.SEL;ctx.lineWidth=Math.max(1,LW*0.5);ctx.beginPath();ctx.arc(sx,sy,CR+5,0,Math.PI*2);ctx.stroke();}});
   // 人物の垂直線
   S.chars.forEach((c,i)=>{
     const [hx,hy]=n2s(c.head.x,c.head.y), [fx,fy]=n2s(c.foot.x,c.foot.y);
-    // 真の鉛直（足元接地点を通る）
-    ctx.strokeStyle=C.VERT;ctx.lineWidth=2.5;ctx.beginPath();
+    ctx.strokeStyle=C.VERT;ctx.lineWidth=LW;ctx.beginPath();
     ctx.moveTo(fx,Math.min(hy,fy)-Math.abs(fy-hy)*0.12-6);ctx.lineTo(fx,Math.max(hy,fy)+6);ctx.stroke();
-    // 体軸（頭→足）破線
-    ctx.strokeStyle=C.AXIS;ctx.lineWidth=2;ctx.setLineDash([10,7]);ctx.beginPath();ctx.moveTo(hx,hy);ctx.lineTo(fx,fy);ctx.stroke();ctx.setLineDash([]);
-    dot(hx,hy,C.AXIS,5);dot(fx,fy,C.VERT,5);
-    label(fx+7,hy-8,c.name||('人物'+letter(i)),C.VERT);
-    if(S.sel&&S.sel.type==='char'&&S.sel.i===i){ctx.strokeStyle=C.SEL;ctx.lineWidth=1;
+    ctx.strokeStyle=C.AXIS;ctx.lineWidth=Math.max(1.5,LW*0.8);ctx.setLineDash([10,7]);ctx.beginPath();ctx.moveTo(hx,hy);ctx.lineTo(fx,fy);ctx.stroke();ctx.setLineDash([]);
+    dot(hx,hy,C.AXIS,DR);dot(fx,fy,C.VERT,DR);
+    label(fx+DR+3,hy-8,c.name||('人物'+letter(i)),C.VERT);
+    if(S.sel&&S.sel.type==='char'&&S.sel.i===i){ctx.strokeStyle=C.SEL;ctx.lineWidth=Math.max(1,LW*0.5);
       ctx.strokeRect(Math.min(hx,fx)-8,Math.min(hy,fy)-8,Math.abs(fx-hx)+16,Math.abs(fy-hy)+16);}
   });
 }
@@ -401,7 +460,10 @@ function rotateHorizon(delta,Ps){
   const yl=A[1]+m*(r.x0-A[0]), yr=A[1]+m*(r.x1-A[0]);
   const nyl=s2n(r.x0,yl)[1], nyr=s2n(r.x1,yr)[1];
   if(Math.abs(nyr-nyl)>1.5) return;   // 急すぎ(ほぼ垂直)は無視
-  S.horizon.ya=clampN(nyl); S.horizon.yb=clampN(nyr);
+  // 誤差1°未満は水平へ自動補正（screen角度で判定）
+  const degNow=Math.abs(Math.atan2(yr-yl,r.x1-r.x0)*180/Math.PI);
+  if(degNow<1.0){const mid=(nyl+nyr)/2;S.horizon.ya=clampN(mid);S.horizon.yb=clampN(mid);}
+  else{S.horizon.ya=clampN(nyl); S.horizon.yb=clampN(nyr);}
   S.vps.forEach(v=>{const sp=n2s(v.x,v.y);const rp=rotPt(sp[0],sp[1],Ps,c,s);const np=s2n(rp[0],rp[1]);v.x=clampW(np[0]);v.y=clampW(np[1]);});
 }
 
@@ -514,8 +576,17 @@ function annotation(){
 }
 async function save(){
   if(!S.path){setMsg('先に画像を開いてください');return;}
-  const r=await fetch('/api/save',{method:'POST',headers:{'content-type':'application/json'},
-    body:JSON.stringify({path:S.path,annotation:annotation()})});
+  // 保存先をダイアログで選ぶ（拡張子は .json/.png に振り直す）
+  const initName=(S.name?S.name.replace(/\.[^.]+$/,''):'perspective')+'.perspective.png';
+  setMsg('保存先を選んでいます…（サーバ機の画面にダイアログ）');
+  let save_path='';
+  try{const pr=await fetch('/api/pick_save?name='+encodeURIComponent(initName));const pj=await pr.json();
+    if(pj.cancelled){setMsg('保存をキャンセルしました');return;}
+    if(pj.ok&&pj.path) save_path=pj.path;
+  }catch(e){/* ダイアログ不可なら既定の保存先へ */}
+  const body={path:S.path,annotation:annotation(),line_scale:S.lw/4};
+  if(save_path) body.save_path=save_path;
+  const r=await fetch('/api/save',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
   const j=await r.json(); if(!r.ok){setMsg('保存エラー: '+(j.error||r.status));return;}
   setMsg('保存: '+(j.png||j.json)+(j.png_error?(' (PNG失敗:'+j.png_error+')'):''));
 }
@@ -545,6 +616,7 @@ $('save').onclick=save;
 $('reset').onclick=reset;
 $('snap').onchange=e=>{S.snap=e.target.checked;applySnap();draw();};
 $('density').oninput=e=>{S.density=+e.target.value;$('dval').textContent=e.target.value;draw();};
+$('lw').oninput=e=>{S.lw=+e.target.value;$('lval').textContent=e.target.value;draw();};
 window.addEventListener('resize',resize);
 resize();
 fetch('/api/config').then(r=>r.json()).then(j=>{if(j.image){$('path').value=j.image;openTyped();}});

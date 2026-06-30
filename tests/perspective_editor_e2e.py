@@ -131,6 +131,9 @@ def main():
             # 密度スライダ反映
             page.eval_on_selector("#density", "el=>{el.value=30;el.dispatchEvent(new Event('input'))}")
             check("ガイド密度反映", page.evaluate("() => window.S.density") == 30)
+            # 線の太さスライダ反映
+            page.eval_on_selector("#lw", "el=>{el.value=7;el.dispatchEvent(new Event('input'))}")
+            check("線の太さ反映", page.evaluate("() => window.S.lw") == 7)
 
             # アイレベルを掴んで画像の外へドラッグ → 傾く（消失点も連動）
             page.evaluate("() => { window.S.horizon={ya:0.5,yb:0.5}; "
@@ -154,20 +157,54 @@ def main():
                 vp_after = page.evaluate("() => { const v=window.S.vps.find(v=>!v.vertical); return v.y; }")
                 check("消失点がアイレベルに連動", abs(vp_after - vp_before) > 0.01)
 
-            # 保存 → JSON/PNG が出来る
-            page.click("#save")
-            page.wait_for_function(
-                "() => document.getElementById('msg').textContent.includes('保存')",
-                timeout=8000)
+            # 保存先を指定しての保存（save_path：ダイアログの代わりに直接POSTで検証）
+            ann = page.evaluate("() => annotation()")
+            sdir = tempfile.mkdtemp(prefix="persp_save_")
+            sdst = os.path.join(sdir, "mycut.png")
+            sv = page.request.post(base + "/api/save",
+                data=json.dumps({"path": img, "annotation": ann,
+                                 "save_path": sdst, "line_scale": 1.5}),
+                headers={"content-type": "application/json"})
+            check("save_path保存(PNG)", sv.ok and os.path.exists(os.path.join(sdir, "mycut.png")))
+            check("save_path保存(JSON)", os.path.exists(os.path.join(sdir, "mycut.json")))
+
+            # 既定の保存先（save_path無し）でも保存できる
             stem = "cut"
+            dv = page.request.post(base + "/api/save",
+                data=json.dumps({"path": img, "annotation": ann}),
+                headers={"content-type": "application/json"})
             jp = os.path.join("work", "_perspective", stem, f"{stem}.edit.json")
             pp = os.path.join("work", "_perspective", stem, f"{stem}.edit.png")
-            check("保存JSON存在", os.path.exists(jp))
-            check("保存PNG存在", os.path.exists(pp))
+            check("既定保存JSON存在", dv.ok and os.path.exists(jp))
+            check("既定保存PNG存在", os.path.exists(pp))
             if os.path.exists(jp):
                 obj = json.load(open(jp, encoding="utf-8"))
                 check("JSONにvanishing_points", len(obj.get("vanishing_points", [])) == n_vp + 2)
                 check("JSONにcharacters", len(obj.get("characters", [])) == n_char0 + 1)
+
+            # 保存ボタンはダイアログ起動（headless環境では開けず/即キャンセルになる）。
+            # ここではクリックしてもJSが落ちず、メッセージが更新されることだけ確認する。
+            page.click("#save")
+            page.wait_for_function(
+                "() => document.getElementById('msg').textContent.includes('保存')",
+                timeout=8000)
+            check("保存ボタンでメッセージ更新", "保存" in page.text_content("#msg"))
+
+            # 誤差1°未満は水平へ自動補正 / 1°以上は傾きを保持（状態を変えるので最後に）
+            snap_lt1 = page.evaluate("""() => {
+                window.S.horizon={ya:0.5,yb:0.5};
+                const r=window.imgRect(); const Ps=[(r.x0+r.x1)/2,(r.y0+r.y1)/2];
+                window.rotateHorizon(0.5*Math.PI/180, Ps);   // 0.5°だけ回す
+                return Math.abs(window.S.horizon.ya-window.S.horizon.yb);
+            }""")
+            check("<1°は水平へ自動補正", snap_lt1 < 1e-9)
+            keep_gt1 = page.evaluate("""() => {
+                window.S.horizon={ya:0.5,yb:0.5};
+                const r=window.imgRect(); const Ps=[(r.x0+r.x1)/2,(r.y0+r.y1)/2];
+                window.rotateHorizon(3*Math.PI/180, Ps);     // 3°回す
+                return Math.abs(window.S.horizon.ya-window.S.horizon.yb);
+            }""")
+            check("1°以上は傾きを保持", keep_gt1 > 1e-4)
 
             check("JSエラー無し", not errs)
             if errs:

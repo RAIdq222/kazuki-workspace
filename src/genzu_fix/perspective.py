@@ -749,15 +749,19 @@ def _dashed_line(draw, p, q, color, width=2, dash=14, gap=9):
 
 
 def render(res: PerspectiveResult, src_path: str, out_path: str,
-           title: str | None = None) -> str:
-    """検出結果を元画像に重ねて PNG 保存。out_path を返す。"""
+           title: str | None = None, line_scale: float = 1.0) -> str:
+    """検出結果を元画像に重ねて PNG 保存。out_path を返す。
+
+    生成の参照資料・指示に使うので線は太め。line_scale で更に増減できる。
+    """
     base = Image.open(src_path).convert("RGB")
     W, H = base.size
     over = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     draw = ImageDraw.Draw(over)
-    fs = max(14, int(min(W, H) * 0.022))
+    fs = max(16, int(min(W, H) * 0.026 * max(0.6, line_scale)))
     font = _font(fs)
-    lw = max(2, int(min(W, H) * 0.0028))
+    lw = max(3, int(min(W, H) * 0.0048 * line_scale))   # 主要線（太め）
+    gw = max(2, int(lw * 0.55))                          # ガイド線
 
     def P(pt):  # 正規化 → ピクセル
         return (pt[0] * W, pt[1] * H)
@@ -771,7 +775,7 @@ def render(res: PerspectiveResult, src_path: str, out_path: str,
                    vy + math.sin(math.radians(ang)) * (W + H))
             seg = _clip_line_to_box((vx, vy), far, W, H)
             if seg:
-                draw.line(seg, fill=COL_GUIDE + (70,), width=1)
+                draw.line(seg, fill=COL_GUIDE + (110,), width=gw)
 
     # --- アイレベル（地平線）
     if res.eye_level:
@@ -815,7 +819,7 @@ def render(res: PerspectiveResult, src_path: str, out_path: str,
         _dashed_line(draw, (hx, hy), (fx, fy), COL_AXIS + (255,),
                      width=max(2, lw - 1))
         # 頭・足のドット
-        dr = max(4, int(min(W, H) * 0.006))
+        dr = max(5, int(min(W, H) * 0.008 * line_scale))
         draw.ellipse([hx - dr, hy - dr, hx + dr, hy + dr], fill=COL_AXIS + (255,))
         draw.ellipse([fx - dr, fy - dr, fx + dr, fy + dr], fill=COL_VERT + (255,))
         _text(draw, (fx + dr + 2, hy - fs), ch.name, font, COL_VERT)
