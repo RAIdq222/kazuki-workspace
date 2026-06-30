@@ -975,12 +975,20 @@ def verify(csv_path: str = "runs/conte_v2_ep7.csv") -> int:
                 f"全ページOCRできていない可能性大（--first-page で一部だけ回した／途中で失敗）。"
                 f"`extract2`(--first-page無し)→`consolidate` で作り直してから verify を。")
         else:
-            # (a) 正典にあるのにコンテに無い＝確実な読み落とし/番号ズレ。直前の正典カットの在処を案内。
+            # (a) 正典にあるのにコンテに無い＝確実な読み落とし/番号ズレ。番号が最も近いOCRカットの
+            #     ページを案内する（cut3-14等の原図なしカットを跨いでも実ページに当てられる）。
+            ocr_num_page = []   # (番号, ページ) OCRに在る数値カット
+            for r in rows:
+                n = _cut_num(cell(r, "cut"))
+                if n is not None:
+                    ocr_num_page.append((n, cell(r, "page")))
             miss = [c for c in canon if c not in ocr_set]
             for c in miss:
-                i = canon.index(c)
-                near = next((canon[j] for j in range(i - 1, -1, -1) if canon[j] in ocr_set), None)
-                where = f"（{ocr_first_page.get(near,'?')} の cut{near} の後あたり）" if near else ""
+                cn = _cut_num(c)
+                where = ""
+                if cn is not None and ocr_num_page:
+                    nn, pg = min(ocr_num_page, key=lambda t: abs(t[0] - cn))
+                    where = f"（{pg} の cut{nn} 付近）"
                 issues.append(f"[正典欠落] cut {c} がコンテに無い{where}＝原図カットの読み落とし/番号ズレ")
         # (b) 想定外の枝番（正典に無い英字付き＝続きの取り違え）
         if not partial:
