@@ -138,10 +138,40 @@ def test_vision_parse(img):
     check("parse eye_level", obj.get("eye_level") is not None)
     res = P._result_from_vision_obj(obj, img, "vision")
     check("parsed VP off-frame x>1", len(res.vanishing_points) == 1 and res.vanishing_points[0].x > 1.0)
-    check("parsed character name", res.characters and res.characters[0].name == "ピーちゃん")
-    check("parsed eye tilt", res.eye_level is not None and res.eye_level.b[1] != res.eye_level.a[1])
+    # キャラ名は Vision の推測を捨てて 人物A/B/C に固定する
+    check("character renamed to 人物A", res.characters and res.characters[0].name == "人物A")
+    # 0.45→0.47 のわずかな傾きは水平にスナップされる
+    check("eye snapped horizontal", res.eye_level is not None and res.eye_level.a[1] == res.eye_level.b[1])
+    # 大きな傾き(ダッチアングル)は保持する
+    tilt = P._result_from_vision_obj(
+        {"eye_level": {"a": [0.0, 0.2], "b": [1.0, 0.7]}}, img, "vision")
+    check("big tilt kept", tilt.eye_level.a[1] != tilt.eye_level.b[1])
     # 壊れた応答でも落ちない
     check("broken json -> {}", P._parse_json_object("ごめんJSON出せません") == {})
+
+
+def test_horizon_estimator():
+    """estimate_horizon_y: 2点透視でも複数VPが同じ地平線yに乗ることを確認。"""
+    print("test_horizon_estimator")
+    w, h = 1000, 600
+    horizon = 250.0
+    # 地平線上の2つの消失点(x=200, x=1300)へ収束する線群を作る
+    lines = []
+    for vpx in (200.0, 1300.0):
+        for sy in (50, 150, 400, 550):  # 画面内の色々な高さから VP へ
+            # VP(vpx,horizon) と (sx, sy) を通る直線 → 係数
+            sx = 500.0
+            dx, dy = vpx - sx, horizon - sy
+            n = math.hypot(dx, dy)
+            a, b = -dy / n, dx / n           # 法線
+            c = -(a * vpx + b * horizon)
+            lines.append((a, b, c, 5))
+    hy = P.estimate_horizon_y(lines, (w, h))
+    check("horizon found", hy is not None)
+    if hy is not None:
+        print(f"    地平線y = {hy:.1f} (true={horizon})")
+        check("horizon within 8px", abs(hy - horizon) < 8)
+    check("letter A/B/Z/AA", (P._letter(0), P._letter(1), P._letter(25), P._letter(26)) == ("A", "B", "Z", "AA"))
 
 
 def test_vision_skip(img):
@@ -165,6 +195,7 @@ def main():
         res = test_cv(img)
         test_render(res, img)
         test_json_roundtrip(res)
+        test_horizon_estimator()
         test_vision_parse(img)
         test_vision_skip(img)
     print()
