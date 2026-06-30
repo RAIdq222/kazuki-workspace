@@ -1,4 +1,5 @@
 Pillow>=10
+numpy>=1.24
 psd-tools>=1.17
 # 絵コンテ(PDF)→ページ画像化（genzu_fix.conte render）。Vision抽出は標準ライブラリで
 # Anthropic REST を叩くため追加依存なし（要 ANTHROPIC_API_KEY）。
