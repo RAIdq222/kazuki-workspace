@@ -87,21 +87,13 @@ def main():
             page.on("pageerror", lambda e: errs.append(str(e)))
             page.goto(base, wait_until="networkidle")
 
-            # 画像を開く（パスを貼って Enter。#open はネイティブダイアログ起動なのでテストでは使わない）
-            page.fill("#path", img)
-            page.press("#path", "Enter")
+            # 画像を開く（ブラウザのファイル選択 <input type=file>。内部で /api/upload に送られる）
+            page.set_input_files("#file", img)
             page.wait_for_function(
                 "() => document.getElementById('info').textContent.includes('1200')",
                 timeout=8000)
-            check("画像読込(寸法表示)", "1200" in page.text_content("#info"))
-
-            # アップロード(ドラッグ&ドロップ相当)エンドポイント
-            up = page.request.post(base + "/api/upload", multipart={
-                "file": {"name": "up.png", "mimeType": "image/png",
-                         "buffer": open(img, "rb").read()}})
-            uj = up.json()
-            check("/api/upload ok", up.ok and uj.get("width") == 1200)
-            check("uploadはwork/_uploadsに保存", "work" in (uj.get("path", "")))
+            check("画像読込(ファイル選択)", "1200" in page.text_content("#info"))
+            check("uploadはwork/_uploadsに保存", "work" in page.evaluate("() => window.S.path"))
 
             # 自動推定(cv) → 消失点が1つ以上入る
             page.select_option("#method", "cv")
@@ -157,38 +149,32 @@ def main():
                 vp_after = page.evaluate("() => { const v=window.S.vps.find(v=>!v.vertical); return v.y; }")
                 check("消失点がアイレベルに連動", abs(vp_after - vp_before) > 0.01)
 
-            # 保存先を指定しての保存（save_path：ダイアログの代わりに直接POSTで検証）
+            # 保存(PNG): /api/render がフルレゾPNGを返す。ガイド密度がPNGに反映されるか回帰確認。
             ann = page.evaluate("() => annotation()")
-            sdir = tempfile.mkdtemp(prefix="persp_save_")
-            sdst = os.path.join(sdir, "mycut.png")
-            sv = page.request.post(base + "/api/save",
-                data=json.dumps({"path": img, "annotation": ann,
-                                 "save_path": sdst, "line_scale": 1.5}),
+            r4 = page.request.post(base + "/api/render",
+                data=json.dumps({"path": img, "annotation": ann, "line_scale": 1.0, "guides": 4}),
                 headers={"content-type": "application/json"})
-            check("save_path保存(PNG)", sv.ok and os.path.exists(os.path.join(sdir, "mycut.png")))
-            check("save_path保存(JSON)", os.path.exists(os.path.join(sdir, "mycut.json")))
-
-            # 既定の保存先（save_path無し）でも保存できる
-            stem = "cut"
-            dv = page.request.post(base + "/api/save",
-                data=json.dumps({"path": img, "annotation": ann}),
+            r30 = page.request.post(base + "/api/render",
+                data=json.dumps({"path": img, "annotation": ann, "line_scale": 1.0, "guides": 30}),
                 headers={"content-type": "application/json"})
-            jp = os.path.join("work", "_perspective", stem, f"{stem}.edit.json")
-            pp = os.path.join("work", "_perspective", stem, f"{stem}.edit.png")
-            check("既定保存JSON存在", dv.ok and os.path.exists(jp))
-            check("既定保存PNG存在", os.path.exists(pp))
-            if os.path.exists(jp):
-                obj = json.load(open(jp, encoding="utf-8"))
-                check("JSONにvanishing_points", len(obj.get("vanishing_points", [])) == n_vp + 2)
-                check("JSONにcharacters", len(obj.get("characters", [])) == n_char0 + 1)
+            check("render PNG返却", r4.ok and r4.headers.get("content-type", "").startswith("image/png")
+                  and len(r4.body()) > 0)
+            check("ガイド密度がPNGに反映(4≠30)", r4.body() != r30.body())
 
-            # 保存ボタンはダイアログ起動（headless環境では開けず/即キャンセルになる）。
-            # ここではクリックしてもJSが落ちず、メッセージが更新されることだけ確認する。
-            page.click("#save")
-            page.wait_for_function(
-                "() => document.getElementById('msg').textContent.includes('保存')",
-                timeout=8000)
-            check("保存ボタンでメッセージ更新", "保存" in page.text_content("#msg"))
+            # PNG保存ボタン → ブラウザのダウンロード
+            with page.expect_download() as di:
+                page.click("#savepng")
+            dlp = di.value.path()
+            check("PNGダウンロード", bool(dlp) and os.path.getsize(dlp) > 0)
+            check("PNGファイル名", di.value.suggested_filename.endswith(".perspective.png"))
+
+            # JSON保存ボタン → ブラウザのダウンロード（内容も確認）
+            with page.expect_download() as dj:
+                page.click("#savejson")
+            jobj = json.load(open(dj.value.path(), encoding="utf-8"))
+            check("JSONダウンロードVP数", len(jobj.get("vanishing_points", [])) == n_vp + 2)
+            check("JSONダウンロードchars数", len(jobj.get("characters", [])) == n_char0 + 1)
+            check("JSONに guide_density", "guide_density" in jobj)
 
             # 誤差1°未満は水平へ自動補正 / 1°以上は傾きを保持（状態を変えるので最後に）
             snap_lt1 = page.evaluate("""() => {

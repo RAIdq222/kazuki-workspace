@@ -733,6 +733,33 @@ def _clip_line_to_box(p, q, w, h):
     return ((x0 + t0 * dx, y0 + t0 * dy), (x0 + t1 * dx, y0 + t1 * dy))
 
 
+def _fan_segments(vx, vy, W, H, density):
+    """消失点 (vx,vy) から画像矩形を覆う扇状ガイド線分を density 本返す（エディタと同形）。
+
+    消失点が画角内なら全方位、画角外なら画像が張る角度範囲(コーン)に density 本。
+    """
+    inside = 0 <= vx <= W and 0 <= vy <= H
+    if inside:
+        amin, amax = 0.0, 2 * math.pi
+    else:
+        angs = [math.atan2(cy - vy, cx - vx)
+                for cx, cy in ((0, 0), (W, 0), (W, H), (0, H))]
+        amin, amax = min(angs), max(angs)
+        if amax - amin > math.pi:           # 角度の巻き込みを補正
+            angs = [a + 2 * math.pi if a < 0 else a for a in angs]
+            amin, amax = min(angs), max(angs)
+    big = (W + H) * 3
+    n = max(1, int(density))
+    segs = []
+    for k in range(n + 1):
+        a = amin + (amax - amin) * k / n
+        seg = _clip_line_to_box((vx, vy),
+                                (vx + math.cos(a) * big, vy + math.sin(a) * big), W, H)
+        if seg:
+            segs.append(seg)
+    return segs
+
+
 def _dashed_line(draw, p, q, color, width=2, dash=14, gap=9):
     x0, y0 = p
     x1, y1 = q
@@ -749,10 +776,12 @@ def _dashed_line(draw, p, q, color, width=2, dash=14, gap=9):
 
 
 def render(res: PerspectiveResult, src_path: str, out_path: str,
-           title: str | None = None, line_scale: float = 1.0) -> str:
+           title: str | None = None, line_scale: float = 1.0,
+           guides: int = 14) -> str:
     """検出結果を元画像に重ねて PNG 保存。out_path を返す。
 
-    生成の参照資料・指示に使うので線は太め。line_scale で更に増減できる。
+    生成の参照資料・指示に使うので線は太め。line_scale で太さ、guides で
+    消失点ごとのパースガイド本数（エディタの「ガイド密度」と同じ）を指定する。
     """
     base = Image.open(src_path).convert("RGB")
     W, H = base.size
@@ -766,16 +795,11 @@ def render(res: PerspectiveResult, src_path: str, out_path: str,
     def P(pt):  # 正規化 → ピクセル
         return (pt[0] * W, pt[1] * H)
 
-    # --- 消失点へのガイド線（薄く先に） + 消失点マーカー
+    # --- 消失点へのガイド線（扇状・密度=guides、薄く先に） + 消失点マーカー
     for vp in res.vanishing_points:
         vx, vy = P((vp.x, vp.y))
-        # 周囲 16 方向へ薄いガイド（クリップして画面内だけ）
-        for ang in range(0, 360, 30):
-            far = (vx + math.cos(math.radians(ang)) * (W + H),
-                   vy + math.sin(math.radians(ang)) * (W + H))
-            seg = _clip_line_to_box((vx, vy), far, W, H)
-            if seg:
-                draw.line(seg, fill=COL_GUIDE + (110,), width=gw)
+        for seg in _fan_segments(vx, vy, W, H, guides):
+            draw.line(seg, fill=COL_GUIDE + (110,), width=gw)
 
     # --- アイレベル（地平線）
     if res.eye_level:

@@ -32,36 +32,6 @@ from . import perspective
 
 CONFIG = {"image": ""}
 
-# ネイティブのファイル選択ダイアログを別プロセスで開く（Flask のワーカスレッドから
-# Tk を直接触ると不安定なので subprocess に分離。日本語パスのため UTF-8 で出力）。
-_PICK_SNIPPET = (
-    "import sys\n"
-    "try: sys.stdout.reconfigure(encoding='utf-8')\n"
-    "except Exception: pass\n"
-    "import tkinter as tk\n"
-    "from tkinter import filedialog\n"
-    "r = tk.Tk(); r.withdraw(); r.attributes('-topmost', True)\n"
-    "p = filedialog.askopenfilename(title='画像を選択', "
-    "filetypes=[('画像', '*.png *.jpg *.jpeg *.webp *.bmp *.gif'), "
-    "('すべて', '*.*')])\n"
-    "print(p or '')\n"
-)
-
-# 保存先を選ぶダイアログ（asksaveasfilename）。既定名は呼び出し側から argv で渡す。
-_SAVE_SNIPPET = (
-    "import sys\n"
-    "try: sys.stdout.reconfigure(encoding='utf-8')\n"
-    "except Exception: pass\n"
-    "import tkinter as tk\n"
-    "from tkinter import filedialog\n"
-    "init = sys.argv[1] if len(sys.argv) > 1 else 'perspective.png'\n"
-    "r = tk.Tk(); r.withdraw(); r.attributes('-topmost', True)\n"
-    "p = filedialog.asksaveasfilename(title='保存先を選択', initialfile=init, "
-    "defaultextension='.png', "
-    "filetypes=[('PNG画像', '*.png'), ('すべて', '*.*')])\n"
-    "print(p or '')\n"
-)
-
 
 def _ok(path: str) -> bool:
     return bool(path) and os.path.isfile(path)
@@ -96,51 +66,33 @@ def create_app():
         except Exception as e:
             return jsonify({"error": f"画像を開けません: {e}"}), 400
 
-    def _dialog(snippet, *args):
-        """別プロセスで Tk ダイアログを開く。返値 (path, rc, stderr)。
-
-        rc==0 で正常終了（path 空=ユーザがキャンセル）。rc!=0 はダイアログ自体が
-        開けなかった（例: 画面無しの環境）→ 呼び出し側でフォールバックさせる。
-        """
-        import subprocess
-        out = subprocess.run([sys.executable, "-c", snippet, *args],
-                             capture_output=True, timeout=600)
-        raw = (out.stdout or b"").decode("utf-8", "replace")
-        lines = [ln.strip() for ln in raw.splitlines() if ln.strip()]
-        return (lines[-1] if lines else ""), out.returncode, \
-            (out.stderr or b"").decode("utf-8", "replace")
-
-    @app.get("/api/pick")
-    def api_pick():
-        """サーバ機(=ブラウザと同じPC)でネイティブのファイル選択ダイアログを出す。"""
-        try:
-            path, rc, err = _dialog(_PICK_SNIPPET)
-        except Exception as e:
-            return jsonify({"error": f"ダイアログ起動失敗: {e}"}), 500
-        if rc != 0:
-            return jsonify({"error": f"ダイアログを開けません: {err[-300:]}"}), 500
-        if not path:
-            return jsonify({"cancelled": True})
+    @app.post("/api/render")
+    def api_render():
+        """注釈を元画像にフルレゾで焼いた PNG を返す（ブラウザでダウンロード保存する用）。"""
+        import io
+        import tempfile
+        b = request.json or {}
+        path = (b.get("path") or "").strip().strip('"')
+        ann = b.get("annotation") or {}
         if not _ok(path):
-            return jsonify({"error": f"選択が無効: {path}"}), 400
+            return jsonify({"error": "画像が見つかりません"}), 404
+        line_scale = float(b.get("line_scale", 1.0) or 1.0)
+        guides = int(b.get("guides", 14) or 14)
         try:
-            return jsonify(_img_info(path))
+            res = perspective.PerspectiveResult.from_json(ann)
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tf:
+                tmp = tf.name
+            perspective.render(res, path, tmp, title=None,
+                               line_scale=line_scale, guides=guides)
+            with open(tmp, "rb") as fh:
+                data = fh.read()
+            os.remove(tmp)
         except Exception as e:
-            return jsonify({"error": f"画像を開けません: {e}"}), 400
-
-    @app.get("/api/pick_save")
-    def api_pick_save():
-        """保存先を選ぶダイアログ。返値 path(拡張子は呼び出し側で .json/.png に振り直す)。"""
-        initial = request.args.get("name", "perspective.png")
-        try:
-            path, rc, err = _dialog(_SAVE_SNIPPET, initial)
-        except Exception as e:
-            return jsonify({"error": f"ダイアログ起動失敗: {e}"}), 500
-        if rc != 0:
-            return jsonify({"error": f"ダイアログを開けません: {err[-300:]}"}), 500
-        if not path:
-            return jsonify({"cancelled": True})
-        return jsonify({"ok": True, "path": os.path.abspath(path)})
+            return jsonify({"error": str(e)}), 500
+        stem = os.path.splitext(os.path.basename(path))[0]
+        from flask import Response as _Resp
+        return _Resp(data, mimetype="image/png", headers={
+            "Content-Disposition": f'attachment; filename="{stem}.perspective.png"'})
 
     @app.post("/api/upload")
     def api_upload():
@@ -179,37 +131,6 @@ def create_app():
         except Exception as e:
             return jsonify({"error": str(e)}), 500
         return jsonify(res.to_json())
-
-    @app.post("/api/save")
-    def api_save():
-        b = request.json or {}
-        path = (b.get("path") or "").strip().strip('"')
-        ann = b.get("annotation") or {}
-        if not _ok(path):
-            return jsonify({"error": "画像が見つかりません"}), 404
-        stem = os.path.splitext(os.path.basename(path))[0]
-        line_scale = float(b.get("line_scale", 1.0) or 1.0)
-        # 保存先: ダイアログで選んだ save_path（拡張子を .json/.png に振り直す）優先。
-        save_path = (b.get("save_path") or "").strip().strip('"')
-        if save_path:
-            out_dir = os.path.dirname(save_path) or "."
-            base = os.path.splitext(os.path.basename(save_path))[0] or f"{stem}.edit"
-        else:
-            out_dir = b.get("out_dir") or os.path.join("work", "_perspective", stem)
-            base = f"{stem}.edit"
-        os.makedirs(out_dir, exist_ok=True)
-        json_path = os.path.join(out_dir, f"{base}.json")
-        with open(json_path, "w", encoding="utf-8") as f:
-            json.dump(ann, f, ensure_ascii=False, indent=2)
-        try:
-            res = perspective.PerspectiveResult.from_json(ann)
-            png_path = os.path.join(out_dir, f"{base}.png")
-            perspective.render(res, path, png_path, title="EDIT", line_scale=line_scale)
-        except Exception as e:
-            return jsonify({"ok": True, "json": os.path.abspath(json_path),
-                            "png_error": str(e)})
-        return jsonify({"ok": True, "json": os.path.abspath(json_path),
-                        "png": os.path.abspath(png_path)})
 
     return app
 
@@ -266,6 +187,7 @@ PAGE = r"""<!DOCTYPE html>
 <header>
   <div class="grp">
     <button id="open" class="pri">ファイルを開く…</button>
+    <input id="file" type="file" accept="image/*" style="display:none">
     <input id="path" type="text" placeholder="またはパスを貼って Enter / 画像をD&D">
   </div>
   <div class="grp">
@@ -288,7 +210,8 @@ PAGE = r"""<!DOCTYPE html>
     <span id="lval" class="pill">4</span>
   </div>
   <div class="grp">
-    <button id="save" class="pri">保存</button>
+    <button id="savepng" class="pri">PNG保存</button>
+    <button id="savejson">JSON保存</button>
     <button id="reset" class="warn">リセット</button>
   </div>
 </header>
@@ -534,13 +457,6 @@ async function openTyped(){
   const j=await r.json(); if(!r.ok){setMsg('エラー: '+(j.error||r.status));return;}
   openInfo(j);
 }
-async function pickFile(){
-  setMsg('ファイル選択ダイアログを開いています…（サーバ機の画面に出ます）');
-  let r,j; try{r=await fetch('/api/pick');j=await r.json();}catch(e){setMsg('ダイアログ取得失敗: '+e);return;}
-  if(j.cancelled){setMsg('キャンセルしました');return;}
-  if(!r.ok||j.error){setMsg('エラー: '+(j.error||r.status));return;}
-  openInfo(j);
-}
 async function uploadFile(file){
   setMsg('読込中… '+file.name);
   const fd=new FormData(); fd.append('file',file);
@@ -572,30 +488,32 @@ function annotation(){
     eye_level:{a:[0,S.horizon.ya],b:[1,S.horizon.yb]},
     vanishing_points:S.vps.map((v,i)=>({x:v.x,y:v.y,label:(v.vertical?'VVP':'VP')+(i+1),axis:v.vertical?'vertical':'horizontal'})),
     characters:S.chars.map((c,i)=>({name:c.name||('人物'+letter(i)),head:[c.head.x,c.head.y],foot:[c.foot.x,c.foot.y]})),
-    notes:'editor'};
+    guide_density:S.density, line_scale:S.lw/4, notes:'editor'};
 }
-async function save(){
+function baseName(){return S.name?S.name.replace(/\.[^.]+$/,''):'perspective';}
+function download(blob,name){const u=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);}
+async function savePNG(){
   if(!S.path){setMsg('先に画像を開いてください');return;}
-  // 保存先をダイアログで選ぶ（拡張子は .json/.png に振り直す）
-  const initName=(S.name?S.name.replace(/\.[^.]+$/,''):'perspective')+'.perspective.png';
-  setMsg('保存先を選んでいます…（サーバ機の画面にダイアログ）');
-  let save_path='';
-  try{const pr=await fetch('/api/pick_save?name='+encodeURIComponent(initName));const pj=await pr.json();
-    if(pj.cancelled){setMsg('保存をキャンセルしました');return;}
-    if(pj.ok&&pj.path) save_path=pj.path;
-  }catch(e){/* ダイアログ不可なら既定の保存先へ */}
-  const body={path:S.path,annotation:annotation(),line_scale:S.lw/4};
-  if(save_path) body.save_path=save_path;
-  const r=await fetch('/api/save',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
-  const j=await r.json(); if(!r.ok){setMsg('保存エラー: '+(j.error||r.status));return;}
-  setMsg('保存: '+(j.png||j.json)+(j.png_error?(' (PNG失敗:'+j.png_error+')'):''));
+  setMsg('PNGを生成中…');
+  const r=await fetch('/api/render',{method:'POST',headers:{'content-type':'application/json'},
+    body:JSON.stringify({path:S.path,annotation:annotation(),line_scale:S.lw/4,guides:S.density})});
+  if(!r.ok){let e='';try{e=(await r.json()).error;}catch(_){} setMsg('PNG生成失敗: '+(e||r.status));return;}
+  const blob=await r.blob(); download(blob, baseName()+'.perspective.png');
+  setMsg('PNGをダウンロードしました（ブラウザの保存先へ）。');
+}
+function saveJSON(){
+  if(!S.path){setMsg('先に画像を開いてください');return;}
+  const blob=new Blob([JSON.stringify(annotation(),null,2)],{type:'application/json'});
+  download(blob, baseName()+'.perspective.json'); setMsg('JSONをダウンロードしました。');
 }
 function addVP(vertical){const x=0.5,y=vertical?0.12:horizonYat(0.5);S.vps.push({x,y,vertical});S.sel={type:'vp',i:S.vps.length-1};draw();}
 function addChar(){const i=S.chars.length;S.chars.push({name:'人物'+letter(i),head:{x:0.45,y:0.35},foot:{x:0.45,y:0.85}});S.sel={type:'char',i};draw();}
 function delSel(){if(!S.sel)return;if(S.sel.type==='vp')S.vps.splice(S.sel.i,1);if(S.sel.type==='char')S.chars.splice(S.sel.i,1);S.sel=null;draw();}
 function reset(){S.horizon={ya:0.5,yb:0.5};S.vps=[];S.chars=[];S.sel=null;draw();setMsg('リセットしました');}
 
-$('open').onclick=pickFile;
+$('open').onclick=()=>$('file').click();
+$('file').onchange=e=>{const f=e.target.files&&e.target.files[0]; if(f)uploadFile(f); e.target.value='';};
 $('path').addEventListener('keydown',e=>{if(e.key==='Enter')openTyped();});
 $('auto').onclick=auto;
 // ドラッグ&ドロップで開く
@@ -612,7 +530,8 @@ $('addvp').onclick=()=>addVP(false);
 $('addvpv').onclick=()=>addVP(true);
 $('addchar').onclick=addChar;
 $('del').onclick=delSel;
-$('save').onclick=save;
+$('savepng').onclick=savePNG;
+$('savejson').onclick=saveJSON;
 $('reset').onclick=reset;
 $('snap').onchange=e=>{S.snap=e.target.checked;applySnap();draw();};
 $('density').oninput=e=>{S.density=+e.target.value;$('dval').textContent=e.target.value;draw();};
