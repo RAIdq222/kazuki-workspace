@@ -3,6 +3,11 @@
   "allowRotate": true,
   "cropMargin": 0,
   "trimThreshold": 18,
+  "padCropX": 0.5,
+  "maxCropFrac": 0.15,
+  "fullbodyBaseHeight": 2200,
+  "fullbodyTile": 1024,
+  "neckRatio": 0.14,
   "vocabularyRoots": [
     "D:\\□ワンオペ解雇\\◎lora作り",
     "D:\\□異世界おじさん\\◎lora制作",

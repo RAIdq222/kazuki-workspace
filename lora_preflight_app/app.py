@@ -21,10 +21,12 @@ from urllib.parse import parse_qs, unquote, urlparse
 from urllib.request import Request, urlopen
 
 try:
-    from PIL import Image, ImageChops
+    from PIL import Image
 except ImportError as exc:
     print("Pillow is required. Install it with: pip install -r requirements.txt")
     raise exc
+
+import preflight_core as pfc
 
 
 APP_ROOT = Path(__file__).resolve().parent
@@ -45,6 +47,11 @@ DEFAULT_SETTINGS = {
     "allowRotate": True,
     "cropMargin": 0.0,
     "trimThreshold": 18,
+    "padCropX": 0.5,
+    "maxCropFrac": 0.15,
+    "fullbodyBaseHeight": 2200,
+    "fullbodyTile": 1024,
+    "neckRatio": 0.14,
     "vocabularyRoots": [],
     "vocabularyMinCount": 1,
     "autoVocabularyRefresh": True,
@@ -62,6 +69,17 @@ DEFAULT_SETTINGS = {
     "upscalerCommand": "",
 }
 SETTING_KEYS = set(DEFAULT_SETTINGS)
+UPSCALER_KEYS = (
+    "upscalerMode",
+    "sdWebuiUrl",
+    "sdWebuiUpscaler",
+    "realesrganExe",
+    "realesrganModel",
+    "realesrganModelDir",
+    "realesrganScale",
+    "realesrganTile",
+    "upscalerCommand",
+)
 SESSIONS: dict[str, dict] = {}
 TAGGER_SESSIONS: dict[str, object] = {}
 TAGGER_MODEL_REPOS = {
@@ -172,6 +190,11 @@ def load_settings() -> dict:
     settings["eva2Threshold"] = min(1.0, max(0.01, float(settings.get("eva2Threshold", 0.35) or 0.35)))
     settings["autoVocabularyRefresh"] = bool(settings.get("autoVocabularyRefresh", True))
     settings["useSidecarFallback"] = bool(settings.get("useSidecarFallback", True))
+    settings["padCropX"] = min(1.0, max(0.0, float(settings.get("padCropX", 0.5) or 0.0)))
+    settings["maxCropFrac"] = min(1.0, max(0.01, float(settings.get("maxCropFrac", 0.15) or 0.15)))
+    settings["fullbodyBaseHeight"] = max(256, int(settings.get("fullbodyBaseHeight", 2200) or 2200))
+    settings["fullbodyTile"] = max(64, int(settings.get("fullbodyTile", 1024) or 1024))
+    settings["neckRatio"] = min(0.5, max(0.01, float(settings.get("neckRatio", 0.14) or 0.14)))
     return settings
 
 
@@ -188,6 +211,16 @@ def merge_settings(base: dict, updates: dict) -> dict:
             merged[key] = min(1.0, max(0.01, float(updates[key] or 0.35)))
         elif key in {"allowRotate", "autoVocabularyRefresh", "useSidecarFallback"}:
             merged[key] = bool(updates[key])
+        elif key == "padCropX":
+            merged[key] = min(1.0, max(0.0, float(updates[key] if updates[key] is not None else 0.5)))
+        elif key == "maxCropFrac":
+            merged[key] = min(1.0, max(0.01, float(updates[key] or 0.15)))
+        elif key == "fullbodyBaseHeight":
+            merged[key] = max(256, int(updates[key] or 2200))
+        elif key == "fullbodyTile":
+            merged[key] = max(64, int(updates[key] or 1024))
+        elif key == "neckRatio":
+            merged[key] = min(0.5, max(0.01, float(updates[key] or 0.14)))
         else:
             merged[key] = updates[key]
     return merged
@@ -776,17 +809,6 @@ def sort_tags_by_order(tags: list[str], order_index: dict[str, int]) -> list[str
     return sorted(tags, key=lambda tag: (order_index.get(tag, 999999), tag))
 
 
-def estimate_background_color(img: Image.Image) -> tuple[int, int, int]:
-    rgb = img.convert("RGB")
-    points = [
-        rgb.getpixel((0, 0)),
-        rgb.getpixel((rgb.width - 1, 0)),
-        rgb.getpixel((0, rgb.height - 1)),
-        rgb.getpixel((rgb.width - 1, rgb.height - 1)),
-    ]
-    return tuple(int(sum(color[i] for color in points) / len(points)) for i in range(3))
-
-
 def create_thumbnail(session_id: str, image_path: Path, index: int) -> str:
     thumb_dir = SESSION_ROOT / session_id / "thumbs"
     thumb_dir.mkdir(parents=True, exist_ok=True)
@@ -805,165 +827,141 @@ def create_thumbnail(session_id: str, image_path: Path, index: int) -> str:
     return f"/api/thumb?session={session_id}&file={thumb_name}"
 
 
-def detect_content_box(img: Image.Image, threshold: int = 18, margin: float = 0.08) -> tuple[int, int, int, int]:
-    rgb = img.convert("RGB")
-    sample = rgb.resize((1, 1), Image.Resampling.BOX)
-    average = sample.getpixel((0, 0))
-    corners = [
-        rgb.getpixel((0, 0)),
-        rgb.getpixel((rgb.width - 1, 0)),
-        rgb.getpixel((0, rgb.height - 1)),
-        rgb.getpixel((rgb.width - 1, rgb.height - 1)),
-        average,
-    ]
-    bg = tuple(int(sum(color[i] for color in corners) / len(corners)) for i in range(3))
-    diff = ImageChops.difference(rgb, Image.new("RGB", rgb.size, bg)).convert("L")
-    mask = diff.point(lambda p: 255 if p > threshold else 0)
-    bbox = mask.getbbox()
-    if not bbox:
-        return (0, 0, img.width, img.height)
+def create_output_thumbnail(session_id: str, image_path: Path, key: str) -> str:
+    """出力PNGそのものからサムネを作る（画面と実ファイルがズレない）。毎回上書き。"""
+    thumb_dir = SESSION_ROOT / session_id / "thumbs"
+    thumb_dir.mkdir(parents=True, exist_ok=True)
+    safe_key = re.sub(r"[^A-Za-z0-9_-]+", "_", key)
+    thumb_name = f"out_{safe_key}.jpg"
+    thumb_path = thumb_dir / thumb_name
+    with Image.open(image_path) as img:
+        img = img.convert("RGB")
+        img.thumbnail((320, 320), Image.Resampling.LANCZOS)
+        canvas = Image.new("RGB", (320, 320), (29, 32, 38))
+        canvas.paste(img, ((320 - img.width) // 2, (320 - img.height) // 2))
+        canvas.save(thumb_path, "JPEG", quality=88)
+    return f"/api/thumb?session={session_id}&file={thumb_name}&v={int(time.time())}"
 
-    x0, y0, x1, y1 = bbox
-    pad_x = int((x1 - x0) * margin)
-    pad_y = int((y1 - y0) * margin)
-    return (
-        max(0, x0 - pad_x),
-        max(0, y0 - pad_y),
-        min(img.width, x1 + pad_x),
-        min(img.height, y1 + pad_y),
+
+def preflight_config_from(settings: dict) -> pfc.PreflightConfig:
+    return pfc.PreflightConfig(
+        sizes=tuple(parse_target_sizes(settings.get("targetSizes", ""))),
+        allow_rotate=bool(settings.get("allowRotate", True)),
+        pad_crop_x=float(settings.get("padCropX", 0.5)),
+        max_crop_frac=float(settings.get("maxCropFrac", 0.15)),
+        fullbody_base_height=int(settings.get("fullbodyBaseHeight", 2200)),
+        fullbody_tile=int(settings.get("fullbodyTile", 1024)),
+        neck_ratio=float(settings.get("neckRatio", 0.14)),
+        trim_threshold=int(settings.get("trimThreshold", 18)),
     )
 
 
-def choose_target_size(content_box: tuple[int, int, int, int], target_sizes: list[tuple[int, int]], allow_rotate: bool) -> tuple[int, int]:
-    x0, y0, x1, y1 = content_box
-    aspect = max(x1 - x0, 1) / max(y1 - y0, 1)
-    candidates = list(target_sizes)
-    if allow_rotate:
-        for w, h in target_sizes:
-            if w != h and (h, w) not in candidates:
-                candidates.append((h, w))
-    return min(candidates, key=lambda size: abs((size[0] / size[1]) - aspect))
-
-
-def crop_region_for_aspect(
-    image_size: tuple[int, int],
-    content_box: tuple[int, int, int, int],
-    target_size: tuple[int, int],
-) -> tuple[tuple[int, int, int, int], bool]:
-    image_w, image_h = image_size
-    x0, y0, x1, y1 = content_box
-    center_x = (x0 + x1) / 2
-    center_y = (y0 + y1) / 2
-    target_aspect = target_size[0] / target_size[1]
-    image_aspect = image_w / max(image_h, 1)
-
-    if image_aspect > target_aspect:
-        crop_h = image_h
-        crop_w = crop_h * target_aspect
-    else:
-        crop_w = image_w
-        crop_h = crop_w / target_aspect
-
-    left = int(round(center_x - crop_w / 2))
-    top = int(round(center_y - crop_h / 2))
-    right = int(round(left + crop_w))
-    bottom = int(round(top + crop_h))
-
-    if left < 0:
-        right -= left
-        left = 0
-    if top < 0:
-        bottom -= top
-        top = 0
-    if right > image_w:
-        left -= right - image_w
-        right = image_w
-    if bottom > image_h:
-        top -= bottom - image_h
-        bottom = image_h
-
-    return (max(0, left), max(0, top), min(image_w, right), min(image_h, bottom)), False
-
-
-def fit_to_target_canvas(img: Image.Image, target: tuple[int, int], background: tuple[int, int, int]) -> tuple[Image.Image, bool]:
-    target_w, target_h = target
-    if img.width == target_w and img.height == target_h:
-        return img, False
-    scale = min(target_w / img.width, target_h / img.height)
-    new_w = max(1, int(round(img.width * scale)))
-    new_h = max(1, int(round(img.height * scale)))
-    resized = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
-    canvas = Image.new("RGB", target, background)
-    canvas.paste(resized, ((target_w - new_w) // 2, (target_h - new_h) // 2))
-    return canvas, new_w != target_w or new_h != target_h
-
-
-def process_image(
-    source: Path,
-    destination: Path,
-    target_sizes: list[tuple[int, int]],
-    allow_rotate: bool,
-    trim_threshold: int,
-    crop_margin: float,
-    upscaler_options: dict,
-) -> dict:
-    with Image.open(source) as img:
-        img = img.convert("RGB")
-        content_box = detect_content_box(img, trim_threshold, crop_margin)
-        target = choose_target_size(content_box, target_sizes, allow_rotate)
-        crop_box, _ = crop_region_for_aspect((img.width, img.height), content_box, target)
-        cropped = img.crop(crop_box)
-        resized = cropped.resize(target, Image.Resampling.LANCZOS)
-        padded = False
-
-        temp_path = destination.with_suffix(".pre_upscale.png")
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        resized.save(temp_path, "PNG")
-
-    upscaler_warning = None
-    upscaler_applied = False
+def run_upscaler(temp_path: Path, destination: Path, upscaler_options: dict) -> tuple[bool, str | None]:
     upscaler_mode = (upscaler_options.get("upscalerMode") or "none").strip()
     if upscaler_mode == "sdwebui":
-        upscaler_applied, upscaler_warning = run_sd_webui_upscaler(
+        return run_sd_webui_upscaler(
             temp_path=temp_path,
             destination=destination,
             webui_url=upscaler_options.get("sdWebuiUrl", "http://127.0.0.1:7860"),
             upscaler_name=upscaler_options.get("sdWebuiUpscaler", "R-ESRGAN 4x+ Anime6B"),
         )
-    elif upscaler_mode == "standalone":
+    if upscaler_mode == "standalone":
         try:
             command = build_standalone_realesrgan_command(upscaler_options, temp_path, destination)
-            upscaler_applied, upscaler_warning = run_subprocess_upscaler(command, temp_path, destination)
+            return run_subprocess_upscaler(command, temp_path, destination)
         except Exception as exc:
             shutil.copyfile(temp_path, destination)
-            upscaler_warning = str(exc)
-    elif upscaler_mode == "custom":
+            return False, str(exc)
+    if upscaler_mode == "custom":
         command = command_with_placeholders(
             upscaler_options.get("upscalerCommand", ""),
             {"input": str(temp_path), "output": str(destination)},
         )
         if command.strip():
-            upscaler_applied, upscaler_warning = run_subprocess_upscaler(command, temp_path, destination)
-        else:
-            shutil.copyfile(temp_path, destination)
-            upscaler_warning = "Custom upscaler command is empty; upscaler was not run."
-    else:
-        upscaler_warning = None
+            return run_subprocess_upscaler(command, temp_path, destination)
         shutil.copyfile(temp_path, destination)
+        return False, "Custom upscaler command is empty; upscaler was not run."
+    shutil.copyfile(temp_path, destination)
+    return False, None
 
-    try:
-        temp_path.unlink()
-    except OSError:
-        pass
 
-    return {
-        "targetSize": f"{target[0]}x{target[1]}",
-        "cropBox": crop_box,
-        "contentBox": content_box,
-        "paddedToPreserveContent": padded,
-        "upscalerApplied": upscaler_applied,
-        "upscalerWarning": upscaler_warning,
+def process_image_v2(
+    source: Path,
+    dataset_dir: Path,
+    stem: str,
+    mode: str,
+    settings: dict,
+    upscaler_options: dict,
+) -> list[dict]:
+    """1枚の入力から mode に応じて1枚（通常）または4枚（全身絵）を出力する。
+
+    出力ファイル名: 通常 = {stem}.png / 全身絵 = {stem}_1.png .. {stem}_4.png
+    （名前順で 上半身→首から下→足元→全身。TODO_IMAGE_PROCESSING.md の命名案）
+    """
+    cfg = preflight_config_from(settings)
+    dataset_dir.mkdir(parents=True, exist_ok=True)
+    outputs: list[dict] = []
+    with Image.open(source) as img:
+        img = img.convert("RGB")
+        info = pfc.analyze(img, cfg.trim_threshold)
+        plans = pfc.plan_for_mode(info, cfg, mode)
+        for index, plan in enumerate(plans, start=1):
+            suffix = f"_{index}" if len(plans) > 1 else ""
+            destination = dataset_dir / f"{stem}{suffix}.png"
+            result = pfc.apply_plan(img, plan)
+            temp_path = destination.with_suffix(".pre_upscale.png")
+            result.save(temp_path, "PNG")
+            applied, warning = run_upscaler(temp_path, destination, upscaler_options)
+            try:
+                temp_path.unlink()
+            except OSError:
+                pass
+            outputs.append(
+                {
+                    "image": str(destination),
+                    "kind": plan.kind,
+                    "kindLabel": pfc.KIND_LABELS.get(plan.kind, plan.kind),
+                    "targetSize": f"{plan.scale_to[0]}x{plan.scale_to[1]}",
+                    "fallback": plan.fallback,
+                    "plan": plan.to_dict(),
+                    "upscalerApplied": applied,
+                    "upscalerWarning": warning,
+                }
+            )
+    return outputs
+
+
+def write_prepare_manifest(session: dict, output_dir: Path, dataset_dir: Path) -> None:
+    """整形画面の出力台帳。派生元(source)と派生種別(kind)、加工計画(plan)を全部残す。"""
+    items = []
+    for image in session.get("images", []):
+        if not image.get("prepared"):
+            continue
+        for output in image.get("results", []):
+            items.append(
+                {
+                    "source": image.get("path", ""),
+                    "output": output.get("image", ""),
+                    "kind": output.get("kind", "normal"),
+                    "mode": image.get("mode", "normal"),
+                    "targetSize": output.get("targetSize", ""),
+                    "fallback": output.get("fallback"),
+                    "plan": output.get("plan"),
+                    "upscalerApplied": output.get("upscalerApplied", False),
+                }
+            )
+    manifest = {
+        "created": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "inputDir": session.get("inputDir", ""),
+        "outputDir": str(output_dir),
+        "datasetDir": str(dataset_dir),
+        "settings": {
+            key: session.get("settings", {}).get(key)
+            for key in ("targetSizes", "allowRotate", "padCropX", "maxCropFrac", "fullbodyBaseHeight", "fullbodyTile", "neckRatio")
+        },
+        "items": items,
     }
+    (output_dir / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def build_caption(character_trigger: str, common_tags: list[str], trigger_tokens: list[str], candidate_tags: list[str]) -> str:
@@ -1268,45 +1266,36 @@ class AppHandler(SimpleHTTPRequestHandler):
         output_dir = Path(session["outputDir"])
         dataset_dir = output_dir / "images"
         dataset_dir.mkdir(parents=True, exist_ok=True)
-        target_sizes = parse_target_sizes(settings.get("targetSizes", ""))
-        allow_rotate = bool(settings.get("allowRotate", True))
-        trim_threshold = int(settings.get("trimThreshold", 18))
-        crop_margin = float(settings.get("cropMargin", 0.08))
-        upscaler_options = {
-            "upscalerMode": settings.get("upscalerMode", "none"),
-            "sdWebuiUrl": settings.get("sdWebuiUrl", "http://127.0.0.1:7860"),
-            "sdWebuiUpscaler": settings.get("sdWebuiUpscaler", "R-ESRGAN 4x+ Anime6B"),
-            "realesrganExe": settings.get("realesrganExe", ""),
-            "realesrganModel": settings.get("realesrganModel", "realesrgan-x4plus-anime"),
-            "realesrganModelDir": settings.get("realesrganModelDir", ""),
-            "realesrganScale": settings.get("realesrganScale", "1"),
-            "realesrganTile": settings.get("realesrganTile", ""),
-            "upscalerCommand": settings.get("upscalerCommand", ""),
-        }
+        mode = body.get("mode") or "normal"
+        upscaler_options = {key: settings.get(key, DEFAULT_SETTINGS.get(key)) for key in UPSCALER_KEYS}
 
         for image in session.get("images", []):
             if image.get("id") != image_id:
                 continue
             source = Path(image["path"])
-            stem = f"{int(image['index']):03d}"
-            image_out = dataset_dir / f"{stem}.png"
-            process_info = process_image(
+            stem = source.stem
+            outputs = process_image_v2(
                 source=source,
-                destination=image_out,
-                target_sizes=target_sizes,
-                allow_rotate=allow_rotate,
-                trim_threshold=trim_threshold,
-                crop_margin=crop_margin,
+                dataset_dir=dataset_dir,
+                stem=stem,
+                mode=mode,
+                settings=settings,
                 upscaler_options=upscaler_options,
             )
+            for out_index, output in enumerate(outputs, start=1):
+                output["thumbUrl"] = create_output_thumbnail(
+                    session_id, Path(output["image"]), f"{image['id']}_{out_index}"
+                )
             image["prepared"] = True
-            image["result"] = {
-                "image": str(image_out),
-                **process_info,
-            }
-            image["warnings"] = [process_info["upscalerWarning"]] if process_info.get("upscalerWarning") else []
+            image["mode"] = mode
+            image["results"] = outputs
+            image["result"] = outputs[0]
+            image["warnings"] = [
+                f"{Path(o['image']).name}: {o['upscalerWarning']}" for o in outputs if o.get("upscalerWarning")
+            ] + [f"{Path(o['image']).name}: {o['fallback']}" for o in outputs if o.get("fallback")]
             session["settings"] = settings
             self.save_session(session)
+            write_prepare_manifest(session, output_dir, dataset_dir)
             write_json(self, {"ok": True, "image": image, "outputDir": str(output_dir), "datasetDir": str(dataset_dir)})
             return
 
@@ -1424,57 +1413,59 @@ class AppHandler(SimpleHTTPRequestHandler):
         character_trigger = body.get("characterTrigger", "")
         common_tags = parse_tags(body.get("commonTags", ""))
         assignments = body.get("assignments", {})
+        modes = body.get("modes", {}) if isinstance(body.get("modes"), dict) else {}
         trigger_definitions = body.get("triggerDefinitions", [])
         token_by_id = {item.get("id"): item.get("token", "").strip() for item in trigger_definitions}
-        target_sizes = parse_target_sizes(body.get("targetSizes", ""))
-        allow_rotate = bool(body.get("allowRotate", True))
-        trim_threshold = int(body.get("trimThreshold", 18))
-        crop_margin = float(body.get("cropMargin", 0.08))
-        upscaler_options = {
-            "upscalerMode": body.get("upscalerMode", "none"),
-            "sdWebuiUrl": body.get("sdWebuiUrl", "http://127.0.0.1:7860"),
-            "sdWebuiUpscaler": body.get("sdWebuiUpscaler", "R-ESRGAN 4x+ Anime6B"),
-            "realesrganExe": body.get("realesrganExe", ""),
-            "realesrganModel": body.get("realesrganModel", "realesrgan-x4plus-anime"),
-            "realesrganModelDir": body.get("realesrganModelDir", ""),
-            "realesrganScale": body.get("realesrganScale", "1"),
-            "realesrganTile": body.get("realesrganTile", ""),
-            "upscalerCommand": body.get("upscalerCommand", ""),
-        }
+        settings = merge_settings(load_settings(), body)
+        target_sizes = parse_target_sizes(settings.get("targetSizes", ""))
+        allow_rotate = bool(settings.get("allowRotate", True))
+        upscaler_options = {key: settings.get(key, DEFAULT_SETTINGS.get(key)) for key in UPSCALER_KEYS}
 
         results = []
         warnings = []
         for index, image in enumerate(session["images"], start=1):
             source = Path(image["path"])
             stem = f"{index:03d}"
-            image_out = dataset_dir / f"{stem}.png"
-            txt_out = dataset_dir / f"{stem}.txt"
+            mode = modes.get(image["id"]) or image.get("mode") or "normal"
             selected_ids = assignments.get(image["id"], [])
             trigger_tokens = [token_by_id.get(trigger_id, "") for trigger_id in selected_ids]
             trigger_tokens = [token for token in trigger_tokens if token]
-            caption = build_caption(character_trigger, common_tags, trigger_tokens, image.get("keptTags", []))
 
-            process_info = process_image(
+            outputs = process_image_v2(
                 source=source,
-                destination=image_out,
-                target_sizes=target_sizes,
-                allow_rotate=allow_rotate,
-                trim_threshold=trim_threshold,
-                crop_margin=crop_margin,
+                dataset_dir=dataset_dir,
+                stem=stem,
+                mode=mode,
+                settings=settings,
                 upscaler_options=upscaler_options,
             )
-            txt_out.write_text(caption, encoding="utf-8")
-
-            result = {
-                "source": str(source),
-                "image": str(image_out),
-                "captionFile": str(txt_out),
-                "caption": caption,
-                **process_info,
-            }
-            if process_info.get("upscalerWarning"):
-                warnings.append(f"{source.name}: {process_info['upscalerWarning']}")
-            results.append(result)
+            for output in outputs:
+                image_out = Path(output["image"])
+                txt_out = image_out.with_suffix(".txt")
+                # 首から下の派生画像には head out of frame を足す（TODOの構図意図）
+                extra = ["head out of frame"] if output["kind"] == "fb_body" else []
+                caption = build_caption(
+                    character_trigger, common_tags, trigger_tokens, extra + image.get("keptTags", [])
+                )
+                txt_out.write_text(caption, encoding="utf-8")
+                result = {
+                    "source": str(source),
+                    "image": str(image_out),
+                    "captionFile": str(txt_out),
+                    "caption": caption,
+                    "kind": output["kind"],
+                    "mode": mode,
+                    "targetSize": output["targetSize"],
+                    "fallback": output.get("fallback"),
+                    "plan": output.get("plan"),
+                    "upscalerApplied": output.get("upscalerApplied", False),
+                    "upscalerWarning": output.get("upscalerWarning"),
+                }
+                if output.get("upscalerWarning"):
+                    warnings.append(f"{image_out.name}: {output['upscalerWarning']}")
+                if output.get("fallback"):
+                    warnings.append(f"{image_out.name}: {output['fallback']}")
+                results.append(result)
 
         manifest = {
             "created": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -1483,6 +1474,11 @@ class AppHandler(SimpleHTTPRequestHandler):
             "datasetDir": str(dataset_dir),
             "targetSizes": [f"{w}x{h}" for w, h in target_sizes],
             "allowRotate": allow_rotate,
+            "padCropX": settings.get("padCropX"),
+            "maxCropFrac": settings.get("maxCropFrac"),
+            "fullbodyBaseHeight": settings.get("fullbodyBaseHeight"),
+            "fullbodyTile": settings.get("fullbodyTile"),
+            "neckRatio": settings.get("neckRatio"),
             "upscalerOptions": {
                 key: value for key, value in upscaler_options.items() if key != "upscalerCommand" or value
             },

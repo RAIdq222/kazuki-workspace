@@ -92,11 +92,30 @@
 
       <section class="panel">
         <div class="panel-title">
-          <h2>3. 切り取り</h2>
+          <h2>3. 余白と切り取り</h2>
         </div>
         <input id="cropMargin" type="hidden" value="0">
         <input id="trimThreshold" type="hidden" value="18">
-        <div class="fixed-setting">余白追加なし / 指定サイズへ最小切り取り</div>
+
+        <label>
+          余白 ⇔ 切り取り バランス（<span id="padCropXValue">0.50</span>）
+          <input id="padCropX" type="range" min="0" max="1" step="0.05" value="0.5">
+        </label>
+        <span class="hint">
+          0に近いほど余白を足して画像全体を残します。1に近いほど余白を作らず、
+          少し切り取って規定サイズへ合わせます。迷ったら0.5のままでOK。
+          切り取りが大きくなりすぎる画像は自動で余白側に切り替わります。
+        </span>
+
+        <label>
+          首から下の開始位置（全身絵用）
+          <input id="neckRatio" type="number" min="0.05" max="0.3" step="0.01" value="0.14">
+        </label>
+        <span class="hint">
+          全身絵の「首から下」画像を、頭のてっぺんからどれだけ下がった位置で
+          切り出すか（人物の高さに対する割合）。顔が写り込んでしまう場合は
+          数値を大きくして、もう一度整形してください。
+        </span>
       </section>
 
       <section class="panel upscaler-panel">

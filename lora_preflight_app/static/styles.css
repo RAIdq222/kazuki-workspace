@@ -552,6 +552,59 @@ summary {
   line-height: 1.45;
 }
 
+.mode-toggle {
+  margin-top: 8px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mode-toggle input {
+  width: 15px;
+  min-height: 15px;
+}
+
+.result-grid {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.result-thumb {
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #1d222a;
+}
+
+.result-thumb img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  display: block;
+}
+
+.result-thumb figcaption {
+  padding: 4px 6px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.badge-fallback {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: #fdf0dd;
+  color: #a05a00;
+  font-size: 10px;
+}
+
 dialog {
   border: 1px solid var(--line);
   border-radius: 8px;

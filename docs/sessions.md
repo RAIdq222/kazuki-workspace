@@ -51,3 +51,5 @@
 ## 更新ログ
 - 2026-06: cross-session 共有レイヤー整備（CLAUDE.md / docs/sessions.md / read-genzu skill）。
 - 2026-07-02: LoRA Preflight 画像加工の設計書を追加（`docs/lora-preflight/`、実装は次フェーズ）。
+- 2026-07-02: 同実装 P1〜P5 完了（コア `preflight_core.py`・app.py統合・UI・manifest・
+  テスト2本 `tests/preflight_core_test.py` / `preflight_app_e2e.py` 全通過）。残: P6自動判定ほか（設計書§9）。

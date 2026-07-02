@@ -2,6 +2,15 @@ const state = {
   sessionId: null,
   images: [],
   outputDir: "",
+  modes: {}, // imageId -> "normal" | "fullbody"
+};
+
+const KIND_LABELS = {
+  normal: "整形",
+  fb_upper: "上半身",
+  fb_body: "首から下",
+  fb_feet: "足元",
+  fb_full: "全身",
 };
 
 const $ = (id) => document.getElementById(id);
@@ -61,6 +70,8 @@ function getConfig() {
     cropMargin: readNumber("cropMargin", 0),
     trimThreshold: readNumber("trimThreshold", 18),
     allowRotate: readChecked("allowRotate", true),
+    padCropX: readNumber("padCropX", 0.5),
+    neckRatio: readNumber("neckRatio", 0.14),
     upscalerMode: readValue("upscalerMode", "none"),
     sdWebuiUrl: readValue("sdWebuiUrl", "http://127.0.0.1:7860"),
     sdWebuiUpscaler: readValue("sdWebuiUpscaler", "R-ESRGAN 4x+ Anime6B"),
@@ -118,12 +129,27 @@ function renderImages() {
   $("imageCount").textContent = `${state.images.length}枚の画像`;
   grid.innerHTML = state.images
     .map((image) => {
-      const result = image.result || {};
+      const mode = state.modes[image.id] || image.mode || "normal";
+      const results = image.results || [];
       const status = image.prepared
-        ? `<div class="tag-source">整形済み: ${escapeHtml(result.targetSize || "")}</div>`
+        ? `<div class="tag-source">整形済み (${results.length}枚)</div>`
         : '<div class="tag-source pending">未整形</div>';
       const warning = (image.warnings || []).length
         ? `<div class="unknown">警告: ${escapeHtml(image.warnings.join(" / "))}</div>`
+        : "";
+      const resultGrid = results.length
+        ? `<div class="result-grid">${results
+            .map(
+              (r) => `
+              <figure class="result-thumb">
+                <img src="${r.thumbUrl}" alt="${escapeHtml(r.kind)}">
+                <figcaption>
+                  ${escapeHtml(KIND_LABELS[r.kind] || r.kind)} ${escapeHtml(r.targetSize || "")}
+                  ${r.fallback ? '<span class="badge-fallback" title="' + escapeHtml(r.fallback) + '">自動調整</span>' : ""}
+                </figcaption>
+              </figure>`
+            )
+            .join("")}</div>`
         : "";
       return `
         <article class="image-card">
@@ -132,8 +158,13 @@ function renderImages() {
           </div>
           <div class="card-body">
             <div class="file-name">${escapeHtml(image.name)}</div>
+            <label class="checkline mode-toggle">
+              <input type="checkbox" data-mode-toggle data-id="${escapeHtml(image.id)}" ${mode === "fullbody" ? "checked" : ""}>
+              全身絵として処理（4枚生成）
+            </label>
             ${status}
             ${warning}
+            ${resultGrid}
           </div>
         </article>
       `;
@@ -181,6 +212,7 @@ async function prepareImages() {
         ...config,
         sessionId: state.sessionId,
         imageId: image.id,
+        mode: state.modes[image.id] || "normal",
       });
       state.images[index] = data.image;
       state.outputDir = data.outputDir || state.outputDir;
@@ -211,6 +243,15 @@ function wireEvents() {
   $("upscalerMode").addEventListener("change", renderUpscalerBlocks);
   document.querySelectorAll(".target-size-choice").forEach((input) => {
     input.addEventListener("change", selectedTargetSizes);
+  });
+  $("padCropX").addEventListener("input", () => {
+    $("padCropXValue").textContent = Number(readValue("padCropX", "0.5")).toFixed(2);
+  });
+  $("imageGrid").addEventListener("change", (event) => {
+    const target = event.target;
+    if (target.matches("[data-mode-toggle]")) {
+      state.modes[target.dataset.id] = target.checked ? "fullbody" : "normal";
+    }
   });
 }
 

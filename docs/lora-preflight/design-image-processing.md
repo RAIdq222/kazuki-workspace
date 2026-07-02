@@ -6,22 +6,19 @@
 
 ## 0. 前提と実装の置き場所（最重要）
 
-引き継ぎ対象アプリ本体（`app.py` ほか `lora_preflight_app` フォルダ）は
-**このリポジトリには入っていない**（Windows 側 `C:\Users\Dolak\Documents\Codex\lora作り自動化\...` に実体、ZIP渡し想定）。
+アプリ本体は 2026-07-02 に ZIP で受領し **`lora_preflight_app/` に収載済み**
+（コード＋config のみ。`models/` `.venv/` `wheelhouse/` はユーザーの Windows 側に実体）。
 
-そこで実装は次の2層に分ける:
+実装は2層に分ける:
 
-1. **コアロジック層（本リポジトリで実装・テスト完結）**
-   - `src/lora_preflight/` に **UI非依存・純粋関数中心** のパッケージとして実装する。
-   - 依存は PIL(Pillow) と numpy のみ（アプリ側 requirements と衝突しない最小構成）。
-   - 合成画像によるユニットテストを `tests/` に置き、このリポジトリ単体で検証できる。
-2. **アプリ統合層（app.py への薄いパッチ）**
-   - `lora_preflight_app` の ZIP が手に入り次第、`app.py` から本パッケージを呼ぶ薄い統合を行う。
-   - 統合手順書を `docs/lora-preflight/integration-notes.md` として実装時に書く。
-   - それまでは **CLIドライバ（`scripts/preflight_plan.py`）** で実画像確認できるようにする。
-
-この分割により「まず設計 → コア実装 → 実画像で確認 → app.py 統合」を、
-アプリ本体の到着を待たずに進められる。
+1. **コアロジック層** = `lora_preflight_app/preflight_core.py`
+   - **UI非依存・純粋関数中心**・依存は Pillow のみ。
+   - アプリフォルダ内に置くのは、ZIP配布時にフォルダ単体で完結させるため
+     （当初案の `src/lora_preflight/` からの変更点）。
+   - テスト: `tests/preflight_core_test.py`（合成画像・モデル不要）。
+2. **アプリ統合層** = `app.py` の整形処理（`process_image_v2`）とUI
+   - e2e テスト: `tests/preflight_app_e2e.py`（サーバ実起動・HTTP経由で検証）。
+   - 実画像の手元確認は CLI `scripts/preflight_plan.py`（アプリ起動不要）。
 
 ## 1. 設計原則: Plan（計画）と Render（実行）の分離 = WYSIWYG保証
 
@@ -104,13 +101,14 @@ crop_area >= x * pad_area  →  候補1（pad）を採用
 
 ### 3.4 比率の選択と「削りすぎ」フォールバック
 
-1. 第一候補 = 比率距離 `|log(c) - log(r)|` が最小のもの（縦長画像には縦系、横長には横系が自然に選ばれる）。
-2. **削りすぎ判定**: 採用計画が crop で、`crop_area / (W*H) > max_crop_frac` のとき、
-   その比率に固執しない。切除率が `max_crop_frac` 以下になる候補のうち比率距離最小のものへ逃がす。
-3. どの候補でも収まらない場合は、全候補中 `crop_area` 最小のものを採用する
-   （= 資料の「切り取り量が少なく、かつ規定サイズに収まるものを選ぶ」）。
-4. フォールバックが起きたことは CropPlan にフラグとして残す（警告表示はするが、資料の指示どおり
-   **警告で終わらせず自動でより良い処理へ逃がす**のが既定動作）。
+1. 採用比率 = 比率距離 `|log(c) - log(r)|` が最小のもの（縦長画像には縦系、横長には横系が自然に選ばれる）。
+2. **実装時の発見**: 切除率は比率距離の単調関数（`crop_frac = 1 - exp(-距離)`）なので、
+   **最近比率が常に最小クロップでもある**。つまり「別の（より緩い）比率へ逃がす」は
+   数学的に発生し得ない。資料の意図（削りすぎ→余裕を出す）は**余白側（候補1）へ倒す**ことで実現する。
+3. **削りすぎ判定**: 採用計画が crop で `crop_frac > max_crop_frac` のとき、同じ比率のまま
+   **pad（余白）計画に切り替える**。画像は一切削られない。
+4. フォールバックが起きたことは CropPlan.fallback に理由文字列として残し、UIにバッジ表示する
+   （警告で終わらせず**自動でより安全な処理へ逃がす**のが既定動作）。
 
 ### 3.5 切り取り位置（アンカー）
 
@@ -163,10 +161,12 @@ crop_area >= x * pad_area  →  候補1（pad）を採用
 
 ### 4.5 A_4: 全身をできるだけ残した1枚
 
-- 候補 = 規定サイズの**縦向き**（640x1536, 768x1344, …。`allow_rotate` 前提）。
-- 選択規則: パディングは許容し、**人物（content_bbox）に食い込むクロップがゼロで済む最も縦長の候補**を選ぶ。
-  全候補で食い込みが出る場合は、人物の欠損面積が最小の候補（資料: まず 1536 系 → 削りすぎるなら 1344 系へ、の一般化）。
-- 元の全身画像（幅クロップ前）から §3 と同じ pad/crop 機構で生成する。
+- 候補 = 規定サイズの**縦向き**（640x1536, 768x1344, …。`allow_rotate` 前提）。縦は全て残す。
+- 選択規則: 縦長順（h/w 降順）に見て、**必要幅が人物幅以上になる最初の候補**
+  ＝「人物に食い込まない最も縦長の比率」を選ぶ。幅が余白で足りない分はパディング。
+  全候補で人物が欠ける場合のみ、欠損最小の候補へ逃がし fallback を記録
+  （資料: まず 1536 系 → 削りすぎるなら 1344 系へ、の一般化）。
+- 元の全身画像（幅クロップ前）から生成する。
 
 ### 4.6 命名と出力
 
@@ -210,19 +210,24 @@ A_4.png  … 全身         (fb_full)
 ## 7. モジュール構成と公開API
 
 ```
-src/lora_preflight/
-  __init__.py
-  config.py      # PreflightConfig dataclass + JSON読み込み
-  analyze.py     # analyze(img) -> ImageInfo（content_bbox, bg_color）
-  planner.py     # plan_normal(info, cfg) -> CropPlan
-                 # plan_fullbody(info, cfg) -> list[CropPlan]（4枚: kind付き）
-  render.py      # apply_plan(img, plan) -> Image
-                 # thumbnail(img, plan, max_side=512) -> Image  ＝ apply_planの縮小
+lora_preflight_app/
+  preflight_core.py   # コア一式（既存アプリの単一ファイル流儀に合わせ1ファイル）:
+                      #   PreflightConfig / ImageInfo / CropPlan
+                      #   analyze(img) -> ImageInfo
+                      #   plan_normal(info, cfg) -> CropPlan
+                      #   plan_fullbody(info, cfg, neck_ratio=None) -> list[CropPlan]（4枚）
+                      #   plan_for_mode(info, cfg, mode) / apply_plan(img, plan) / thumbnail(...)
+  app.py              # 統合: process_image_v2()（1 or 4枚出力）、run_upscaler()、
+                      #   create_output_thumbnail()（出力実物からサムネ）、write_prepare_manifest()
 scripts/
-  preflight_plan.py   # CLI: 入力画像→plan JSON＋出力PNG＋サムネを work/ に出す（実画像確認用）
+  preflight_plan.py   # CLI: 入力画像→plan JSON＋出力PNG＋サムネ（実画像確認用）
 tests/
-  test_lora_preflight.py
+  preflight_core_test.py   # コア不変条件（合成画像）
+  preflight_app_e2e.py     # サーバ実起動のe2e
 ```
+
+出力命名: 整形画面（prepare）は**元ファイル名ベース**（`A.png` → `A.png` / `A_1..4.png`）。
+タグ付け後のビルドは従来の連番 stem（`001.png` / `001_1..4.png`、caption `.txt` と対）。
 
 主要シグネチャ:
 
@@ -260,16 +265,20 @@ def apply_plan(img: Image.Image, plan: CropPlan) -> Image.Image: ...
 
 ## 9. 実装フェーズ（TODOの「まず実装してほしい順番」に対応）
 
-| フェーズ | 内容 | TODO対応 | 場所 |
+| フェーズ | 内容 | TODO対応 | 状態 |
 |---|---|---|---|
-| P1 | コア: config / analyze / CropPlan / apply_plan / thumbnail ＋テスト | 2, 5(基盤) | 本リポジトリ |
-| P2 | 通常画像: plan_normal（比率選択・x判定・フォールバック・アンカー）＋テスト | 2 | 本リポジトリ |
-| P3 | 全身絵: plan_fullbody（2200正規化・4枚・首推定・命名）＋テスト | 3, 4 | 本リポジトリ |
-| P4 | CLIドライバ `scripts/preflight_plan.py` で実画像確認 | 5 | 本リポジトリ |
-| P5 | app.py 統合: モード選択UI・スライダー・4枚サムネ・manifest記録 | 1, 5, 6 | app到着後 |
-| P6 | 自動判定（全身絵らしさの初期値提案） | 7 | app到着後 |
+| P1 | コア: config / analyze / CropPlan / apply_plan / thumbnail ＋テスト | 2, 5(基盤) | **済 (2026-07-02)** |
+| P2 | 通常画像: plan_normal（比率選択・x判定・フォールバック・アンカー）＋テスト | 2 | **済** |
+| P3 | 全身絵: plan_fullbody（2200正規化・4枚・首推定・命名）＋テスト | 3, 4 | **済** |
+| P4 | CLIドライバ `scripts/preflight_plan.py` で実画像確認 | 5 | **済**（合成画像で動作確認。実画像はユーザー確認待ち） |
+| P5 | app.py 統合: モード選択UI・スライダー・4枚サムネ・manifest記録 | 1, 5, 6 | **済**（e2eテスト通過） |
+| P6 | 自動判定（全身絵らしさの初期値提案） | 7 | 未着手（資料の指示どおり最後） |
 
-P1〜P4 はアプリ本体が無くても完了・検証できる。
+残タスク:
+- P6 自動判定（EVA02タグ or 人物縦横比ヒューリスティック→チェックボックス初期値の提案）。
+- 首位置の**画像ごと**微調整UI（現在はグローバル設定 `neckRatio` を変えて再整形）。
+- タグ付け画面(`/tagging`)側でのモード指定UI（現在 build API は `modes` を受け取れるが UI 未配線）。
+- Windows 実機（実画像・Real-ESRGAN 経路）での動作確認。
 
 ## 10. 未決事項（ユーザー確認したい点）
 
