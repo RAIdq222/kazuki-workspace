@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+  :root{--bg:#1e1f24;--panel:#26282f;--ink:#e8e8ea;--muted:#9aa0aa;--line:#3a3d46;
+        --eye:#00c8ff;--vp:#ff28c8;--vpv:#ffb400;--vert:#28dc46;--axis:#ffa000;--guide:#ff78d2;}
+  *{box-sizing:border-box}
+  body{margin:0;font:12px/1.5 sans-serif;background:var(--bg);color:var(--ink);height:100vh;display:flex;flex-direction:column}
+  #bar{padding:6px;background:var(--panel);border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+  #bar .sep{width:100%;height:0}
+  button{background:#33363f;border:1px solid var(--line);color:var(--ink);border-radius:5px;padding:5px 8px;cursor:pointer;font-size:12px}
+  button:hover{background:#3d414b}
+  button.pri{background:#2563eb;border-color:#2563eb}
+  button.warn{background:#7a2230;border-color:#7a2230}
+  label.chk{display:flex;gap:4px;align-items:center;color:var(--muted)}
+  .pill{font-size:11px;color:var(--muted)}
+  #wrap{flex:1;position:relative;min-height:0}
+  #cv{display:block;width:100%;height:100%;background:#111}
+  #msg{position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.6);padding:4px 8px;border-radius:5px;color:#cfd3da;max-width:90%}
+  .legend{padding:4px 6px;background:var(--panel);border-top:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:11px}
+  .legend i{display:inline-block;width:12px;height:3px;vertical-align:middle;margin-right:3px}
+</style></head>
+<body>
+  <div id="bar">
+    <button id="loaddoc" class="pri">ドキュメント読込</button>
+    <button id="addvp">消失点+（水平）</button>
+    <button id="addvpv">消失点+（鉛直）</button>
+    <button id="addchar">人物垂直線+</button>
+    <button id="del" class="warn">選択削除</button>
+    <div class="sep"></div>
+    <label class="chk"><input id="snap" type="checkbox" checked>地平線へスナップ</label>
+    <span class="pill">密度</span><input id="density" type="range" min="3" max="40" value="14">
+    <span class="pill">太さ</span><input id="lw" type="range" min="1" max="10" step="0.5" value="4">
+    <div class="sep"></div>
+    <button id="addlayer" class="pri">パース線をレイヤーに追加</button>
+    <button id="reset" class="warn">リセット</button>
+  </div>
+  <div id="wrap"><canvas id="cv"></canvas><div id="msg">「ドキュメント読込」で現在のPSDを背景に。アイレベル/消失点をドラッグ。画像の外へ出すと傾け（消失点連動・1°未満は水平補正）。</div></div>
+  <div class="legend">
+    <span><i style="background:var(--eye)"></i>アイレベル</span>
+    <span><i style="background:var(--vp)"></i>消失点(水平)</span>
+    <span><i style="background:var(--vpv)"></i>消失点(鉛直)</span>
+    <span><i style="background:var(--guide)"></i>パースガイド</span>
+    <span><i style="background:var(--vert)"></i>人物の鉛直線</span>
+    <span class="pill" id="info">未読込</span>
+  </div>
+  <script src="main.js"></script>
+</body></html>

@@ -1,0 +1,92 @@
+[
+  {
+    "cut": 15,
+    "psd": "shz_07_015_genzu.psd",
+    "genzu": true,
+    "visible": true,
+    "manifest": false,
+    "conte": false,
+    "note": "layer[BG]=['BG_A3_B2.jpg'] 2086x1474"
+  },
+  {
+    "cut": 23,
+    "psd": "shz_07_023_genzu.psd",
+    "genzu": true,
+    "visible": true,
+    "manifest": false,
+    "conte": false,
+    "note": "layer[LO]=['LO.jpg', 'LO_le.jpg'] 2083x1469"
+  },
+  {
+    "cut": 47,
+    "psd": "shz_07_047_genzu.psd",
+    "genzu": true,
+    "visible": true,
+    "manifest": false,
+    "conte": false,
+    "note": "layer[BG]=['BG_e.jpg', 'BG①\\u3000建物の中から強い光が漏れているようにしてください BG②\\u3000夜\\u3000ノーマル色'] 2962x2099"
+  },
+  {
+    "cut": 53,
+    "psd": "shz_07_053_genzu.psd",
+    "genzu": true,
+    "visible": true,
+    "manifest": false,
+    "conte": false,
+    "note": "layer[fallback]=[] 2089x1478"
+  },
+  {
+    "cut": 207,
+    "psd": "shz_07_207_genzu.psd",
+    "genzu": true,
+    "visible": true,
+    "manifest": false,
+    "conte": false,
+    "note": "layer[BG]=['BG.jpg'] 2090x1474"
+  },
+  {
+    "cut": 240,
+    "psd": "shz_07_240_genzu.psd",
+    "genzu": true,
+    "visible": true,
+    "manifest": false,
+    "conte": false,
+    "note": "layer[BG]=['BG.jpg'] 2086x1478"
+  },
+  {
+    "cut": 257,
+    "psd": "shz_07_257_genzu_BGonly.psd",
+    "genzu": true,
+    "visible": true,
+    "manifest": false,
+    "conte": false,
+    "note": "layer[BG]=['BG_lk.jpg', 'BG_le.jpg'] 2087x1479"
+  },
+  {
+    "cut": 274,
+    "psd": "shz_07_274_genzu_BGonly.psd",
+    "genzu": true,
+    "visible": true,
+    "manifest": false,
+    "conte": false,
+    "note": "layer[BG]=['BG.jpg', 'BG_演出修'] 2087x1492"
+  },
+  {
+    "cut": 293,
+    "psd": "shz_07_293_genzu.psd",
+    "genzu": true,
+    "visible": true,
+    "manifest": false,
+    "conte": false,
+    "note": "layer[BG]=['BG.jpg', 'BG_le.jpg'] 2087x1477"
+  },
+  {
+    "cut": 294,
+    "psd": "shz_07_294_genzu.psd",
+    "genzu": true,
+    "visible": true,
+    "manifest": false,
+    "conte": false,
+    "note": "layer[LO]=['LO.jpg'] 2086x1476"
+  }
+]

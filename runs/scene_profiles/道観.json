@@ -1,0 +1,112 @@
+{
+  "key": "道観",
+  "_note": "考証確定：クライアント参考資料『6話_原作65~84話』より、道観=南岩宮(武当山南岩)。",
+  "match": [
+    "道観"
+  ],
+  "grounding": {
+    "en": "The Daoist temple is modeled on Nanyan Palace (南岩宮) at the Southern Cliff of Wudang Mountain (武当山), Hubei, China: halls built onto a sheer cliff opening to the sky with a deep ravine below, surrounded by mountain peaks. Era is Northern-and-Southern-Dynasties at base, but props span several periods per the client reference (see props_by_era).",
+    "jp": "道観は中国 湖北省・武当山『南岩』の南岩宮が下敷き。断崖に張り付く堂宇、空へ開け足下に深い谷、周囲に峰々。時代は南北朝を基調に、小物は参考資料の年代指定に従い複数時代が混在。",
+    "props_by_era": [
+      "衣紋掛け＝明代", "燭台『銅雁足灯』＝戦国", "食卓・青磁の碗・畳(ベッド)＝南北朝",
+      "食器・提梁盒＝清代", "香炉・蓮形香炉・ドアロック＝年代指定なし"
+    ],
+    "source": "handoff/ep7/assets/6話_原作65~84話_捧げられし少女参考資料_20250226.txt"
+  },
+  "place": {
+    "en": "a Daoist temple compound in the mountains",
+    "jp": "山中の道教寺院（道観）の境内・建屋"
+  },
+  "era": {
+    "en": "Chinese Northern-and-Southern-Dynasties to early-Tang period, mountain Daoist temple",
+    "jp": "中国 南北朝〜初唐ごろ／山岳の道教寺院"
+  },
+  "structures": {
+    "en": [
+      "tiled or thatched temple halls with timber post-and-beam framing",
+      "wooden colonnades / verandas and railings",
+      "stone steps, packed-earth courtyard and paved approach",
+      "plain ritual fittings; set into a mountain forest backdrop"
+    ],
+    "jp": [
+      "瓦または茅葺の堂宇、木組みの柱と梁",
+      "木の回廊・縁・欄干",
+      "石段・土間の中庭・敷石のアプローチ",
+      "簡素な調度。背景は山の自然林"
+    ]
+  },
+  "style_note": {
+    "en": "Humble Chinese mountain Daoist temple; rooflines, timber framing and the mountain setting carry the shot. Soft light; some scenes have light rain",
+    "jp": "質素な中国山岳の道観。屋根のライン・木組み・山の地形が画面を支える。光は柔らかく、一部小雨"
+  },
+  "avoid": {
+    "en": [
+      "Japanese temple/shrine silhouettes (torii, pagoda, karahafu)",
+      "European architecture",
+      "grand ornate palace decoration; modern elements"
+    ],
+    "jp": [
+      "日本の寺社シルエット（鳥居・五重塔・唐破風）",
+      "西洋建築",
+      "豪壮で過剰な宮殿装飾／近代要素"
+    ]
+  },
+  "boards": [
+    {
+      "name": "#6_山の中道教の寺院（昼）_R1.png",
+      "time": "昼",
+      "used_in_cutmap": true,
+      "url": "https://drive.google.com/file/d/1vTABxngXIaHQrKjQ0AiaUtmSSZddxYGm/view",
+      "drive_id": "1vTABxngXIaHQrKjQ0AiaUtmSSZddxYGm"
+    },
+    {
+      "name": "#6_山の中道教の寺院_R1_朝.png",
+      "time": "朝",
+      "used_in_cutmap": true,
+      "url": "https://drive.google.com/file/d/1eilKJiPxC87Fw12ug9yQZJBruO1AG3Qv/view",
+      "drive_id": "1eilKJiPxC87Fw12ug9yQZJBruO1AG3Qv"
+    },
+    {
+      "name": "#6_山の中道教の寺院_R1_夕方.png",
+      "time": "夕方",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/1HUhgmAV3GwDXq9tE1hlFZbspEcQpI_II/view",
+      "drive_id": "1HUhgmAV3GwDXq9tE1hlFZbspEcQpI_II"
+    },
+    {
+      "name": "#6_山の中道教の寺院_R1_夕方 （雨）.png",
+      "time": "夕方(雨)",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/1lVn1ICdsqzrCowOomRBMYNFuYav5s-Dp/view",
+      "drive_id": "1lVn1ICdsqzrCowOomRBMYNFuYav5s-Dp"
+    },
+    {
+      "name": "#6_山の中道教の寺院_R1_夜.png",
+      "time": "夜",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/1K15KwSf0i49WQnFwLw7LZCw3D-VN57rb/view",
+      "drive_id": "1K15KwSf0i49WQnFwLw7LZCw3D-VN57rb"
+    },
+    {
+      "name": "寺院内 台所 食堂(夕方_雨)_R2_.png",
+      "time": "夕方(雨)",
+      "used_in_cutmap": true,
+      "url": "https://drive.google.com/file/d/1L4dT0A0OJgIVns8Kmg6_abAcPs11bVxM/view",
+      "drive_id": "1L4dT0A0OJgIVns8Kmg6_abAcPs11bVxM"
+    },
+    {
+      "name": "寺院内 台所 食堂(朝)_R2.png",
+      "time": "朝",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/1pX28Wt7-jvOvgJbrshT4CzgTwRDpLIOr/view",
+      "drive_id": "1pX28Wt7-jvOvgJbrshT4CzgTwRDpLIOr"
+    },
+    {
+      "name": "寺院内 台所 食堂(昼)_R2.png",
+      "time": "昼",
+      "used_in_cutmap": false,
+      "url": "https://drive.google.com/file/d/1B2ABxfdDQPLYcCySoqxA_qwj8Be4wY3j/view",
+      "drive_id": "1B2ABxfdDQPLYcCySoqxA_qwj8Be4wY3j"
+    }
+  ]
+}
