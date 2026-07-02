@@ -39,6 +39,14 @@ def _make_fixture(root):
     # QC結果（S3）: カードにバッジ／フィルタが出るか検証するため
     with open(os.path.join(out, "testcut01", "qc.json"), "w", encoding="utf-8") as f:
         f.write('{"verdict":"needs_retake","reasons":["色が残っている"],"checks":{}}')
+    # テイク履歴（S5）: take_01=赤 / take_02=青、現行=take2。console_state に2テイクを仕込む
+    for n, col in ((1, (220, 60, 60)), (2, (60, 80, 220))):
+        td = os.path.join(out, "testcut01", "takes", f"take_{n:02d}")
+        os.makedirs(td, exist_ok=True)
+        _solid(os.path.join(td, "restored_full.png"), col)
+    with open(os.path.join(out, "console_state.json"), "w", encoding="utf-8") as f:
+        f.write('{"testcut01":{"status":"done","adopted":2,'
+                '"takes":[{"n":1,"ts":0,"qc":"pass"},{"n":2,"ts":0,"qc":"needs_retake"}]}}')
     csv_path = os.path.join(root, "cuts.csv")
     with open(csv_path, "w", encoding="utf-8", newline="") as f:
         w = csv.writer(f)
@@ -105,6 +113,18 @@ def main():
             page.check("#fQC")
             check("QCフィルタで1件", page.locator(".card").count() == 1)
             page.uncheck("#fQC")
+
+            # テイク履歴（S5）: 2テイクのチップ表示＋採用でadoptedが切替
+            import json as _json
+            import urllib.request
+            check("テイクチップ2個", page.locator(".takechip").count() == 2)
+            u0 = _json.loads(urllib.request.urlopen(base + "/api/units").read())[0]
+            check("初期adopted=2", u0.get("adopted") == 2)
+            page.once("dialog", lambda d: d.accept())  # adopt に confirm は無いが念のため
+            page.locator(".takechip", has_text="T1").first.click()
+            page.wait_for_timeout(700)
+            u1 = _json.loads(urllib.request.urlopen(base + "/api/units").read())[0]
+            check("採用でadopted=1に", u1.get("adopted") == 1)
             # 画像ルート（原図/結果/ボード）が200
             import urllib.request
             for which in ("genzu", "result", "board"):

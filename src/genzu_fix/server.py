@@ -263,6 +263,52 @@ def _result_path(uid):
     return None
 
 
+def _take_dir(uid, n):
+    return os.path.join(_unit_dir(uid), "takes", f"take_{int(n):02d}")
+
+
+def _snapshot_take(uid):
+    """生成直後の結果を takes/take_NN/ に退避（上書きで前版を失わないため）。戻り: テイク番号。"""
+    import shutil
+    ud = _unit_dir(uid)
+    src = os.path.join(ud, "restored_full.png")
+    if not os.path.exists(src):
+        return None
+    with STATE_LOCK:
+        takes = STATE.setdefault(uid, {}).setdefault("takes", [])
+        n = (max(t["n"] for t in takes) + 1) if takes else 1
+    tdir = _take_dir(uid, n)
+    os.makedirs(tdir, exist_ok=True)
+    for fn in ("restored_full.png", "gen_raw.png", "prompt.en.txt", "qc.json"):
+        p = os.path.join(ud, fn)
+        if os.path.exists(p):
+            shutil.copy2(p, os.path.join(tdir, fn))
+    qv = _load_json(os.path.join(ud, "qc.json"), {}).get("verdict")
+    with STATE_LOCK:
+        STATE.setdefault(uid, {}).setdefault("takes", []).append(
+            {"n": n, "ts": time.time(), "qc": qv})
+        STATE[uid]["adopted"] = n
+        _save_state_locked()
+    return n
+
+
+def _adopt_take(uid, n):
+    """過去テイクを現行結果に採用（root へ戻す＋qcも切替）。best-effort で PSD 再差し込み。"""
+    import shutil
+    tdir = _take_dir(uid, n)
+    src = os.path.join(tdir, "restored_full.png")
+    if not os.path.exists(src):
+        return False
+    ud = _unit_dir(uid)
+    shutil.copy2(src, os.path.join(ud, "restored_full.png"))
+    for fn in ("gen_raw.png", "prompt.en.txt", "qc.json"):
+        p = os.path.join(tdir, fn)
+        if os.path.exists(p):
+            shutil.copy2(p, os.path.join(ud, fn))
+    _update_state(uid, adopted=int(n))
+    return True
+
+
 def _genzu_preview(uid, psd_path, source="base", force=False):
     # ソース別ファイル名（base/visible を分離）＋ process_cut の中間 visible.png と衝突させない。
     out = os.path.join(_unit_dir(uid), f"genzu_{source}.png")
@@ -337,6 +383,7 @@ def _run_generate(uid):
                           cut_num=(u["cuts"][0] if u.get("cuts") else ""),
                           cut_info_map=CFG.get("cut_info_map"),
                           qc_vision=CFG.get("qc_vision", False))
+        n = _snapshot_take(uid)   # 上書きせず takes/take_NN/ に保存（S5・前版を失わない）
         with STATE_LOCK:
             s = STATE.setdefault(uid, {})
             if s.get("generated_once"):
@@ -347,7 +394,7 @@ def _run_generate(uid):
             _save_state_locked()
         with JOBS_LOCK:
             JOBS[uid].update(status="done")
-        log("完了")
+        log(f"完了（テイク{n}）" if n else "完了")
     except Exception as e:  # noqa
         # 「生成中」のまま固めない＝元の状態へ戻す（再生成できるように）
         _update_state(uid, status=(prev_status if prev_status != "generating" else "todo"))
@@ -402,6 +449,7 @@ def create_app():
                 "genzu_source": st.get("genzu_source", "base"),
                 "has_result": _result_path(uid) is not None,
                 "qc_verdict": q.get("verdict"), "qc_reasons": q.get("reasons", []),
+                "takes": st.get("takes", []), "adopted": st.get("adopted"),
                 "prompt_edited": bool(st.get("prompt")), "retakes": st.get("retakes", 0)}
 
     @app.get("/")
@@ -587,6 +635,13 @@ def create_app():
         return jsonify({"queued": len(q), "skipped": len(s),
                         "skip_reasons": dict(Counter(r for _, r in s))})
 
+    @app.post("/api/unit/<uid>/adopt")
+    def api_adopt(uid):
+        n = (request.json or {}).get("take")
+        if not _adopt_take(uid, n):
+            return jsonify({"error": "テイクが見つかりません"}), 404
+        return jsonify({"ok": True, "adopted": int(n)})
+
     @app.get("/api/jobs")
     def api_jobs():
         with JOBS_LOCK:
@@ -602,6 +657,13 @@ def create_app():
     def api_job(uid):
         with JOBS_LOCK:
             return jsonify(dict(JOBS.get(uid, {"status": "idle", "log": [], "error": None})))
+
+    @app.get("/img/<uid>/take/<int:n>")
+    def img_take(uid, n):
+        p = os.path.join(_take_dir(uid, n), "restored_full.png")
+        if not os.path.exists(p):
+            return "", 404
+        return send_file(os.path.abspath(p))
 
     @app.get("/img/<uid>/<which>")
     def img(uid, which):
@@ -669,6 +731,9 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
  .thumbs figure{margin:0;flex:1} .thumbs figcaption{font-size:10px;color:#888}
  .thumbs img{width:100%;height:150px;object-fit:contain;border:1px solid #eee;background:#fff;cursor:zoom-in}
  .ph{height:150px;border:1px dashed #ddd;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:11px}
+ .takes{font-size:11px;color:#666;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+ .takechip{font-size:11px;padding:2px 7px;border:1px solid #ccc;border-radius:10px;background:#fff;cursor:pointer}
+ .takechip.on{background:#1a5fb4;color:#fff;border-color:#1a5fb4}
  .prog{height:6px;background:#ffe6a8;border-radius:4px;overflow:hidden;display:none}
  .prog.on{display:block} .prog>i{display:block;height:100%;width:40%;background:#bf8700;animation:slide 1.1s infinite}
  @keyframes slide{0%{margin-left:-40%}100%{margin-left:100%}}
@@ -893,6 +958,21 @@ function qcBadge(u){
   const tip=(u.qc_reasons||[]).join(' / ');
   return `<span class="b" style="background:${m[1]};color:${m[2]}" title="${esc(tip)}">${m[0]}</span>`;
 }
+function takeStrip(u){
+  const tk=u.takes||[]; if(tk.length<2) return '';   // 2テイク以上で履歴を出す
+  const chips=tk.map(t=>{
+    const on=(t.n===u.adopted);
+    const qc=t.qc==='needs_retake'||t.qc==='human'?' ⚠':(t.qc==='pass'?' ✓':'');
+    return `<button class="takechip${on?' on':''}" title="テイク${t.n}${qc}を採用" onclick="adoptTake('${u.id}',${t.n})">T${t.n}${on?'●':''}${qc}</button>`;
+  }).join('');
+  return `<div class="takes">テイク履歴: ${chips}<span class="muted">（クリックで採用＝現行結果に戻す）</span></div>`;
+}
+async function adoptTake(id,n){
+  const u=unit(id); if(u&&u.adopted===n) return;
+  const r=await post('/api/unit/'+id+'/adopt',{take:n});
+  if(r.error){alert(r.error);return;}
+  await refresh();
+}
 function card(u){
   const t=Date.now();
   const opts='<option value="">— ボード未選択 —</option>'+BOARDS.map(b=>`<option ${b===u.board?'selected':''}>${esc(b)}</option>`).join('');
@@ -907,6 +987,7 @@ function card(u){
        ${u.has_psd?`<img loading="lazy" src="/img/${u.id}/genzu" onclick="openGenzu('${u.id}')" onerror="this.outerHTML='<div class=ph>原図なし</div>'">`:'<div class="ph">PSD未検出</div>'}</figure>
      <figure><figcaption>生成結果 ${u.has_result?`<a href="#" onclick="openCmp('${u.id}');return false">前後比較</a>`:''}</figcaption>${u.has_result?`<img loading="lazy" src="/img/${u.id}/result?t=${t}" onclick="openCmp('${u.id}')">`:'<div class="ph">未生成</div>'}</figure>
    </div>
+   ${takeStrip(u)}
    <div class="prog ${RUN.has(u.id)?'on':''}" id="prog_${u.id}"><i></i></div>
    <div class="bar"><select style="flex:1;width:auto" onchange="setBoard('${u.id}',this.value)">${opts}</select>
      <button onclick="showBoard('${u.id}')" onmousemove="boardHover('${u.id}',event)" onmouseleave="boardOut()" title="クリックで拡大／ホバーでプレビュー">ボード表示</button></div>
