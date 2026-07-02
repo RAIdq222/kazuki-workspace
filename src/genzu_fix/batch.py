@@ -168,17 +168,25 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
                 model: str, image_flag: str, dry: bool, include_book: bool = False,
                 header_top: int | None = None, board_path: str | None = None,
                 genzu_source: str = "base", cut_num: str = "",
-                cut_info_map=None, qc_vision: bool = False) -> dict:
+                cut_info_map=None, qc_vision: bool = False,
+                genzu_layers=None) -> dict:
     os.makedirs(out_dir, exist_ok=True)
     cut = os.path.splitext(os.path.basename(psd_path))[0]
     visible = os.path.join(out_dir, "visible.png")
     body = os.path.join(out_dir, "body.png")
     inp = os.path.join(out_dir, "input.png")
-    # 1. prep（原図ソース: base=背景レイヤー自動検出 / visible=見たまま全レイヤー合成）
+    # 1. prep（原図ソース: base=背景自動検出 / visible=見たまま / override=手動レイヤー選択）
     if genzu_source == "visible":
         vw, vh = psd_export.export_visible_to_png(psd_path, visible, bg=(255, 255, 255),
                                                   drop_text=False)
         linfo = {"strategy": "visible", "layers": ["(見たまま)"]}
+    elif genzu_source == "override" and genzu_layers:
+        names = set(genzu_layers)
+        allnames = [li.name for li in psd_export.list_layers(psd_path)]
+        vw, vh = psd_export.export_with_overrides(
+            psd_path, visible, show=names, hide={n for n in allnames if n not in names},
+            bg=(255, 255, 255))
+        linfo = {"strategy": "override", "layers": list(genzu_layers)}
     else:
         vw, vh, linfo = psd_export.export_background_layer(
             psd_path, visible, bg=(255, 255, 255), include_book=include_book)

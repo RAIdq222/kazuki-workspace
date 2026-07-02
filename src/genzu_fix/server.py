@@ -273,6 +273,11 @@ def _genzu_preview(uid, psd_path, source="base", force=False):
         try:
             if source == "visible":
                 psd_export.export_visible_to_png(psd_path, out, drop_text=False)
+            elif source == "override":
+                names = set(STATE.get(uid, {}).get("layers_show") or [])
+                allnames = [li.name for li in psd_export.list_layers(psd_path)]
+                psd_export.export_with_overrides(
+                    psd_path, out, show=names, hide={n for n in allnames if n not in names})
             else:
                 psd_export.export_background_layer(psd_path, out, include_book=CFG["include_book"])
         except Exception as e:  # noqa
@@ -328,6 +333,7 @@ def _run_generate(uid):
                           dry=False, include_book=CFG["include_book"],
                           header_top=CFG["header_top"], board_path=board_path,
                           genzu_source=st.get("genzu_source", "base"),
+                          genzu_layers=st.get("layers_show"),
                           cut_num=(u["cuts"][0] if u.get("cuts") else ""),
                           cut_info_map=CFG.get("cut_info_map"),
                           qc_vision=CFG.get("qc_vision", False))
@@ -495,17 +501,36 @@ def create_app():
         _update_state(uid, status=(request.json or {}).get("value", "accepted"))
         return jsonify({"ok": True})
 
+    @app.get("/api/unit/<uid>/layers")
+    def api_layers(uid):
+        proj, u = _find_unit(uid)
+        if not u:
+            return jsonify({"error": "not found"}), 404
+        psd = proj["psd_idx"].get(u["filename"])
+        if not psd:
+            return jsonify({"error": "PSDが見つかりません"}), 404
+        try:
+            layers = [{"name": li.name, "kind": li.kind, "visible": li.visible, "depth": li.depth}
+                      for li in psd_export.list_layers(psd)]
+        except Exception as e:  # noqa
+            return jsonify({"error": str(e)[:200]}), 500
+        return jsonify({"layers": layers, "selected": STATE.get(uid, {}).get("layers_show", [])})
+
     @app.post("/api/unit/<uid>/recapture")
     def api_recapture(uid):
         proj, u = _find_unit(uid)
         if not u:
             return jsonify({"error": "not found"}), 404
-        source = (request.json or {}).get("source", "base")
-        _update_state(uid, genzu_source=source)
+        b = request.json or {}
+        source = b.get("source", "base")
+        kw = {"genzu_source": source}
+        if source == "override":
+            kw["layers_show"] = list(b.get("layers") or [])
+        _update_state(uid, **kw)
         psd = proj["psd_idx"].get(u["filename"])
         p = _genzu_preview(uid, psd, source=source, force=True)
         if not p:
-            return jsonify({"error": "原図の取得に失敗（PSD未検出?）"}), 400
+            return jsonify({"error": "原図の取得に失敗（PSD未検出? / レイヤー未選択?）"}), 400
         return jsonify({"ok": True, "source": source})
 
     @app.post("/api/unit/<uid>/open")
@@ -731,11 +756,13 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
     <button onclick="document.getElementById('gmodal').style.display='none'">閉じる</button></div>
   <img id="gImg">
   <div class="bar" style="margin-top:10px;align-items:center">原図ソース:
-    <label><input type="radio" name="gsrc" value="base"> 自動検出(Base)</label>
-    <label><input type="radio" name="gsrc" value="visible"> 見たまま(visible)</label>
+    <label><input type="radio" name="gsrc" value="base" onchange="onGsrc()"> 自動検出(Base)</label>
+    <label><input type="radio" name="gsrc" value="visible" onchange="onGsrc()"> 見たまま(visible)</label>
+    <label><input type="radio" name="gsrc" value="override" onchange="onGsrc()"> レイヤー選択</label>
     <button class="primary" onclick="recapture()">この設定で取得しなおす</button>
     <span id="gMsg" class="muted"></span></div>
-  <div class="muted">PhotoshopでPSDを直して保存→ここで「取得しなおす」。Baseは背景レイヤー自動検出、visibleは表示中の全レイヤー合成。</div>
+  <div id="gLayers" style="display:none;max-height:200px;overflow:auto;border:1px solid #eee;padding:6px;margin-top:6px;font-size:12px"></div>
+  <div class="muted">PhotoshopでPSDを直して保存→「取得しなおす」。Base=背景レイヤー自動検出／visible=表示中の全レイヤー／レイヤー選択=チェックしたレイヤーだけを原図にする（025/052 の誤検出対策）。</div>
 </div></div>
 
 <div class="ov" id="modal"><div class="box">
@@ -898,9 +925,26 @@ function markRunning(id,on){const c=document.getElementById('card_'+id),p=docume
 function openGenzu(id){const u=unit(id); GCUR=id; $('#gTitle').textContent='原図 c'+u.cuts.join(',');
   $('#gImg').src='/img/'+id+'/genzu?t='+Date.now();
   document.querySelectorAll('input[name=gsrc]').forEach(r=>r.checked=(r.value===u.genzu_source));
-  $('#gMsg').textContent=''; $('#gmodal').style.display='flex';}
+  $('#gLayers').style.display='none'; $('#gLayers').innerHTML='';
+  $('#gMsg').textContent=''; $('#gmodal').style.display='flex';
+  if(u.genzu_source==='override') onGsrc();}
+async function onGsrc(){
+  const src=document.querySelector('input[name=gsrc]:checked').value;
+  const box=$('#gLayers');
+  if(src!=='override'){box.style.display='none';return;}
+  box.style.display='block'; box.innerHTML='レイヤー取得中…';
+  const d=await (await fetch('/api/unit/'+GCUR+'/layers')).json();
+  if(d.error){box.textContent='エラー: '+d.error;return;}
+  const sel=new Set(d.selected||[]);
+  box.innerHTML=d.layers.map(l=>`<label style="display:block;padding-left:${l.depth*14}px">`+
+    `<input type="checkbox" class="lyr" value="${esc(l.name)}" ${sel.has(l.name)?'checked':''}> `+
+    `${esc(l.name)} <span class="muted">[${esc(l.kind)}]${l.visible?'':' (非表示)'}</span></label>`).join('');
+}
 async function recapture(){const src=document.querySelector('input[name=gsrc]:checked').value; $('#gMsg').textContent='取得中…';
-  const r=await post('/api/unit/'+GCUR+'/recapture',{source:src}); if(r.error){$('#gMsg').textContent='エラー: '+r.error;return;}
+  const body={source:src};
+  if(src==='override'){body.layers=[...document.querySelectorAll('#gLayers .lyr:checked')].map(c=>c.value);
+    if(!body.layers.length){$('#gMsg').textContent='レイヤーを1つ以上選んでください';return;}}
+  const r=await post('/api/unit/'+GCUR+'/recapture',body); if(r.error){$('#gMsg').textContent='エラー: '+r.error;return;}
   $('#gImg').src='/img/'+GCUR+'/genzu?t='+Date.now(); $('#gMsg').textContent='取得しました（'+src+'）'; await refresh();}
 async function openPsd(id){const r=await post('/api/unit/'+id+'/open',{}); slog(id,r.error?('開けません: '+r.error):'PSDを開きました');}
 async function loadPrompt(id){const d=await (await fetch('/api/unit/'+id)).json(); const t=document.getElementById('pr_'+id); if(t)t.value=d.prompt;}
