@@ -35,6 +35,8 @@ PROJ_LOCK = threading.Lock()
 JOBS = {}
 JOBS_LOCK = threading.Lock()
 OVERVIEWS = {}              # "<work>#<ep>" -> {synopsis, scenes, note}
+# 生成の同時実行数の上限（Higgsfield 多重起動＝レート制限/クレジット浪費を防ぐ）。main で差替可。
+GEN_SEM = threading.BoundedSemaphore(3)
 
 WORK_NAMES = {"shz": "尚善"}
 
@@ -47,17 +49,38 @@ def _projects_path():
     return os.path.join(CFG["out"], "projects.json")
 
 
-def _save_state():
+def _save_state_locked():
+    """STATE を state ファイルへアトミックに書く。呼び出し側が STATE_LOCK 保持前提。"""
     os.makedirs(CFG["out"], exist_ok=True)
+    tmp = _state_path() + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(STATE, f, ensure_ascii=False, indent=2)
+    os.replace(tmp, _state_path())  # 途中書きで壊さない（別スレッドの読込/次回起動を守る）
+
+
+def _save_state():
     with STATE_LOCK:
-        with open(_state_path(), "w", encoding="utf-8") as f:
-            json.dump(STATE, f, ensure_ascii=False, indent=2)
+        _save_state_locked()
+
+
+def _update_state(uid, **kw):
+    """STATE[uid] の変更と保存をロック内でまとめて行う（json.dump 中の同時変更を防ぐ）。"""
+    with STATE_LOCK:
+        STATE.setdefault(uid, {}).update(kw)
+        _save_state_locked()
 
 
 def _load_json(path, default):
     if os.path.exists(path):
-        with open(path, encoding="utf-8") as f:
-            return json.load(f)
+        try:
+            with open(path, encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, OSError) as e:  # 壊れていても起動を止めない
+            try:
+                os.replace(path, path + ".corrupt")  # 退避して原因を残す
+            except OSError:
+                pass
+            print(f"[warn] {path} を読めませんでした（{e}）。既定値で起動します。")
     return default
 
 
@@ -208,15 +231,19 @@ def _result_path(uid):
 
 
 def _genzu_preview(uid, psd_path, source="base", force=False):
-    out = os.path.join(_unit_dir(uid), "visible.png")
-    if (force or not os.path.exists(out)) and psd_path:
+    # ソース別ファイル名（base/visible を分離）＋ process_cut の中間 visible.png と衝突させない。
+    out = os.path.join(_unit_dir(uid), f"genzu_{source}.png")
+    stale = bool(psd_path and os.path.exists(out) and os.path.exists(psd_path)
+                 and os.path.getmtime(psd_path) > os.path.getmtime(out))  # PSD更新で再取得
+    if (force or stale or not os.path.exists(out)) and psd_path:
         os.makedirs(_unit_dir(uid), exist_ok=True)
         try:
             if source == "visible":
                 psd_export.export_visible_to_png(psd_path, out, drop_text=False)
             else:
                 psd_export.export_background_layer(psd_path, out, include_book=CFG["include_book"])
-        except Exception:
+        except Exception as e:  # noqa
+            print(f"[warn] 原図プレビュー失敗 {uid}/{source}: {str(e)[:200]}")
             return None
     return out if os.path.exists(out) else None
 
@@ -257,9 +284,13 @@ def _run_generate(uid):
         with JOBS_LOCK:
             JOBS[uid].update(status="error", error="原図PSDが見つかりません")
         return
-    st = STATE.setdefault(uid, {})
+    st = STATE.get(uid, {})
+    prev_status = st.get("status", "todo")   # 失敗時に戻す（「生成中」で固まらせない）
     board = st.get("board", u["board"])
     board_path = _board_png(proj, board) if (proj.get("boards_dir") and board) else None
+    if not GEN_SEM.acquire(blocking=False):
+        log("順番待ち…（同時実行の空きを待っています）")
+        GEN_SEM.acquire()
     try:
         log("prep→生成→finish 実行中…")
         batch.process_cut(psd, board, u["scene"], _unit_dir(uid), st.get("prompt") or None,
@@ -270,19 +301,24 @@ def _run_generate(uid):
                           cut_num=(u["cuts"][0] if u.get("cuts") else ""),
                           cut_info_map=CFG.get("cut_info_map"))
         with STATE_LOCK:
-            if st.get("generated_once"):
-                st["retakes"] = st.get("retakes", 0) + 1
-            st["generated_once"] = True
-            st["status"] = "done"
-            st["last_run"] = time.time()
-        _save_state()
+            s = STATE.setdefault(uid, {})
+            if s.get("generated_once"):
+                s["retakes"] = s.get("retakes", 0) + 1
+            s["generated_once"] = True
+            s["status"] = "done"
+            s["last_run"] = time.time()
+            _save_state_locked()
         with JOBS_LOCK:
             JOBS[uid].update(status="done")
         log("完了")
     except Exception as e:  # noqa
+        # 「生成中」のまま固めない＝元の状態へ戻す（再生成できるように）
+        _update_state(uid, status=(prev_status if prev_status != "generating" else "todo"))
         with JOBS_LOCK:
             JOBS[uid].update(status="error", error=str(e)[:300])
         log("失敗: " + str(e)[:200])
+    finally:
+        GEN_SEM.release()
 
 
 def create_app():
@@ -387,20 +423,17 @@ def create_app():
 
     @app.post("/api/unit/<uid>/prompt")
     def api_prompt(uid):
-        STATE.setdefault(uid, {})["prompt"] = (request.json or {}).get("prompt", "").strip() or None
-        _save_state()
+        _update_state(uid, prompt=(request.json or {}).get("prompt", "").strip() or None)
         return jsonify({"ok": True})
 
     @app.post("/api/unit/<uid>/board")
     def api_board(uid):
-        STATE.setdefault(uid, {})["board"] = (request.json or {}).get("board", "")
-        _save_state()
+        _update_state(uid, board=(request.json or {}).get("board", ""))
         return jsonify({"ok": True})
 
     @app.post("/api/unit/<uid>/accept")
     def api_accept(uid):
-        STATE.setdefault(uid, {})["status"] = (request.json or {}).get("value", "accepted")
-        _save_state()
+        _update_state(uid, status=(request.json or {}).get("value", "accepted"))
         return jsonify({"ok": True})
 
     @app.post("/api/unit/<uid>/recapture")
@@ -409,8 +442,7 @@ def create_app():
         if not u:
             return jsonify({"error": "not found"}), 404
         source = (request.json or {}).get("source", "base")
-        STATE.setdefault(uid, {})["genzu_source"] = source
-        _save_state()
+        _update_state(uid, genzu_source=source)
         psd = proj["psd_idx"].get(u["filename"])
         p = _genzu_preview(uid, psd, source=source, force=True)
         if not p:
@@ -440,8 +472,7 @@ def create_app():
             if JOBS.get(uid, {}).get("status") == "running":
                 return jsonify({"error": "already running"}), 409
             JOBS[uid] = {"status": "running", "log": [], "error": None, "ts": time.time()}
-        STATE.setdefault(uid, {})["status"] = "generating"
-        _save_state()
+        _update_state(uid, status="generating")
         threading.Thread(target=_run_generate, args=(uid,), daemon=True).start()
         return jsonify({"ok": True})
 
@@ -807,8 +838,11 @@ def main(argv=None):
     p.add_argument("--include-book", action="store_true")
     p.add_argument("--header-top", type=int, default=None)
     p.add_argument("--cut-info", default="runs/cut_scene_info_ep7.csv")
+    p.add_argument("--max-parallel", type=int, default=3, help="生成の同時実行数の上限")
     p.add_argument("--port", type=int, default=8765)
     a = p.parse_args(argv)
+    global GEN_SEM
+    GEN_SEM = threading.BoundedSemaphore(max(1, a.max_parallel))
     # カット別 situation/remove（great-edisonの3層プロンプトCUT層）。在ればプロンプトに反映。
     cut_info_map = {}
     try:

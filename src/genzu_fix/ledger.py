@@ -42,5 +42,14 @@ def append(rec: GenRecord, path: str = LEDGER_PATH) -> None:
 def load(path: str = LEDGER_PATH) -> list[dict]:
     if not os.path.exists(path):
         return []
+    out = []
     with open(path, encoding="utf-8") as f:
-        return [json.loads(line) for line in f if line.strip()]
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                out.append(json.loads(line))  # 壊れ行1つで全読み込みを落とさない
+            except json.JSONDecodeError:
+                continue
+    return out

@@ -77,11 +77,16 @@ def _resolve(cmd: list[str]) -> list[str]:
     return [exe] + cmd[1:]
 
 
-def _run(cmd: list[str], dry: bool) -> str:
+def _run(cmd: list[str], dry: bool, timeout: int = 900) -> str:
     print("    $ " + " ".join(cmd))
     if dry:
         return ""
-    r = subprocess.run(_resolve(cmd), capture_output=True, text=True, encoding="utf-8")
+    # timeout でハングを打ち切る（1本の生成停止でバッチ全体が固まらないように）
+    try:
+        r = subprocess.run(_resolve(cmd), capture_output=True, text=True,
+                           encoding="utf-8", timeout=timeout)
+    except subprocess.TimeoutExpired:
+        raise RuntimeError(f"command timed out after {timeout}s: {' '.join(cmd[:3])}…")
     if r.returncode != 0:
         raise RuntimeError(f"command failed ({r.returncode}): {(r.stderr or r.stdout).strip()[:400]}")
     return r.stdout.strip()
@@ -208,7 +213,9 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
     url = _hf_generate(uuid, prompt, prep.aspect_ratio, resolution, quality, model,
                        image_flag, dry, extra)
     if not dry:
-        urllib.request.urlretrieve(url, gen_raw)
+        # timeout 付きDL（ハングでスレッド/バッチが永久 running 化するのを防ぐ）
+        with urllib.request.urlopen(url, timeout=300) as r, open(gen_raw, "wb") as f:
+            f.write(r.read())
     # 3. finish（戻し→region復帰→PSD差し込み）
     out_psd = os.path.join(out_dir, f"{cut}_AI.psd")
     if not dry:
@@ -223,7 +230,9 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
             params={"aspect_ratio": prep.aspect_ratio, "resolution": resolution, "quality": quality},
             prompt=prompt, result_url=url, output_file=out_psd, status="completed",
             notes="batch local-CLI", scene_info={"scene": scene, "board": board})
-        ledger.append(rec)
+        # 台帳は出力ルート側（work/非git）へ。git管理の runs/ledger.jsonl に直接追記しない
+        # （毎回dirty・複数マシンで衝突するため）。run_dir = <out>/<cut> の親 = <out>。
+        ledger.append(rec, os.path.join(os.path.dirname(os.path.normpath(out_dir)), "ledger.jsonl"))
         print(f"    -> {out_psd}  layer='{layer}'")
     return {"cut": cut, "psd": out_psd, "url": url}
 
