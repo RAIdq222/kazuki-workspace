@@ -38,6 +38,7 @@
 | ローカル実行手順 | `docs/local-cli-runbook.md` |
 | TODO | `docs/TODO.md` |
 | セッション台帳（誰が何を/ブランチ/決定） | `docs/sessions.md` |
+| LoRA Preflight（別プロダクト同居）設計/引継 | `docs/lora-preflight/`（design-image-processing.md ＋ 引継資料コピー） |
 | スキル（再利用手順） | `.claude/skills/`（例 `read-genzu`） |
 
 ## 3. 確定した技術前提（解釈し直さない）

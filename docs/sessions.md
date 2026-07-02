@@ -37,5 +37,14 @@
 - 充足には原図＋コンテが要る。原図は `/read-genzu`、コンテは Drive `shz_07_conte_決定稿1025.pdf`（92MB・1本）。
 - great-edison 側の担当。進めるなら scene_profiles と同じ対訳(JP/EN)形式で埋める。
 
+## LoRA Preflight（別プロダクト・同居）
+- ブランチ `claude/feature-design-implementation-u22jp5`: LoRA Preflight App（画像整形・EVA02タグ付け）の
+  画像加工機能の設計を担当。引き継ぎ資料と設計書は `docs/lora-preflight/`。
+- アプリ本体（app.py / lora_preflight_app）は**このリポジトリに未収載**（Windows側にZIP渡し想定）。
+  設計はコアロジックを `src/lora_preflight/` に UI 非依存で実装 → 後で app.py に薄く統合する2層構成
+  （詳細: `docs/lora-preflight/design-image-processing.md` §0）。
+- 未決: アプリ本体ZIPを本リポジトリへ入れるか／閾値既定値ほか（設計書 §10）。
+
 ## 更新ログ
 - 2026-06: cross-session 共有レイヤー整備（CLAUDE.md / docs/sessions.md / read-genzu skill）。
+- 2026-07-02: LoRA Preflight 画像加工の設計書を追加（`docs/lora-preflight/`、実装は次フェーズ）。
