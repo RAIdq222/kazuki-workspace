@@ -1,0 +1,10 @@
+# 重いもの・ローカル環境・出力物は git に入れない（コードと config だけ管理する）
+.venv/
+wheelhouse/
+models/
+.sessions/
+__pycache__/
+dataset/
+manifest.json
+*_preflight/
+*_prepared/

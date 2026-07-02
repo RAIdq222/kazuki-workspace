@@ -1,0 +1,25 @@
+{
+  "targetSizes": "1024x1024, 1152x896, 1216x832, 1344x768, 1536x640",
+  "allowRotate": true,
+  "cropMargin": 0,
+  "trimThreshold": 18,
+  "vocabularyRoots": [
+    "D:\\□ワンオペ解雇\\◎lora作り",
+    "D:\\□異世界おじさん\\◎lora制作",
+    "D:\\□ウィッチウォッチ\\◎lora使用"
+  ],
+  "vocabularyMinCount": 1,
+  "autoVocabularyRefresh": false,
+  "eva2Model": "wd-eva02-large-tagger-v3",
+  "eva2Threshold": 0.1,
+  "useSidecarFallback": true,
+  "upscalerMode": "none",
+  "sdWebuiUrl": "http://127.0.0.1:7860",
+  "sdWebuiUpscaler": "R-ESRGAN 4x+ Anime6B",
+  "realesrganExe": "",
+  "realesrganModel": "realesrgan-x4plus-anime",
+  "realesrganModelDir": "",
+  "realesrganScale": "1",
+  "realesrganTile": "",
+  "upscalerCommand": ""
+}

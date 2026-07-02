@@ -40,10 +40,13 @@
 ## LoRA Preflight（別プロダクト・同居）
 - ブランチ `claude/feature-design-implementation-u22jp5`: LoRA Preflight App（画像整形・EVA02タグ付け）の
   画像加工機能の設計を担当。引き継ぎ資料と設計書は `docs/lora-preflight/`。
-- アプリ本体（app.py / lora_preflight_app）は**このリポジトリに未収載**（Windows側にZIP渡し想定）。
-  設計はコアロジックを `src/lora_preflight/` に UI 非依存で実装 → 後で app.py に薄く統合する2層構成
+- アプリ本体は 2026-07-02 に ZIP で受領し **`lora_preflight_app/` に収載済み**（コード＋configのみ。
+  `models/` `.venv/` `wheelhouse/` 等は同フォルダの .gitignore で除外＝ユーザーのWindows側に実体）。
+  設計はコアロジックを `src/lora_preflight/` に UI 非依存で実装 → app.py に薄く統合する2層構成
   （詳細: `docs/lora-preflight/design-image-processing.md` §0）。
-- 未決: アプリ本体ZIPを本リポジトリへ入れるか／閾値既定値ほか（設計書 §10）。
+- 注意: `lora_preflight_app/config/default_settings.json` に個人PCのDドライブパスが入っている。
+  リポジトリ非公開前提で許容。**外部配布時は必ず除去**（HANDOFF のチェックリスト参照）。
+- 未決: 閾値既定値ほか（設計書 §10 の 2〜5）。
 
 ## 更新ログ
 - 2026-06: cross-session 共有レイヤー整備（CLAUDE.md / docs/sessions.md / read-genzu skill）。

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LoRA Preflight - 辞書編集</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <h1>辞書編集</h1>
+        <p>EVA02タグから残す語彙を、このアプリ内で編集します。</p>
+      </div>
+      <div class="header-actions">
+        <a class="nav-button" href="/">メインへ戻る</a>
+        <div class="status-pill" id="serverStatus">ready</div>
+      </div>
+    </header>
+
+    <main class="single-layout">
+      <section class="panel">
+        <div class="panel-title">
+          <h2>現在の辞書</h2>
+          <div class="actions slim-actions">
+            <button id="loadDictionaryBtn" type="button">再読み込み</button>
+            <button id="clearDictionaryBtn" type="button">空に戻す</button>
+          </div>
+        </div>
+        <div id="dictionarySummary" class="summary">確認中...</div>
+        <div id="dictionaryTags" class="tag-list"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">
+          <h2>手入力で編集</h2>
+          <button id="saveManualBtn" type="button" class="primary">保存</button>
+        </div>
+        <label>
+          残したいタグ
+          <textarea id="manualTags" rows="16" placeholder="1girl&#10;solo&#10;long_hair"></textarea>
+          <span class="hint">1行に1タグ、またはカンマ区切りで入力できます。保存するとこの一覧がタグ語彙フィルターになります。</span>
+        </label>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">
+          <h2>過去LoRAから作成</h2>
+          <button id="buildDictionaryBtn" type="button" class="primary">作成して保存</button>
+        </div>
+        <label>
+          参照LoRA置き場
+          <textarea id="vocabularyRoots" rows="4" placeholder="D:\path\to\past_loras"></textarea>
+          <span class="hint">画像と同名の .txt を探して、使われているタグを辞書にします。複数フォルダは改行で分けます。</span>
+        </label>
+        <label class="short-field">
+          採用する最小出現回数
+          <input id="vocabularyMinCount" type="number" value="1" min="1" max="999">
+        </label>
+      </section>
+    </main>
+
+    <script src="/static/dictionary.js"></script>
+  </body>
+</html>

@@ -1,0 +1,649 @@
+{
+  "ok": true,
+  "source": "manual",
+  "created": "2026-07-01 17:30:21",
+  "message": "",
+  "tagCount": 105,
+  "totalTagCount": 105,
+  "pairCount": 0,
+  "txtCount": 0,
+  "folderCount": 0,
+  "rootCount": 0,
+  "minCount": 1,
+  "duplicateUses": 0,
+  "warnings": [],
+  "tags": [
+    {
+      "tag": "t-shirt",
+      "count": 1,
+      "avgPosition": 0
+    },
+    {
+      "tag": "cape",
+      "count": 1,
+      "avgPosition": 1
+    },
+    {
+      "tag": "collared shirt",
+      "count": 1,
+      "avgPosition": 2
+    },
+    {
+      "tag": "sweater",
+      "count": 1,
+      "avgPosition": 3
+    },
+    {
+      "tag": "opaque glasses",
+      "count": 1,
+      "avgPosition": 4
+    },
+    {
+      "tag": "no humans",
+      "count": 1,
+      "avgPosition": 5
+    },
+    {
+      "tag": "looking afar",
+      "count": 1,
+      "avgPosition": 6
+    },
+    {
+      "tag": "overalls",
+      "count": 1,
+      "avgPosition": 7
+    },
+    {
+      "tag": "nude",
+      "count": 1,
+      "avgPosition": 8
+    },
+    {
+      "tag": "tilted headwear",
+      "count": 1,
+      "avgPosition": 9
+    },
+    {
+      "tag": "lower body",
+      "count": 1,
+      "avgPosition": 10
+    },
+    {
+      "tag": "laughing",
+      "count": 1,
+      "avgPosition": 11
+    },
+    {
+      "tag": "full body",
+      "count": 1,
+      "avgPosition": 12
+    },
+    {
+      "tag": "upper body",
+      "count": 1,
+      "avgPosition": 13
+    },
+    {
+      "tag": "head out of frame",
+      "count": 1,
+      "avgPosition": 14
+    },
+    {
+      "tag": "jacket",
+      "count": 1,
+      "avgPosition": 15
+    },
+    {
+      "tag": "surprised",
+      "count": 1,
+      "avgPosition": 16
+    },
+    {
+      "tag": "ape",
+      "count": 1,
+      "avgPosition": 17
+    },
+    {
+      "tag": "dress shirt",
+      "count": 1,
+      "avgPosition": 18
+    },
+    {
+      "tag": "clenched teeth",
+      "count": 1,
+      "avgPosition": 19
+    },
+    {
+      "tag": "light smile",
+      "count": 1,
+      "avgPosition": 20
+    },
+    {
+      "tag": "evil smile",
+      "count": 1,
+      "avgPosition": 21
+    },
+    {
+      "tag": "flying",
+      "count": 1,
+      "avgPosition": 22
+    },
+    {
+      "tag": "headband",
+      "count": 1,
+      "avgPosition": 23
+    },
+    {
+      "tag": "reaching towards viewer",
+      "count": 1,
+      "avgPosition": 24
+    },
+    {
+      "tag": "from side",
+      "count": 1,
+      "avgPosition": 25
+    },
+    {
+      "tag": "serious",
+      "count": 1,
+      "avgPosition": 26
+    },
+    {
+      "tag": "looking down",
+      "count": 1,
+      "avgPosition": 27
+    },
+    {
+      "tag": "looking up",
+      "count": 1,
+      "avgPosition": 28
+    },
+    {
+      "tag": "from below",
+      "count": 1,
+      "avgPosition": 29
+    },
+    {
+      "tag": "angry",
+      "count": 1,
+      "avgPosition": 30
+    },
+    {
+      "tag": "sad",
+      "count": 1,
+      "avgPosition": 31
+    },
+    {
+      "tag": "from above",
+      "count": 1,
+      "avgPosition": 32
+    },
+    {
+      "tag": "tearing up",
+      "count": 1,
+      "avgPosition": 33
+    },
+    {
+      "tag": "smug",
+      "count": 1,
+      "avgPosition": 34
+    },
+    {
+      "tag": "from behind",
+      "count": 1,
+      "avgPosition": 35
+    },
+    {
+      "tag": "smile",
+      "count": 1,
+      "avgPosition": 36
+    },
+    {
+      "tag": "parted lips",
+      "count": 1,
+      "avgPosition": 37
+    },
+    {
+      "tag": "looking to the side",
+      "count": 1,
+      "avgPosition": 38
+    },
+    {
+      "tag": "upturned eyes",
+      "count": 1,
+      "avgPosition": 39
+    },
+    {
+      "tag": "wide-eyed",
+      "count": 1,
+      "avgPosition": 40
+    },
+    {
+      "tag": "facing away",
+      "count": 1,
+      "avgPosition": 41
+    },
+    {
+      "tag": "looking at viewer",
+      "count": 1,
+      "avgPosition": 42
+    },
+    {
+      "tag": "shouting",
+      "count": 1,
+      "avgPosition": 43
+    },
+    {
+      "tag": "one eye closed",
+      "count": 1,
+      "avgPosition": 44
+    },
+    {
+      "tag": "raised eyebrow",
+      "count": 1,
+      "avgPosition": 45
+    },
+    {
+      "tag": "arm up",
+      "count": 1,
+      "avgPosition": 46
+    },
+    {
+      "tag": "arms up",
+      "count": 1,
+      "avgPosition": 47
+    },
+    {
+      "tag": "bent arm",
+      "count": 1,
+      "avgPosition": 48
+    },
+    {
+      "tag": "closed eye",
+      "count": 1,
+      "avgPosition": 49
+    },
+    {
+      "tag": "empty eyes",
+      "count": 1,
+      "avgPosition": 50
+    },
+    {
+      "tag": "tears",
+      "count": 1,
+      "avgPosition": 51
+    },
+    {
+      "tag": "profile",
+      "count": 1,
+      "avgPosition": 52
+    },
+    {
+      "tag": "closed eyes",
+      "count": 1,
+      "avgPosition": 53
+    },
+    {
+      "tag": "expressionless",
+      "count": 1,
+      "avgPosition": 54
+    },
+    {
+      "tag": "frown",
+      "count": 1,
+      "avgPosition": 55
+    },
+    {
+      "tag": "facing viewer",
+      "count": 1,
+      "avgPosition": 56
+    },
+    {
+      "tag": "close-up",
+      "count": 1,
+      "avgPosition": 57
+    },
+    {
+      "tag": "spread arms",
+      "count": 1,
+      "avgPosition": 58
+    },
+    {
+      "tag": "open mouth",
+      "count": 1,
+      "avgPosition": 59
+    },
+    {
+      "tag": "arms at sides",
+      "count": 1,
+      "avgPosition": 60
+    },
+    {
+      "tag": "hand in pocket",
+      "count": 1,
+      "avgPosition": 61
+    },
+    {
+      "tag": "lower teeth only",
+      "count": 1,
+      "avgPosition": 62
+    },
+    {
+      "tag": "bowing",
+      "count": 1,
+      "avgPosition": 63
+    },
+    {
+      "tag": "facing down",
+      "count": 1,
+      "avgPosition": 64
+    },
+    {
+      "tag": "holding",
+      "count": 1,
+      "avgPosition": 65
+    },
+    {
+      "tag": "straight-on",
+      "count": 1,
+      "avgPosition": 66
+    },
+    {
+      "tag": "closed mouth",
+      "count": 1,
+      "avgPosition": 67
+    },
+    {
+      "tag": "arm at side",
+      "count": 1,
+      "avgPosition": 68
+    },
+    {
+      "tag": "clenched hands",
+      "count": 1,
+      "avgPosition": 69
+    },
+    {
+      "tag": "upper teeth only",
+      "count": 1,
+      "avgPosition": 70
+    },
+    {
+      "tag": "facing up",
+      "count": 1,
+      "avgPosition": 71
+    },
+    {
+      "tag": "holding unworn clothes",
+      "count": 1,
+      "avgPosition": 72
+    },
+    {
+      "tag": "hand up",
+      "count": 1,
+      "avgPosition": 73
+    },
+    {
+      "tag": "wavy mouth",
+      "count": 1,
+      "avgPosition": 74
+    },
+    {
+      "tag": "standing on one leg",
+      "count": 1,
+      "avgPosition": 75
+    },
+    {
+      "tag": "raised eyebrows",
+      "count": 1,
+      "avgPosition": 76
+    },
+    {
+      "tag": "clenched hand",
+      "count": 1,
+      "avgPosition": 77
+    },
+    {
+      "tag": "cropped shoulders",
+      "count": 1,
+      "avgPosition": 78
+    },
+    {
+      "tag": "v-shaped eyebrows",
+      "count": 1,
+      "avgPosition": 79
+    },
+    {
+      "tag": "teeth",
+      "count": 1,
+      "avgPosition": 80
+    },
+    {
+      "tag": "standing",
+      "count": 1,
+      "avgPosition": 81
+    },
+    {
+      "tag": "hand on own hip",
+      "count": 1,
+      "avgPosition": 82
+    },
+    {
+      "tag": "cropped head",
+      "count": 1,
+      "avgPosition": 83
+    },
+    {
+      "tag": "open hand",
+      "count": 1,
+      "avgPosition": 84
+    },
+    {
+      "tag": "hands in pockets",
+      "count": 1,
+      "avgPosition": 85
+    },
+    {
+      "tag": "head only",
+      "count": 1,
+      "avgPosition": 86
+    },
+    {
+      "tag": "fang",
+      "count": 1,
+      "avgPosition": 87
+    },
+    {
+      "tag": "full-face blush",
+      "count": 1,
+      "avgPosition": 88
+    },
+    {
+      "tag": "pouty lips",
+      "count": 1,
+      "avgPosition": 89
+    },
+    {
+      "tag": "badge",
+      "count": 1,
+      "avgPosition": 90
+    },
+    {
+      "tag": "gloom",
+      "count": 1,
+      "avgPosition": 91
+    },
+    {
+      "tag": "leaning forward",
+      "count": 1,
+      "avgPosition": 92
+    },
+    {
+      "tag": "sideways mouth",
+      "count": 1,
+      "avgPosition": 93
+    },
+    {
+      "tag": "outstretched arm",
+      "count": 1,
+      "avgPosition": 94
+    },
+    {
+      "tag": "rectangular mouth",
+      "count": 1,
+      "avgPosition": 95
+    },
+    {
+      "tag": "walking",
+      "count": 1,
+      "avgPosition": 96
+    },
+    {
+      "tag": "fangs",
+      "count": 1,
+      "avgPosition": 97
+    },
+    {
+      "tag": "looking to the viewer",
+      "count": 1,
+      "avgPosition": 98
+    },
+    {
+      "tag": "sweat",
+      "count": 1,
+      "avgPosition": 99
+    },
+    {
+      "tag": "blush stickers",
+      "count": 1,
+      "avgPosition": 100
+    },
+    {
+      "tag": "blush",
+      "count": 1,
+      "avgPosition": 101
+    },
+    {
+      "tag": "fist pump",
+      "count": 1,
+      "avgPosition": 102
+    },
+    {
+      "tag": "no mouth",
+      "count": 1,
+      "avgPosition": 103
+    },
+    {
+      "tag": "nose-blush",
+      "count": 1,
+      "avgPosition": 104
+    }
+  ],
+  "order": [
+    "t-shirt",
+    "cape",
+    "collared shirt",
+    "sweater",
+    "opaque glasses",
+    "no humans",
+    "looking afar",
+    "overalls",
+    "nude",
+    "tilted headwear",
+    "lower body",
+    "laughing",
+    "full body",
+    "upper body",
+    "head out of frame",
+    "jacket",
+    "surprised",
+    "ape",
+    "dress shirt",
+    "clenched teeth",
+    "light smile",
+    "evil smile",
+    "flying",
+    "headband",
+    "reaching towards viewer",
+    "from side",
+    "serious",
+    "looking down",
+    "looking up",
+    "from below",
+    "angry",
+    "sad",
+    "from above",
+    "tearing up",
+    "smug",
+    "from behind",
+    "smile",
+    "parted lips",
+    "looking to the side",
+    "upturned eyes",
+    "wide-eyed",
+    "facing away",
+    "looking at viewer",
+    "shouting",
+    "one eye closed",
+    "raised eyebrow",
+    "arm up",
+    "arms up",
+    "bent arm",
+    "closed eye",
+    "empty eyes",
+    "tears",
+    "profile",
+    "closed eyes",
+    "expressionless",
+    "frown",
+    "facing viewer",
+    "close-up",
+    "spread arms",
+    "open mouth",
+    "arms at sides",
+    "hand in pocket",
+    "lower teeth only",
+    "bowing",
+    "facing down",
+    "holding",
+    "straight-on",
+    "closed mouth",
+    "arm at side",
+    "clenched hands",
+    "upper teeth only",
+    "facing up",
+    "holding unworn clothes",
+    "hand up",
+    "wavy mouth",
+    "standing on one leg",
+    "raised eyebrows",
+    "clenched hand",
+    "cropped shoulders",
+    "v-shaped eyebrows",
+    "teeth",
+    "standing",
+    "hand on own hip",
+    "cropped head",
+    "open hand",
+    "hands in pockets",
+    "head only",
+    "fang",
+    "full-face blush",
+    "pouty lips",
+    "badge",
+    "gloom",
+    "leaning forward",
+    "sideways mouth",
+    "outstretched arm",
+    "rectangular mouth",
+    "walking",
+    "fangs",
+    "looking to the viewer",
+    "sweat",
+    "blush stickers",
+    "blush",
+    "fist pump",
+    "no mouth",
+    "nose-blush"
+  ]
+}
