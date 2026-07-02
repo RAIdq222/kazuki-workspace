@@ -329,7 +329,8 @@ def _run_generate(uid):
                           header_top=CFG["header_top"], board_path=board_path,
                           genzu_source=st.get("genzu_source", "base"),
                           cut_num=(u["cuts"][0] if u.get("cuts") else ""),
-                          cut_info_map=CFG.get("cut_info_map"))
+                          cut_info_map=CFG.get("cut_info_map"),
+                          qc_vision=CFG.get("qc_vision", False))
         with STATE_LOCK:
             s = STATE.setdefault(uid, {})
             if s.get("generated_once"):
@@ -386,6 +387,7 @@ def create_app():
         st = STATE.get(uid, {})
         with JOBS_LOCK:
             running = JOBS.get(uid, {}).get("status") == "running"
+        q = _load_json(os.path.join(_unit_dir(uid), "qc.json"), {})
         return {"id": uid, "cuts": u["cuts"], "assignee": u["assignee"], "scene": u["scene"],
                 "board": st.get("board", u["board"]), "group": proj["group"], "project": proj["key"],
                 "work": proj["work"], "ep": proj["ep"],
@@ -393,6 +395,7 @@ def create_app():
                 "status": st.get("status", "todo"), "running": running,
                 "genzu_source": st.get("genzu_source", "base"),
                 "has_result": _result_path(uid) is not None,
+                "qc_verdict": q.get("verdict"), "qc_reasons": q.get("reasons", []),
                 "prompt_edited": bool(st.get("prompt")), "retakes": st.get("retakes", 0)}
 
     @app.get("/")
@@ -686,6 +689,7 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
    担当 <select id="fAssignee" style="width:auto"><option value="">全部</option></select>
    状態 <select id="fStatus" style="width:auto"><option value="">全部</option><option>todo</option><option>generating</option><option>done</option><option>accepted</option><option>reject</option></select>
    <label><input type="checkbox" id="fResult"> 未生成のみ</label>
+   <label><input type="checkbox" id="fQC"> QC要確認のみ</label>
    <span class="grow"></span>
    <span class="summary" id="summary"></span>
    <button class="primary" onclick="genBatch('ungenerated')" title="この話数の未生成カットをまとめてキュー投入">未生成を一括生成</button>
@@ -840,9 +844,10 @@ async function renderOverview(cur){
     ${o.note?`<div class="note">${esc(o.note)}</div>`:''}</details>`;
 }
 function render(){
-  const fa=$('#fAssignee').value,fs=$('#fStatus').value,fr=$('#fResult').checked;
+  const fa=$('#fAssignee').value,fs=$('#fStatus').value,fr=$('#fResult').checked,fq=$('#fQC').checked;
   const all=UNITS.filter(u=>u.group===GROUP);
-  const us=all.filter(u=>(!fa||u.assignee===fa)&&(!fs||u.status===fs)&&(!fr||!u.has_result));
+  const us=all.filter(u=>(!fa||u.assignee===fa)&&(!fs||u.status===fs)&&(!fr||!u.has_result)
+    &&(!fq||['needs_retake','human'].includes(u.qc_verdict)));
   const gen=all.filter(u=>u.has_result).length, ok=all.filter(u=>u.status==='accepted').length, ng=all.filter(u=>u.status==='reject').length;
   const pct=all.length?Math.round(ok/all.length*100):0;
   const running=[...RUN].map(unit).filter(u=>u&&u.group===GROUP);
@@ -853,6 +858,14 @@ function render(){
   $('#grid').innerHTML=us.map(card).join('');
   us.forEach(u=>{if(RUN.has(u.id))markRunning(u.id,true);});
 }
+function qcBadge(u){
+  if(!u.qc_verdict||u.qc_verdict==='unknown') return '';
+  const map={pass:['QC✓','#dff3e6','#0a5'],needs_retake:['QC⚠','#fde2e2','#d1242f'],
+             human:['QC要確認','#fff3d6','#a36a00']};
+  const m=map[u.qc_verdict]; if(!m) return '';
+  const tip=(u.qc_reasons||[]).join(' / ');
+  return `<span class="b" style="background:${m[1]};color:${m[2]}" title="${esc(tip)}">${m[0]}</span>`;
+}
 function card(u){
   const t=Date.now();
   const opts='<option value="">— ボード未選択 —</option>'+BOARDS.map(b=>`<option ${b===u.board?'selected':''}>${esc(b)}</option>`).join('');
@@ -860,6 +873,7 @@ function card(u){
    <div class="chead"><span class="cut">c${u.cuts.join(',')}</span>
      <span class="who ${u.assignee==='GKV'?'gkv':'other'}">${u.assignee}</span>
      <span class="b ${u.status}">${u.status}</span>${u.retakes?`<span class="muted">RT${u.retakes}</span>`:''}
+     ${qcBadge(u)}
      ${u.has_psd?'':'<span class="muted">PSD無</span>'}<span class="scene">${esc(u.scene)}</span></div>
    <div class="thumbs">
      <figure><figcaption>原図[${u.genzu_source}] ${u.has_psd?`<a href="#" onclick="openPsd('${u.id}');return false">PSDを開く</a> · <a href="#" onclick="openGenzu('${u.id}');return false">拡大/取り直し</a>`:''}</figcaption>
@@ -930,7 +944,7 @@ async function addProject(){$('#mMsg').textContent='追加中…';
   const r=await post('/api/projects',{work:$('#mWork').value,ep:$('#mEp').value,genzu_dir:$('#mGenzu').value,boards_dir:$('#mBoards').value});
   if(r.error){$('#mMsg').textContent='エラー: '+r.error;return;}
   $('#modal').style.display='none'; WORK=$('#mWork').value||WORK; GROUP=null; await refresh();}
-$('#fAssignee').onchange=render;$('#fStatus').onchange=render;$('#fResult').onchange=render;
+$('#fAssignee').onchange=render;$('#fStatus').onchange=render;$('#fResult').onchange=render;$('#fQC').onchange=render;
 $('#cmpSlider').addEventListener('pointermove',cmpMove);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('#cmp').style.display='none';$('#lb').style.display='none';$('#gmodal').style.display='none';}});
 refresh();
@@ -955,6 +969,8 @@ def main(argv=None):
     p.add_argument("--header-top", type=int, default=None)
     p.add_argument("--cut-info", default="runs/cut_scene_info_ep7.csv")
     p.add_argument("--max-parallel", type=int, default=3, help="生成の同時実行数の上限")
+    p.add_argument("--qc-vision", action="store_true",
+                   help="生成後にAI視覚QC（人物残り/文字残り/画角）も走らせる（要 ANTHROPIC_API_KEY）")
     p.add_argument("--port", type=int, default=8765)
     a = p.parse_args(argv)
     # カット別 situation/remove（great-edisonの3層プロンプトCUT層）。在ればプロンプトに反映。
@@ -967,7 +983,7 @@ def main(argv=None):
                     resolution=a.resolution, quality=a.quality, model=a.model,
                     image_flag=a.image_flag, include_book=a.include_book,
                     header_top=a.header_top, cut_info_map=cut_info_map,
-                    max_parallel=a.max_parallel))
+                    max_parallel=a.max_parallel, qc_vision=a.qc_vision))
     OVERVIEWS.update(_load_json(a.overview_json, {}))
     global STATE
     STATE = _load_json(_state_path(), {})

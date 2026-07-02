@@ -36,6 +36,9 @@ def _make_fixture(root):
     _solid(os.path.join(out, "testcut01", "genzu_base.png"), (220, 60, 60))
     _solid(os.path.join(out, "testcut01", "restored_full.png"), (60, 80, 220))
     _solid(os.path.join(boards, "BoardA.png"), (60, 200, 90))
+    # QC結果（S3）: カードにバッジ／フィルタが出るか検証するため
+    with open(os.path.join(out, "testcut01", "qc.json"), "w", encoding="utf-8") as f:
+        f.write('{"verdict":"needs_retake","reasons":["色が残っている"],"checks":{}}')
     csv_path = os.path.join(root, "cuts.csv")
     with open(csv_path, "w", encoding="utf-8", newline="") as f:
         w = csv.writer(f)
@@ -97,6 +100,11 @@ def main():
             # カードが1枚描画される
             page.wait_for_selector(".card", timeout=8000)
             check("カード描画", page.locator(".card").count() == 1)
+            # QCバッジ（S3）: needs_retake の qc.json → 「QC⚠」バッジ、QCフィルタで1件
+            check("QC⚠バッジ表示", page.locator("text=QC⚠").count() >= 1)
+            page.check("#fQC")
+            check("QCフィルタで1件", page.locator(".card").count() == 1)
+            page.uncheck("#fQC")
             # 画像ルート（原図/結果/ボード）が200
             import urllib.request
             for which in ("genzu", "result", "board"):

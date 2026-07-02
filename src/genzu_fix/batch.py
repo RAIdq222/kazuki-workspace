@@ -30,7 +30,7 @@ import sys
 import time
 import urllib.request
 
-from . import image_aspect, psd_export, frame, ledger, prompt as promptlib
+from . import image_aspect, psd_export, frame, ledger, qc, prompt as promptlib
 
 
 def build_prompt(board: str, scene: str, prompt_override: str | None = None,
@@ -168,7 +168,7 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
                 model: str, image_flag: str, dry: bool, include_book: bool = False,
                 header_top: int | None = None, board_path: str | None = None,
                 genzu_source: str = "base", cut_num: str = "",
-                cut_info_map=None) -> dict:
+                cut_info_map=None, qc_vision: bool = False) -> dict:
     os.makedirs(out_dir, exist_ok=True)
     cut = os.path.splitext(os.path.basename(psd_path))[0]
     visible = os.path.join(out_dir, "visible.png")
@@ -224,12 +224,24 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
         image_aspect.restore_output_image(gen_raw, restored, prep)
         frame.paste_into_region((vw, vh), tuple(region), restored, full)
         layer = psd_export.insert_result_layer(psd_path, full, out_psd, base_name="AI原図修正")
+        # 検品(QC): プログラム判定は常時（空白/破綻・色残り）。視覚判定は qc_vision 時のみ。
+        qc_dict = {}
+        try:
+            vv = None
+            if qc_vision and os.environ.get("ANTHROPIC_API_KEY"):
+                vv = qc.vision_check(visible, full)
+            qc_dict = qc.asdict(qc.evaluate(full, vision_verdicts=vv))
+            with open(os.path.join(out_dir, "qc.json"), "w", encoding="utf-8") as f:
+                json.dump(qc_dict, f, ensure_ascii=False)
+            print(f"    qc[{qc_dict.get('verdict')}] {qc_dict.get('reasons')}")
+        except Exception as e:  # noqa QCで生成自体を失敗にしない
+            print(f"    qc skip: {str(e)[:120]}")
         rec = ledger.GenRecord(
             run_id="", created_at=time.time(), cut=cut, genzu_file=psd_path,
             board_files=[board] if board else [], model=model,
             params={"aspect_ratio": prep.aspect_ratio, "resolution": resolution, "quality": quality},
             prompt=prompt, result_url=url, output_file=out_psd, status="completed",
-            notes="batch local-CLI", scene_info={"scene": scene, "board": board})
+            qc=qc_dict, notes="batch local-CLI", scene_info={"scene": scene, "board": board})
         # 台帳は出力ルート側（work/非git）へ。git管理の runs/ledger.jsonl に直接追記しない
         # （毎回dirty・複数マシンで衝突するため）。run_dir = <out>/<cut> の親 = <out>。
         ledger.append(rec, os.path.join(os.path.dirname(os.path.normpath(out_dir)), "ledger.jsonl"))
@@ -260,6 +272,8 @@ def main(argv=None) -> None:
                    help="美術ボード画像のあるディレクトリ（再帰探索）。指定すると2枚目入力に渡す")
     p.add_argument("--cut-info", default="runs/cut_scene_info_ep7.csv",
                    help="カット別構造化情報CSV（situation/remove 込み）。在ればプロンプトに反映")
+    p.add_argument("--qc-vision", action="store_true",
+                   help="生成後にAI視覚QCも実行（要 ANTHROPIC_API_KEY）")
     a = p.parse_args(argv)
 
     # 美術ボード画像の索引（ファイル名→パス）
@@ -321,7 +335,8 @@ def main(argv=None) -> None:
             process_cut(psd, board_name, r.get("scene", ""), out_dir,
                         prompt_override, a.resolution, a.quality, a.model, a.image_flag,
                         a.dry_run, a.include_book, a.header_top, board_path,
-                        cut_num=r.get("cut", ""), cut_info_map=cut_info_map)
+                        cut_num=r.get("cut", ""), cut_info_map=cut_info_map,
+                        qc_vision=a.qc_vision)
             ok += 1
         except Exception as e:
             print(f"    ! 失敗: {e}")
