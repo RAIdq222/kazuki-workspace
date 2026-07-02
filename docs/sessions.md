@@ -17,7 +17,11 @@
 ## 確定した決定
 - レジストずれ＝入力=出力グリッドで解決。原図はフレームで切らない（ヘッダはプロンプト除去）。
 - 原図の取り出しはコンソールも別セッションも `psd_export` の同じ関数（`/read-genzu`）。
-  **PNG化してgitで配る方式は不要**（PSDにアクセスできる前提）。必要時のみ `gather_handoff_ep7.py`。
+  PSDが手元にあるセッションは `gather` 不要。**ただし `handoff/ep7/` は PSD が無いセッションの
+  原図/資料アクセス経路として意図的に git 管理**（`scene_understanding.py`・`fetch_asset.py` が読む）。
+  肥大するので全カット分は入れない／`run_gather.bat` は投入前にサイズ確認する（2026-07 訂正）。
+- 生成の台帳(ledger)は実行時 `<out>/ledger.jsonl`（work側・非git）へ。`runs/ledger.jsonl` に直接追記しない。
+- リポジトリ衛生: `work/`（含 conte_crops）は git 対象外。中間物は work/、共有物は work/ の外。
 - 比較ビュー（コンソール）: 横並び / スライダー / 重ね合わせ(透過) の3モード。
 - 話数概要＋主要ボードはコンソール上部に表示（`runs/ep_overview.json` / `cut_board_map` 集計）。
 - カット個別の場面記述（synopsis の per-cut）は**保留**。
