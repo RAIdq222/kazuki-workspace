@@ -18,6 +18,7 @@ import argparse
 import csv
 import json
 import os
+import queue as _queue
 import re
 import subprocess
 import sys
@@ -35,8 +36,40 @@ PROJ_LOCK = threading.Lock()
 JOBS = {}
 JOBS_LOCK = threading.Lock()
 OVERVIEWS = {}              # "<work>#<ep>" -> {synopsis, scenes, note}
-# 生成の同時実行数の上限（Higgsfield 多重起動＝レート制限/クレジット浪費を防ぐ）。main で差替可。
-GEN_SEM = threading.BoundedSemaphore(3)
+# 生成ジョブは1本のキュー＋N本のワーカーで捌く（N=同時実行上限＝Higgsfield多重起動を防ぐ）。
+GEN_QUEUE = _queue.Queue()
+_WORKERS_LOCK = threading.Lock()
+_WORKERS_STARTED = False
+
+
+def _ensure_workers():
+    global _WORKERS_STARTED
+    with _WORKERS_LOCK:
+        if _WORKERS_STARTED:
+            return
+        n = max(1, int(CFG.get("max_parallel", 3)))
+        for _ in range(n):
+            threading.Thread(target=_gen_worker, daemon=True).start()
+        _WORKERS_STARTED = True
+
+
+def _gen_worker():
+    while True:
+        uid = GEN_QUEUE.get()
+        try:
+            with JOBS_LOCK:
+                j = JOBS.get(uid)
+                if not j or j.get("status") != "queued":
+                    continue  # キャンセル済み等
+                j["status"] = "running"
+                j["ts"] = time.time()
+            _run_generate(uid)
+        except Exception as e:  # noqa 念のためワーカーを殺さない
+            with JOBS_LOCK:
+                if uid in JOBS:
+                    JOBS[uid].update(status="error", error=str(e)[:300])
+        finally:
+            GEN_QUEUE.task_done()
 
 WORK_NAMES = {"shz": "尚善"}
 
@@ -288,9 +321,6 @@ def _run_generate(uid):
     prev_status = st.get("status", "todo")   # 失敗時に戻す（「生成中」で固まらせない）
     board = st.get("board", u["board"])
     board_path = _board_png(proj, board) if (proj.get("boards_dir") and board) else None
-    if not GEN_SEM.acquire(blocking=False):
-        log("順番待ち…（同時実行の空きを待っています）")
-        GEN_SEM.acquire()
     try:
         log("prep→生成→finish 実行中…")
         batch.process_cut(psd, board, u["scene"], _unit_dir(uid), st.get("prompt") or None,
@@ -317,8 +347,34 @@ def _run_generate(uid):
         with JOBS_LOCK:
             JOBS[uid].update(status="error", error=str(e)[:300])
         log("失敗: " + str(e)[:200])
-    finally:
-        GEN_SEM.release()
+
+
+def _enqueue(uids, force):
+    """生成キューに積む。force=False は冪等（既生成/原図待ちをスキップ）。
+    戻り: (queued[uid...], skipped[(uid,理由)...])。理由= no_psd / done / busy。"""
+    queued, skipped = [], []
+    for uid in uids:
+        proj, u = _find_unit(uid)
+        if not u:
+            skipped.append((uid, "not_found"))
+            continue
+        if u["filename"] not in proj["psd_idx"]:
+            skipped.append((uid, "no_psd"))          # 原図待ち＝スキップ（後日rescanで拾う）
+            continue
+        if not force and _result_path(uid):
+            skipped.append((uid, "done"))            # 既生成＝スキップ（S2冪等・再課金防止）
+            continue
+        with JOBS_LOCK:
+            if JOBS.get(uid, {}).get("status") in ("queued", "running"):
+                skipped.append((uid, "busy"))
+                continue
+            JOBS[uid] = {"status": "queued", "log": [], "error": None, "ts": time.time()}
+        _update_state(uid, status="generating")
+        GEN_QUEUE.put(uid)
+        queued.append(uid)
+    if queued:
+        _ensure_workers()
+    return queued, skipped
 
 
 def create_app():
@@ -465,16 +521,54 @@ def create_app():
 
     @app.post("/api/unit/<uid>/generate")
     def api_generate(uid):
-        proj, u = _find_unit(uid)
-        if not u:
-            return jsonify({"error": "not found"}), 404
-        with JOBS_LOCK:
-            if JOBS.get(uid, {}).get("status") == "running":
+        # 単体生成はユーザーの明示操作＝force（リテイク含む）。キュー経由で同時数を守る。
+        q, s = _enqueue([uid], force=True)
+        if not q:
+            reason = dict(s).get(uid, "error")
+            if reason == "busy":
                 return jsonify({"error": "already running"}), 409
-            JOBS[uid] = {"status": "running", "log": [], "error": None, "ts": time.time()}
-        _update_state(uid, status="generating")
-        threading.Thread(target=_run_generate, args=(uid,), daemon=True).start()
-        return jsonify({"ok": True})
+            return jsonify({"error": reason}), 400
+        return jsonify({"ok": True, "queued": 1})
+
+    @app.post("/api/generate_batch")
+    def api_generate_batch():
+        b = request.json or {}
+        force = bool(b.get("force"))
+        uids = b.get("uids")
+        # scope 指定時はグループ内から候補を集め、done/no_psd の判定は _enqueue に委ねる
+        # （スキップ理由を集計してユーザーに見せるため）。
+        if uids is None:
+            group = b.get("group")
+            scope = b.get("scope", "ungenerated")  # ungenerated | failed
+            uids = []
+            for p in PROJECTS.values():
+                if group and p["group"] != group:
+                    continue
+                for u in p["units"].values():
+                    uid = u["id"]
+                    if scope == "failed":
+                        with JOBS_LOCK:
+                            if JOBS.get(uid, {}).get("status") == "error":
+                                uids.append(uid)
+                    elif STATE.get(uid, {}).get("status") != "accepted":  # OK済は対象外
+                        uids.append(uid)
+            if scope == "failed":
+                force = True  # 失敗の再実行は明示再生成
+        q, s = _enqueue(uids, force=force)
+        from collections import Counter
+        return jsonify({"queued": len(q), "skipped": len(s),
+                        "skip_reasons": dict(Counter(r for _, r in s))})
+
+    @app.get("/api/jobs")
+    def api_jobs():
+        with JOBS_LOCK:
+            active = {uid: {"status": j["status"], "error": j.get("error")}
+                      for uid, j in JOBS.items() if j.get("status") in ("queued", "running")}
+            counts = {}
+            for j in JOBS.values():
+                counts[j.get("status")] = counts.get(j.get("status"), 0) + 1
+        return jsonify({"active": active, "counts": counts,
+                        "busy": len(active), "qsize": GEN_QUEUE.qsize()})
 
     @app.get("/api/unit/<uid>/job")
     def api_job(uid):
@@ -594,7 +688,9 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
    <label><input type="checkbox" id="fResult"> 未生成のみ</label>
    <span class="grow"></span>
    <span class="summary" id="summary"></span>
-   <button onclick="rescan()">フォルダ再取得</button><button onclick="refresh()">更新</button>
+   <button class="primary" onclick="genBatch('ungenerated')" title="この話数の未生成カットをまとめてキュー投入">未生成を一括生成</button>
+   <button onclick="genBatch('failed')" title="失敗したカットだけ再実行">失敗のみ再実行</button>
+   <button onclick="rescan()" title="原図フォルダを再走査（後から届いた原図を取り込む）">フォルダ再取得</button><button onclick="refresh()">更新</button>
  </div>
 </header>
 <main><section id="ovbox"></section><div class="grid" id="grid"></div></main>
@@ -652,6 +748,7 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
 let UNITS=[],PROJECTS=[],WORK=null,GROUP=null,BOARDS=[],GCUR=null,BOARDFILES=false;
 let CMPMODE=(function(){try{return localStorage.getItem('cmpmode')||'side'}catch(e){return 'side'}})();
 let CMPSWAP=false,CMPSRC={g:'',r:''};
+let POLL=null,BATCH='';
 const RUN=new Set();
 const $=s=>document.querySelector(s);
 const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
@@ -749,7 +846,7 @@ function render(){
   const gen=all.filter(u=>u.has_result).length, ok=all.filter(u=>u.status==='accepted').length, ng=all.filter(u=>u.status==='reject').length;
   const pct=all.length?Math.round(ok/all.length*100):0;
   const running=[...RUN].map(unit).filter(u=>u&&u.group===GROUP);
-  $('#summary').innerHTML=(running.length?`<span class="pill run">⏳生成中 ${running.length}: c${running.map(u=>u.cuts.join(',')).join(' / c')}</span>`:'')
+  $('#summary').innerHTML=(BATCH?`<span class="pill run">⏳ ${BATCH}</span>`:(running.length?`<span class="pill run">⏳生成中 ${running.length}: c${running.map(u=>u.cuts.join(',')).join(' / c')}</span>`:''))
     +`<span class="pill">全${all.length}</span><span class="pill">生成済 ${gen}</span>`
     +`<span class="pill ok">OK ${ok}</span><span class="pill ng">要修正 ${ng}</span><span class="pill">未生成 ${all.length-gen}</span>`
     +`<div class="pbar"><i style="width:${pct}%"></i></div><span class="muted">${pct}% OK</span>`;
@@ -801,11 +898,30 @@ function slog(id,m){const l=document.getElementById('log_'+id); if(l){l.style.di
 async function gen(id){
   const t=document.getElementById('pr_'+id); if(t&&t.value.trim()) await post('/api/unit/'+id+'/prompt',{prompt:t.value});
   const r=await post('/api/unit/'+id+'/generate',{}); if(r.error){slog(id,'エラー: '+r.error);return;}
-  RUN.add(id); markRunning(id,true); const u=unit(id); if(u){u.status='generating';u.running=true;} render(); slog(id,'生成開始…(数分)');
-  const c=document.getElementById('card_'+id); c&&c.querySelectorAll('.bar button').forEach(b=>b.disabled=true);
-  const poll=setInterval(async()=>{const j=await (await fetch('/api/unit/'+id+'/job')).json();
-    slog(id,(j.log||[]).join('\n'));
-    if(j.status==='done'||j.status==='error'){clearInterval(poll); RUN.delete(id); await refresh();}},2500);
+  RUN.add(id); markRunning(id,true); const u=unit(id); if(u){u.status='generating';u.running=true;} render(); slog(id,'キュー投入…');
+  pollJobs();
+}
+async function genBatch(scope){
+  const label=scope==='failed'?'失敗したカットを再実行':'未生成のカットを一括生成';
+  if(!confirm(label+'しますか？（同時実行 上限内でキュー処理）')) return;
+  const r=await post('/api/generate_batch',{group:GROUP,scope:scope});
+  const sk=r.skip_reasons||{};
+  const skmsg=Object.keys(sk).length?(' / スキップ '+Object.entries(sk).map(([k,v])=>k+':'+v).join(',')):'';
+  alert('キュー投入 '+(r.queued||0)+'件'+skmsg);
+  await refresh(); pollJobs();
+}
+// 生成ジョブ全体を1本のタイマーで監視（多数カードでもポーラは1つ）
+function pollJobs(){
+  if(POLL) return;
+  POLL=setInterval(async()=>{
+    let j; try{j=await (await fetch('/api/jobs')).json();}catch(e){return;}
+    const active=j.active||{};
+    RUN.clear(); Object.keys(active).forEach(id=>RUN.add(id));
+    UNITS.forEach(u=>{ if(active[u.id]) u.status='generating'; });
+    BATCH=`待ち/生成中 ${j.busy||0}`+((j.qsize||0)?`（残 ${j.qsize}）`:'');
+    render();
+    if((j.busy||0)===0){ clearInterval(POLL); POLL=null; BATCH=''; await refresh(); }
+  },2500);
 }
 async function rescan(){const p=PROJECTS.find(x=>x.group===GROUP); if(!p)return; await post('/api/projects/'+encodeURIComponent(p.key)+'/rescan',{}); await refresh();}
 function openAdd(work){$('#mWork').value=work||''; $('#mEp').value=''; $('#mGenzu').value=''; $('#mBoards').value='';
@@ -841,8 +957,6 @@ def main(argv=None):
     p.add_argument("--max-parallel", type=int, default=3, help="生成の同時実行数の上限")
     p.add_argument("--port", type=int, default=8765)
     a = p.parse_args(argv)
-    global GEN_SEM
-    GEN_SEM = threading.BoundedSemaphore(max(1, a.max_parallel))
     # カット別 situation/remove（great-edisonの3層プロンプトCUT層）。在ればプロンプトに反映。
     cut_info_map = {}
     try:
@@ -852,7 +966,8 @@ def main(argv=None):
     CFG.update(dict(out=a.out, csv=a.csv, boards_json=a.boards_json,
                     resolution=a.resolution, quality=a.quality, model=a.model,
                     image_flag=a.image_flag, include_book=a.include_book,
-                    header_top=a.header_top, cut_info_map=cut_info_map))
+                    header_top=a.header_top, cut_info_map=cut_info_map,
+                    max_parallel=a.max_parallel))
     OVERVIEWS.update(_load_json(a.overview_json, {}))
     global STATE
     STATE = _load_json(_state_path(), {})
