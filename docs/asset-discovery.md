@@ -37,9 +37,22 @@ python run_console.py --project runs/project_尚善_08.json
   "settings":["…世界観….pdf", …], "found":[…], "missing":[…] }
 ```
 
+## 香盤表 → cut_board_map（実装済み）
+新話数のカット表は香盤表から自動生成できる（`src/genzu_fix/koban.py`＋`scripts/build_cut_board_map.py`）:
+```
+python scripts/build_cut_board_map.py --project runs/project_尚善_08.json --last-cut <最終カット番号>
+# → runs/cut_board_map_ep8.csv（BANKスキップ・PSD突合・担当=親フォルダ・ボード自動提案）
+python run_console.py --project runs/project_尚善_08.json --csv runs/cut_board_map_ep8.csv
+```
+- xlsx は**標準ライブラリで読む**（openpyxl 不要）。ep7実データの癖に対応:
+  レンジ `001～002`／チルダ全半角／枝番レンジ `207～239A`・`239B～246`／終端開き `293～`(--last-cut で閉じる)／
+  BANK行スキップ／場所空欄=直前を継承／備考続き行／「色彩設計戻しカット」節・シーン色シートの除外。
+- **原図待ち**: PSDが無いカットは予測ファイル名（`shz_<ep>_<NNN>_genzu.psd`）で行を作る
+  → 後日原図が届いたら「フォルダ再取得」で自動的に繋がる（原図は一気に届かない前提）。
+- **ボード自動提案**は確度が高い場合のみ記入（`--board-score` 既定3=場所+時間一致。誤マッチは空欄＝コンソールで選択）。
+- シーン色（夜色/朝色/森_よどんだ朝/室内_夕方…）→ time へ翻訳し scene 列に反映。
+
 ## 今後の統合（B の残り）
-- 現状 `--project` はコンソールのフォルダ系を補完。**cut_board_map/cut_scene_info/overview も project に束ねる**と
-  完全に脱ハードコードになる（`--csv`/`--overview-json`/`--cut-info` を project から引く）。
-- 新話数の cut_board_map は **香盤表(koban)→cut_board_map 生成ツール** が要る（香盤表パーサ。未実装＝次段）。
-- Drive 側（PDF/xlsx が Drive のみの場合）の探索は、Drive ID を manifest に足す拡張で対応可能
-  （このセッションは Drive MCP で ID を引ける。ローカルpipelineは fetch_asset でDL）。
+- `--project` に cut_board_map/cut_scene_info/overview のパスも束ねると完全脱ハードコード
+  （`--csv`/`--overview-json`/`--cut-info` を project から引く）。
+- Drive 側（PDF/xlsx が Drive のみの場合）の探索は、Drive ID を manifest に足す拡張で対応可能。
