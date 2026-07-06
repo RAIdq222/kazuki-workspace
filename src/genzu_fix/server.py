@@ -71,7 +71,17 @@ def _gen_worker():
         finally:
             GEN_QUEUE.task_done()
 
+# 作品プレフィックス→和名。runs/works.json（作品レジストリ）から拡張される。
 WORK_NAMES = {"shz": "尚善"}
+try:
+    from .assets import WORK_ALIASES as _WA
+    for _k, _vs in _WA.items():
+        if _k.isascii():
+            _jp = next((v for v in _vs if not v.isascii()), None)
+            if _jp:
+                WORK_NAMES.setdefault(_k, _jp)
+except Exception:  # noqa レジストリ不整合でもコンソールは起動する
+    pass
 
 
 def _state_path():

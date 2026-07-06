@@ -1,4 +1,4 @@
-# CLAUDE.md — 尚善 原図修正自動化（全セッション共通）
+# CLAUDE.md — 原図修正プラットフォーム（全セッション共通）
 
 このファイルはどのセッションでも自動で読まれる。**会話の記憶はセッション間で共有されない**ので、
 事実は必ず git 上のファイルに書く。迷ったらまず下の索引を読む。
@@ -16,9 +16,14 @@
 - 繰り返す共通ルールはこの CLAUDE.md に追記する（毎回説明し直さない）。
 
 ## 1. これは何のプロジェクトか
-商用アニメ「尚善」の**背景原図(genzu)PSD** を、GPT Image 2(Higgsfield)で**白黒線画ドラフト**に
-変換し、PSDへ「AI原図修正」レイヤーとして戻すパイプライン。ep7 で **245カット/217原図**。
-- **登場人物/話の概要**は `runs/ep_overview.json`（コンソール上部にも表示）。
+商用アニメの**背景原図(genzu)PSD** を、GPT Image 2(Higgsfield)で**白黒線画ドラフト**に変換し、
+PSDへ「AI原図修正」レイヤーとして戻す**複数作品対応のプラットフォーム**。
+将来的には背景美術の制作工程を広く受け持つ基盤に育てる（原図修正はその第一タスク）。
+- **作品はコードでなく `runs/works.json`（作品レジストリ）に登録する**（prefix/別名/話数と参照CSV）。
+- 実績: 「尚善」ep7＝245カット/217原図（運用中・一時中断中。状態は `docs/sessions.md`）。
+- 話数の概要は `runs/ep_overview.json`（コンソール上部にも表示）。
+- **新作品/新話数の入口**: `discover_assets`（参照先自動探索）→`build_cut_board_map`（香盤表→カット表）→
+  `run_console.py --project …`。詳細は `docs/asset-discovery.md`。
 
 ## 2. どこに何があるか（索引）
 | 種類 | 場所 |
@@ -28,6 +33,7 @@
 | パース編集エディタ(Flask/キャンバス) | `src/genzu_fix/perspective_editor.py` ／ 起動は `run_perspective_editor.bat` / `run_perspective_editor.py`（手置き＋自動推定でパース線） |
 | パース線 Photoshopプラグイン(UXP) | `photoshop/uxp-perspective/`（手置きパース線をPSDに透過レイヤーで追加・最小プロト・実機未検証/READMEに読込手順） |
 | 作業コンソール(Flask) | `src/genzu_fix/server.py` ／ 起動は `run_console.bat` / `run_console.py` |
+| 作品レジストリ | `runs/works.json`（prefix/別名/話数→参照CSV。新作品はここに足す） |
 | カット表・索引 | `runs/cut_board_map_ep7.csv`(245行/217原図) `runs/genzu_index_ep7.csv` |
 | 話数概要 | `runs/ep_overview.json` |
 | ロードマップ/現在地 | `docs/roadmap-genzu-prompt.md`（3観点→統合→プロンプトの進捗と次の一手） |

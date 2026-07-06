@@ -1,0 +1,16 @@
+{
+  "_comment": "作品レジストリ。新作品はここに1エントリ足す（コードは触らない）。prefix=原図ファイル名の接頭辞。",
+  "尚善": {
+    "prefix": "shz",
+    "aliases": ["shz", "尚善"],
+    "eps": {
+      "07": {
+        "status": "運用中（一時中断 2026-07）",
+        "csv": "runs/cut_board_map_ep7.csv",
+        "cut_info": "runs/cut_scene_info_ep7.csv",
+        "overview": "runs/ep_overview.json",
+        "boards_json": "runs/boards_ep7.json"
+      }
+    }
+  }
+}

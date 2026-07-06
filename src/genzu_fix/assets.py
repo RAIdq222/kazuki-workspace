@@ -21,8 +21,35 @@ from __future__ import annotations
 import os
 import re
 
-# 作品プレフィックス(shz)→和名(尚善)。server.WORK_NAMES と揃える。
+# 作品プレフィックス(shz)→和名(尚善)。runs/works.json（作品レジストリ）があればそれを優先。
+# 新作品はコードでなく works.json に足す。
 WORK_ALIASES = {"shz": ["尚善"], "尚善": ["shz", "尚善"]}
+
+
+def _load_registry():
+    """runs/works.json を読み WORK_ALIASES を拡張（無ければ内蔵値のみ）。"""
+    import json
+    here = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    path = os.path.join(here, "runs", "works.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            reg = json.load(f)
+    except (OSError, ValueError):
+        return
+    for work, info in reg.items():
+        if work.startswith("_") or not isinstance(info, dict):
+            continue
+        aliases = list(info.get("aliases") or [])
+        prefix = info.get("prefix")
+        if prefix and prefix not in aliases:
+            aliases.append(prefix)
+        if aliases:
+            WORK_ALIASES[work] = sorted(set(aliases) | {work})
+            if prefix:
+                WORK_ALIASES.setdefault(prefix, sorted({work, *aliases}))
+
+
+_load_registry()
 
 
 def _ep_tokens(ep: str) -> list[str]:
