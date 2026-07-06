@@ -53,3 +53,7 @@
 - 2026-07-02: LoRA Preflight 画像加工の設計書を追加（`docs/lora-preflight/`、実装は次フェーズ）。
 - 2026-07-02: 同実装 P1〜P5 完了（コア `preflight_core.py`・app.py統合・UI・manifest・
   テスト2本 `tests/preflight_core_test.py` / `preflight_app_e2e.py` 全通過）。残: P6自動判定ほか（設計書§9）。
+- 2026-07-06: Windows実機投入→フィードバック反映を複数回実施（起動バッチ/依存修正・
+  出力フォルダバグ修正・拡大表示・首の手動ライン・フォルダ参照/保存・README全面改訂）。
+  ブラウザ表示テスト `tests/preflight_ui_e2e.py` 追加。モデル抜き配布用ZIPをユーザーへ納品済み
+  （個人パス除去済み）。**現在メンバーFB待ち**。PR #3 は未マージ（FB後にmainへ）。
