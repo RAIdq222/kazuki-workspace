@@ -276,9 +276,14 @@ def apply_plan(img: Image.Image, plan: CropPlan) -> Image.Image: ...
 
 残タスク:
 - P6 自動判定（EVA02タグ or 人物縦横比ヒューリスティック→チェックボックス初期値の提案）。
-- 首位置の**画像ごと**微調整UI（現在はグローバル設定 `neckRatio` を変えて再整形）。
-- タグ付け画面(`/tagging`)側でのモード指定UI（現在 build API は `modes` を受け取れるが UI 未配線）。
+- タグ付け画面(`/tagging`)側でのモード指定UI（現在 build API は `modes`/`neckYs` を受け取れるが UI 未配線）。
 - Windows 実機（実画像・Real-ESRGAN 経路）での動作確認。
+
+追記(2026-07-06): 首位置は**画像ごとの手動ライン**方式に決定（ユーザー判断）。
+「全身絵として処理」を入れるとサムネ上に赤いラインが出て、ドラッグで首位置を指定
+→ `neckY`（元画像座標）として送られ fb_body の切り出し上端になる（manifest に
+neckSource: manual/auto を記録）。`neckRatio` はラインの初期位置のみに使う。
+EVA02 による自動判定（§旧案）は P6 の「初期位置の提案」に格下げ。
 
 ## 10. 未決事項（ユーザー確認したい点）
 

@@ -209,9 +209,17 @@ def plan_normal(info: ImageInfo, cfg: PreflightConfig) -> CropPlan:
     )
 
 
-def plan_fullbody(info: ImageInfo, cfg: PreflightConfig, neck_ratio: float | None = None) -> list:
+def plan_fullbody(
+    info: ImageInfo,
+    cfg: PreflightConfig,
+    neck_ratio: float | None = None,
+    neck_y: float | None = None,
+) -> list:
     """全身絵: 高さを fullbody_base_height に正規化した空間で
     上半身/首から下/足元の正方形3枚＋全身1枚、計4枚の計画を作る。
+
+    neck_y（元画像座標）が指定されたら首位置はそれを使う（UIの手動ライン）。
+    無ければ neck_ratio による自動推定。
 
     実際の切り出しは元画像座標で行う（リサンプリング1回で済み劣化が少ない）。
     正規化空間の長さ L は元画像座標では L/s (s = base_height/H)。
@@ -246,10 +254,15 @@ def plan_fullbody(info: ImageInfo, cfg: PreflightConfig, neck_ratio: float | Non
         )
 
     person_h = max(1, y1 - y0)
-    neck_y = y0 + nr * person_h
+    if neck_y is not None:
+        neck = _clamp(float(neck_y), 0, H)
+        neck_source = "manual"
+    else:
+        neck = y0 + nr * person_h
+        neck_source = "auto"
     plans = [
         tile_plan("fb_upper", y0 - margin, {}),
-        tile_plan("fb_body", neck_y, {"neckRatio": nr, "neckY": int(round(neck_y))}),
+        tile_plan("fb_body", neck, {"neckRatio": nr, "neckY": int(round(neck)), "neckSource": neck_source}),
         tile_plan("fb_feet", min(H, y1 + margin) - t, {}),
     ]
 
@@ -299,9 +312,15 @@ def plan_fullbody(info: ImageInfo, cfg: PreflightConfig, neck_ratio: float | Non
     return plans
 
 
-def plan_for_mode(info: ImageInfo, cfg: PreflightConfig, mode: str, neck_ratio: float | None = None) -> list:
+def plan_for_mode(
+    info: ImageInfo,
+    cfg: PreflightConfig,
+    mode: str,
+    neck_ratio: float | None = None,
+    neck_y: float | None = None,
+) -> list:
     if mode == "fullbody":
-        return plan_fullbody(info, cfg, neck_ratio=neck_ratio)
+        return plan_fullbody(info, cfg, neck_ratio=neck_ratio, neck_y=neck_y)
     return [plan_normal(info, cfg)]
 
 

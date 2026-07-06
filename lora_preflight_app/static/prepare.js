@@ -3,6 +3,7 @@ const state = {
   images: [],
   outputDir: "",
   modes: {}, // imageId -> "normal" | "fullbody"
+  neckY: {}, // imageId -> 首位置（元画像のピクセル座標）
 };
 
 const KIND_LABELS = {
@@ -108,6 +109,41 @@ async function postJson(url, payload = {}) {
   return data;
 }
 
+// サムネは320px正方形キャンバスに中央配置されているので、
+// 元画像のy座標 <-> サムネ上の位置(0..1) を相互変換する
+function thumbGeometry(image) {
+  const size = image.size || null;
+  if (!size || !size[0] || !size[1]) return null;
+  const [w, h] = size;
+  const scale = 320 / Math.max(w, h);
+  const imgFracH = (h * scale) / 320;
+  return { h, topFrac: (1 - imgFracH) / 2, imgFracH };
+}
+
+function defaultNeckY(image) {
+  const size = image.size || [0, 0];
+  const cb = image.contentBox || [0, 0, size[0], size[1]];
+  return cb[1] + readNumber("neckRatio", 0.14) * Math.max(1, cb[3] - cb[1]);
+}
+
+function neckYOf(image) {
+  return state.neckY[image.id] != null ? state.neckY[image.id] : defaultNeckY(image);
+}
+
+function neckLineFrac(image) {
+  const geo = thumbGeometry(image);
+  if (!geo) return 0.2;
+  const y = Math.min(geo.h, Math.max(0, neckYOf(image)));
+  return geo.topFrac + (y / geo.h) * geo.imgFracH;
+}
+
+function fracToNeckY(image, frac) {
+  const geo = thumbGeometry(image);
+  if (!geo) return null;
+  const y = ((frac - geo.topFrac) / geo.imgFracH) * geo.h;
+  return Math.min(geo.h, Math.max(0, Math.round(y)));
+}
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -153,10 +189,17 @@ function renderImages() {
             })
             .join("")}</div>`
         : "";
+      const neckLine =
+        mode === "fullbody"
+          ? `<div class="neck-line" data-neck-id="${escapeHtml(image.id)}" style="top:${(neckLineFrac(image) * 100).toFixed(2)}%">
+               <span class="neck-label">首から下 ここから↓（ドラッグで調整）</span>
+             </div>`
+          : "";
       return `
         <article class="image-card">
           <div class="thumb-wrap">
             <img src="${image.thumbUrl}" alt="${escapeHtml(image.name)}">
+            ${neckLine}
           </div>
           <div class="card-body">
             <div class="file-name">${escapeHtml(image.name)}</div>
@@ -210,11 +253,13 @@ async function prepareImages() {
       const image = state.images[index];
       const percent = Math.round((index / total) * 100);
       setProgress(`画像整形中 ${index + 1}/${total}: ${image.name}`, percent);
+      const mode = state.modes[image.id] || "normal";
       const data = await postJson("/api/prepare/image", {
         ...config,
         sessionId: state.sessionId,
         imageId: image.id,
-        mode: state.modes[image.id] || "normal",
+        mode,
+        neckY: mode === "fullbody" ? Math.round(neckYOf(image)) : null,
       });
       state.images[index] = data.image;
       state.outputDir = data.outputDir || state.outputDir;
@@ -275,7 +320,31 @@ function wireEvents() {
     const target = event.target;
     if (target.matches("[data-mode-toggle]")) {
       state.modes[target.dataset.id] = target.checked ? "fullbody" : "normal";
+      renderImages(); // 首ラインの表示/非表示を反映
     }
+  });
+  // 首ラインのドラッグ
+  $("imageGrid").addEventListener("pointerdown", (event) => {
+    const line = event.target.closest(".neck-line");
+    if (!line) return;
+    event.preventDefault();
+    const image = state.images.find((item) => item.id === line.dataset.neckId);
+    if (!image) return;
+    const wrap = line.parentElement;
+    const onMove = (moveEvent) => {
+      const rect = wrap.getBoundingClientRect();
+      const frac = Math.min(1, Math.max(0, (moveEvent.clientY - rect.top) / rect.height));
+      const y = fracToNeckY(image, frac);
+      if (y == null) return;
+      state.neckY[image.id] = y;
+      line.style.top = `${(neckLineFrac(image) * 100).toFixed(2)}%`;
+    };
+    const onUp = () => {
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+    };
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
   });
   $("browseInput").addEventListener("click", () => pickFolder("inputDir"));
   $("browseOutput").addEventListener("click", () => pickFolder("outputDir"));

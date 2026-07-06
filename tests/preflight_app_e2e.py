@@ -90,6 +90,9 @@ def main() -> int:
         check("scan ok", scan.get("ok") is True)
         images = {img["name"]: img for img in scan["images"]}
         session_id = scan["sessionId"]
+        fb = images["fullbody_b.png"]
+        check("scan: 寸法を返す", fb.get("size") == [900, 2000], str(fb.get("size")))
+        check("scan: 内容範囲を返す", bool(fb.get("contentBox")), str(fb.get("contentBox")))
 
         # 通常モード（出力フォルダをスキャン後に変更→反映されること=回帰テスト）
         out2 = work / "out2"
@@ -115,13 +118,17 @@ def main() -> int:
         thumb = _get_bytes(base, outs[0]["thumbUrl"])
         check("通常: サムネ取得できる", len(thumb) > 500, str(len(thumb)))
 
-        # 全身絵モード
+        # 全身絵モード（首位置を手動指定→そのまま切り出し位置になること）
+        manual_neck = 500
         res = _post(
             base,
             "/api/prepare/image",
-            {"sessionId": session_id, "imageId": images["fullbody_b.png"]["id"], "mode": "fullbody"},
+            {"sessionId": session_id, "imageId": images["fullbody_b.png"]["id"], "mode": "fullbody", "neckY": manual_neck},
         )
         outs = res["image"]["results"]
+        body_plan = outs[1]["plan"]
+        check("首位置: 手動指定が反映される", body_plan["crop_box"][1] == manual_neck, str(body_plan["crop_box"]))
+        check("首位置: manual と記録される", body_plan["params"].get("neckSource") == "manual", str(body_plan["params"]))
         check("全身: 4枚出力", len(outs) == 4, str(len(outs)))
         names = [Path(o["image"]).name for o in outs]
         check("全身: 命名 _1.._4", names == [f"fullbody_b_{i}.png" for i in (1, 2, 3, 4)], str(names))

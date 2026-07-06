@@ -892,11 +892,13 @@ def process_image_v2(
     mode: str,
     settings: dict,
     upscaler_options: dict,
+    neck_y: float | None = None,
 ) -> list[dict]:
     """1枚の入力から mode に応じて1枚（通常）または4枚（全身絵）を出力する。
 
     出力ファイル名: 通常 = {stem}.png / 全身絵 = {stem}_1.png .. {stem}_4.png
     （名前順で 上半身→首から下→足元→全身。TODO_IMAGE_PROCESSING.md の命名案）
+    neck_y = 首位置の手動指定（元画像座標。UIのドラッグライン）。
     """
     cfg = preflight_config_from(settings)
     dataset_dir.mkdir(parents=True, exist_ok=True)
@@ -904,7 +906,7 @@ def process_image_v2(
     with Image.open(source) as img:
         img = img.convert("RGB")
         info = pfc.analyze(img, cfg.trim_threshold)
-        plans = pfc.plan_for_mode(info, cfg, mode)
+        plans = pfc.plan_for_mode(info, cfg, mode, neck_y=neck_y)
         for index, plan in enumerate(plans, start=1):
             suffix = f"_{index}" if len(plans) > 1 else ""
             destination = dataset_dir / f"{stem}{suffix}.png"
@@ -1233,8 +1235,18 @@ class AppHandler(SimpleHTTPRequestHandler):
 
         session_id = uuid.uuid4().hex[:12]
         (SESSION_ROOT / session_id).mkdir(parents=True, exist_ok=True)
+        trim_threshold = int(settings.get("trimThreshold", 18))
         images = []
         for index, image_path in enumerate(list_images(input_dir), start=1):
+            # 首ラインの初期位置計算用に寸法と内容範囲も返す
+            try:
+                with Image.open(image_path) as img:
+                    info = pfc.analyze(img.convert("RGB"), trim_threshold)
+                size = [info.width, info.height]
+                content_box = list(info.content_box)
+            except Exception:
+                size = None
+                content_box = None
             images.append(
                 {
                     "id": f"prep_{index:04d}",
@@ -1242,6 +1254,8 @@ class AppHandler(SimpleHTTPRequestHandler):
                     "name": image_path.name,
                     "path": str(image_path),
                     "thumbUrl": create_thumbnail(session_id, image_path, index),
+                    "size": size,
+                    "contentBox": content_box,
                     "prepared": False,
                     "result": None,
                     "warnings": [],
@@ -1293,6 +1307,11 @@ class AppHandler(SimpleHTTPRequestHandler):
         dataset_dir = output_dir / "images"
         dataset_dir.mkdir(parents=True, exist_ok=True)
         mode = body.get("mode") or "normal"
+        neck_y = body.get("neckY")
+        try:
+            neck_y = float(neck_y) if neck_y is not None else None
+        except (TypeError, ValueError):
+            neck_y = None
         upscaler_options = {key: settings.get(key, DEFAULT_SETTINGS.get(key)) for key in UPSCALER_KEYS}
 
         for image in session.get("images", []):
@@ -1307,6 +1326,7 @@ class AppHandler(SimpleHTTPRequestHandler):
                 mode=mode,
                 settings=settings,
                 upscaler_options=upscaler_options,
+                neck_y=neck_y,
             )
             for out_index, output in enumerate(outputs, start=1):
                 output["thumbUrl"] = create_output_thumbnail(
@@ -1467,6 +1487,7 @@ class AppHandler(SimpleHTTPRequestHandler):
         common_tags = parse_tags(body.get("commonTags", ""))
         assignments = body.get("assignments", {})
         modes = body.get("modes", {}) if isinstance(body.get("modes"), dict) else {}
+        neck_ys = body.get("neckYs", {}) if isinstance(body.get("neckYs"), dict) else {}
         trigger_definitions = body.get("triggerDefinitions", [])
         token_by_id = {item.get("id"): item.get("token", "").strip() for item in trigger_definitions}
         settings = merge_settings(load_settings(), body)
@@ -1480,6 +1501,10 @@ class AppHandler(SimpleHTTPRequestHandler):
             source = Path(image["path"])
             stem = f"{index:03d}"
             mode = modes.get(image["id"]) or image.get("mode") or "normal"
+            try:
+                neck_y = float(neck_ys[image["id"]]) if image["id"] in neck_ys else None
+            except (TypeError, ValueError):
+                neck_y = None
             selected_ids = assignments.get(image["id"], [])
             trigger_tokens = [token_by_id.get(trigger_id, "") for trigger_id in selected_ids]
             trigger_tokens = [token for token in trigger_tokens if token]
@@ -1491,6 +1516,7 @@ class AppHandler(SimpleHTTPRequestHandler):
                 mode=mode,
                 settings=settings,
                 upscaler_options=upscaler_options,
+                neck_y=neck_y,
             )
             for output in outputs:
                 image_out = Path(output["image"])

@@ -87,6 +87,20 @@ def main() -> int:
             page.click("#scanBtn")
             page.wait_for_selector(".image-card", timeout=10000)
             page.locator("[data-mode-toggle]").first.check()
+            page.wait_for_selector(".neck-line", timeout=5000)
+            check("全身チェックで首ラインが出る", page.locator(".neck-line").count() == 1)
+
+            # 首ラインをドラッグ→位置が変わる
+            line = page.locator(".neck-line").first
+            before = line.get_attribute("style")
+            box = line.bounding_box()
+            page.mouse.move(box["x"] + box["width"] / 2, box["y"] + 1)
+            page.mouse.down()
+            page.mouse.move(box["x"] + box["width"] / 2, box["y"] + 60, steps=5)
+            page.mouse.up()
+            after = line.get_attribute("style")
+            check("首ラインをドラッグで動かせる", before != after, f"{before} -> {after}")
+
             page.click("#prepareBtn")
             page.wait_for_function("document.querySelectorAll('.result-thumb').length >= 4", timeout=30000)
             check("全身絵の4枚サムネが表示される", page.locator(".result-thumb").count() >= 4)
