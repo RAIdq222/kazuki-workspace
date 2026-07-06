@@ -645,6 +645,10 @@ summary {
   cursor: zoom-out;
 }
 
+#lightbox[hidden] {
+  display: none;
+}
+
 #lightbox figure {
   margin: 0;
   text-align: center;
