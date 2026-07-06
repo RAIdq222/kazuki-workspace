@@ -285,8 +285,9 @@ def _snapshot_take(uid):
             shutil.copy2(p, os.path.join(tdir, fn))
     qv = _load_json(os.path.join(ud, "qc.json"), {}).get("verdict")
     with STATE_LOCK:
+        note = (STATE.get(uid, {}).get("retake_note") or "").strip()
         STATE.setdefault(uid, {}).setdefault("takes", []).append(
-            {"n": n, "ts": time.time(), "qc": qv})
+            {"n": n, "ts": time.time(), "qc": qv, "note": note})
         STATE[uid]["adopted"] = n
         _save_state_locked()
     return n
@@ -372,9 +373,17 @@ def _run_generate(uid):
     prev_status = st.get("status", "todo")   # 失敗時に戻す（「生成中」で固まらせない）
     board = st.get("board", u["board"])
     board_path = _board_png(proj, board) if (proj.get("boards_dir") and board) else None
+    # リテイク指示（端的な修正メモ）があれば、最終プロンプト末尾へ最優先の修正指示として足す。
+    note = (st.get("retake_note") or "").strip()
+    base_prompt = st.get("prompt") or None
+    if note:
+        cut0 = u["cuts"][0] if u.get("cuts") else ""
+        eff = base_prompt or batch.build_prompt_pair(
+            board, u["scene"], None, cut=cut0, cut_info_map=CFG.get("cut_info_map"))[0]
+        base_prompt = eff + "\n\n[RETAKE CORRECTION — apply with top priority]: " + note
     try:
-        log("prep→生成→finish 実行中…")
-        batch.process_cut(psd, board, u["scene"], _unit_dir(uid), st.get("prompt") or None,
+        log("prep→生成→finish 実行中…" + (f"（指示: {note[:30]}）" if note else ""))
+        batch.process_cut(psd, board, u["scene"], _unit_dir(uid), base_prompt,
                           CFG["resolution"], CFG["quality"], CFG["model"], CFG["image_flag"],
                           dry=False, include_book=CFG["include_book"],
                           header_top=CFG["header_top"], board_path=board_path,
@@ -450,6 +459,7 @@ def create_app():
                 "has_result": _result_path(uid) is not None,
                 "qc_verdict": q.get("verdict"), "qc_reasons": q.get("reasons", []),
                 "takes": st.get("takes", []), "adopted": st.get("adopted"),
+                "retake_note": st.get("retake_note", ""),
                 "prompt_edited": bool(st.get("prompt")), "retakes": st.get("retakes", 0)}
 
     @app.get("/")
@@ -542,6 +552,11 @@ def create_app():
     @app.post("/api/unit/<uid>/board")
     def api_board(uid):
         _update_state(uid, board=(request.json or {}).get("board", ""))
+        return jsonify({"ok": True})
+
+    @app.post("/api/unit/<uid>/retake_note")
+    def api_retake_note(uid):
+        _update_state(uid, retake_note=(request.json or {}).get("note", "").strip())
         return jsonify({"ok": True})
 
     @app.post("/api/unit/<uid>/accept")
@@ -731,6 +746,7 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
  .thumbs figure{margin:0;flex:1} .thumbs figcaption{font-size:10px;color:#888}
  .thumbs img{width:100%;height:150px;object-fit:contain;border:1px solid #eee;background:#fff;cursor:zoom-in}
  .ph{height:150px;border:1px dashed #ddd;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:11px}
+ .rnote{width:100%;font-size:12px;padding:4px 6px;border:1px solid #cbd;border-radius:6px;background:#fbfcff}
  .takes{font-size:11px;color:#666;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
  .takechip{font-size:11px;padding:2px 7px;border:1px solid #ccc;border-radius:10px;background:#fff;cursor:pointer}
  .takechip.on{background:#1a5fb4;color:#fff;border-color:#1a5fb4}
@@ -963,7 +979,8 @@ function takeStrip(u){
   const chips=tk.map(t=>{
     const on=(t.n===u.adopted);
     const qc=t.qc==='needs_retake'||t.qc==='human'?' ⚠':(t.qc==='pass'?' ✓':'');
-    return `<button class="takechip${on?' on':''}" title="テイク${t.n}${qc}を採用" onclick="adoptTake('${u.id}',${t.n})">T${t.n}${on?'●':''}${qc}</button>`;
+    const tip=`テイク${t.n}${qc}を採用`+(t.note?`\n指示: ${t.note}`:'');
+    return `<button class="takechip${on?' on':''}" title="${esc(tip)}" onclick="adoptTake('${u.id}',${t.n})">T${t.n}${on?'●':''}${qc}${t.note?'📝':''}</button>`;
   }).join('');
   return `<div class="takes">テイク履歴: ${chips}<span class="muted">（クリックで採用＝現行結果に戻す）</span></div>`;
 }
@@ -996,6 +1013,9 @@ function card(u){
      <div class="bar"><button onclick="savePrompt('${u.id}')">保存</button>
        <button onclick="loadPrompt('${u.id}')">自動表示</button>
        <button onclick="resetPrompt('${u.id}')">自動に戻す</button></div></details>
+   ${u.has_result?`<input class="rnote" id="rn_${u.id}" value="${esc(u.retake_note||'')}"
+     placeholder="リテイク指示（例: 右の木の幹をつなげる / 奥行きを出す）"
+     onchange="saveNote('${u.id}')">`:''}
    <div class="bar"><button class="primary" onclick="gen('${u.id}')">${u.has_result?'リテイク':'生成'}</button>
      <button class="ok" onclick="accept('${u.id}','accepted')">OK</button>
      <button class="ng" onclick="accept('${u.id}','reject')">要修正</button></div>
@@ -1034,8 +1054,11 @@ async function resetPrompt(id){await post('/api/unit/'+id+'/prompt',{prompt:''})
 async function setBoard(id,v){await post('/api/unit/'+id+'/board',{board:v}); slog(id,'ボード保存');}
 async function accept(id,v){await post('/api/unit/'+id+'/accept',{value:v}); const u=unit(id); if(u)u.status=v; render();}
 function slog(id,m){const l=document.getElementById('log_'+id); if(l){l.style.display='block';l.textContent=m;}}
+async function saveNote(id){const e=document.getElementById('rn_'+id);
+  await post('/api/unit/'+id+'/retake_note',{note:e?e.value:''}); const u=unit(id); if(u)u.retake_note=e?e.value:'';}
 async function gen(id){
   const t=document.getElementById('pr_'+id); if(t&&t.value.trim()) await post('/api/unit/'+id+'/prompt',{prompt:t.value});
+  const rn=document.getElementById('rn_'+id); if(rn) await post('/api/unit/'+id+'/retake_note',{note:rn.value});
   const r=await post('/api/unit/'+id+'/generate',{}); if(r.error){slog(id,'エラー: '+r.error);return;}
   RUN.add(id); markRunning(id,true); const u=unit(id); if(u){u.status='generating';u.running=true;} render(); slog(id,'キュー投入…');
   pollJobs();

@@ -125,6 +125,14 @@ def main():
             page.wait_for_timeout(700)
             u1 = _json.loads(urllib.request.urlopen(base + "/api/units").read())[0]
             check("採用でadopted=1に", u1.get("adopted") == 1)
+
+            # 指示付きリテイク（A）: 指示入力→保存→APIに反映
+            check("リテイク指示欄あり", page.locator("#rn_testcut01").count() == 1)
+            page.fill("#rn_testcut01", "右の木の幹をつなげる")
+            page.locator("#rn_testcut01").blur()
+            page.wait_for_timeout(500)
+            u2 = _json.loads(urllib.request.urlopen(base + "/api/units").read())[0]
+            check("リテイク指示が保存された", u2.get("retake_note") == "右の木の幹をつなげる")
             # 画像ルート（原図/結果/ボード）が200
             import urllib.request
             for which in ("genzu", "result", "board"):
