@@ -1101,7 +1101,9 @@ refresh();
 
 def main(argv=None):
     p = argparse.ArgumentParser(prog="genzu_fix.server", description="原図修正コンソール")
-    p.add_argument("--genzu-dir", required=True)
+    p.add_argument("--project", default=None,
+                   help="discover_assets が作る project json。genzu_dir/boards_dir/out/work/ep を補完")
+    p.add_argument("--genzu-dir", default=None)
     p.add_argument("--out", default="work/console")
     p.add_argument("--csv", default="runs/cut_board_map_ep7.csv")
     p.add_argument("--boards-dir", default=None)
@@ -1121,6 +1123,19 @@ def main(argv=None):
                    help="生成後にAI視覚QC（人物残り/文字残り/画角）も走らせる（要 ANTHROPIC_API_KEY）")
     p.add_argument("--port", type=int, default=8765)
     a = p.parse_args(argv)
+    # --project（discover_assets 出力）で未指定の genzu_dir/boards_dir/out/work/ep を補完。
+    if a.project:
+        pj = _load_json(a.project, {})
+        a.genzu_dir = a.genzu_dir or pj.get("genzu_dir")
+        a.boards_dir = a.boards_dir or pj.get("boards_dir")
+        if a.out == "work/console" and pj.get("out_dir"):
+            a.out = pj["out_dir"]
+        if pj.get("work"):
+            a.work = pj["work"]
+        if pj.get("ep"):
+            a.ep = pj["ep"]
+    if not a.genzu_dir:
+        p.error("--genzu-dir か --project のどちらかが必要です")
     # カット別 situation/remove（great-edisonの3層プロンプトCUT層）。在ればプロンプトに反映。
     cut_info_map = {}
     try:
