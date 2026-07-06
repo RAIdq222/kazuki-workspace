@@ -27,7 +27,10 @@
 
         <label>
           新規キャラ画像フォルダ
-          <input id="inputDir" type="text" placeholder="C:\path\to\new_character\input">
+          <span class="dir-row">
+            <input id="inputDir" type="text" placeholder="C:\path\to\new_character\input">
+            <button id="browseInput" type="button" class="browse-btn">参照…</button>
+          </span>
         </label>
 
         <div class="actions">
@@ -127,7 +130,10 @@
 
         <label>
           出力フォルダ
-          <input id="outputDir" type="text" placeholder="空欄なら入力フォルダ名_preflight">
+          <span class="dir-row">
+            <input id="outputDir" type="text" placeholder="空欄なら入力フォルダ名_preflight">
+            <button id="browseOutput" type="button" class="browse-btn">参照…</button>
+          </span>
         </label>
 
         <div class="actions">

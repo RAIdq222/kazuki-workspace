@@ -574,6 +574,23 @@ function renderUpscalerBlocks() {
   });
 }
 
+async function pickFolder(targetId) {
+  try {
+    const data = await postJson("/api/pick-folder", { initial: readValue(targetId) });
+    if (data.path) {
+      $(targetId).value = data.path;
+      $(targetId).dispatchEvent(new Event("input")); // 保存処理を発火させる
+    }
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+["browseInput", "browseOutput"].forEach((id, index) => {
+  const button = $(id);
+  if (button) button.addEventListener("click", () => pickFolder(index === 0 ? "inputDir" : "outputDir"));
+});
+
 // フォルダ欄はブラウザに保存して、ページを開き直しても消えないようにする
 // （キーは整形画面と別: タグ付けの入力は「整形済み」フォルダを指すことが多いため）
 ["inputDir", "outputDir"].forEach((id) => {

@@ -712,9 +712,15 @@ summary {
 }
 
 #lightboxNeck .neck-label {
-  font-size: 13px;
-  top: 4px;
-  left: 8px;
+  /* 拡大表示では大きく・線に被らないよう上へ浮かせる */
+  font-size: 17px;
+  font-weight: 600;
+  top: -38px;
+  left: 10px;
+  padding: 5px 12px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  line-height: 1.4;
 }
 
 dialog {
