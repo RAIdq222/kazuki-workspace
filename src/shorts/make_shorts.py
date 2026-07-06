@@ -65,15 +65,19 @@ def cut_and_convert(
     mode: str,
     focus_x: float = 0.5,
     has_audio: bool = True,
+    trim_bottom: float = 0.0,
 ) -> None:
     dur = end - start
     cmd = [_ffmpeg_bin(), "-y", "-ss", f"{start:.3f}", "-t", f"{dur:.3f}", "-i", src]
+    # 焼き込み字幕などの下帯を先に切り落とす（trim_bottom は高さに対する割合）
+    pre = f"crop=iw:ih*{1.0 - trim_bottom}:0:0," if trim_bottom > 0 else ""
     if mode == "crop":
-        cmd += ["-filter_complex", _vf_crop(focus_x)]
+        cmd += ["-filter_complex", pre + _vf_crop(focus_x)]
     elif mode == "blurpad":
-        cmd += ["-filter_complex", _vf_blurpad()]
+        cmd += ["-filter_complex", pre + _vf_blurpad()]
     elif mode == "cut":
-        pass  # 画角そのまま
+        if pre:
+            cmd += ["-filter_complex", pre.rstrip(",")]
     else:
         raise ValueError(f"未知のモード: {mode}")
     cmd += ["-c:v", "libx264", "-crf", "18", "-preset", "veryfast", "-pix_fmt", "yuv420p"]
@@ -104,6 +108,7 @@ def make_montage(
     default_focus_x: float,
     has_audio: bool,
     duration: float,
+    trim_bottom: float = 0.0,
 ) -> list[dict]:
     """マイクロカット群を記載順に切り出して結合する（docs/shorts-editing-style.md の型）。"""
     tmp_paths = []
@@ -113,7 +118,7 @@ def make_montage(
         end = min(duration, float(cut["end"]))
         tmp = f"{out_path}.part{j:02d}.mp4"
         focus_x = float(cut.get("focus_x", default_focus_x))
-        cut_and_convert(src, start, end, tmp, mode, focus_x, has_audio)
+        cut_and_convert(src, start, end, tmp, mode, focus_x, has_audio, trim_bottom)
         tmp_paths.append(tmp)
         done.append({"start": start, "end": end, "focus_x": focus_x, "note": cut.get("note", "")})
     concat_clips(tmp_paths, out_path)
@@ -131,6 +136,8 @@ def main() -> None:
     ap.add_argument("--focus-x", type=float, default=0.5, help="crop 時の注視点 (0.0-1.0)")
     ap.add_argument("--auto-focus", action="store_true",
                     help="focus_x 未指定のカットをアニメ顔検出/動き重心で自動推定 (要 opencv)")
+    ap.add_argument("--trim-bottom", type=float, default=0.0,
+                    help="下帯(焼き込み字幕など)を切り落とす高さ割合 (例 0.12)")
     args = ap.parse_args()
 
     estimate = None
@@ -155,7 +162,8 @@ def main() -> None:
                         cut["focus_x"] = round(fx, 3)
                         cut["focus_method"] = method
             done = make_montage(args.input, cuts, out_path, args.mode,
-                                args.focus_x, info.has_audio, info.duration)
+                                args.focus_x, info.has_audio, info.duration,
+                                args.trim_bottom)
             total = sum(c["end"] - c["start"] for c in done)
             manifest.append({
                 "file": out_path,
@@ -168,7 +176,7 @@ def main() -> None:
         start = max(0.0, float(seg["start"]))
         end = min(info.duration, float(seg["end"]))
         focus_x = float(seg.get("focus_x", args.focus_x))
-        cut_and_convert(args.input, start, end, out_path, args.mode, focus_x, info.has_audio)
+        cut_and_convert(args.input, start, end, out_path, args.mode, focus_x, info.has_audio, args.trim_bottom)
         manifest.append({
             "file": out_path,
             "start": start,
