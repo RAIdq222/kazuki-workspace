@@ -118,7 +118,8 @@ def make_montage(
         end = min(duration, float(cut["end"]))
         tmp = f"{out_path}.part{j:02d}.mp4"
         focus_x = float(cut.get("focus_x", default_focus_x))
-        cut_and_convert(src, start, end, tmp, mode, focus_x, has_audio, trim_bottom)
+        tb = float(cut.get("trim_bottom", trim_bottom))  # カット単位で上書き可（字幕行数差対応）
+        cut_and_convert(src, start, end, tmp, mode, focus_x, has_audio, tb)
         tmp_paths.append(tmp)
         done.append({"start": start, "end": end, "focus_x": focus_x, "note": cut.get("note", "")})
     concat_clips(tmp_paths, out_path)

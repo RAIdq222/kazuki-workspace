@@ -43,7 +43,19 @@ Personal Clipper をサーバー側ダウンローダーとして使う。
    python3 -m src.shorts.make_shorts <clip.mp4> <edl.json> -o out/ \
      --mode crop --auto-focus --trim-bottom 0.15
    ```
-6. **検品**: 出力からフレーム抽出して字幕残り・framing を確認（1080x1920）
+6. **セルフチェック（改善ループ・必須）**:
+   ```bash
+   python3 -m src.shorts.review_sheet out/short_01.mp4 <edl.json> -o review/
+   ```
+   機械チェック（解像度/尺16-34s/音声/字幕残り2種のエッジ密度）を確認したうえで、
+   review/ の各カット mid/join フレームを**自分の目で見て**以下を検品する:
+   - 字幕・黒帯の残り（ナレーションが長い区間は字幕2行 → その cut だけ
+     `"trim_bottom": 0.24` に上げる）
+   - カット途中でシーンが変わっていないか（mid と join の絵が別物なら境界ズレ）
+   - **音と映像の意味ズレ**: review.json の audio_text_overlap と cut の note を突き合わせ、
+     動作カット（合掌・投入・すすり等）が対応するセリフ位置に載っているか
+   - framing（被写体の見切れ。ダメなら focus_x を手動指定）
+   問題があれば EDL を直して再ビルド → 再チェック（1〜2周で収束するのが普通）
 7. **完パケ**: タイトル・説明文・タグは **`docs/shorts-metadata-style.md` のルールに従う**
    （タイトルにすべての情報を載せる・末尾に #深夜のドカ食い天使ちゃん・絵文字なし。
    説明文は `src/shorts/data/tenshichan_description.txt` の定型文そのまま。tags固定4種）。
