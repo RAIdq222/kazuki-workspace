@@ -127,6 +127,28 @@ def make_montage(
     return done
 
 
+def apply_audio_bed(src: str, video_path: str, audio_start: float) -> None:
+    """モンタージュ映像に「連続した元音声」を敷き直す（音声ベッド方式）。
+
+    カット毎に音声を切り貼りすると BGM・セリフの繋ぎ目が破綻するため、
+    参照ショートと同じく音声は audio_start からの連続区間をそのまま使い、
+    映像だけをモンタージュにする。長さは映像に合わせて自動で切る。
+    """
+    vdur = probe(video_path).duration
+    tmp = video_path + ".bed.mp4"
+    subprocess.run(
+        [_ffmpeg_bin(), "-y",
+         "-i", video_path,                                  # 映像(モンタージュ済み)
+         "-ss", f"{audio_start:.3f}", "-i", src,            # 音声(連続)
+         "-map", "0:v", "-map", "1:a",
+         "-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
+         "-af", f"afade=t=out:st={max(0.0, vdur - 0.4):.3f}:d=0.4",  # 末尾を軽くフェード
+         "-shortest", "-movflags", "+faststart", tmp],
+        check=True, capture_output=True,
+    )
+    os.replace(tmp, video_path)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("input", help="元の横型動画ファイル")
@@ -164,6 +186,10 @@ def main() -> None:
             done = make_montage(args.input, cuts, out_path, args.mode,
                                 args.focus_x, info.has_audio, info.duration,
                                 args.trim_bottom)
+            # 音声ベッド: {"audio_bed": {"start": 秒}} 指定時、連続音声を敷き直す
+            bed = seg.get("audio_bed")
+            if bed is not None and info.has_audio:
+                apply_audio_bed(args.input, out_path, float(bed.get("start", 0.0)))
             total = sum(c["end"] - c["start"] for c in done)
             manifest.append({
                 "file": out_path,

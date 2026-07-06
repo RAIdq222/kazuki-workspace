@@ -42,15 +42,19 @@ def package(video_path: str, meta: dict, outdir: str) -> str:
     )
 
     # アップロード用テキスト（コピペ前提）
-    hashtags = meta.get("hashtags", ["#Shorts"])
+    hashtags = meta.get("hashtags", [])
     lines = [
         "=== タイトル ===",
         meta.get("title", name),
         "",
         "=== 説明文 ===",
         meta.get("description", ""),
-        "",
-        " ".join(hashtags),
+    ]
+    if hashtags:
+        lines += ["", " ".join(hashtags)]
+    if meta.get("tags"):
+        lines += ["", "=== タグ(tags欄) ===", ", ".join(meta["tags"])]
+    lines += [
         "",
         "=== 情報 ===",
         f"尺: {info.duration:.1f}秒 / {info.width}x{info.height}",

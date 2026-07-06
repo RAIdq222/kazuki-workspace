@@ -33,15 +33,21 @@ Personal Clipper をサーバー側ダウンローダーとして使う。
    `ffmpeg -ss <t> -i clip.mp4 -frames:v 1 f.jpg` でフレーム抽出して**自分の目で確認**
 4. **EDL作成**: `docs/shorts-editing-style.md` の型でモンタージュ EDL（cuts配列）を書く
    - カット境界がシーン変わり目を跨いでいないかフレームで検証する（重要）
-   - セリフはフレーズ完結範囲で拾う
+   - **音声は「音声ベッド方式」が既定**: segments に `"audio_bed": {"start": <秒>}` を
+     付けると、カット毎の切り貼りではなく元音声の連続区間が敷かれる
+     （BGM/セリフの繋ぎ目破綻を防ぐ。参照ショートと同じ構造）。
+     ベッド区間に良いナレーションが乗るよう、映像カットは時系列順を基本にし、
+     口元が大写しのカットはセリフ位置とだいたい合わせる
 5. **生成**:
    ```bash
    python3 -m src.shorts.make_shorts <clip.mp4> <edl.json> -o out/ \
      --mode crop --auto-focus --trim-bottom 0.15
    ```
 6. **検品**: 出力からフレーム抽出して字幕残り・framing を確認（1080x1920）
-7. **完パケ**: タイトル(数字/フック語入り・40字以内)、説明文1〜2行、ハッシュタグを
-   考えて meta.json を書き、`python3 -m src.shorts.package_short` でパッケージ →
+7. **完パケ**: タイトル・説明文・タグは **`docs/shorts-metadata-style.md` のルールに従う**
+   （タイトルにすべての情報を載せる・末尾に #深夜のドカ食い天使ちゃん・絵文字なし。
+   説明文は `src/shorts/data/tenshichan_description.txt` の定型文そのまま。tags固定4種）。
+   meta.json を書き `python3 -m src.shorts.package_short` でパッケージ →
    `SendUserFile` で mp4 + upload.txt を納品
 8. 制約を毎回伝える: 素材は Clipper が選んだ窓に限られる。フル素材で作りたい場合は
    Drive リンク共有（高画質・全範囲）か配布版CLI（ユーザーPCで yt-dlp）を案内
