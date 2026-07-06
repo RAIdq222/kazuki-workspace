@@ -574,6 +574,21 @@ function renderUpscalerBlocks() {
   });
 }
 
+// フォルダ欄はブラウザに保存して、ページを開き直しても消えないようにする
+// （キーは整形画面と別: タグ付けの入力は「整形済み」フォルダを指すことが多いため）
+["inputDir", "outputDir"].forEach((id) => {
+  const element = $(id);
+  if (!element) return;
+  const key = `preflight:tagging:${id}`;
+  const saved = localStorage.getItem(key);
+  if (saved && !element.value) {
+    element.value = saved;
+  }
+  ["input", "change"].forEach((type) =>
+    element.addEventListener(type, () => localStorage.setItem(key, element.value.trim()))
+  );
+});
+
 wireEvents();
 addTrigger("ジャケットあり", "SJKT01");
 addTrigger("マスクあり", "SMSK01");

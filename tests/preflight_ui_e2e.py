@@ -132,6 +132,19 @@ def main() -> int:
             page.wait_for_timeout(300)
             card_after = page.locator(".neck-line[data-neck-id]").first.get_attribute("style")
             check("拡大中の調整がカードの首ラインへ反映", card_before != card_after, f"{card_before} -> {card_after}")
+
+            # フォルダ欄と設定の保存: タグ付けへ移動→戻っても消えない
+            page.fill("#neckRatio", "0.2")
+            page.click("#prepareBtn")  # 実行で設定がサーバへ保存される
+            page.wait_for_function("document.getElementById('progressText').textContent.includes('完了')", timeout=30000)
+            page.goto(base + "/tagging")
+            page.wait_for_timeout(300)
+            page.goto(base + "/")
+            page.wait_for_function("document.getElementById('inputDir').value !== ''", timeout=5000)
+            check("戻っても入力フォルダが残る", page.input_value("#inputDir") == str(raw), page.input_value("#inputDir"))
+            page.wait_for_function("document.getElementById('neckRatio').value === '0.2'", timeout=5000)
+            check("設定(首位置の初期値)も復元される", page.input_value("#neckRatio") == "0.2")
+
             check("JSエラーが出ていない", not errors, "; ".join(errors))
             browser.close()
     finally:

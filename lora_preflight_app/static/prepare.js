@@ -283,6 +283,7 @@ async function pickFolder(targetId) {
     const data = await postJson("/api/pick-folder", { initial: readValue(targetId) });
     if (data.path) {
       $(targetId).value = data.path;
+      $(targetId).dispatchEvent(new Event("input")); // 保存処理を発火させる
     }
   } catch (error) {
     alert(error.message);
@@ -324,6 +325,73 @@ function renderUpscalerBlocks() {
   document.querySelectorAll("[data-upscaler-block]").forEach((block) => {
     block.hidden = block.dataset.upscalerBlock !== mode;
   });
+}
+
+// フォルダ欄はブラウザに保存して、ページを開き直しても消えないようにする
+const PERSIST_FIELDS = ["inputDir", "outputDir"];
+
+function restorePersistedFields() {
+  PERSIST_FIELDS.forEach((id) => {
+    const value = localStorage.getItem(`preflight:${id}`);
+    if (value && $(id) && !$(id).value) {
+      $(id).value = value;
+    }
+  });
+}
+
+function wirePersistedFields() {
+  PERSIST_FIELDS.forEach((id) => {
+    const element = $(id);
+    if (!element) return;
+    element.addEventListener("input", () => {
+      localStorage.setItem(`preflight:${id}`, element.value.trim());
+    });
+    element.addEventListener("change", () => {
+      localStorage.setItem(`preflight:${id}`, element.value.trim());
+    });
+  });
+}
+
+// サーバに保存済みの設定（スライダー等）を画面へ反映する
+async function loadSavedSettings() {
+  let data;
+  try {
+    data = await postJson("/api/settings", {});
+  } catch {
+    return; // 読めなくても既定値で動く
+  }
+  const s = data.settings || {};
+  if (s.padCropX != null) {
+    $("padCropX").value = s.padCropX;
+    $("padCropXValue").textContent = Number(s.padCropX).toFixed(2);
+  }
+  if (s.neckRatio != null) $("neckRatio").value = s.neckRatio;
+  if (s.allowRotate != null) $("allowRotate").checked = Boolean(s.allowRotate);
+  [
+    "upscalerMode",
+    "sdWebuiUrl",
+    "sdWebuiUpscaler",
+    "realesrganExe",
+    "realesrganModel",
+    "realesrganModelDir",
+    "realesrganScale",
+    "realesrganTile",
+    "upscalerCommand",
+  ].forEach((key) => {
+    if (s[key] != null && s[key] !== "" && $(key)) $(key).value = s[key];
+  });
+  renderUpscalerBlocks();
+  if (s.targetSizes) {
+    const sizes = String(s.targetSizes)
+      .split(/[\s,]+/)
+      .filter(Boolean);
+    if (sizes.length) {
+      document.querySelectorAll(".target-size-choice").forEach((input) => {
+        input.checked = sizes.includes(input.value);
+      });
+      selectedTargetSizes();
+    }
+  }
 }
 
 function wireEvents() {
@@ -412,3 +480,6 @@ function wireEvents() {
 wireEvents();
 selectedTargetSizes();
 renderUpscalerBlocks();
+restorePersistedFields();
+wirePersistedFields();
+loadSavedSettings();
