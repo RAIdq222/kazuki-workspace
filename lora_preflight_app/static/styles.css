@@ -675,7 +675,7 @@ summary {
   left: 4px;
   padding: 1px 6px;
   border-radius: 8px;
-  background: rgba(229, 72, 77, 0.9);
+  background: #e5484d;
   color: #fff;
   font-size: 10px;
   white-space: nowrap;
@@ -699,6 +699,22 @@ summary {
   margin-top: 8px;
   color: #dfe6ee;
   font-size: 13px;
+}
+
+.thumb-wrap img {
+  cursor: zoom-in;
+}
+
+.lightbox-imgwrap {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
+#lightboxNeck .neck-label {
+  font-size: 13px;
+  top: 4px;
+  left: 8px;
 }
 
 dialog {

@@ -1051,6 +1051,17 @@ class AppHandler(SimpleHTTPRequestHandler):
                 return
             write_file(self, Path(requested))
             return
+        if path == "/api/source":
+            # 整形対象（元画像）のフル解像度表示。セッションに載っている入力だけ返す
+            query = parse_qs(parsed.query)
+            session = self.load_session(query.get("session", [""])[0])
+            requested = str(Path(unquote(query.get("path", [""])[0])))
+            allowed = {str(Path(image["path"])) for image in (session or {}).get("images", [])}
+            if requested not in allowed:
+                self.send_error(403)
+                return
+            write_file(self, Path(requested))
+            return
         self.send_error(404)
 
     def do_POST(self) -> None:

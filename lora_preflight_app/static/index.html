@@ -211,7 +211,12 @@
 
     <div id="lightbox" hidden>
       <figure>
-        <img id="lightboxImg" alt="拡大表示">
+        <div class="lightbox-imgwrap">
+          <img id="lightboxImg" alt="拡大表示">
+          <div id="lightboxNeck" class="neck-line" hidden>
+            <span class="neck-label">首から下 ここから↓（ドラッグで調整）</span>
+          </div>
+        </div>
         <figcaption id="lightboxCaption"></figcaption>
       </figure>
     </div>

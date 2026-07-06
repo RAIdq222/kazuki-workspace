@@ -94,6 +94,15 @@ def main() -> int:
         check("scan: 寸法を返す", fb.get("size") == [900, 2000], str(fb.get("size")))
         check("scan: 内容範囲を返す", bool(fb.get("contentBox")), str(fb.get("contentBox")))
 
+        # 元画像のフル解像度表示API
+        src_url = f"/api/source?session={session_id}&path={urllib.parse.quote(fb['path'])}"
+        check("元画像拡大: フル解像度取得", len(_get_bytes(base, src_url)) > 1000)
+        try:
+            _get_bytes(base, f"/api/source?session={session_id}&path={urllib.parse.quote(str(work / 'sneaky.png'))}")
+            check("元画像拡大: 未登録パスは拒否", False, "403にならなかった")
+        except urllib.error.HTTPError as exc:
+            check("元画像拡大: 未登録パスは拒否", exc.code == 403, str(exc.code))
+
         # 通常モード（出力フォルダをスキャン後に変更→反映されること=回帰テスト）
         out2 = work / "out2"
         res = _post(

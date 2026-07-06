@@ -195,10 +195,11 @@ function renderImages() {
                <span class="neck-label">首から下 ここから↓（ドラッグで調整）</span>
              </div>`
           : "";
+      const sourceUrl = `/api/source?session=${encodeURIComponent(state.sessionId)}&path=${encodeURIComponent(image.path)}`;
       return `
         <article class="image-card">
-          <div class="thumb-wrap">
-            <img src="${image.thumbUrl}" alt="${escapeHtml(image.name)}">
+          <div class="thumb-wrap" title="クリックで拡大（拡大中も首ラインを調整できます）">
+            <img src="${image.thumbUrl}" alt="${escapeHtml(image.name)}" data-source-full="${escapeHtml(sourceUrl)}" data-id="${escapeHtml(image.id)}">
             ${neckLine}
           </div>
           <div class="card-body">
@@ -288,15 +289,34 @@ async function pickFolder(targetId) {
   }
 }
 
-function openLightbox(src, caption) {
+let lightboxImageId = null;
+
+function positionLightboxNeck(image) {
+  const frac = Math.min(1, Math.max(0, neckYOf(image) / image.size[1]));
+  $("lightboxNeck").style.top = `${(frac * 100).toFixed(2)}%`;
+}
+
+function openLightbox(src, caption, imageId) {
+  lightboxImageId = imageId || null;
   $("lightboxImg").src = src;
   $("lightboxCaption").textContent = caption || "";
+  const image = lightboxImageId ? state.images.find((item) => item.id === lightboxImageId) : null;
+  const showLine =
+    image && image.size && (state.modes[image.id] || "normal") === "fullbody";
+  $("lightboxNeck").hidden = !showLine;
+  if (showLine) {
+    positionLightboxNeck(image);
+  }
   $("lightbox").hidden = false;
 }
 
 function closeLightbox() {
   $("lightbox").hidden = true;
   $("lightboxImg").src = "";
+  if (lightboxImageId) {
+    lightboxImageId = null;
+    renderImages(); // 拡大表示中の首ライン調整をカードへ反映
+  }
 }
 
 function renderUpscalerBlocks() {
@@ -349,12 +369,41 @@ function wireEvents() {
   $("browseInput").addEventListener("click", () => pickFolder("inputDir"));
   $("browseOutput").addEventListener("click", () => pickFolder("outputDir"));
   $("imageGrid").addEventListener("click", (event) => {
-    const img = event.target.closest(".result-thumb img");
-    if (img && img.dataset.full) {
-      openLightbox(img.dataset.full, img.dataset.caption);
+    const resultImg = event.target.closest(".result-thumb img");
+    if (resultImg && resultImg.dataset.full) {
+      openLightbox(resultImg.dataset.full, resultImg.dataset.caption);
+      return;
+    }
+    const sourceImg = event.target.closest(".thumb-wrap > img");
+    if (sourceImg && sourceImg.dataset.sourceFull) {
+      const image = state.images.find((item) => item.id === sourceImg.dataset.id);
+      openLightbox(sourceImg.dataset.sourceFull, image ? image.name : "", sourceImg.dataset.id);
     }
   });
-  $("lightbox").addEventListener("click", closeLightbox);
+  $("lightbox").addEventListener("click", (event) => {
+    if (event.target.closest(".neck-line")) return; // ライン操作では閉じない
+    closeLightbox();
+  });
+  // 拡大表示内の首ラインドラッグ（元画像座標そのままなので精密に合わせられる）
+  $("lightboxNeck").addEventListener("pointerdown", (event) => {
+    const image = state.images.find((item) => item.id === lightboxImageId);
+    if (!image || !image.size) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const wrap = $("lightboxNeck").parentElement;
+    const onMove = (moveEvent) => {
+      const rect = wrap.getBoundingClientRect();
+      const frac = Math.min(1, Math.max(0, (moveEvent.clientY - rect.top) / rect.height));
+      state.neckY[image.id] = Math.round(frac * image.size[1]);
+      positionLightboxNeck(image);
+    };
+    const onUp = () => {
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+    };
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+  });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") closeLightbox();
   });

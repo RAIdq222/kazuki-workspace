@@ -87,11 +87,11 @@ def main() -> int:
             page.click("#scanBtn")
             page.wait_for_selector(".image-card", timeout=10000)
             page.locator("[data-mode-toggle]").first.check()
-            page.wait_for_selector(".neck-line", timeout=5000)
-            check("全身チェックで首ラインが出る", page.locator(".neck-line").count() == 1)
+            page.wait_for_selector(".neck-line[data-neck-id]", timeout=5000)
+            check("全身チェックで首ラインが出る", page.locator(".neck-line[data-neck-id]").count() == 1)
 
             # 首ラインをドラッグ→位置が変わる
-            line = page.locator(".neck-line").first
+            line = page.locator(".neck-line[data-neck-id]").first
             before = line.get_attribute("style")
             box = line.bounding_box()
             page.mouse.move(box["x"] + box["width"] / 2, box["y"] + 1)
@@ -113,6 +113,25 @@ def main() -> int:
             page.wait_for_timeout(200)
             display = page.evaluate("getComputedStyle(document.getElementById('lightbox')).display")
             check("Escで拡大表示が閉じる", display == "none", display)
+
+            # 元画像の拡大表示: 首ライン付きで開き、拡大中にドラッグ調整→カードへ反映
+            page.locator(".thumb-wrap > img").first.click()
+            page.wait_for_timeout(400)
+            display = page.evaluate("getComputedStyle(document.getElementById('lightbox')).display")
+            check("元画像クリックで拡大表示が開く", display == "flex", display)
+            neck_display = page.evaluate("getComputedStyle(document.getElementById('lightboxNeck')).display")
+            check("拡大表示に首ラインが出る", neck_display != "none", neck_display)
+            card_before = page.locator(".neck-line[data-neck-id]").first.get_attribute("style")
+            lb_line = page.locator("#lightboxNeck")
+            box = lb_line.bounding_box()
+            page.mouse.move(box["x"] + box["width"] / 2, box["y"] + 1)
+            page.mouse.down()
+            page.mouse.move(box["x"] + box["width"] / 2, box["y"] + 80, steps=5)
+            page.mouse.up()
+            page.keyboard.press("Escape")
+            page.wait_for_timeout(300)
+            card_after = page.locator(".neck-line[data-neck-id]").first.get_attribute("style")
+            check("拡大中の調整がカードの首ラインへ反映", card_before != card_after, f"{card_before} -> {card_after}")
             check("JSエラーが出ていない", not errors, "; ".join(errors))
             browser.close()
     finally:
