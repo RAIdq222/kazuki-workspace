@@ -128,25 +128,54 @@ def make_montage(
     return done
 
 
-def apply_audio_bed(src: str, video_path: str, audio_start: float) -> None:
+def apply_audio_bed(src: str, video_path: str, bed: dict) -> None:
     """モンタージュ映像に「連続した元音声」を敷き直す（音声ベッド方式）。
 
     カット毎に音声を切り貼りすると BGM・セリフの繋ぎ目が破綻するため、
-    参照ショートと同じく音声は audio_start からの連続区間をそのまま使い、
-    映像だけをモンタージュにする。長さは映像に合わせて自動で切る。
+    参照ショートと同じく音声は元音声の連続区間をそのまま使い、映像だけをモンタージュにする。
+
+    bed の書式:
+      {"start": 秒}                                  … 単一の連続区間（従来）
+      {"parts": [{"start": s, "end": e}, ...],
+       "crossfade": 0.3}                             … 複数区間をクロスフェードで接続。
+                                                        フレーズ単位で音声パートを削る時に使う。
+                                                        接続点は映像のカット替わりに合わせること。
+    いずれも末尾 0.4 秒をフェードアウトし、長さは映像に合わせて切る。
     """
     vdur = probe(video_path).duration
     tmp = video_path + ".bed.mp4"
-    subprocess.run(
-        [_ffmpeg_bin(), "-y",
-         "-i", video_path,                                  # 映像(モンタージュ済み)
-         "-ss", f"{audio_start:.3f}", "-i", src,            # 音声(連続)
-         "-map", "0:v", "-map", "1:a",
-         "-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
-         "-af", f"afade=t=out:st={max(0.0, vdur - 0.4):.3f}:d=0.4",  # 末尾を軽くフェード
-         "-shortest", "-movflags", "+faststart", tmp],
-        check=True, capture_output=True,
-    )
+    end_fade = f"afade=t=out:st={max(0.0, vdur - 0.4):.3f}:d=0.4"
+
+    if "parts" in bed:
+        parts = bed["parts"]
+        xf = float(bed.get("crossfade", 0.3))
+        n = len(parts)
+        fc = f"[1:a]asplit={n}" + "".join(f"[s{i}]" for i in range(n)) + ";"
+        for i, p in enumerate(parts):
+            fc += (f"[s{i}]atrim={float(p['start']):.3f}:{float(p['end']):.3f},"
+                   f"asetpts=PTS-STARTPTS[p{i}];")
+        cur = "[p0]"
+        for i in range(1, n):
+            out = f"[x{i}]" if i < n - 1 else "[xa]"
+            fc += f"{cur}[p{i}]acrossfade=d={xf:.3f}{out};"
+            cur = out
+        if n == 1:
+            fc += "[p0]anull[xa];"
+        fc += f"[xa]{end_fade}[aout]"
+        cmd = [_ffmpeg_bin(), "-y", "-i", video_path, "-i", src,
+               "-filter_complex", fc,
+               "-map", "0:v", "-map", "[aout]",
+               "-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
+               "-shortest", "-movflags", "+faststart", tmp]
+    else:
+        cmd = [_ffmpeg_bin(), "-y",
+               "-i", video_path,
+               "-ss", f"{float(bed.get('start', 0.0)):.3f}", "-i", src,
+               "-map", "0:v", "-map", "1:a",
+               "-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
+               "-af", end_fade,
+               "-shortest", "-movflags", "+faststart", tmp]
+    subprocess.run(cmd, check=True, capture_output=True)
     os.replace(tmp, video_path)
 
 
@@ -187,10 +216,10 @@ def main() -> None:
             done = make_montage(args.input, cuts, out_path, args.mode,
                                 args.focus_x, info.has_audio, info.duration,
                                 args.trim_bottom)
-            # 音声ベッド: {"audio_bed": {"start": 秒}} 指定時、連続音声を敷き直す
+            # 音声ベッド: {"audio_bed": {...}} 指定時、連続音声を敷き直す
             bed = seg.get("audio_bed")
             if bed is not None and info.has_audio:
-                apply_audio_bed(args.input, out_path, float(bed.get("start", 0.0)))
+                apply_audio_bed(args.input, out_path, bed)
             total = sum(c["end"] - c["start"] for c in done)
             manifest.append({
                 "file": out_path,

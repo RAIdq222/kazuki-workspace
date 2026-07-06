@@ -121,10 +121,30 @@ def main() -> None:
             "bottom_strip_density": round(strip, 2),
         })
 
+    # 全編走査: カット中間だけでなく 0.5 秒刻みで字幕残りを見る（カット内で字幕が
+    # 出たり消えたりするため、mid フレームだけでは見逃す）
+    scan_hits = []
+    t = 0.25
+    scan_dir = os.path.join(args.outdir, "scan")
+    os.makedirs(scan_dir, exist_ok=True)
+    while t < info.duration:
+        jpg = os.path.join(scan_dir, f"t{t:05.1f}.jpg")
+        extract_frame(args.video, t, jpg)
+        edge, strip = bottom_band_edge_density(jpg)
+        max_edge = max(max_edge, edge)
+        max_strip = max(max_strip, strip)
+        if edge > 25.0 or strip > 15.0:
+            scan_hits.append({"t": round(t, 2), "band": round(edge, 2),
+                              "strip": round(strip, 2), "frame": os.path.basename(jpg)})
+        else:
+            os.remove(jpg)  # 問題フレームだけ残す
+        t += 0.5
+
     checks["bottom_edge_density_max"] = round(max_edge, 2)
     checks["bottom_strip_density_max"] = round(max_strip, 2)
     # 実測: 字幕なしフレームはおおむね一桁〜十数。最下端ストリップは細い残り帯に敏感
     checks["subtitle_suspect"] = max_edge > 25.0 or max_strip > 15.0
+    checks["scan_hits"] = scan_hits
 
     sheet = {"video": args.video, "checks": checks, "cuts": rows, "transcript": speech}
     out_json = os.path.join(args.outdir, "review.json")
