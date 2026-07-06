@@ -41,7 +41,21 @@ python3 -m src.shorts.probe work/shorts/<name>/source.mp4
 
 で尺・解像度・音声有無を確認。
 
-## 3. シーン解析（Higgsfield）
+## 3-L. シーン解析（ローカル・推奨。外部サービス不要）
+
+```bash
+pip install faster-whisper "opencv-python-headless<5" numpy   # 初回のみ
+python3 -m src.shorts.analyze_local work/shorts/<name>/source.mp4 \
+  -o work/shorts/<name>/analysis.json
+```
+
+- シーン境界・音量・文字起こしが入った Higgsfield 互換 scenes JSON が出る。
+- 映像の意味（何が映っているか）は含まれないため、見どころ候補の各区間から
+  `ffmpeg -ss <t> -i source.mp4 -frames:v 1 frame.png` でフレームを抽出して
+  **自分(Claude)で画像を見て**内容を確認しながら EDL を組む。
+- crop の注視点は `--auto-focus`（手順5）で自動推定できる（アニメ顔検出→動き重心）。
+
+## 3. シーン解析（Higgsfield 版・代替）
 
 1. `mcp__Higgsfield__media_upload` (filename, content_type="video/mp4") → 返ってきた curl で PUT
    → `mcp__Higgsfield__media_confirm` (type="video")

@@ -99,6 +99,26 @@ LLM不使用時のフォールバックとして残す。
 アダプタ層を1枚挟み、`--provider seedance-byteplus / veo / fal:kling` のように
 切替可能にする。価格は各社改定が頻繁なため、実装時に get-cost 相当を必ず挟む。
 
+## 2.5 実装状況（2026-07-06 実装・検証済み）
+
+**「見どころ検出」「縦型化」は外部サービスゼロ（ローカルOSSのみ）で成立することを実証済み。**
+
+| モジュール | 実装 | 依存 |
+|---|---|---|
+| `analyze_local.py` | シーン境界(ffmpeg scdet) + 音量プロファイル(astats) + 文字起こし(faster-whisper small/int8/CPU) → Higgsfield互換 scenes JSON | ffmpeg, faster-whisper (全てOSS・無料) |
+| `focus.py` | crop注視点の自動推定: アニメ顔検出(lbpcascade_animeface, MIT) → 動き重心フォールバック | opencv-python-headless <5 |
+| `make_shorts.py --auto-focus` | focus_x 未指定カットを自動推定してモンタージュ結合 | 同上 |
+
+実測（29秒・実映像クリップ, CPUのみ）: シーン境界15箇所・発話12区間・全処理数十秒。
+whisper の注意: BGM混在素材では `vad_filter=False` + `language='ja'` 必須（VADが発話を落とす）。
+文字起こしは small モデルだと誤字が出るが、見どころ選定用途には十分。精度が要る場合は
+`--whisper-model medium/large-v3` に上げる（CPUだと処理時間増）。
+
+**残る非ローカル要素は「映像の意味理解」のみ**（例:「黄身が割れる瞬間」の識別）。
+- Claude Code セッション運用では、フレーム画像を抽出して Claude 自身が見る（追加API不要）
+- 配布版では (a) 文字起こし+構造情報だけで選定（人がレビュー） (b) Gemini 等のAPIをオプション追加
+  の2段構え。**APIなしでも成立し、APIを足すと選定が賢くなる**という位置づけにする。
+
 ## 3. 移行ステップ（案）
 
 1. **P1**: `providers/` 抽象化 + Gemini 解析プロバイダ実装（scenes JSON を現行スキーマ互換に）

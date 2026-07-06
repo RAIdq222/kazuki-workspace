@@ -129,7 +129,14 @@ def main() -> None:
     ap.add_argument("-o", "--outdir", default="work/shorts_out")
     ap.add_argument("--mode", choices=["crop", "blurpad", "cut"], default="crop")
     ap.add_argument("--focus-x", type=float, default=0.5, help="crop 時の注視点 (0.0-1.0)")
+    ap.add_argument("--auto-focus", action="store_true",
+                    help="focus_x 未指定のカットをアニメ顔検出/動き重心で自動推定 (要 opencv)")
     args = ap.parse_args()
+
+    estimate = None
+    if args.auto_focus:
+        from .focus import estimate_focus_x  # 遅延import（cv2 はオプション依存）
+        estimate = estimate_focus_x
 
     info = probe(args.input)
     with open(args.segments, encoding="utf-8") as f:
@@ -140,7 +147,14 @@ def main() -> None:
     for i, seg in enumerate(segments, 1):
         out_path = os.path.join(args.outdir, f"short_{i:02d}.mp4")
         if "cuts" in seg:  # モンタージュ形式
-            done = make_montage(args.input, seg["cuts"], out_path, args.mode,
+            cuts = seg["cuts"]
+            if estimate:
+                for cut in cuts:
+                    if "focus_x" not in cut:
+                        fx, method = estimate(args.input, float(cut["start"]), float(cut["end"]))
+                        cut["focus_x"] = round(fx, 3)
+                        cut["focus_method"] = method
+            done = make_montage(args.input, cuts, out_path, args.mode,
                                 args.focus_x, info.has_audio, info.duration)
             total = sum(c["end"] - c["start"] for c in done)
             manifest.append({
