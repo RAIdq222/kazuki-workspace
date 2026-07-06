@@ -1,44 +1,59 @@
 ---
 name: shorts-ideate
-description: トレンド/ミームを自動収集し、チャンネル「深夜のドカ食い天使ちゃん」の型と掛け合わせて非・飯テロ系ショートの企画カードを量産する。「ネタ出しして」「企画考えて」で使用。
+description: トレンド収集＋自由発想で企画カードを量産し、ダッシュボード「天使ちゃんスタジオ」のボードへ直接投入する。remake（天使ちゃん変換）や切り抜き依頼などのワーカータスク処理も行う。「ネタ出しして」「スタジオのタスク処理して」で使用。
 ---
 
-# ショート企画の自動ネタ出し
+# ネタ出し＆スタジオワーカー
 
-型とルールの本体は `docs/shorts-ideation.md`（必読）。ここは実行手順のみ。
+型とルールの本体は `docs/shorts-ideation.md`（必読）。
+ダッシュボード: https://summer-bell-707.higgsfield.app （APIトークン: `work/agent_token.txt`）
 
-## 1. トレンド収集
+## A. ネタ出し（カードをボードへ直接投入）
 
-```bash
-python3 -m src.shorts.trends -o work/trends/trends_$(date +%m%d).json --youtube
-```
+ユーザーは**生のトレンドではなく完成した企画カード**を見て採否を判断したい。
+トレンド→カードの1:1変換に縛られず、自由に発想すること。
 
-- YouTube急上昇は失敗することがある（errors に載る）。3ソース取れていれば十分
-- ユーザーがミームを直接指定してきた場合（「今〇〇が流行ってる」）は
-  それを最優先の item として扱う
+1. トレンド収集: `python3 -m src.shorts.trends -o work/trends/trends_$(date +%m%d).json`
+2. **発想（6〜8案）** — 以下をミックスする:
+   - トレンド由来 2〜3案（トレンド2つの掛け算も可。例: サッカー×寝溜め）
+   - **発想シード由来 2〜3案**（トレンド不使用）:
+     季節・曜日・時事の生活イベント（月曜、給料日前、猛暑、健康診断…）／
+     天使ちゃんの生活の未公開領域（休日の過ごし方、実家、会社の給湯室、コンビニ…）／
+     定番型の続編（部屋紹介第2弾、苦手なことシリーズ…）／if妄想（もし天使ちゃんが◯◯だったら）
+   - 実績ある型①②③（生活公開/ミーム参加/不器用チャレンジ）を優先、⑤チルは多くて1
+   - NG: 政治・事故・訃報・下品。飯テロに逃げない
+3. 各案に: タイトル（メタデータルール準拠）/ memo（フック→展開→オチ＋カット割り）/
+   prompt（キャラ定型記述込みSeedance英語プロンプト）/ source（元ネタ表記）
+4. **ボードへ投入**:
+   ```bash
+   TOKEN=$(cat work/agent_token.txt)
+   curl -sS -X POST https://summer-bell-707.higgsfield.app/api/agent/cards \
+     -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+     -d '{"cards":[{"type":"idea","title":"...","memo":"...","source":"...","prompt":"..."}]}'
+   ```
+5. ユーザーには投入した件数と各案の1行サマリだけ報告（詳細はボードで見る）
 
-## 2. 企画カード生成（Claude の仕事）
+## B. ワーカータスク処理（remake / 切り抜き依頼）
 
-収集した items を全部読み、以下でフィルタ→変換する:
+1. タスク取得:
+   ```bash
+   curl -sS https://summer-bell-707.higgsfield.app/api/agent/tasks \
+     -H "Authorization: Bearer $TOKEN"
+   ```
+2. **remake（天使ちゃん変換）** — 「この動画/画像を天使ちゃんでやったらどうなる？」の自動検証:
+   - youtube_url があれば `video_analysis_create(youtube_url)` でシーン解析、
+     image_url があれば画像をダウンロードして自分の目で見る
+   - 元ネタの「面白さの構造」を1行で特定し、天使ちゃんの文脈（OL/深夜/ぼっち/回復）に翻訳
+   - `PATCH /api/agent/cards/:id` で title/memo（変換企画）/prompt を書き込み
+   - **検証生成（1カットのみ、上限50cr）**: `generate_video` model=seedance_2_0,
+     aspect_ratio=9:16, duration≤10, resolution=720p, image_references=三面図
+     （media_id: docs/character-tenshichan.md 参照）。job_id を
+     `POST /api/agent/cards/:id/jobs` で登録し、status を「レビュー」に PATCH
+   - 課金は実行アカウント（既定=オーナーのHiggsfield）。1タスク1検証カットまで。
+     本制作はユーザーがカードを承認してから
+3. **clip（YouTube切り抜き依頼）**: `/shorts-from-video` の手順で制作。
+   完成したら完パケをチャットで納品し、カードの status を「レビュー」に PATCH
 
-1. NG除外: 政治・事故・訃報・係争中の話題
-2. 変換可能性で選別: 「OLの日常/深夜/ぼっち/回復」の文脈に翻訳できるものだけ残す
-3. `docs/shorts-ideation.md` §3 の変換ルールと §1 の型（①生活公開/②ミーム参加/
-   ③不器用チャレンジ/④インタラクション/⑤チル）に当てはめる
-4. **5〜8案**を §4 のカード形式で出す。型①②③を優先し、⑤は多くて1案
-5. トレンド由来でない「定番の型の続編」（部屋紹介第2弾など）も1〜2案混ぜてよい
+## C. 定期実行
 
-各案には必ず: タイトル案（メタデータルール準拠）/ 元ネタとソース / カット割り
-（Seedance 4〜15s×N）/ 必要参照素材 / コスト概算（45cr/10s 720p std）を付ける。
-
-## 3. ユーザー選択 → 制作へ
-
-- ユーザーが案を選んだら `/shorts-from-idea`（Seedance ルート）で制作に入る
-- 参照素材が未提供の場合: `docs/shorts-ideation.md` §6 の表を見せて依頼するか、
-  既存動画からフレーム抽出するフォールバックを提案する
-- 生成前に必ず get_cost で総額を見積もってユーザーに提示する
-
-## 4. 定期実行（任意）
-
-ユーザーが「毎週ネタ出しして」等を求めたら、Claude_Code_Remote の create_trigger
-（cron）でこのスキルの定期起動を提案する。
+毎日のcronセッションは A→B の順で1周する（Aは6〜8案、Bは残タスク全部）。

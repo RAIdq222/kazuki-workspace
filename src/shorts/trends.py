@@ -49,13 +49,16 @@ def google_trends_jp(limit: int = 20) -> list[dict]:
 
 
 def hatena_hotentry(limit: int = 20, category: str = "all") -> list[dict]:
+    import html as _html
+
     xml = _get(f"https://b.hatena.ne.jp/hotentry/{category}.rss")
     root = ET.fromstring(xml)
     items = []
     for i, item in enumerate(root.iter("{http://purl.org/rss/1.0/}item")):
         if i >= limit:
             break
-        title = item.findtext("{http://purl.org/rss/1.0/}title") or ""
+        # XMLパース後もHTMLエンティティ(&#x...;)が残ることがあるためデコード
+        title = _html.unescape(item.findtext("{http://purl.org/rss/1.0/}title") or "")
         link = item.findtext("{http://purl.org/rss/1.0/}link") or ""
         items.append({"source": f"hatena_{category}", "title": title.strip(),
                       "detail": link, "rank": i + 1})
