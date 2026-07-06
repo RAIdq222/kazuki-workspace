@@ -82,6 +82,58 @@ def wikipedia_top_ja(limit: int = 20) -> list[dict]:
     return items
 
 
+def x_trends_yahoo(limit: int = 20) -> list[dict]:
+    """X(Twitter) の日本トレンド。Yahoo!リアルタイム検索（国内Xデータ提携）の
+    トップページに埋め込まれた __NEXT_DATA__ から buzzTrend を取る。"""
+    html = _get("https://search.yahoo.co.jp/realtime").decode("utf-8", errors="ignore")
+    m = re.search(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', html, re.S)
+    if not m:
+        raise RuntimeError("__NEXT_DATA__ が見つからない（ページ構造変更の可能性）")
+    data = json.loads(m.group(1))
+    buzz = data["props"]["pageProps"]["pageData"]["buzzTrend"]["items"]
+    items = []
+    for i, b in enumerate(buzz[:limit]):
+        tw = b.get("tweetCount") or ""
+        items.append({"source": "x_trends_yahoo_jp", "title": b["query"],
+                      "detail": f"{tw} tweets" if tw else "", "rank": i + 1})
+    return items
+
+
+def tiktok_trends_jp(limit: int = 20) -> list[dict]:
+    """TikTok Creative Center（公開・認証不要ページ）の急上昇ハッシュタグ。
+    APIは署名ヘッダが必要なため、ヘッドレスChromiumでページを開いて
+    creative_radar_api のレスポンスを横取りする（定番手法）。"""
+    from playwright.sync_api import sync_playwright
+
+    url = ("https://ads.tiktok.com/business/creativecenter/inspiration/"
+           "popular/hashtag/pc/ja")
+    captured: list = []
+    proxy_url = os.environ.get("HTTPS_PROXY")
+    with sync_playwright() as p:
+        browser = p.chromium.launch(executable_path="/opt/pw-browsers/chromium",
+                                    args=["--no-sandbox"],
+                                    proxy={"server": proxy_url} if proxy_url else None)
+        page = browser.new_page()
+        page.on("response", lambda r: captured.append(r)
+                if "popular_trend/hashtag/list" in r.url else None)
+        page.goto(url, wait_until="networkidle", timeout=60000)
+        items = []
+        for r in captured:
+            try:
+                data = r.json()
+                for h in data.get("data", {}).get("list", []):
+                    items.append({"source": "tiktok_cc_jp",
+                                  "title": "#" + h.get("hashtag_name", ""),
+                                  "detail": f"{h.get('publish_cnt', 0):,} posts",
+                                  "rank": h.get("rank", len(items) + 1)})
+            except Exception:
+                continue
+        browser.close()
+    if not items:
+        raise RuntimeError("Creative Center からデータを取得できず（要デバッグ）")
+    return items[:limit]
+
+
 def youtube_trending_jp(limit: int = 20) -> list[dict]:
     """yt-dlp のメタデータ取得（メディアDLなし）。数十秒かかるので任意。"""
     env = dict(os.environ, NODE_EXTRA_CA_CERTS="/root/.ccr/ca-bundle.crt")
@@ -104,9 +156,12 @@ def main() -> None:
     ap.add_argument("-o", "--out", default="work/trends/trends.json")
     ap.add_argument("--limit", type=int, default=20)
     ap.add_argument("--youtube", action="store_true", help="YouTube急上昇も収集（数十秒）")
+    ap.add_argument("--tiktok", action="store_true", help="TikTok CCも収集（ヘッドレスブラウザ・1分程度）")
     args = ap.parse_args()
 
-    collectors = [google_trends_jp, hatena_hotentry, wikipedia_top_ja]
+    collectors = [google_trends_jp, hatena_hotentry, wikipedia_top_ja, x_trends_yahoo]
+    if args.tiktok:
+        collectors.append(tiktok_trends_jp)
     if args.youtube:
         collectors.append(youtube_trending_jp)
 
