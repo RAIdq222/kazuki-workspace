@@ -85,3 +85,15 @@ python3 -m src.shorts.trends -o work/trends/trends_today.json [--youtube]
 **フォールバック（資料なしでも可）**: 既存動画から立ち絵相当のクリーンなフレームを
 抽出して image_references に使う（実績: 顔・衣装の再現はこの方法でもある程度可能）。
 三面図があれば後ろ姿・横顔カットの破綻が減る。
+
+## 7. チーム用ダッシュボードアプリ「天使ちゃんスタジオ」（2026-07-06 稼働開始）
+
+- URL: https://summer-bell-707.higgsfield.app （Higgsfieldアカウントでサインインして使用）
+- 機能: 企画カードの表管理（アイデア/YouTube切り抜き、ステータス: アイデア→承認→生成中→レビュー→完成）、
+  カード詳細でのSeedance縦型生成（参照画像プリセット=三面図/ぬい/スマホ、コスト表示+確認ゲート、
+  生成は各ユーザー自身のHiggsfieldクレジット）、結果ギャラリー+採用マーク、
+  トレンドタブ（Googleトレンド/はてな/Wikipedia/X(Yahooリアルタイム)をサーバー側で収集→ワンクリックでカード化）
+- YouTube切り抜きカードは「依頼キュー」: 実制作はClaude運用セッション（/shorts-from-video）が
+  担当し、完成したらカードに結果を記録する運用
+- ソース管理: Higgsfieldプラットフォーム側のアプリrepo（website_id: 905b4dfa-61de-4737-a5b7-541fb0d34227,
+  slug: summer-bell-707）。編集は website_repo_access → clone → push → deploy_website
