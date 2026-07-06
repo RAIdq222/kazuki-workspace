@@ -139,16 +139,18 @@ function renderImages() {
         : "";
       const resultGrid = results.length
         ? `<div class="result-grid">${results
-            .map(
-              (r) => `
-              <figure class="result-thumb">
-                <img src="${r.thumbUrl}" alt="${escapeHtml(r.kind)}">
+            .map((r) => {
+              const fullUrl = `/api/output?session=${encodeURIComponent(state.sessionId)}&path=${encodeURIComponent(r.image)}`;
+              const label = `${KIND_LABELS[r.kind] || r.kind} ${r.targetSize || ""}`;
+              return `
+              <figure class="result-thumb" title="クリックで拡大">
+                <img src="${r.thumbUrl}" alt="${escapeHtml(r.kind)}" data-full="${escapeHtml(fullUrl)}" data-caption="${escapeHtml(label)}">
                 <figcaption>
-                  ${escapeHtml(KIND_LABELS[r.kind] || r.kind)} ${escapeHtml(r.targetSize || "")}
+                  ${escapeHtml(label)}
                   ${r.fallback ? '<span class="badge-fallback" title="' + escapeHtml(r.fallback) + '">自動調整</span>' : ""}
                 </figcaption>
-              </figure>`
-            )
+              </figure>`;
+            })
             .join("")}</div>`
         : "";
       return `
@@ -230,6 +232,28 @@ async function prepareImages() {
   }
 }
 
+async function pickFolder(targetId) {
+  try {
+    const data = await postJson("/api/pick-folder", { initial: readValue(targetId) });
+    if (data.path) {
+      $(targetId).value = data.path;
+    }
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+function openLightbox(src, caption) {
+  $("lightboxImg").src = src;
+  $("lightboxCaption").textContent = caption || "";
+  $("lightbox").hidden = false;
+}
+
+function closeLightbox() {
+  $("lightbox").hidden = true;
+  $("lightboxImg").src = "";
+}
+
 function renderUpscalerBlocks() {
   const mode = readValue("upscalerMode", "none");
   document.querySelectorAll("[data-upscaler-block]").forEach((block) => {
@@ -252,6 +276,18 @@ function wireEvents() {
     if (target.matches("[data-mode-toggle]")) {
       state.modes[target.dataset.id] = target.checked ? "fullbody" : "normal";
     }
+  });
+  $("browseInput").addEventListener("click", () => pickFolder("inputDir"));
+  $("browseOutput").addEventListener("click", () => pickFolder("outputDir"));
+  $("imageGrid").addEventListener("click", (event) => {
+    const img = event.target.closest(".result-thumb img");
+    if (img && img.dataset.full) {
+      openLightbox(img.dataset.full, img.dataset.caption);
+    }
+  });
+  $("lightbox").addEventListener("click", closeLightbox);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeLightbox();
   });
 }
 

@@ -1034,6 +1034,21 @@ class AppHandler(SimpleHTTPRequestHandler):
             file_name = Path(query.get("file", [""])[0]).name
             write_file(self, SESSION_ROOT / session_id / "thumbs" / file_name)
             return
+        if path == "/api/output":
+            # 整形済み出力のフル解像度表示。セッションに記録された出力だけ返す
+            query = parse_qs(parsed.query)
+            session = self.load_session(query.get("session", [""])[0])
+            requested = str(Path(unquote(query.get("path", [""])[0])))
+            allowed = {
+                str(Path(output["image"]))
+                for image in (session or {}).get("images", [])
+                for output in image.get("results", [])
+            }
+            if requested not in allowed:
+                self.send_error(403)
+                return
+            write_file(self, Path(requested))
+            return
         self.send_error(404)
 
     def do_POST(self) -> None:
@@ -1058,6 +1073,8 @@ class AppHandler(SimpleHTTPRequestHandler):
                 self.handle_prepare_scan()
             elif self.path == "/api/prepare/image":
                 self.handle_prepare_image()
+            elif self.path == "/api/pick-folder":
+                self.handle_pick_folder()
             elif self.path == "/api/tag/prepare":
                 self.handle_tag_prepare()
             elif self.path == "/api/tag/image":
@@ -1263,7 +1280,16 @@ class AppHandler(SimpleHTTPRequestHandler):
             return
 
         settings = save_settings(merge_settings(session.get("settings") or load_settings(), body))
-        output_dir = Path(session["outputDir"])
+        # 出力フォルダはスキャン時でなく整形実行時の値を尊重する
+        # （スキャン後に入力・変更しても反映されないバグの修正）
+        output_dir_raw = str(body.get("outputDir", "") or "").strip()
+        if output_dir_raw:
+            output_dir = Path(output_dir_raw).expanduser()
+            if not output_dir.is_absolute():
+                output_dir = Path(session["inputDir"]).parent / output_dir
+            session["outputDir"] = str(output_dir)
+        else:
+            output_dir = Path(session["outputDir"])
         dataset_dir = output_dir / "images"
         dataset_dir.mkdir(parents=True, exist_ok=True)
         mode = body.get("mode") or "normal"
@@ -1318,6 +1344,33 @@ class AppHandler(SimpleHTTPRequestHandler):
             json.dumps(session, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
+
+    def handle_pick_folder(self) -> None:
+        """OSのフォルダ選択ダイアログを開いて選択パスを返す（ローカル専用ツール前提）。"""
+        body = read_body(self)
+        initial = str(body.get("initial", "") or "").strip()
+        try:
+            import tkinter as tk
+            from tkinter import filedialog
+
+            root = tk.Tk()
+            root.withdraw()
+            root.attributes("-topmost", True)
+            kwargs = {}
+            if initial:
+                candidate = Path(initial).expanduser()
+                if candidate.is_dir():
+                    kwargs["initialdir"] = str(candidate)
+            selected = filedialog.askdirectory(parent=root, title="フォルダを選択", **kwargs)
+            root.destroy()
+        except Exception as exc:
+            write_json(
+                self,
+                {"ok": False, "error": f"フォルダ選択ダイアログを開けませんでした。パスを直接入力してください。({exc})"},
+                status=500,
+            )
+            return
+        write_json(self, {"ok": True, "path": str(Path(selected)) if selected else ""})
 
     def handle_tag_prepare(self) -> None:
         body = read_body(self)

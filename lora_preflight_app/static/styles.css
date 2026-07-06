@@ -605,6 +605,65 @@ summary {
   font-size: 10px;
 }
 
+.result-thumb img {
+  cursor: zoom-in;
+}
+
+.dir-row {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.dir-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.browse-btn {
+  flex: none;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.browse-btn:hover {
+  border-color: var(--accent);
+}
+
+#lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 12, 16, 0.88);
+  cursor: zoom-out;
+}
+
+#lightbox figure {
+  margin: 0;
+  text-align: center;
+}
+
+#lightbox img {
+  max-width: 92vw;
+  max-height: 88vh;
+  object-fit: contain;
+  background: #1d222a;
+  border-radius: 6px;
+}
+
+#lightbox figcaption {
+  margin-top: 8px;
+  color: #dfe6ee;
+  font-size: 13px;
+}
+
 dialog {
   border: 1px solid var(--line);
   border-radius: 8px;

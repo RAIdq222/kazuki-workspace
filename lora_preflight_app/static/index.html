@@ -27,7 +27,10 @@
 
         <label>
           入力画像フォルダ
-          <input id="inputDir" type="text" placeholder="C:\path\to\raw_images">
+          <span class="dir-row">
+            <input id="inputDir" type="text" placeholder="C:\path\to\raw_images">
+            <button id="browseInput" type="button" class="browse-btn">参照…</button>
+          </span>
         </label>
 
         <div class="actions">
@@ -190,8 +193,12 @@
 
         <label>
           出力フォルダ
-          <input id="outputDir" type="text" placeholder="空欄なら入力フォルダ名_prepared">
+          <span class="dir-row">
+            <input id="outputDir" type="text" placeholder="空欄なら入力フォルダ名_prepared">
+            <button id="browseOutput" type="button" class="browse-btn">参照…</button>
+          </span>
         </label>
+        <span class="hint">画像は選んだフォルダ内の「images」フォルダに保存されます。</span>
 
         <div id="outputSummary" class="summary">未実行</div>
         <div class="actions">
@@ -200,6 +207,13 @@
         </div>
       </section>
     </main>
+
+    <div id="lightbox" hidden>
+      <figure>
+        <img id="lightboxImg" alt="拡大表示">
+        <figcaption id="lightboxCaption"></figcaption>
+      </figure>
+    </div>
 
     <script src="/static/prepare.js"></script>
   </body>

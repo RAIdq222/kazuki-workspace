@@ -16,6 +16,8 @@ import subprocess
 import sys
 import tempfile
 import time
+import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -89,16 +91,24 @@ def main() -> int:
         images = {img["name"]: img for img in scan["images"]}
         session_id = scan["sessionId"]
 
-        # 通常モード
+        # 通常モード（出力フォルダをスキャン後に変更→反映されること=回帰テスト）
+        out2 = work / "out2"
         res = _post(
             base,
             "/api/prepare/image",
-            {"sessionId": session_id, "imageId": images["normal_a.png"]["id"], "mode": "normal", "padCropX": 0.5},
+            {
+                "sessionId": session_id,
+                "imageId": images["normal_a.png"]["id"],
+                "mode": "normal",
+                "padCropX": 0.5,
+                "outputDir": str(out2),
+            },
         )
         outs = res["image"]["results"]
         check("通常: 1枚出力", len(outs) == 1, str(len(outs)))
         out_path = Path(outs[0]["image"])
         check("通常: ファイル名は元名", out_path.name == "normal_a.png", out_path.name)
+        check("通常: スキャン後に変更した出力フォルダへ出る", out_path.parent == out2 / "images", str(out_path))
         with Image.open(out_path) as img:
             check("通常: 出力寸法=規定サイズ", f"{img.width}x{img.height}" == outs[0]["targetSize"], str(img.size))
         check("通常: サムネURLあり", bool(outs[0].get("thumbUrl")))
@@ -125,8 +135,17 @@ def main() -> int:
         for o in outs:
             check(f"全身: {o['kind']} サムネ取得", len(_get_bytes(base, o["thumbUrl"])) > 500)
 
+        # 拡大表示API: セッション記録済みの出力は取得でき、未記録パスは403
+        full_url = f"/api/output?session={session_id}&path={urllib.parse.quote(outs[0]['image'])}"
+        check("拡大表示: フル解像度取得", len(_get_bytes(base, full_url)) > 1000)
+        try:
+            _get_bytes(base, f"/api/output?session={session_id}&path={urllib.parse.quote(str(input_dir / 'normal_a.png'))}")
+            check("拡大表示: 未記録パスは拒否", False, "403にならなかった")
+        except urllib.error.HTTPError as exc:
+            check("拡大表示: 未記録パスは拒否", exc.code == 403, str(exc.code))
+
         # manifest
-        manifest_path = work / "out" / "manifest.json"
+        manifest_path = out2 / "manifest.json"
         check("manifest がある", manifest_path.exists())
         if manifest_path.exists():
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
