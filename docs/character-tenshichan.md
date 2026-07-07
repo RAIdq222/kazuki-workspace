@@ -7,10 +7,27 @@
 
 | 資料 | media_id | 用途 |
 |---|---|---|
-| 三面図（着彩・正面/横/背面） | `09c22898-36d7-433f-9582-f732fc6e5100` | **主参照**。全カットに必ず入れる |
+| 三面図（着彩・正面/横/背面） | `09c22898-36d7-433f-9582-f732fc6e5100` | 形状・衣装ディテールの補助参照 |
 | カラーラフver（3面） | `22cb2de5-1822-40d9-b2a6-1a6d1622f778` | 補助（色味の別解釈） |
 | うさぎぬいぐるみ設定 | `eb75692f-6f08-44ba-822a-5ac8242b22e8` | 部屋シーン・ぬい登場回 |
 | スマホ（ケース）設定 | `ff72251e-1a95-4dd7-b37d-b6e65ddf1fdf` | スマホ操作カット |
+
+### ルック参照フレーム（本編実動画から抽出・字幕除去済み。**塗り/ルックの主参照**）
+
+> 2026-07-07 追加。三面図だけを参照にすると「設定資料の絵」に寄ってしまい
+> 本編のルック（柔らかいグラデの豊かなアニメ塗り＋温かいライティング）から外れる、
+> というユーザー指摘を受けて、本編フレームをルックの一次参照に昇格。
+
+| フレーム | media_id | 内容 |
+|---|---|---|
+| look_face_eating | `ce3220ac-ab9a-4b57-ad34-95044529bf99` | 顔アップ（食事・チョーカー/フード目元） |
+| look_bust_nightstreet | `87d156cd-b768-456b-8394-c906e6837b1e` | 夜街の上半身（叫び顔・照明） |
+| look_full_street | `d951c4ef-1837-4e79-93d5-b76e079942c1` | 夕方の全身立ち（衣装全体・プロポーション） |
+| look_full_dynamic | `2f7fd693-8a70-465c-a598-5bdf9175d8bf` | ダイナミックな全身ポーズ |
+
+再抽出手順: Personal Clipperのクリップ（CloudFront）→ fps=0.5でフレーム展開 →
+lbpcascade_animeface で顔サイズ上位を選抜 → 下部の焼き込み字幕帯をクロップ →
+media_upload。
 
 CloudFront URL は `show_medias`(type=image) でいつでも再取得可。
 
@@ -51,29 +68,35 @@ inner color, large purple eyes, black choker. Japanese anime style.
 
 ## ルック制御の勝ちパターン（2026-07-07 QCテストで確立。以後の生成はこの手順必須）
 
-**教訓**: 三面図参照＋テキストだけのSeedance直行は、耳が長くなる・厚塗りレンダー調に
-なる等でチャンネルのルックから外れる。正解のルックは
-**短い垂れ耳フード＋フラットなセル塗り＋細い均一線＋（本家は）実写寄り背景**。
+**教訓（2段階で学んだ）**:
+- 三面図＋テキストだけのSeedance直行 → 耳が長くなる・別ルックの厚塗り化（初回の失敗）
+- 三面図参照＋「フラットセル塗り」指示 → 今度は**設定資料の絵に寄りすぎて本編と合わない**
+  （2回目の失敗。ユーザー指摘）
+- **正解: ルックは本編実動画フレーム（上記「ルック参照フレーム」）を一次参照にし、
+  三面図は形状・衣装ディテールの補助に回す**。本編のルック＝柔らかいグラデの
+  豊かなアニメ塗り・繊細な線・温かいシネマティックライティング・
+  短い垂れ耳フード・（多くのカットで）実写寄り背景との合成
 
 **2段階QCフロー**:
 1. **スタートフレームを静止画で確定**（安い）: `generate_image` model=nano_banana_pro、
-   三面図を参照に。プロンプトに必ず入れる記述:
-   - `SHORT rounded floppy bunny ears hanging down beside her head (not long ears)`
-   - `flat anime colors, thin uniform clean line art, single-tone simple cel shadows,
-     TV anime finish — NOT painterly, NOT soft-shaded, NOT 3D`
-   - 実写背景合成なら `2D cel-shaded anime girl composited over a photorealistic
-     live-action background` ＋ `soft contact shadow under her feet`
+   参照= **ルック参照フレーム2〜3枚（顔＋全身を混ぜる）**＋必要なら三面図。
+   プロンプトの要点:
+   - `match the identity AND the exact art style / rendering look of the attached
+     anime screenshot references (same series): soft rich anime shading with gentle
+     gradients, warm cinematic lighting, delicate lineart` ＋ `Do NOT flatten the style`
+   - 実写背景合成なら `composited over a photorealistic live-action background`
+     ＋ `soft natural contact shadow under her feet`
    - 細部チェックリスト: 短い垂れ耳 / 紫X釦目＋ピンク頬マーク / リボン / チョーカー /
      絆創膏（右膝下=緑・左すね=青）/ 白フリルソックス＋黒厚底ローファー / ピンクインナー
 2. **合格した静止画を `start_image` にして Seedance で動かす**: roleは
    `start_image`（`image_references` は複数形が正）。プロンプト冒頭に
-   `Keep her design, outfit, proportions and the flat TV-anime cel look with thin
-   clean lines COMPLETELY unchanged from the start frame` を入れる。
-   10秒1カットでルック維持を確認してから本数を増やす
+   `Keep her design, outfit, proportions and the art style COMPLETELY unchanged
+   from the start frame` を入れ、**音声はSE/環境音のみの定型文必須**
+   （docs/shorts-script-style.md §4）。10秒1カットでルック維持を確認してから本数を増やす
 
-**実績**: 浅草雷門Vlogテスト（image job `0eb418c4-…`→video job `415bfa90-…`）で
-10秒間ルック維持を確認。残課題: フードのX釦の×マークが弱く出る / 絆創膏の左右が
-入れ替わることがある（静止画段階で目視チェックして弾く）
+**実績**: 浅草雷門Vlogテスト（三面図版: image `0eb418c4-…`→video `415bfa90-…`/`fdc15805-…`、
+本編ルック版: image `6480199f-…`）。10秒のルック維持・SEのみ音声（whisper検査クリーン）を確認。
+残課題: 絆創膏の左右が入れ替わることがある（静止画段階で目視チェックして弾く）
 
 ## 未収集（あれば追加）
 
