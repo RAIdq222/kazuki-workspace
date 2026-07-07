@@ -49,6 +49,32 @@ inner color, large purple eyes, black choker. Japanese anime style.
 - 参照は最低でも三面図を `image_references` に渡す（横顔/後ろ姿カットで特に効く）
 - ぬい/スマホが映るカットはその設定画も追加で渡す
 
+## ルック制御の勝ちパターン（2026-07-07 QCテストで確立。以後の生成はこの手順必須）
+
+**教訓**: 三面図参照＋テキストだけのSeedance直行は、耳が長くなる・厚塗りレンダー調に
+なる等でチャンネルのルックから外れる。正解のルックは
+**短い垂れ耳フード＋フラットなセル塗り＋細い均一線＋（本家は）実写寄り背景**。
+
+**2段階QCフロー**:
+1. **スタートフレームを静止画で確定**（安い）: `generate_image` model=nano_banana_pro、
+   三面図を参照に。プロンプトに必ず入れる記述:
+   - `SHORT rounded floppy bunny ears hanging down beside her head (not long ears)`
+   - `flat anime colors, thin uniform clean line art, single-tone simple cel shadows,
+     TV anime finish — NOT painterly, NOT soft-shaded, NOT 3D`
+   - 実写背景合成なら `2D cel-shaded anime girl composited over a photorealistic
+     live-action background` ＋ `soft contact shadow under her feet`
+   - 細部チェックリスト: 短い垂れ耳 / 紫X釦目＋ピンク頬マーク / リボン / チョーカー /
+     絆創膏（右膝下=緑・左すね=青）/ 白フリルソックス＋黒厚底ローファー / ピンクインナー
+2. **合格した静止画を `start_image` にして Seedance で動かす**: roleは
+   `start_image`（`image_references` は複数形が正）。プロンプト冒頭に
+   `Keep her design, outfit, proportions and the flat TV-anime cel look with thin
+   clean lines COMPLETELY unchanged from the start frame` を入れる。
+   10秒1カットでルック維持を確認してから本数を増やす
+
+**実績**: 浅草雷門Vlogテスト（image job `0eb418c4-…`→video job `415bfa90-…`）で
+10秒間ルック維持を確認。残課題: フードのX釦の×マークが弱く出る / 絆創膏の左右が
+入れ替わることがある（静止画段階で目視チェックして弾く）
+
 ## 未収集（あれば追加）
 
 - 表情差分シート、パーカー以外の衣装（パジャマ等）、部屋の全景設定画
