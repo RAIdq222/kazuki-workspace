@@ -199,8 +199,16 @@ PAGE = r"""<!DOCTYPE html>
   <div class="grp">
     <button id="addvp">消失点+（水平）</button>
     <button id="addvpv">消失点+（鉛直）</button>
+    <button id="addray">パース線+</button>
     <button id="addchar">人物垂直線+</button>
     <button id="del" class="warn">選択を削除</button>
+  </div>
+  <div class="grp">
+    <button id="addref">参考画像+</button>
+    <input id="refimg" type="file" accept="image/*" style="display:none">
+    <span id="hint3">透明度</span>
+    <input id="ovop" type="range" min="10" max="100" value="70">
+    <span id="oval" class="pill">70%</span>
   </div>
   <div class="grp">
     <label class="chk"><input id="snap" type="checkbox" checked>消失点を地平線へスナップ</label>
@@ -242,8 +250,9 @@ const S = {
   path:'', name:'', img:null, iw:0, ih:0,
   view:{scale:1, ox:0, oy:0},
   horizon:{ya:0.5, yb:0.5},     // 正規化 y（x=0 と x=1 の高さ）
-  vps:[],                        // {x,y,vertical}
+  vps:[],                        // {x,y,vertical,rays:[angle...]} angle=doc-px空間のラジアン
   chars:[],                      // {name, head:{x,y}, foot:{x,y}}
+  overlays:[],                   // {img,name,corners:[{x,y}x4 TL,TR,BR,BL 正規化],opacity}
   density:14, snap:true, lw:4,
   sel:null, drag:null,
 };
@@ -301,6 +310,70 @@ function drawFan(x,vx,vy,r,density){
   }
   x.stroke();
 }
+// ---- 参考画像の射影変形（単位正方形→四隅quadのホモグラフィ＋三角形メッシュ描画）----
+function quadMap(p0,p1,p2,p3){  // p0..p3 = TL,TR,BR,BL（px）
+  const dx1=p1[0]-p2[0], dx2=p3[0]-p2[0], dx3=p0[0]-p1[0]+p2[0]-p3[0];
+  const dy1=p1[1]-p2[1], dy2=p3[1]-p2[1], dy3=p0[1]-p1[1]+p2[1]-p3[1];
+  let g=0,h=0;
+  const den=dx1*dy2-dy1*dx2;
+  if(Math.abs(dx3)>1e-9||Math.abs(dy3)>1e-9){
+    if(Math.abs(den)<1e-12) return null;
+    g=(dx3*dy2-dy3*dx2)/den; h=(dx1*dy3-dy1*dx3)/den;
+  }
+  const a=p1[0]-p0[0]+g*p1[0], b=p3[0]-p0[0]+h*p3[0], c=p0[0];
+  const d=p1[1]-p0[1]+g*p1[1], e=p3[1]-p0[1]+h*p3[1], f=p0[1];
+  return (u,v)=>{const w=g*u+h*v+1; return [(a*u+b*v+c)/w,(d*u+e*v+f)/w];};
+}
+function drawImageTri(x,img,s0,s1,s2,d0,d1,d2){
+  const den=s0[0]*(s1[1]-s2[1])+s1[0]*(s2[1]-s0[1])+s2[0]*(s0[1]-s1[1]);
+  if(Math.abs(den)<1e-9) return;
+  const m11=(d0[0]*(s1[1]-s2[1])+d1[0]*(s2[1]-s0[1])+d2[0]*(s0[1]-s1[1]))/den;
+  const m12=(d0[1]*(s1[1]-s2[1])+d1[1]*(s2[1]-s0[1])+d2[1]*(s0[1]-s1[1]))/den;
+  const m21=(d0[0]*(s2[0]-s1[0])+d1[0]*(s0[0]-s2[0])+d2[0]*(s1[0]-s0[0]))/den;
+  const m22=(d0[1]*(s2[0]-s1[0])+d1[1]*(s0[0]-s2[0])+d2[1]*(s1[0]-s0[0]))/den;
+  const dx=(d0[0]*(s1[0]*s2[1]-s2[0]*s1[1])+d1[0]*(s2[0]*s0[1]-s0[0]*s2[1])+d2[0]*(s0[0]*s1[1]-s1[0]*s0[1]))/den;
+  const dy=(d0[1]*(s1[0]*s2[1]-s2[0]*s1[1])+d1[1]*(s2[0]*s0[1]-s0[0]*s2[1])+d2[1]*(s0[0]*s1[1]-s1[0]*s0[1]))/den;
+  // クリップは重心に向けて僅かに拡張（三角形間の継ぎ目消し）
+  const cx=(d0[0]+d1[0]+d2[0])/3, cy=(d0[1]+d1[1]+d2[1])/3, EX=1.02;
+  const q=p=>[cx+(p[0]-cx)*EX, cy+(p[1]-cy)*EX];
+  const e0=q(d0),e1=q(d1),e2=q(d2);
+  x.save();
+  x.beginPath();x.moveTo(e0[0],e0[1]);x.lineTo(e1[0],e1[1]);x.lineTo(e2[0],e2[1]);x.closePath();x.clip();
+  x.transform(m11,m12,m21,m22,dx,dy);
+  x.drawImage(img,0,0);
+  x.restore();
+}
+// overlay を P(正規化→px) で描く。N×N メッシュで射影近似。
+function drawOverlayOn(x,ov,P,selected,handleR){
+  const map=quadMap(P(ov.corners[0].x,ov.corners[0].y),P(ov.corners[1].x,ov.corners[1].y),
+                    P(ov.corners[2].x,ov.corners[2].y),P(ov.corners[3].x,ov.corners[3].y));
+  if(!map||!ov.img) return;
+  const iw=ov.img.naturalWidth||ov.img.width, ih=ov.img.naturalHeight||ov.img.height;
+  const N=8;
+  x.save();x.globalAlpha=ov.opacity;
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){
+    const u0=i/N,u1=(i+1)/N,v0=j/N,v1=(j+1)/N;
+    const s00=[u0*iw,v0*ih],s10=[u1*iw,v0*ih],s11=[u1*iw,v1*ih],s01=[u0*iw,v1*ih];
+    const d00=map(u0,v0),d10=map(u1,v0),d11=map(u1,v1),d01=map(u0,v1);
+    drawImageTri(x,ov.img,s00,s10,s11,d00,d10,d11);
+    drawImageTri(x,ov.img,s00,s11,s01,d00,d11,d01);
+  }
+  x.restore();
+  if(selected){
+    const pts=ov.corners.map(c=>P(c.x,c.y));
+    x.strokeStyle=C.SEL;x.lineWidth=1.5;x.setLineDash([6,4]);
+    x.beginPath();x.moveTo(pts[0][0],pts[0][1]);for(let k=1;k<4;k++)x.lineTo(pts[k][0],pts[k][1]);x.closePath();x.stroke();x.setLineDash([]);
+    pts.forEach(p=>{x.fillStyle='#2563eb';x.beginPath();x.arc(p[0],p[1],handleR||6,0,Math.PI*2);x.fill();
+      x.strokeStyle='#fff';x.lineWidth=1.5;x.beginPath();x.arc(p[0],p[1],handleR||6,0,Math.PI*2);x.stroke();});
+  }
+}
+// VP から角度 ang（doc-px空間）のパース線分（画面px）を返す
+function raySeg(v,ri,P,r){
+  const vp=P(v.x,v.y);
+  const dir=[Math.cos(v.rays[ri]),Math.sin(v.rays[ri])];
+  const big=(r.x1-r.x0)+(r.y1-r.y0);
+  return clipSeg(vp[0],vp[1],vp[0]+dir[0]*big*3,vp[1]+dir[1]*big*3,r);
+}
 function cross(x,y,col,rad,w){
   ctx.strokeStyle=col;ctx.lineWidth=w||2;
   ctx.beginPath();ctx.moveTo(x-rad,y);ctx.lineTo(x+rad,y);ctx.moveTo(x,y-rad);ctx.lineTo(x,y+rad);ctx.stroke();
@@ -315,10 +388,21 @@ function draw(){
   const r=imgRect();
   ctx.drawImage(S.img,r.x0,r.y0,r.x1-r.x0,r.y1-r.y0);
   const LW=S.lw, GW=Math.max(1,S.lw*0.5), CR=6+S.lw*1.4, DR=3+S.lw*0.9;
+  // 参考画像（アタリ・ラフ）: 背景の上・線の下
+  S.overlays.forEach((ov,i)=>drawOverlayOn(ctx,ov,(nx,ny)=>n2s(nx,ny),
+    S.sel&&S.sel.type==='ov'&&S.sel.i===i, 7));
   // パースガイド（やや濃いめ）
   ctx.save();ctx.globalAlpha=0.6;
   S.vps.forEach(v=>{const [sx,sy]=n2s(v.x,v.y);ctx.strokeStyle=C.GUIDE;ctx.lineWidth=GW;drawFan(ctx,sx,sy,r,S.density);});
   ctx.restore();
+  // 個別パース線（レイ）: 濃く・選択可能
+  S.vps.forEach((v,vi)=>{ (v.rays||[]).forEach((_,ri)=>{
+    const seg=raySeg(v,ri,(nx,ny)=>n2s(nx,ny),r);
+    if(!seg) return;
+    const selr=S.sel&&S.sel.type==='ray'&&S.sel.vi===vi&&S.sel.ri===ri;
+    ctx.strokeStyle=selr?C.SEL:C.GUIDE;ctx.lineWidth=selr?LW+1:Math.max(1.5,LW*0.8);
+    ctx.beginPath();ctx.moveTo(seg[0],seg[1]);ctx.lineTo(seg[2],seg[3]);ctx.stroke();
+  });});
   // 傾け中: 半透明の水平基準線（アイレベル中央の高さに）
   if(S.drag&&S.drag.type==='horizon'&&S.drag.rotating){
     const my=(S.drag.pivotN?S.drag.pivotN.y:(S.horizon.ya+S.horizon.yb)/2);
@@ -352,12 +436,33 @@ function draw(){
 
 // ---- ヒットテスト ----
 function near(sx,sy,px,py,th){return Math.hypot(sx-px,sy-py)<=th;}
+function pointInQuad(mx,my,pts){
+  let inside=false;
+  for(let i=0,j=3;i<4;j=i++){
+    const xi=pts[i][0],yi=pts[i][1],xj=pts[j][0],yj=pts[j][1];
+    if(((yi>my)!==(yj>my)) && (mx < (xj-xi)*(my-yi)/(yj-yi)+xi)) inside=!inside;
+  }
+  return inside;
+}
 function hit(mx,my){
   const th=10;
   for(let i=0;i<S.chars.length;i++){const c=S.chars[i];
     let p=n2s(c.head.x,c.head.y); if(near(mx,my,p[0],p[1],th))return{type:'char',i,sub:'head'};
     p=n2s(c.foot.x,c.foot.y); if(near(mx,my,p[0],p[1],th))return{type:'char',i,sub:'foot'};}
   for(let i=0;i<S.vps.length;i++){const p=n2s(S.vps[i].x,S.vps[i].y); if(near(mx,my,p[0],p[1],12))return{type:'vp',i};}
+  // 個別パース線（レイ）
+  const r=imgRect();
+  for(let vi=0;vi<S.vps.length;vi++){const v=S.vps[vi];
+    for(let ri=0;ri<(v.rays||[]).length;ri++){
+      const seg=raySeg(v,ri,(nx,ny)=>n2s(nx,ny),r);
+      if(seg && distToSeg(mx,my,seg[0],seg[1],seg[2],seg[3])<7)return{type:'ray',vi,ri};
+    }}
+  // 参考画像: 角ハンドル → 本体（後に追加したものを優先）
+  for(let i=S.overlays.length-1;i>=0;i--){const ov=S.overlays[i];
+    const pts=ov.corners.map(c=>n2s(c.x,c.y));
+    for(let ci=0;ci<4;ci++){ if(near(mx,my,pts[ci][0],pts[ci][1],11))return{type:'ov',i,sub:ci}; }
+    if(pointInQuad(mx,my,pts))return{type:'ov',i,sub:'body'};
+  }
   // アイレベル端 / 本体
   const a=n2s(0,S.horizon.ya), b=n2s(1,S.horizon.yb);
   if(near(mx,my,a[0],a[1],th))return{type:'horizon',sub:'a'};
@@ -399,9 +504,11 @@ let dragStart=null;
 cv.addEventListener('mousedown',e=>{
   if(!S.img)return; const m=mouse(e);
   const h=hit(m.x,m.y);
-  S.sel = (h&&(h.type==='vp'||h.type==='char'))?{type:h.type,i:h.i}:S.sel;
+  if(h&&(h.type==='vp'||h.type==='char'||h.type==='ov')) S.sel={type:h.type,i:h.i};
+  else if(h&&h.type==='ray') S.sel={type:'ray',vi:h.vi,ri:h.ri};
   S.drag = h || {type:'horizon',sub:'body'};
   if(!h) S.sel=null;
+  if(S.sel&&S.sel.type==='ov'){const op=S.overlays[S.sel.i].opacity;$('ovop').value=Math.round(op*100);$('oval').textContent=Math.round(op*100)+'%';}
   S.drag.lastY=m.y; S.drag.lastX=m.x; S.drag.rotating=false;
   dragStart={m, horizon:{...S.horizon}};
   draw();
@@ -411,6 +518,21 @@ window.addEventListener('mousemove',e=>{
   const d=S.drag;
   if(d.type==='vp'){const v=S.vps[d.i]; v.x=clampW(nx); v.y=(S.snap&&!v.vertical)?horizonYat(v.x):clampW(ny);}
   else if(d.type==='char'){const c=S.chars[d.i]; c[d.sub].x=clampN(nx); c[d.sub].y=clampN(ny);}
+  else if(d.type==='ray'){
+    // レイの回転: VP→マウスの角度（doc-px空間）に合わせる
+    const v=S.vps[d.vi];
+    v.rays[d.ri]=Math.atan2((ny-v.y)*S.ih,(nx-v.x)*S.iw);
+  }
+  else if(d.type==='ov'){
+    const ov=S.overlays[d.i];
+    if(d.sub==='body'){
+      const dx=(m.x-d.lastX)/(S.iw*S.view.scale), dy=(m.y-d.lastY)/(S.ih*S.view.scale);
+      ov.corners.forEach(c=>{c.x=clampN(c.x+dx);c.y=clampN(c.y+dy);});
+      d.lastX=m.x; d.lastY=m.y;
+    }else{
+      ov.corners[d.sub]={x:clampN(nx),y:clampN(ny)};
+    }
+  }
   else if(d.type==='horizon'){
     if(d.sub==='a'){S.horizon.ya=clampN(ny);applySnap();}
     else if(d.sub==='b'){S.horizon.yb=clampN(ny);applySnap();}
@@ -447,7 +569,7 @@ function setMsg(t){$('msg').textContent=t;}
 function openInfo(j){
   const img=new Image();
   img.onload=()=>{S.img=img;S.iw=j.width;S.ih=j.height;S.path=j.path;S.name=j.name;
-    S.horizon={ya:0.5,yb:0.5};S.vps=[];S.chars=[];S.sel=null;
+    S.horizon={ya:0.5,yb:0.5};S.vps=[];S.chars=[];S.overlays=[];S.sel=null;
     $('path').value=j.path;
     $('info').textContent=`${j.name}  ${j.width}×${j.height}`;
     fitView();draw();setMsg('読込完了。アイレベル/消失点を配置、または「自動推定」。画面外ドラッグで傾け可。');};
@@ -483,15 +605,16 @@ function loadResult(j){
     if(Math.abs(dx)>1e-6){const s=(b[1]-a[1])/dx; S.horizon.ya=a[1]-s*a[0]; S.horizon.yb=a[1]+s*(1-a[0]);}
     else{S.horizon.ya=a[1];S.horizon.yb=b[1];}
   }
-  S.vps=(j.vanishing_points||[]).map(v=>({x:v.x,y:v.y,vertical:(v.axis==='vertical')}));
+  S.vps=(j.vanishing_points||[]).map(v=>({x:v.x,y:v.y,vertical:(v.axis==='vertical'),rays:(v.rays||[]).slice()}));
   S.chars=(j.characters||[]).map((c,i)=>({name:c.name||('人物'+letter(i)),head:{x:c.head[0],y:c.head[1]},foot:{x:c.foot[0],y:c.foot[1]}}));
   applySnap();draw();
 }
 function annotation(){
   return {method:'edit', image:{path:S.path,width:S.iw,height:S.ih},
     eye_level:{a:[0,S.horizon.ya],b:[1,S.horizon.yb]},
-    vanishing_points:S.vps.map((v,i)=>({x:v.x,y:v.y,label:(v.vertical?'VVP':'VP')+(i+1),axis:v.vertical?'vertical':'horizontal'})),
+    vanishing_points:S.vps.map((v,i)=>({x:v.x,y:v.y,label:(v.vertical?'VVP':'VP')+(i+1),axis:v.vertical?'vertical':'horizontal',rays:(v.rays||[]).slice()})),
     characters:S.chars.map((c,i)=>({name:c.name||('人物'+letter(i)),head:[c.head.x,c.head.y],foot:[c.foot.x,c.foot.y]})),
+    overlays:S.overlays.map(o=>({name:o.name,opacity:o.opacity,corners:o.corners.map(c=>[c.x,c.y])})),
     guide_density:S.density, line_scale:S.lw/4, notes:'editor'};
 }
 function baseName(){return S.name?S.name.replace(/\.[^.]+$/,''):'perspective';}
@@ -511,10 +634,18 @@ function renderFullCanvas(withImage){
   const P=(nx,ny)=>[nx*W,ny*H];
   const r={x0:0,y0:0,x1:W,y1:H};
   const lbl=(px,py,t,col)=>{x.font=FS+'px system-ui';x.lineWidth=Math.max(3,LW);x.strokeStyle='rgba(0,0,0,.85)';x.strokeText(t,px,py);x.fillStyle=col;x.fillText(t,px,py);};
+  // 参考画像（アタリ）: PNG保存(withImage)にのみ焼き込む。透過(線だけ)には入れない
+  if(withImage!==false) S.overlays.forEach(ov=>drawOverlayOn(x,ov,(nx,ny)=>P(nx,ny),false,0));
   // ガイド
   x.save();x.globalAlpha=0.6;x.strokeStyle=C.GUIDE;x.lineWidth=GW;
   S.vps.forEach(v=>{const [vx,vy]=P(v.x,v.y);drawFan(x,vx,vy,r,S.density);});
   x.restore();
+  // 個別パース線（レイ）
+  S.vps.forEach(v=>{(v.rays||[]).forEach((_,ri)=>{
+    const seg=raySeg(v,ri,(nx,ny)=>P(nx,ny),r);
+    if(seg){x.strokeStyle=C.GUIDE;x.lineWidth=Math.max(1.5,LW*0.8);
+      x.beginPath();x.moveTo(seg[0],seg[1]);x.lineTo(seg[2],seg[3]);x.stroke();}
+  });});
   // アイレベル
   const [ax,ay]=P(0,S.horizon.ya),[bx,by]=P(1,S.horizon.yb);
   const seg=clipSeg(ax,ay,bx,by,r);
@@ -578,10 +709,42 @@ async function saveJSON(){
   await saveBlobPicker(blob, baseName()+'.perspective.json',
     [{description:'JSON',accept:{'application/json':['.json']}}], 'JSON');
 }
-function addVP(vertical){const x=0.5,y=vertical?0.12:horizonYat(0.5);S.vps.push({x,y,vertical});S.sel={type:'vp',i:S.vps.length-1};draw();}
+function addVP(vertical){const x=0.5,y=vertical?0.12:horizonYat(0.5);S.vps.push({x,y,vertical,rays:[]});S.sel={type:'vp',i:S.vps.length-1};draw();}
 function addChar(){const i=S.chars.length;S.chars.push({name:'人物'+letter(i),head:{x:0.45,y:0.35},foot:{x:0.45,y:0.85}});S.sel={type:'char',i};draw();}
-function delSel(){if(!S.sel)return;if(S.sel.type==='vp')S.vps.splice(S.sel.i,1);if(S.sel.type==='char')S.chars.splice(S.sel.i,1);S.sel=null;draw();}
-function reset(){S.horizon={ya:0.5,yb:0.5};S.vps=[];S.chars=[];S.sel=null;draw();setMsg('リセットしました');}
+// 個別パース線: 選択中のVP（無ければ最後のVP）に1本足す。ドラッグで角度を合わせる。
+function addRay(){
+  if(!S.vps.length){setMsg('先に消失点を追加してください');return;}
+  const vi=(S.sel&&S.sel.type==='vp')?S.sel.i:S.vps.length-1;
+  const v=S.vps[vi]; v.rays=v.rays||[];
+  // 既定角: 下向き45°から少しずつずらす（重なり防止）
+  v.rays.push(Math.PI/4 + v.rays.length*0.22);
+  S.sel={type:'ray',vi,ri:v.rays.length-1};
+  draw();setMsg('パース線を追加（VP'+(vi+1)+'）。線をドラッグで角度調整、Delで削除。');
+}
+// 参考画像（アタリ・ラフ用）: 中央に40%幅で置き、四隅をパースに合わせてドラッグ
+function addOverlayFile(file){
+  const rd=new FileReader();
+  rd.onload=()=>{const img=new Image();
+    img.onload=()=>{
+      const w=0.4, h=0.4*(img.naturalHeight/img.naturalWidth)*(S.iw/S.ih);
+      const cx=0.5, cy=0.5;
+      S.overlays.push({img, name:file.name, opacity:0.7,
+        corners:[{x:cx-w/2,y:cy-h/2},{x:cx+w/2,y:cy-h/2},{x:cx+w/2,y:cy+h/2},{x:cx-w/2,y:cy+h/2}]});
+      S.sel={type:'ov',i:S.overlays.length-1};
+      draw();setMsg('参考画像を追加: '+file.name+'。四隅ハンドルをパース線に沿わせると射影変形されます。');
+    };
+    img.onerror=()=>setMsg('参考画像の読込に失敗: '+file.name);
+    img.src=rd.result;
+  };
+  rd.readAsDataURL(file);
+}
+function delSel(){if(!S.sel)return;
+  if(S.sel.type==='vp')S.vps.splice(S.sel.i,1);
+  if(S.sel.type==='char')S.chars.splice(S.sel.i,1);
+  if(S.sel.type==='ray'){const v=S.vps[S.sel.vi]; if(v&&v.rays)v.rays.splice(S.sel.ri,1);}
+  if(S.sel.type==='ov')S.overlays.splice(S.sel.i,1);
+  S.sel=null;draw();}
+function reset(){S.horizon={ya:0.5,yb:0.5};S.vps=[];S.chars=[];S.overlays=[];S.sel=null;draw();setMsg('リセットしました');}
 
 $('open').onclick=()=>$('file').click();
 $('file').onchange=e=>{const f=e.target.files&&e.target.files[0]; if(f)uploadFile(f); e.target.value='';};
@@ -599,7 +762,13 @@ window.addEventListener('dragover',e=>e.preventDefault());
 window.addEventListener('drop',e=>e.preventDefault());
 $('addvp').onclick=()=>addVP(false);
 $('addvpv').onclick=()=>addVP(true);
+$('addray').onclick=addRay;
 $('addchar').onclick=addChar;
+$('addref').onclick=()=>{if(!S.img){setMsg('先に背景画像を開いてください');return;}$('refimg').click();};
+$('refimg').onchange=e=>{const f=e.target.files&&e.target.files[0]; if(f)addOverlayFile(f); e.target.value='';};
+$('ovop').oninput=e=>{const v=+e.target.value;$('oval').textContent=v+'%';
+  if(S.sel&&S.sel.type==='ov'){S.overlays[S.sel.i].opacity=v/100;draw();}
+  else if(S.overlays.length){S.overlays[S.overlays.length-1].opacity=v/100;draw();}};
 $('del').onclick=delSel;
 $('savepng').onclick=savePNG;
 $('savepngtr').onclick=savePNGLines;

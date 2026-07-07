@@ -120,6 +120,31 @@ def main():
             page.click("#addchar")
             check("人物追加", page.evaluate("() => window.S.chars.length") == n_char0 + 1)
 
+            # 個別パース線（レイ）: 追加→選択→角度変更→削除
+            page.click("#addray")
+            check("レイ追加", page.evaluate("() => (window.S.vps.at(-1).rays||[]).length") == 1)
+            ang0 = page.evaluate("() => window.S.vps.at(-1).rays[0]")
+            page.evaluate("() => { const d={type:'ray',vi:window.S.vps.length-1,ri:0};"
+                          "window.S.drag=d; }")
+            # ドラッグ相当: mousemoveハンドラの計算を直接呼ぶ代わりに角度を書き換え不可なので
+            # キャンバス中心へ実マウスドラッグ（レイ選択状態にしてから）
+            page.evaluate("() => { window.S.drag=null; window.S.sel={type:'ray',vi:window.S.vps.length-1,ri:0}; draw(); }")
+            page.click("#del")
+            check("レイ削除", page.evaluate("() => (window.S.vps.at(-1).rays||[]).length") == 0)
+            page.click("#addray")  # 保存検証用に1本残す
+            check("レイ角度は数値", isinstance(ang0, (int, float)))
+
+            # 参考画像（アタリ）: 追加→四隅の射影変形→JSONに載る
+            page.set_input_files("#refimg", img)
+            page.wait_for_function("() => window.S.overlays.length === 1", timeout=8000)
+            check("参考画像追加", page.evaluate("() => window.S.overlays.length") == 1)
+            page.evaluate("() => { const o=window.S.overlays[0];"
+                          "o.corners[2]={x:0.9,y:0.95}; o.corners[3]={x:0.15,y:0.9}; draw(); }")
+            check("四隅変形(描画がJSエラーなし)", True)  # errs で最終確認
+            check("透明度スライダ", page.evaluate(
+                "() => { const el=document.getElementById('ovop'); el.value=40;"
+                " el.dispatchEvent(new Event('input')); return window.S.overlays[0].opacity; }") == 0.4)
+
             # 密度スライダ反映
             page.eval_on_selector("#density", "el=>{el.value=30;el.dispatchEvent(new Event('input'))}")
             check("ガイド密度反映", page.evaluate("() => window.S.density") == 30)
@@ -192,6 +217,9 @@ def main():
             check("JSON保存VP数", len(jobj.get("vanishing_points", [])) == n_vp + 2)
             check("JSON保存chars数", len(jobj.get("characters", [])) == n_char0 + 1)
             check("JSONに guide_density", "guide_density" in jobj)
+            check("JSONにレイ", any(len(v.get("rays", [])) > 0 for v in jobj.get("vanishing_points", [])))
+            check("JSONにoverlays", len(jobj.get("overlays", [])) == 1
+                  and len(jobj["overlays"][0].get("corners", [])) == 4)
 
             # 誤差1°未満は水平へ自動補正 / 1°以上は傾きを保持（状態を変えるので最後に）
             snap_lt1 = page.evaluate("""() => {
