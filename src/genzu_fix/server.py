@@ -18,6 +18,7 @@ import argparse
 import csv
 import json
 import os
+import queue as _queue
 import re
 import subprocess
 import sys
@@ -35,8 +36,52 @@ PROJ_LOCK = threading.Lock()
 JOBS = {}
 JOBS_LOCK = threading.Lock()
 OVERVIEWS = {}              # "<work>#<ep>" -> {synopsis, scenes, note}
+# 生成ジョブは1本のキュー＋N本のワーカーで捌く（N=同時実行上限＝Higgsfield多重起動を防ぐ）。
+GEN_QUEUE = _queue.Queue()
+_WORKERS_LOCK = threading.Lock()
+_WORKERS_STARTED = False
 
+
+def _ensure_workers():
+    global _WORKERS_STARTED
+    with _WORKERS_LOCK:
+        if _WORKERS_STARTED:
+            return
+        n = max(1, int(CFG.get("max_parallel", 3)))
+        for _ in range(n):
+            threading.Thread(target=_gen_worker, daemon=True).start()
+        _WORKERS_STARTED = True
+
+
+def _gen_worker():
+    while True:
+        uid = GEN_QUEUE.get()
+        try:
+            with JOBS_LOCK:
+                j = JOBS.get(uid)
+                if not j or j.get("status") != "queued":
+                    continue  # キャンセル済み等
+                j["status"] = "running"
+                j["ts"] = time.time()
+            _run_generate(uid)
+        except Exception as e:  # noqa 念のためワーカーを殺さない
+            with JOBS_LOCK:
+                if uid in JOBS:
+                    JOBS[uid].update(status="error", error=str(e)[:300])
+        finally:
+            GEN_QUEUE.task_done()
+
+# 作品プレフィックス→和名。runs/works.json（作品レジストリ）から拡張される。
 WORK_NAMES = {"shz": "尚善"}
+try:
+    from .assets import WORK_ALIASES as _WA
+    for _k, _vs in _WA.items():
+        if _k.isascii():
+            _jp = next((v for v in _vs if not v.isascii()), None)
+            if _jp:
+                WORK_NAMES.setdefault(_k, _jp)
+except Exception:  # noqa レジストリ不整合でもコンソールは起動する
+    pass
 
 
 def _state_path():
@@ -47,17 +92,38 @@ def _projects_path():
     return os.path.join(CFG["out"], "projects.json")
 
 
-def _save_state():
+def _save_state_locked():
+    """STATE を state ファイルへアトミックに書く。呼び出し側が STATE_LOCK 保持前提。"""
     os.makedirs(CFG["out"], exist_ok=True)
+    tmp = _state_path() + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(STATE, f, ensure_ascii=False, indent=2)
+    os.replace(tmp, _state_path())  # 途中書きで壊さない（別スレッドの読込/次回起動を守る）
+
+
+def _save_state():
     with STATE_LOCK:
-        with open(_state_path(), "w", encoding="utf-8") as f:
-            json.dump(STATE, f, ensure_ascii=False, indent=2)
+        _save_state_locked()
+
+
+def _update_state(uid, **kw):
+    """STATE[uid] の変更と保存をロック内でまとめて行う（json.dump 中の同時変更を防ぐ）。"""
+    with STATE_LOCK:
+        STATE.setdefault(uid, {}).update(kw)
+        _save_state_locked()
 
 
 def _load_json(path, default):
     if os.path.exists(path):
-        with open(path, encoding="utf-8") as f:
-            return json.load(f)
+        try:
+            with open(path, encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, OSError) as e:  # 壊れていても起動を止めない
+            try:
+                os.replace(path, path + ".corrupt")  # 退避して原因を残す
+            except OSError:
+                pass
+            print(f"[warn] {path} を読めませんでした（{e}）。既定値で起動します。")
     return default
 
 
@@ -207,16 +273,72 @@ def _result_path(uid):
     return None
 
 
+def _take_dir(uid, n):
+    return os.path.join(_unit_dir(uid), "takes", f"take_{int(n):02d}")
+
+
+def _snapshot_take(uid):
+    """生成直後の結果を takes/take_NN/ に退避（上書きで前版を失わないため）。戻り: テイク番号。"""
+    import shutil
+    ud = _unit_dir(uid)
+    src = os.path.join(ud, "restored_full.png")
+    if not os.path.exists(src):
+        return None
+    with STATE_LOCK:
+        takes = STATE.setdefault(uid, {}).setdefault("takes", [])
+        n = (max(t["n"] for t in takes) + 1) if takes else 1
+    tdir = _take_dir(uid, n)
+    os.makedirs(tdir, exist_ok=True)
+    for fn in ("restored_full.png", "gen_raw.png", "prompt.en.txt", "qc.json"):
+        p = os.path.join(ud, fn)
+        if os.path.exists(p):
+            shutil.copy2(p, os.path.join(tdir, fn))
+    qv = _load_json(os.path.join(ud, "qc.json"), {}).get("verdict")
+    with STATE_LOCK:
+        note = (STATE.get(uid, {}).get("retake_note") or "").strip()
+        STATE.setdefault(uid, {}).setdefault("takes", []).append(
+            {"n": n, "ts": time.time(), "qc": qv, "note": note})
+        STATE[uid]["adopted"] = n
+        _save_state_locked()
+    return n
+
+
+def _adopt_take(uid, n):
+    """過去テイクを現行結果に採用（root へ戻す＋qcも切替）。best-effort で PSD 再差し込み。"""
+    import shutil
+    tdir = _take_dir(uid, n)
+    src = os.path.join(tdir, "restored_full.png")
+    if not os.path.exists(src):
+        return False
+    ud = _unit_dir(uid)
+    shutil.copy2(src, os.path.join(ud, "restored_full.png"))
+    for fn in ("gen_raw.png", "prompt.en.txt", "qc.json"):
+        p = os.path.join(tdir, fn)
+        if os.path.exists(p):
+            shutil.copy2(p, os.path.join(ud, fn))
+    _update_state(uid, adopted=int(n))
+    return True
+
+
 def _genzu_preview(uid, psd_path, source="base", force=False):
-    out = os.path.join(_unit_dir(uid), "visible.png")
-    if (force or not os.path.exists(out)) and psd_path:
+    # ソース別ファイル名（base/visible を分離）＋ process_cut の中間 visible.png と衝突させない。
+    out = os.path.join(_unit_dir(uid), f"genzu_{source}.png")
+    stale = bool(psd_path and os.path.exists(out) and os.path.exists(psd_path)
+                 and os.path.getmtime(psd_path) > os.path.getmtime(out))  # PSD更新で再取得
+    if (force or stale or not os.path.exists(out)) and psd_path:
         os.makedirs(_unit_dir(uid), exist_ok=True)
         try:
             if source == "visible":
                 psd_export.export_visible_to_png(psd_path, out, drop_text=False)
+            elif source == "override":
+                names = set(STATE.get(uid, {}).get("layers_show") or [])
+                allnames = [li.name for li in psd_export.list_layers(psd_path)]
+                psd_export.export_with_overrides(
+                    psd_path, out, show=names, hide={n for n in allnames if n not in names})
             else:
                 psd_export.export_background_layer(psd_path, out, include_book=CFG["include_book"])
-        except Exception:
+        except Exception as e:  # noqa
+            print(f"[warn] 原図プレビュー失敗 {uid}/{source}: {str(e)[:200]}")
             return None
     return out if os.path.exists(out) else None
 
@@ -257,32 +379,75 @@ def _run_generate(uid):
         with JOBS_LOCK:
             JOBS[uid].update(status="error", error="原図PSDが見つかりません")
         return
-    st = STATE.setdefault(uid, {})
+    st = STATE.get(uid, {})
+    prev_status = st.get("status", "todo")   # 失敗時に戻す（「生成中」で固まらせない）
     board = st.get("board", u["board"])
     board_path = _board_png(proj, board) if (proj.get("boards_dir") and board) else None
+    # リテイク指示（端的な修正メモ）があれば、最終プロンプト末尾へ最優先の修正指示として足す。
+    note = (st.get("retake_note") or "").strip()
+    base_prompt = st.get("prompt") or None
+    if note:
+        cut0 = u["cuts"][0] if u.get("cuts") else ""
+        eff = base_prompt or batch.build_prompt_pair(
+            board, u["scene"], None, cut=cut0, cut_info_map=CFG.get("cut_info_map"))[0]
+        base_prompt = eff + "\n\n[RETAKE CORRECTION — apply with top priority]: " + note
     try:
-        log("prep→生成→finish 実行中…")
-        batch.process_cut(psd, board, u["scene"], _unit_dir(uid), st.get("prompt") or None,
+        log("prep→生成→finish 実行中…" + (f"（指示: {note[:30]}）" if note else ""))
+        batch.process_cut(psd, board, u["scene"], _unit_dir(uid), base_prompt,
                           CFG["resolution"], CFG["quality"], CFG["model"], CFG["image_flag"],
                           dry=False, include_book=CFG["include_book"],
                           header_top=CFG["header_top"], board_path=board_path,
                           genzu_source=st.get("genzu_source", "base"),
+                          genzu_layers=st.get("layers_show"),
                           cut_num=(u["cuts"][0] if u.get("cuts") else ""),
-                          cut_info_map=CFG.get("cut_info_map"))
+                          cut_info_map=CFG.get("cut_info_map"),
+                          qc_vision=CFG.get("qc_vision", False))
+        n = _snapshot_take(uid)   # 上書きせず takes/take_NN/ に保存（S5・前版を失わない）
         with STATE_LOCK:
-            if st.get("generated_once"):
-                st["retakes"] = st.get("retakes", 0) + 1
-            st["generated_once"] = True
-            st["status"] = "done"
-            st["last_run"] = time.time()
-        _save_state()
+            s = STATE.setdefault(uid, {})
+            if s.get("generated_once"):
+                s["retakes"] = s.get("retakes", 0) + 1
+            s["generated_once"] = True
+            s["status"] = "done"
+            s["last_run"] = time.time()
+            _save_state_locked()
         with JOBS_LOCK:
             JOBS[uid].update(status="done")
-        log("完了")
+        log(f"完了（テイク{n}）" if n else "完了")
     except Exception as e:  # noqa
+        # 「生成中」のまま固めない＝元の状態へ戻す（再生成できるように）
+        _update_state(uid, status=(prev_status if prev_status != "generating" else "todo"))
         with JOBS_LOCK:
             JOBS[uid].update(status="error", error=str(e)[:300])
         log("失敗: " + str(e)[:200])
+
+
+def _enqueue(uids, force):
+    """生成キューに積む。force=False は冪等（既生成/原図待ちをスキップ）。
+    戻り: (queued[uid...], skipped[(uid,理由)...])。理由= no_psd / done / busy。"""
+    queued, skipped = [], []
+    for uid in uids:
+        proj, u = _find_unit(uid)
+        if not u:
+            skipped.append((uid, "not_found"))
+            continue
+        if u["filename"] not in proj["psd_idx"]:
+            skipped.append((uid, "no_psd"))          # 原図待ち＝スキップ（後日rescanで拾う）
+            continue
+        if not force and _result_path(uid):
+            skipped.append((uid, "done"))            # 既生成＝スキップ（S2冪等・再課金防止）
+            continue
+        with JOBS_LOCK:
+            if JOBS.get(uid, {}).get("status") in ("queued", "running"):
+                skipped.append((uid, "busy"))
+                continue
+            JOBS[uid] = {"status": "queued", "log": [], "error": None, "ts": time.time()}
+        _update_state(uid, status="generating")
+        GEN_QUEUE.put(uid)
+        queued.append(uid)
+    if queued:
+        _ensure_workers()
+    return queued, skipped
 
 
 def create_app():
@@ -294,6 +459,7 @@ def create_app():
         st = STATE.get(uid, {})
         with JOBS_LOCK:
             running = JOBS.get(uid, {}).get("status") == "running"
+        q = _load_json(os.path.join(_unit_dir(uid), "qc.json"), {})
         return {"id": uid, "cuts": u["cuts"], "assignee": u["assignee"], "scene": u["scene"],
                 "board": st.get("board", u["board"]), "group": proj["group"], "project": proj["key"],
                 "work": proj["work"], "ep": proj["ep"],
@@ -301,6 +467,9 @@ def create_app():
                 "status": st.get("status", "todo"), "running": running,
                 "genzu_source": st.get("genzu_source", "base"),
                 "has_result": _result_path(uid) is not None,
+                "qc_verdict": q.get("verdict"), "qc_reasons": q.get("reasons", []),
+                "takes": st.get("takes", []), "adopted": st.get("adopted"),
+                "retake_note": st.get("retake_note", ""),
                 "prompt_edited": bool(st.get("prompt")), "retakes": st.get("retakes", 0)}
 
     @app.get("/")
@@ -387,34 +556,54 @@ def create_app():
 
     @app.post("/api/unit/<uid>/prompt")
     def api_prompt(uid):
-        STATE.setdefault(uid, {})["prompt"] = (request.json or {}).get("prompt", "").strip() or None
-        _save_state()
+        _update_state(uid, prompt=(request.json or {}).get("prompt", "").strip() or None)
         return jsonify({"ok": True})
 
     @app.post("/api/unit/<uid>/board")
     def api_board(uid):
-        STATE.setdefault(uid, {})["board"] = (request.json or {}).get("board", "")
-        _save_state()
+        _update_state(uid, board=(request.json or {}).get("board", ""))
+        return jsonify({"ok": True})
+
+    @app.post("/api/unit/<uid>/retake_note")
+    def api_retake_note(uid):
+        _update_state(uid, retake_note=(request.json or {}).get("note", "").strip())
         return jsonify({"ok": True})
 
     @app.post("/api/unit/<uid>/accept")
     def api_accept(uid):
-        STATE.setdefault(uid, {})["status"] = (request.json or {}).get("value", "accepted")
-        _save_state()
+        _update_state(uid, status=(request.json or {}).get("value", "accepted"))
         return jsonify({"ok": True})
+
+    @app.get("/api/unit/<uid>/layers")
+    def api_layers(uid):
+        proj, u = _find_unit(uid)
+        if not u:
+            return jsonify({"error": "not found"}), 404
+        psd = proj["psd_idx"].get(u["filename"])
+        if not psd:
+            return jsonify({"error": "PSDが見つかりません"}), 404
+        try:
+            layers = [{"name": li.name, "kind": li.kind, "visible": li.visible, "depth": li.depth}
+                      for li in psd_export.list_layers(psd)]
+        except Exception as e:  # noqa
+            return jsonify({"error": str(e)[:200]}), 500
+        return jsonify({"layers": layers, "selected": STATE.get(uid, {}).get("layers_show", [])})
 
     @app.post("/api/unit/<uid>/recapture")
     def api_recapture(uid):
         proj, u = _find_unit(uid)
         if not u:
             return jsonify({"error": "not found"}), 404
-        source = (request.json or {}).get("source", "base")
-        STATE.setdefault(uid, {})["genzu_source"] = source
-        _save_state()
+        b = request.json or {}
+        source = b.get("source", "base")
+        kw = {"genzu_source": source}
+        if source == "override":
+            kw["layers_show"] = list(b.get("layers") or [])
+        _update_state(uid, **kw)
         psd = proj["psd_idx"].get(u["filename"])
         p = _genzu_preview(uid, psd, source=source, force=True)
         if not p:
-            return jsonify({"error": "原図の取得に失敗（PSD未検出?）"}), 400
+            return jsonify({"error": "原図の取得に失敗（PSD未検出? / レイヤー未選択?）"}), 400
         return jsonify({"ok": True, "source": source})
 
     @app.post("/api/unit/<uid>/open")
@@ -433,22 +622,73 @@ def create_app():
 
     @app.post("/api/unit/<uid>/generate")
     def api_generate(uid):
-        proj, u = _find_unit(uid)
-        if not u:
-            return jsonify({"error": "not found"}), 404
-        with JOBS_LOCK:
-            if JOBS.get(uid, {}).get("status") == "running":
+        # 単体生成はユーザーの明示操作＝force（リテイク含む）。キュー経由で同時数を守る。
+        q, s = _enqueue([uid], force=True)
+        if not q:
+            reason = dict(s).get(uid, "error")
+            if reason == "busy":
                 return jsonify({"error": "already running"}), 409
-            JOBS[uid] = {"status": "running", "log": [], "error": None, "ts": time.time()}
-        STATE.setdefault(uid, {})["status"] = "generating"
-        _save_state()
-        threading.Thread(target=_run_generate, args=(uid,), daemon=True).start()
-        return jsonify({"ok": True})
+            return jsonify({"error": reason}), 400
+        return jsonify({"ok": True, "queued": 1})
+
+    @app.post("/api/generate_batch")
+    def api_generate_batch():
+        b = request.json or {}
+        force = bool(b.get("force"))
+        uids = b.get("uids")
+        # scope 指定時はグループ内から候補を集め、done/no_psd の判定は _enqueue に委ねる
+        # （スキップ理由を集計してユーザーに見せるため）。
+        if uids is None:
+            group = b.get("group")
+            scope = b.get("scope", "ungenerated")  # ungenerated | failed
+            uids = []
+            for p in PROJECTS.values():
+                if group and p["group"] != group:
+                    continue
+                for u in p["units"].values():
+                    uid = u["id"]
+                    if scope == "failed":
+                        with JOBS_LOCK:
+                            if JOBS.get(uid, {}).get("status") == "error":
+                                uids.append(uid)
+                    elif STATE.get(uid, {}).get("status") != "accepted":  # OK済は対象外
+                        uids.append(uid)
+            if scope == "failed":
+                force = True  # 失敗の再実行は明示再生成
+        q, s = _enqueue(uids, force=force)
+        from collections import Counter
+        return jsonify({"queued": len(q), "skipped": len(s),
+                        "skip_reasons": dict(Counter(r for _, r in s))})
+
+    @app.post("/api/unit/<uid>/adopt")
+    def api_adopt(uid):
+        n = (request.json or {}).get("take")
+        if not _adopt_take(uid, n):
+            return jsonify({"error": "テイクが見つかりません"}), 404
+        return jsonify({"ok": True, "adopted": int(n)})
+
+    @app.get("/api/jobs")
+    def api_jobs():
+        with JOBS_LOCK:
+            active = {uid: {"status": j["status"], "error": j.get("error")}
+                      for uid, j in JOBS.items() if j.get("status") in ("queued", "running")}
+            counts = {}
+            for j in JOBS.values():
+                counts[j.get("status")] = counts.get(j.get("status"), 0) + 1
+        return jsonify({"active": active, "counts": counts,
+                        "busy": len(active), "qsize": GEN_QUEUE.qsize()})
 
     @app.get("/api/unit/<uid>/job")
     def api_job(uid):
         with JOBS_LOCK:
             return jsonify(dict(JOBS.get(uid, {"status": "idle", "log": [], "error": None})))
+
+    @app.get("/img/<uid>/take/<int:n>")
+    def img_take(uid, n):
+        p = os.path.join(_take_dir(uid, n), "restored_full.png")
+        if not os.path.exists(p):
+            return "", 404
+        return send_file(os.path.abspath(p))
 
     @app.get("/img/<uid>/<which>")
     def img(uid, which):
@@ -516,6 +756,10 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
  .thumbs figure{margin:0;flex:1} .thumbs figcaption{font-size:10px;color:#888}
  .thumbs img{width:100%;height:150px;object-fit:contain;border:1px solid #eee;background:#fff;cursor:zoom-in}
  .ph{height:150px;border:1px dashed #ddd;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:11px}
+ .rnote{width:100%;font-size:12px;padding:4px 6px;border:1px solid #cbd;border-radius:6px;background:#fbfcff}
+ .takes{font-size:11px;color:#666;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+ .takechip{font-size:11px;padding:2px 7px;border:1px solid #ccc;border-radius:10px;background:#fff;cursor:pointer}
+ .takechip.on{background:#1a5fb4;color:#fff;border-color:#1a5fb4}
  .prog{height:6px;background:#ffe6a8;border-radius:4px;overflow:hidden;display:none}
  .prog.on{display:block} .prog>i{display:block;height:100%;width:40%;background:#bf8700;animation:slide 1.1s infinite}
  @keyframes slide{0%{margin-left:-40%}100%{margin-left:100%}}
@@ -561,9 +805,12 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
    担当 <select id="fAssignee" style="width:auto"><option value="">全部</option></select>
    状態 <select id="fStatus" style="width:auto"><option value="">全部</option><option>todo</option><option>generating</option><option>done</option><option>accepted</option><option>reject</option></select>
    <label><input type="checkbox" id="fResult"> 未生成のみ</label>
+   <label><input type="checkbox" id="fQC"> QC要確認のみ</label>
    <span class="grow"></span>
    <span class="summary" id="summary"></span>
-   <button onclick="rescan()">フォルダ再取得</button><button onclick="refresh()">更新</button>
+   <button class="primary" onclick="genBatch('ungenerated')" title="この話数の未生成カットをまとめてキュー投入">未生成を一括生成</button>
+   <button onclick="genBatch('failed')" title="失敗したカットだけ再実行">失敗のみ再実行</button>
+   <button onclick="rescan()" title="原図フォルダを再走査（後から届いた原図を取り込む）">フォルダ再取得</button><button onclick="refresh()">更新</button>
  </div>
 </header>
 <main><section id="ovbox"></section><div class="grid" id="grid"></div></main>
@@ -600,11 +847,13 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
     <button onclick="document.getElementById('gmodal').style.display='none'">閉じる</button></div>
   <img id="gImg">
   <div class="bar" style="margin-top:10px;align-items:center">原図ソース:
-    <label><input type="radio" name="gsrc" value="base"> 自動検出(Base)</label>
-    <label><input type="radio" name="gsrc" value="visible"> 見たまま(visible)</label>
+    <label><input type="radio" name="gsrc" value="base" onchange="onGsrc()"> 自動検出(Base)</label>
+    <label><input type="radio" name="gsrc" value="visible" onchange="onGsrc()"> 見たまま(visible)</label>
+    <label><input type="radio" name="gsrc" value="override" onchange="onGsrc()"> レイヤー選択</label>
     <button class="primary" onclick="recapture()">この設定で取得しなおす</button>
     <span id="gMsg" class="muted"></span></div>
-  <div class="muted">PhotoshopでPSDを直して保存→ここで「取得しなおす」。Baseは背景レイヤー自動検出、visibleは表示中の全レイヤー合成。</div>
+  <div id="gLayers" style="display:none;max-height:200px;overflow:auto;border:1px solid #eee;padding:6px;margin-top:6px;font-size:12px"></div>
+  <div class="muted">PhotoshopでPSDを直して保存→「取得しなおす」。Base=背景レイヤー自動検出／visible=表示中の全レイヤー／レイヤー選択=チェックしたレイヤーだけを原図にする（025/052 の誤検出対策）。</div>
 </div></div>
 
 <div class="ov" id="modal"><div class="box">
@@ -621,6 +870,7 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
 let UNITS=[],PROJECTS=[],WORK=null,GROUP=null,BOARDS=[],GCUR=null,BOARDFILES=false;
 let CMPMODE=(function(){try{return localStorage.getItem('cmpmode')||'side'}catch(e){return 'side'}})();
 let CMPSWAP=false,CMPSRC={g:'',r:''};
+let POLL=null,BATCH='';
 const RUN=new Set();
 const $=s=>document.querySelector(s);
 const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
@@ -712,18 +962,43 @@ async function renderOverview(cur){
     ${o.note?`<div class="note">${esc(o.note)}</div>`:''}</details>`;
 }
 function render(){
-  const fa=$('#fAssignee').value,fs=$('#fStatus').value,fr=$('#fResult').checked;
+  const fa=$('#fAssignee').value,fs=$('#fStatus').value,fr=$('#fResult').checked,fq=$('#fQC').checked;
   const all=UNITS.filter(u=>u.group===GROUP);
-  const us=all.filter(u=>(!fa||u.assignee===fa)&&(!fs||u.status===fs)&&(!fr||!u.has_result));
+  const us=all.filter(u=>(!fa||u.assignee===fa)&&(!fs||u.status===fs)&&(!fr||!u.has_result)
+    &&(!fq||['needs_retake','human'].includes(u.qc_verdict)));
   const gen=all.filter(u=>u.has_result).length, ok=all.filter(u=>u.status==='accepted').length, ng=all.filter(u=>u.status==='reject').length;
   const pct=all.length?Math.round(ok/all.length*100):0;
   const running=[...RUN].map(unit).filter(u=>u&&u.group===GROUP);
-  $('#summary').innerHTML=(running.length?`<span class="pill run">⏳生成中 ${running.length}: c${running.map(u=>u.cuts.join(',')).join(' / c')}</span>`:'')
+  $('#summary').innerHTML=(BATCH?`<span class="pill run">⏳ ${BATCH}</span>`:(running.length?`<span class="pill run">⏳生成中 ${running.length}: c${running.map(u=>u.cuts.join(',')).join(' / c')}</span>`:''))
     +`<span class="pill">全${all.length}</span><span class="pill">生成済 ${gen}</span>`
     +`<span class="pill ok">OK ${ok}</span><span class="pill ng">要修正 ${ng}</span><span class="pill">未生成 ${all.length-gen}</span>`
     +`<div class="pbar"><i style="width:${pct}%"></i></div><span class="muted">${pct}% OK</span>`;
   $('#grid').innerHTML=us.map(card).join('');
   us.forEach(u=>{if(RUN.has(u.id))markRunning(u.id,true);});
+}
+function qcBadge(u){
+  if(!u.qc_verdict||u.qc_verdict==='unknown') return '';
+  const map={pass:['QC✓','#dff3e6','#0a5'],needs_retake:['QC⚠','#fde2e2','#d1242f'],
+             human:['QC要確認','#fff3d6','#a36a00']};
+  const m=map[u.qc_verdict]; if(!m) return '';
+  const tip=(u.qc_reasons||[]).join(' / ');
+  return `<span class="b" style="background:${m[1]};color:${m[2]}" title="${esc(tip)}">${m[0]}</span>`;
+}
+function takeStrip(u){
+  const tk=u.takes||[]; if(tk.length<2) return '';   // 2テイク以上で履歴を出す
+  const chips=tk.map(t=>{
+    const on=(t.n===u.adopted);
+    const qc=t.qc==='needs_retake'||t.qc==='human'?' ⚠':(t.qc==='pass'?' ✓':'');
+    const tip=`テイク${t.n}${qc}を採用`+(t.note?`\n指示: ${t.note}`:'');
+    return `<button class="takechip${on?' on':''}" title="${esc(tip)}" onclick="adoptTake('${u.id}',${t.n})">T${t.n}${on?'●':''}${qc}${t.note?'📝':''}</button>`;
+  }).join('');
+  return `<div class="takes">テイク履歴: ${chips}<span class="muted">（クリックで採用＝現行結果に戻す）</span></div>`;
+}
+async function adoptTake(id,n){
+  const u=unit(id); if(u&&u.adopted===n) return;
+  const r=await post('/api/unit/'+id+'/adopt',{take:n});
+  if(r.error){alert(r.error);return;}
+  await refresh();
 }
 function card(u){
   const t=Date.now();
@@ -732,12 +1007,14 @@ function card(u){
    <div class="chead"><span class="cut">c${u.cuts.join(',')}</span>
      <span class="who ${u.assignee==='GKV'?'gkv':'other'}">${u.assignee}</span>
      <span class="b ${u.status}">${u.status}</span>${u.retakes?`<span class="muted">RT${u.retakes}</span>`:''}
+     ${qcBadge(u)}
      ${u.has_psd?'':'<span class="muted">PSD無</span>'}<span class="scene">${esc(u.scene)}</span></div>
    <div class="thumbs">
      <figure><figcaption>原図[${u.genzu_source}] ${u.has_psd?`<a href="#" onclick="openPsd('${u.id}');return false">PSDを開く</a> · <a href="#" onclick="openGenzu('${u.id}');return false">拡大/取り直し</a>`:''}</figcaption>
        ${u.has_psd?`<img loading="lazy" src="/img/${u.id}/genzu" onclick="openGenzu('${u.id}')" onerror="this.outerHTML='<div class=ph>原図なし</div>'">`:'<div class="ph">PSD未検出</div>'}</figure>
      <figure><figcaption>生成結果 ${u.has_result?`<a href="#" onclick="openCmp('${u.id}');return false">前後比較</a>`:''}</figcaption>${u.has_result?`<img loading="lazy" src="/img/${u.id}/result?t=${t}" onclick="openCmp('${u.id}')">`:'<div class="ph">未生成</div>'}</figure>
    </div>
+   ${takeStrip(u)}
    <div class="prog ${RUN.has(u.id)?'on':''}" id="prog_${u.id}"><i></i></div>
    <div class="bar"><select style="flex:1;width:auto" onchange="setBoard('${u.id}',this.value)">${opts}</select>
      <button onclick="showBoard('${u.id}')" onmousemove="boardHover('${u.id}',event)" onmouseleave="boardOut()" title="クリックで拡大／ホバーでプレビュー">ボード表示</button></div>
@@ -746,6 +1023,9 @@ function card(u){
      <div class="bar"><button onclick="savePrompt('${u.id}')">保存</button>
        <button onclick="loadPrompt('${u.id}')">自動表示</button>
        <button onclick="resetPrompt('${u.id}')">自動に戻す</button></div></details>
+   ${u.has_result?`<input class="rnote" id="rn_${u.id}" value="${esc(u.retake_note||'')}"
+     placeholder="リテイク指示（例: 右の木の幹をつなげる / 奥行きを出す）"
+     onchange="saveNote('${u.id}')">`:''}
    <div class="bar"><button class="primary" onclick="gen('${u.id}')">${u.has_result?'リテイク':'生成'}</button>
      <button class="ok" onclick="accept('${u.id}','accepted')">OK</button>
      <button class="ng" onclick="accept('${u.id}','reject')">要修正</button></div>
@@ -756,9 +1036,26 @@ function markRunning(id,on){const c=document.getElementById('card_'+id),p=docume
 function openGenzu(id){const u=unit(id); GCUR=id; $('#gTitle').textContent='原図 c'+u.cuts.join(',');
   $('#gImg').src='/img/'+id+'/genzu?t='+Date.now();
   document.querySelectorAll('input[name=gsrc]').forEach(r=>r.checked=(r.value===u.genzu_source));
-  $('#gMsg').textContent=''; $('#gmodal').style.display='flex';}
+  $('#gLayers').style.display='none'; $('#gLayers').innerHTML='';
+  $('#gMsg').textContent=''; $('#gmodal').style.display='flex';
+  if(u.genzu_source==='override') onGsrc();}
+async function onGsrc(){
+  const src=document.querySelector('input[name=gsrc]:checked').value;
+  const box=$('#gLayers');
+  if(src!=='override'){box.style.display='none';return;}
+  box.style.display='block'; box.innerHTML='レイヤー取得中…';
+  const d=await (await fetch('/api/unit/'+GCUR+'/layers')).json();
+  if(d.error){box.textContent='エラー: '+d.error;return;}
+  const sel=new Set(d.selected||[]);
+  box.innerHTML=d.layers.map(l=>`<label style="display:block;padding-left:${l.depth*14}px">`+
+    `<input type="checkbox" class="lyr" value="${esc(l.name)}" ${sel.has(l.name)?'checked':''}> `+
+    `${esc(l.name)} <span class="muted">[${esc(l.kind)}]${l.visible?'':' (非表示)'}</span></label>`).join('');
+}
 async function recapture(){const src=document.querySelector('input[name=gsrc]:checked').value; $('#gMsg').textContent='取得中…';
-  const r=await post('/api/unit/'+GCUR+'/recapture',{source:src}); if(r.error){$('#gMsg').textContent='エラー: '+r.error;return;}
+  const body={source:src};
+  if(src==='override'){body.layers=[...document.querySelectorAll('#gLayers .lyr:checked')].map(c=>c.value);
+    if(!body.layers.length){$('#gMsg').textContent='レイヤーを1つ以上選んでください';return;}}
+  const r=await post('/api/unit/'+GCUR+'/recapture',body); if(r.error){$('#gMsg').textContent='エラー: '+r.error;return;}
   $('#gImg').src='/img/'+GCUR+'/genzu?t='+Date.now(); $('#gMsg').textContent='取得しました（'+src+'）'; await refresh();}
 async function openPsd(id){const r=await post('/api/unit/'+id+'/open',{}); slog(id,r.error?('開けません: '+r.error):'PSDを開きました');}
 async function loadPrompt(id){const d=await (await fetch('/api/unit/'+id)).json(); const t=document.getElementById('pr_'+id); if(t)t.value=d.prompt;}
@@ -767,14 +1064,36 @@ async function resetPrompt(id){await post('/api/unit/'+id+'/prompt',{prompt:''})
 async function setBoard(id,v){await post('/api/unit/'+id+'/board',{board:v}); slog(id,'ボード保存');}
 async function accept(id,v){await post('/api/unit/'+id+'/accept',{value:v}); const u=unit(id); if(u)u.status=v; render();}
 function slog(id,m){const l=document.getElementById('log_'+id); if(l){l.style.display='block';l.textContent=m;}}
+async function saveNote(id){const e=document.getElementById('rn_'+id);
+  await post('/api/unit/'+id+'/retake_note',{note:e?e.value:''}); const u=unit(id); if(u)u.retake_note=e?e.value:'';}
 async function gen(id){
   const t=document.getElementById('pr_'+id); if(t&&t.value.trim()) await post('/api/unit/'+id+'/prompt',{prompt:t.value});
+  const rn=document.getElementById('rn_'+id); if(rn) await post('/api/unit/'+id+'/retake_note',{note:rn.value});
   const r=await post('/api/unit/'+id+'/generate',{}); if(r.error){slog(id,'エラー: '+r.error);return;}
-  RUN.add(id); markRunning(id,true); const u=unit(id); if(u){u.status='generating';u.running=true;} render(); slog(id,'生成開始…(数分)');
-  const c=document.getElementById('card_'+id); c&&c.querySelectorAll('.bar button').forEach(b=>b.disabled=true);
-  const poll=setInterval(async()=>{const j=await (await fetch('/api/unit/'+id+'/job')).json();
-    slog(id,(j.log||[]).join('\n'));
-    if(j.status==='done'||j.status==='error'){clearInterval(poll); RUN.delete(id); await refresh();}},2500);
+  RUN.add(id); markRunning(id,true); const u=unit(id); if(u){u.status='generating';u.running=true;} render(); slog(id,'キュー投入…');
+  pollJobs();
+}
+async function genBatch(scope){
+  const label=scope==='failed'?'失敗したカットを再実行':'未生成のカットを一括生成';
+  if(!confirm(label+'しますか？（同時実行 上限内でキュー処理）')) return;
+  const r=await post('/api/generate_batch',{group:GROUP,scope:scope});
+  const sk=r.skip_reasons||{};
+  const skmsg=Object.keys(sk).length?(' / スキップ '+Object.entries(sk).map(([k,v])=>k+':'+v).join(',')):'';
+  alert('キュー投入 '+(r.queued||0)+'件'+skmsg);
+  await refresh(); pollJobs();
+}
+// 生成ジョブ全体を1本のタイマーで監視（多数カードでもポーラは1つ）
+function pollJobs(){
+  if(POLL) return;
+  POLL=setInterval(async()=>{
+    let j; try{j=await (await fetch('/api/jobs')).json();}catch(e){return;}
+    const active=j.active||{};
+    RUN.clear(); Object.keys(active).forEach(id=>RUN.add(id));
+    UNITS.forEach(u=>{ if(active[u.id]) u.status='generating'; });
+    BATCH=`待ち/生成中 ${j.busy||0}`+((j.qsize||0)?`（残 ${j.qsize}）`:'');
+    render();
+    if((j.busy||0)===0){ clearInterval(POLL); POLL=null; BATCH=''; await refresh(); }
+  },2500);
 }
 async function rescan(){const p=PROJECTS.find(x=>x.group===GROUP); if(!p)return; await post('/api/projects/'+encodeURIComponent(p.key)+'/rescan',{}); await refresh();}
 function openAdd(work){$('#mWork').value=work||''; $('#mEp').value=''; $('#mGenzu').value=''; $('#mBoards').value='';
@@ -783,7 +1102,7 @@ async function addProject(){$('#mMsg').textContent='追加中…';
   const r=await post('/api/projects',{work:$('#mWork').value,ep:$('#mEp').value,genzu_dir:$('#mGenzu').value,boards_dir:$('#mBoards').value});
   if(r.error){$('#mMsg').textContent='エラー: '+r.error;return;}
   $('#modal').style.display='none'; WORK=$('#mWork').value||WORK; GROUP=null; await refresh();}
-$('#fAssignee').onchange=render;$('#fStatus').onchange=render;$('#fResult').onchange=render;
+$('#fAssignee').onchange=render;$('#fStatus').onchange=render;$('#fResult').onchange=render;$('#fQC').onchange=render;
 $('#cmpSlider').addEventListener('pointermove',cmpMove);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('#cmp').style.display='none';$('#lb').style.display='none';$('#gmodal').style.display='none';}});
 refresh();
@@ -792,7 +1111,9 @@ refresh();
 
 def main(argv=None):
     p = argparse.ArgumentParser(prog="genzu_fix.server", description="原図修正コンソール")
-    p.add_argument("--genzu-dir", required=True)
+    p.add_argument("--project", default=None,
+                   help="discover_assets が作る project json。genzu_dir/boards_dir/out/work/ep を補完")
+    p.add_argument("--genzu-dir", default=None)
     p.add_argument("--out", default="work/console")
     p.add_argument("--csv", default="runs/cut_board_map_ep7.csv")
     p.add_argument("--boards-dir", default=None)
@@ -807,8 +1128,24 @@ def main(argv=None):
     p.add_argument("--include-book", action="store_true")
     p.add_argument("--header-top", type=int, default=None)
     p.add_argument("--cut-info", default="runs/cut_scene_info_ep7.csv")
+    p.add_argument("--max-parallel", type=int, default=3, help="生成の同時実行数の上限")
+    p.add_argument("--qc-vision", action="store_true",
+                   help="生成後にAI視覚QC（人物残り/文字残り/画角）も走らせる（要 ANTHROPIC_API_KEY）")
     p.add_argument("--port", type=int, default=8765)
     a = p.parse_args(argv)
+    # --project（discover_assets 出力）で未指定の genzu_dir/boards_dir/out/work/ep を補完。
+    if a.project:
+        pj = _load_json(a.project, {})
+        a.genzu_dir = a.genzu_dir or pj.get("genzu_dir")
+        a.boards_dir = a.boards_dir or pj.get("boards_dir")
+        if a.out == "work/console" and pj.get("out_dir"):
+            a.out = pj["out_dir"]
+        if pj.get("work"):
+            a.work = pj["work"]
+        if pj.get("ep"):
+            a.ep = pj["ep"]
+    if not a.genzu_dir:
+        p.error("--genzu-dir か --project のどちらかが必要です")
     # カット別 situation/remove（great-edisonの3層プロンプトCUT層）。在ればプロンプトに反映。
     cut_info_map = {}
     try:
@@ -818,7 +1155,8 @@ def main(argv=None):
     CFG.update(dict(out=a.out, csv=a.csv, boards_json=a.boards_json,
                     resolution=a.resolution, quality=a.quality, model=a.model,
                     image_flag=a.image_flag, include_book=a.include_book,
-                    header_top=a.header_top, cut_info_map=cut_info_map))
+                    header_top=a.header_top, cut_info_map=cut_info_map,
+                    max_parallel=a.max_parallel, qc_vision=a.qc_vision))
     OVERVIEWS.update(_load_json(a.overview_json, {}))
     global STATE
     STATE = _load_json(_state_path(), {})

@@ -21,6 +21,8 @@
 （本番は GPT/Claude 等の視覚モデル呼び出しで自動化する＝AI充足判定）。
 """
 from __future__ import annotations
+import os
+import re
 from dataclasses import dataclass, field, asdict
 
 
@@ -77,3 +79,62 @@ def evaluate(image_path: str, vision_verdicts: dict | None = None) -> QCResult:
         if checks["framing_kept"] is False:
             verdict = "needs_retake"; reasons.append("画角が変わった")
     return QCResult(checks=checks, verdict=verdict, reasons=reasons)
+
+
+# --- 視覚判定（opt-in）。原図(before)と生成結果(after)を Claude に見せて3項目を判定する。
+#     ANTHROPIC_API_KEY が要る。失敗時は {} を返し、プログラム判定だけで評価される。 ---
+_VISION_MODEL = os.environ.get("QC_VISION_MODEL", "claude-opus-4-8")
+
+
+def _b64_downscaled(path: str, maxside: int = 1024) -> str:
+    from PIL import Image
+    import base64
+    import io
+    im = Image.open(path).convert("RGB")
+    if max(im.size) > maxside:
+        s = maxside / max(im.size)
+        im = im.resize((round(im.width * s), round(im.height * s)), Image.LANCZOS)
+    buf = io.BytesIO()
+    im.save(buf, format="JPEG", quality=80)
+    return base64.b64encode(buf.getvalue()).decode()
+
+
+def vision_check(genzu_path: str, result_path: str, model: str | None = None,
+                 timeout: int = 120) -> dict:
+    """原図と生成結果を見比べ {no_subject, text_removed, framing_kept} を True/False で返す。
+    キー未取得は None。API未設定/失敗時は {}（＝プログラム判定のみで評価）。"""
+    import json as _json
+    import urllib.request
+    key = os.environ.get("ANTHROPIC_API_KEY")
+    if not key:
+        return {}
+    prompt = (
+        "アニメ背景美術の検品です。IMAGE1=ラフ原図(入力)、IMAGE2=生成された白黒線画(結果)。"
+        "結果について次をJSONで判定してください（true/false、確信が持てなければ null）。"
+        '{"no_subject": 人物やその持ち物/影が結果に残っていない=true, '
+        '"text_removed": 手書き指示・ラベル・管理ヘッダー・タップ穴が消えている=true, '
+        '"framing_kept": 構図・画角が原図と一致している=true}。JSONのみ返す。')
+    body = {
+        "model": model or _VISION_MODEL, "max_tokens": 300,
+        "messages": [{"role": "user", "content": [
+            {"type": "text", "text": "IMAGE1 (原図):"},
+            {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg",
+                                         "data": _b64_downscaled(genzu_path)}},
+            {"type": "text", "text": "IMAGE2 (生成結果):"},
+            {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg",
+                                         "data": _b64_downscaled(result_path)}},
+            {"type": "text", "text": prompt}]}]}
+    req = urllib.request.Request(
+        "https://api.anthropic.com/v1/messages",
+        data=_json.dumps(body).encode(),
+        headers={"content-type": "application/json", "x-api-key": key,
+                 "anthropic-version": "2023-06-01"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            data = _json.loads(r.read())
+        text = "".join(b.get("text", "") for b in data.get("content", []))
+        m = re.search(r"\{.*\}", text, re.S)
+        obj = _json.loads(m.group(0)) if m else {}
+    except Exception:
+        return {}
+    return {k: obj.get(k) for k in VISION_KEYS if k in obj}

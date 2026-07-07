@@ -38,11 +38,21 @@ def cmd_prep(args) -> None:
     padded_png = os.path.join(out_dir, "padded.png")
 
     bg = None if args.transparent else (255, 255, 255)
-    vw, vh = psd_export.export_visible_to_png(
-        args.psd, visible_png, bg=bg, drop_text=not args.keep_text)
-    # 管理ヘッダー帯を落とす（撮影フレーム外の余分=作画は残す）。非標準シートは --header-top で明示。
-    region = frame.strip_header(visible_png, body_png, top_override=args.header_top)
-    # ヘッダー除去後の本体を GPT Image 2 の出力寸ぴったりへ収めて入力にする
+    # 原図の取り出し（確定前提= 既定 Base=背景作画のみ。batch.process_cut と同一）。
+    if args.genzu_source == "visible":
+        vw, vh = psd_export.export_visible_to_png(
+            args.psd, visible_png, bg=bg, drop_text=not args.keep_text)
+    else:
+        vw, vh, _ = psd_export.export_background_layer(
+            args.psd, visible_png, bg=bg or (255, 255, 255), include_book=args.include_book)
+    # 既定は「切らない」＝原図全域を入力に（レジストは入力=出力グリッドで担保, §20.6）。
+    # header_top 指定時のみ管理ヘッダー帯を落とす（非標準シート用）。batch と一致。
+    if args.header_top is None:
+        region = (0, 0, vw, vh)
+        body_png = visible_png
+    else:
+        region = frame.strip_header(visible_png, body_png, top_override=args.header_top)
+    # 本体を GPT Image 2 の出力寸ぴったりへ収めて入力にする
     prep = image_aspect.build_input_image(body_png, padded_png,
                                           resolution=args.resolution)
 
@@ -184,11 +194,15 @@ def build_parser() -> argparse.ArgumentParser:
     pp.add_argument("--transparent", action="store_true",
                     help="合成PNGの余白を透過にする（既定は白）")
     pp.add_argument("--keep-text", action="store_true",
-                    help="テキストレイヤーを残す（既定は除外）")
+                    help="テキストレイヤーを残す（既定は除外, visible時のみ有効）")
+    pp.add_argument("--genzu-source", choices=["base", "visible"], default="base",
+                    help="原図の取り出し: base=背景作画のみ(既定) / visible=見たまま全レイヤー")
+    pp.add_argument("--include-book", action="store_true",
+                    help="BOOK◯（別ブック）も合成に含める（既定は除外, base時）")
     pp.add_argument("--resolution", default="2k",
                     help="生成解像度tier。入力をこのtierの出力寸ぴったりで作る")
     pp.add_argument("--header-top", type=int, default=None,
-                    help="ヘッダー帯の下端yを明示指定（非標準シート用。既定は自動検出）")
+                    help="ヘッダー帯の下端yを明示指定（非標準シート用。既定は切らない）")
     pp.set_defaults(func=cmd_prep)
 
     pf = sub.add_parser("finish", help="結果PNG → 切り戻し → PSD差し込み → 台帳")

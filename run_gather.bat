@@ -24,18 +24,28 @@ if "%CONTE%"=="" (
   python "%~dp0scripts\gather_handoff_ep7.py" --genzu-dir "%GENZU%" --conte-dir "%CONTE%"
 )
 
-rem --- ensure a git identity exists (commit fails otherwise) ---
+rem --- git identity must be set by the operator (do not impersonate) ---
 set "GEMAIL="
 for /f "tokens=*" %%i in ('git config user.email 2^>nul') do set "GEMAIL=%%i"
 if not defined GEMAIL (
-  echo Setting a local git identity (was unset)...
-  git config user.email "kuroe@creatorsx.jp"
-  git config user.name "kuroe"
+  echo [!] git identity is not set. Set it once, then re-run:
+  echo     git config --global user.email "you@example.com"
+  echo     git config --global user.name  "Your Name"
+  pause & exit /b 1
+)
+
+rem --- size warning: handoff/ep7 is committed to a SHARED repo (bloats clone/pull) ---
+echo === Review before pushing (handoff/ep7 goes into the shared git repo) ===
+dir /s /-c "handoff\ep7" | find "bytes"
+choice /c YN /m "Commit and push handoff/ep7 now"
+if errorlevel 2 (
+  echo Skipped push. Inspect handoff/ep7 and commit manually if needed.
+  pause & exit /b 0
 )
 
 echo === git add / commit / push ===
 git add handoff/ep7
-git commit -m "data: ep7 genzu handoff (10 cuts)"
+git commit -m "data: ep7 genzu handoff"
 git push
 
 echo.
