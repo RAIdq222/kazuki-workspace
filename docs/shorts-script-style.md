@@ -112,7 +112,12 @@
 
 - **VO（[Ｍ]と[声]）は声優さんの後録り**。生成する動画には**環境音・SEだけ**を持たせる
 - 各カットに [SE] 行を必ず書く（秒針・衣擦れ・ドアの音など。セリフなし区間はSEが主役）
-- 生成プロンプトに音の指示は書かない（Seedanceは映像のみ設計。音は編集で載せる）
+- **セリフ混入対策（2026-07-07 追加・厳守）**: Seedanceのネイティブ音声は
+  プロンプトに talks/says/speaking 等があると勝手に喋る。
+  ①発話誘発ワードを書かない（口パクは `mouth moves silently ... do NOT generate
+  any voice` と指定） ②プロンプト末尾に `AUDIO: strictly no human voice, no speech,
+  no narration — ambient sounds / SE only` を必ず入れる
+  ③生成後に faster-whisper でセリフ混入チェック → 混入時は同じ start_image で再生成
 
 ## 5. Seedance カット設計ルール
 
