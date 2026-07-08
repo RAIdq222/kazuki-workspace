@@ -52,8 +52,9 @@ def main() -> None:
     ap.add_argument("--start-seconds", type=float, required=True,
                     help="Clipperレスポンスの start_seconds")
     ap.add_argument("--interval", type=float, default=2.0, help="サンプリング間隔秒")
-    ap.add_argument("--crop-bottom", type=float, default=0.26,
-                    help="焼き込み字幕帯の除去率（1行≈0.14 / 2行≈0.26）")
+    ap.add_argument("--crop-bottom", type=float, default=0.0,
+                    help="焼き込み字幕帯の除去率。マスター素材=0（無劣化）、"
+                         "Clipper由来のみ 1行≈0.14 / 2行≈0.26 を指定")
     ap.add_argument("--dedup-threshold", type=int, default=6)
     ap.add_argument("-o", "--out", required=True)
     args = ap.parse_args()
