@@ -119,6 +119,13 @@ inner color, large purple eyes, black choker. Japanese anime style.
      床と一体化v3 cut2で実証: 後置き→無視された／先頭+コピー禁止→完全に効いた）
    - **連続カットは前カットの終端フレーム（ffmpegで抽出→media_upload）を
      継続参照として次カットに渡す**と、部屋・照明・服装・小物が繋がる
+   - **演技・感情ライン（床と一体化v3.1の教訓・厳守）**: カット設計時に企画全体の
+     感情アークを1行で決め、各カットのプロンプトに `ACTING (critical):` ブロックで
+     表情の状態を明記する。**Seedanceは放っておくとニコニコ・キラキラ目に寄る**ので、
+     疲弊・虚無系の企画では `SHE NEVER SMILES` / `no sparkle in the eyes` 等の
+     禁止形で固定する。**顔の参照フレームも目標感情に合わせて選ぶ**（笑顔の食事顔を
+     参照にすると笑顔化する。ライブラリを表情で検索: 例「ジト目で拗ねる顔」
+     b3e18af1／「寝落ち寸前のうとうと顔」45826bd7）
    - 参照フレームに描き文字（効果音等）が焼き込まれている場合は
      `Do not render any handwritten sound-effect text` を明示
    - **音声はSE/環境音のみの定型文必須**（docs/shorts-script-style.md §4）
