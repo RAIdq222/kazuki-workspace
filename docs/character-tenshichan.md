@@ -105,22 +105,24 @@ inner color, large purple eyes, black choker. Japanese anime style.
   豊かなアニメ塗り・繊細な線・温かいシネマティックライティング・
   短い垂れ耳フード・（多くのカットで）実写寄り背景との合成
 
-**2段階QCフロー**:
-1. **スタートフレームを静止画で確定**（安い）: `generate_image` model=nano_banana_pro、
-   参照= **ルック参照フレーム2〜3枚（顔＋全身を混ぜる）**＋必要なら三面図。
+**生成フロー（2026-07-08 改訂。ユーザー指示）**:
+1. **基本は参照直渡し（スタートフレーム静止画は原則作らない）**: Seedance 2.0 に
+   `image_references`（複数形）で **ルック参照フレーム2〜3枚（顔＋全身を混ぜる）＋
+   舞台参照（シーンライブラリの同一シーン or シーン別参照セット）** を直接渡す。
    プロンプトの要点:
-   - `match the identity AND the exact art style / rendering look of the attached
-     anime screenshot references (same series): soft rich anime shading with gentle
-     gradients, warm cinematic lighting, delicate lineart` ＋ `Do NOT flatten the style`
-   - 実写背景合成なら `composited over a photorealistic live-action background`
-     ＋ `soft natural contact shadow under her feet`
-   - 細部チェックリスト: 短い垂れ耳 / 紫X釦目＋ピンク頬マーク / リボン / チョーカー /
-     絆創膏（右膝下=緑・左すね=青）/ 白フリルソックス＋黒厚底ローファー / ピンクインナー
-2. **合格した静止画を `start_image` にして Seedance で動かす**: roleは
-   `start_image`（`image_references` は複数形が正）。プロンプト冒頭に
-   `Keep her design, outfit, proportions and the art style COMPLETELY unchanged
-   from the start frame` を入れ、**音声はSE/環境音のみの定型文必須**
-   （docs/shorts-script-style.md §4）。10秒1カットでルック維持を確認してから本数を増やす
+   - `Keep her design, hair, face, proportions and soft rich cel-shaded painting
+     style COMPLETELY unchanged from the character references` ＋ `Do NOT flatten the style`
+   - 舞台参照には `Keep this layout and furniture exactly` ＋照明・時間帯の差分だけ文で指定
+   - 参照フレームに描き文字（効果音等）が焼き込まれている場合は
+     `Do not render any handwritten sound-effect text` を明示
+   - **音声はSE/環境音のみの定型文必須**（docs/shorts-script-style.md §4）
+   - 細部チェックリスト（生成後の検品用）: 短い垂れ耳 / 紫X釦目＋ピンク頬マーク / リボン /
+     チョーカー / 絆創膏（右膝下=緑・左すね=青）/ 白フリルソックス＋黒厚底ローファー / ピンクインナー
+2. **画像生成を使うのは「背景のみのロケーション設定画」を作る場合のみ**
+   （ライブラリに舞台が無く、複数カットで同じ架空ロケを固定したい時）。
+   モデルは **GPT Image 2**（models_exploreでID確認）。
+   **nano_banana系は使用NG — マスピ調の画風に寄ってチャンネルのルックと合わない**（ユーザー裁定）。
+   キャラ入りスタートフレームの静止画確定はやらない（キャラはSeedanceが参照から直接出す）
 
 **実績**: 浅草雷門Vlogテスト（三面図版: image `0eb418c4-…`→video `415bfa90-…`/`fdc15805-…`、
 本編ルック版: image `6480199f-…`）。10秒のルック維持・SEのみ音声（whisper検査クリーン）を確認。
