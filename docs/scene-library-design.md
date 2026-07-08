@@ -5,6 +5,17 @@
 > 生成の参照に使え、さらにその場面からYouTube再生までできるライブラリ」。
 > 本日の手作業（ルック参照・シーン別参照の抽出）は本ライブラリのPhase 0（実証）にあたる。
 
+> **2026-07-08 更新（v8）**: 検索は辞書ベース（FTS/同義語）を廃し、埋め込みベクトルの
+> セマンティック検索へ移行済み。構成＝Gemini `gemini-embedding-001`（768次元・L2正規化、
+> doc側 RETRIEVAL_DOCUMENT／query側 RETRIEVAL_QUERY）＋ D1 `scenes.embedding` BLOB
+> （f32 LE、migration 0009）＋ Worker内ブルートフォースコサイン（335件<1ms）。
+> docテキストは `${caption}（場所:${place}／行動:${action}／表情:${expression}／構図:${shot}／時間帯:${time_of_day}）`。
+> **egress制約**: Workerの外向きfetchはログインセッション文脈のみ許可されるため、
+> ブラウザ検索はWorkerが直接埋め込み、エージェント/生成フローは
+> `python3 -m src.shorts.scene_search`（ローカル埋め込み→`qvec`渡し）を使う。
+> ベクトル投入も同様にローカル計算→`POST /api/agent/scenes/vectors`。
+> 辞書検索（v7.3）はキー無し/APIエラー時のフォールバックとして残置。
+
 ## 1. 全体像
 
 ```
