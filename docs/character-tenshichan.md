@@ -113,6 +113,12 @@ inner color, large purple eyes, black choker. Japanese anime style.
    - `Keep her design, hair, face, proportions and soft rich cel-shaded painting
      style COMPLETELY unchanged from the character references` ＋ `Do NOT flatten the style`
    - 舞台参照には `Keep this layout and furniture exactly` ＋照明・時間帯の差分だけ文で指定
+   - **カメラを変えたいカットは `CAMERA (top priority):` をプロンプト先頭に置き、
+     `do NOT copy the camera position of any reference image` を明示**
+     （参照直渡しは舞台・キャラに効く反面、書かないと参照のアングルまでコピーされる。
+     床と一体化v3 cut2で実証: 後置き→無視された／先頭+コピー禁止→完全に効いた）
+   - **連続カットは前カットの終端フレーム（ffmpegで抽出→media_upload）を
+     継続参照として次カットに渡す**と、部屋・照明・服装・小物が繋がる
    - 参照フレームに描き文字（効果音等）が焼き込まれている場合は
      `Do not render any handwritten sound-effect text` を明示
    - **音声はSE/環境音のみの定型文必須**（docs/shorts-script-style.md §4）
