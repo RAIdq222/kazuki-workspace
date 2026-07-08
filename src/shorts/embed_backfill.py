@@ -68,8 +68,10 @@ scenes = exp["scenes"] if isinstance(exp, dict) else exp
 print(f"export: {len(scenes)}件")
 
 def doc_text(s):
-    return (f"{s['caption']}（場所:{s['place']}／行動:{s['action']}／表情:{s['expression']}"
+    base = (f"{s['caption']}（場所:{s['place']}／行動:{s['action']}／表情:{s['expression']}"
             f"／構図:{s['shot']}／時間帯:{s['time_of_day']}）")
+    ed = (s.get("expression_detail") or "").strip()
+    return f"{base}表情ディテール: {ed}" if ed else base
 
 # 2) embed + 3) write, 100件ずつ（登録済みはスキップ＝再開可能）
 todo = [s for s in scenes if s.get("embedding_model") != MODEL]
