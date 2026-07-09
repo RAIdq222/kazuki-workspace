@@ -36,6 +36,11 @@ def main() -> None:
     ap.add_argument("-o", "--out", required=True)
     ap.add_argument("--name", default="montage")
     ap.add_argument("--source-name", default=None)
+    ap.add_argument("--source-path", default=None,
+                    help="編集者ローカルの絶対パス（例: C:\\Users\\kuror\\Downloads\\xxx.mp4）。"
+                         "指定するとpathurlをfile URLで書き、Premiereが開いた瞬間にリンク済みになる。"
+                         "未指定時は src/shorts/data/master_local_dir.txt があれば"
+                         "そのフォルダ + source-name から自動構築")
     ap.add_argument("--segment-index", type=int, default=0)
     args = ap.parse_args()
 
@@ -64,10 +69,33 @@ def main() -> None:
     xf = float(bed.get("crossfade", 0.0)) if "parts" in bed else 0.0
 
     src_name = args.source_name or os.path.basename(args.master)
+
+    # pathurl: 絶対パスがあれば file URL（Windows: file://localhost/C%3a/...）。
+    # 無ければファイル名相対（初回のみ手動リリンク）
+    source_path = args.source_path
+    if not source_path:
+        cfg = os.path.join(os.path.dirname(__file__), "data", "master_local_dir.txt")
+        if os.path.exists(cfg):
+            base = open(cfg, encoding="utf-8").read().strip()
+            if base:
+                sep = "\\" if ("\\" in base or ":" in base[:3]) else "/"
+                source_path = base.rstrip("\\/") + sep + src_name
+    if source_path:
+        from urllib.parse import quote
+        p = source_path.replace("\\", "/")
+        if len(p) > 1 and p[1] == ":":  # Windowsドライブレター
+            p = p[0] + "%3a" + p[2:]
+            pathurl = "file://localhost/" + quote(p, safe="/%")
+        else:
+            pathurl = "file://localhost" + quote(p, safe="/%")
+        src_name = os.path.basename(source_path.replace("\\", "/"))
+    else:
+        pathurl = escape(src_name)
+
     total_src_frames = fr(info.duration)
     file_def = f"""<file id="file-1">
       <name>{escape(src_name)}</name>
-      <pathurl>{escape(src_name)}</pathurl>
+      <pathurl>{pathurl}</pathurl>
       {rate}
       <duration>{total_src_frames}</duration>
       <media>
