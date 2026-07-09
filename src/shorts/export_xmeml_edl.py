@@ -108,7 +108,7 @@ def main() -> None:
         </samplecharacteristics><channelcount>2</channelcount></audio>
       </media>
     </file>"""
-    file_ref = '<file id="file-1"/>'
+    file_ref = file_def  # Resolveは参照のみのfile要素で音声の解決に失敗するため全clipitemに完全定義を繰り返す(Premiere純正と同形式)
 
     # 映像トラック
     v_items, cur = [], 0
