@@ -42,8 +42,11 @@ def main() -> None:
                          "未指定時は src/shorts/data/master_local_dir.txt があれば"
                          "そのフォルダ + source-name から自動構築")
     ap.add_argument("--separate-audio", default=None,
-                    help="音声ベッドを音声専用ファイル参照に分離する場合、そのファイル名"
-                         "（例: xxx_audio.m4a。マスターと同じフォルダに置く前提）")
+                    help="音声ベッド用の音声専用ファイル名（既定: <マスター名>_audio.m4a）。"
+                         "Resolveは映像入りファイルの音声のみ参照クリップを解決できないため"
+                         "分離が既定（実測 2026-07-09）。--embedded-audio で旧方式に戻せる")
+    ap.add_argument("--embedded-audio", action="store_true",
+                    help="音声ベッドもマスターmp4を直接参照する旧方式（Premiere専用）")
     ap.add_argument("--segment-index", type=int, default=0)
     args = ap.parse_args()
 
@@ -113,7 +116,10 @@ def main() -> None:
     </file>"""
     file_ref = file_def  # Resolveは参照のみのfile要素で音声の解決に失敗するため全clipitemに完全定義を繰り返す(Premiere純正と同形式)
 
-    # 音声ベッド用のfile定義: --separate-audio 指定時は音声専用ファイル(file-2)を参照
+    # 音声ベッド用のfile定義: 既定で音声専用ファイル(file-2)を参照（Resolve互換）
+    if not args.separate_audio and not args.embedded_audio:
+        stem = src_name.rsplit(".", 1)[0]
+        args.separate_audio = f"{stem}_audio.m4a"
     if args.separate_audio:
         a_name = args.separate_audio
         if source_path:
