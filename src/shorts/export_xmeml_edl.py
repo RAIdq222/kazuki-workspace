@@ -41,6 +41,9 @@ def main() -> None:
                          "指定するとpathurlをfile URLで書き、Premiereが開いた瞬間にリンク済みになる。"
                          "未指定時は src/shorts/data/master_local_dir.txt があれば"
                          "そのフォルダ + source-name から自動構築")
+    ap.add_argument("--separate-audio", default=None,
+                    help="音声ベッドを音声専用ファイル参照に分離する場合、そのファイル名"
+                         "（例: xxx_audio.m4a。マスターと同じフォルダに置く前提）")
     ap.add_argument("--segment-index", type=int, default=0)
     args = ap.parse_args()
 
@@ -110,6 +113,35 @@ def main() -> None:
     </file>"""
     file_ref = file_def  # Resolveは参照のみのfile要素で音声の解決に失敗するため全clipitemに完全定義を繰り返す(Premiere純正と同形式)
 
+    # 音声ベッド用のfile定義: --separate-audio 指定時は音声専用ファイル(file-2)を参照
+    if args.separate_audio:
+        a_name = args.separate_audio
+        if source_path:
+            from urllib.parse import quote as _q
+            base_dir = source_path.replace("\\", "/").rsplit("/", 1)[0]
+            ap_ = (base_dir + "/" + a_name)
+            if len(ap_) > 1 and ap_[1] == ":":
+                ap_ = ap_[0] + "%3a" + ap_[2:]
+                a_pathurl = "file://localhost/" + _q(ap_, safe="/%")
+            else:
+                a_pathurl = "file://localhost" + _q(ap_, safe="/%")
+        else:
+            a_pathurl = escape(a_name)
+        audio_file_def = f"""<file id="file-2">
+      <name>{escape(a_name)}</name>
+      <pathurl>{a_pathurl}</pathurl>
+      {rate}
+      <duration>{total_src_frames}</duration>
+      <media>
+        <audio><samplecharacteristics><depth>16</depth><samplerate>48000</samplerate>
+        </samplecharacteristics><channelcount>2</channelcount></audio>
+      </media>
+    </file>"""
+        a_src_name = a_name
+    else:
+        audio_file_def = file_def
+        a_src_name = src_name
+
     # 映像トラック
     v_items, cur = [], 0
     for i, c in enumerate(cuts):
@@ -126,29 +158,33 @@ def main() -> None:
         cur += d
     total = cur
 
-    # 音声: parts を A1/A2 交互、クロスフェード分だけ重ねて配置
+    # 音声: parts を A1/A2 交互、クロスフェード分だけ重ねて配置。
+    # ステレオ2チャンネルは Premiere 純正と同じく premiereChannelType="stereo" ＋
+    # <link> でチャンネル同士を連結（Resolve互換）
     a_tracks: list[list[str]] = [[], []]
+    clip_index = [0, 0, 0, 0]  # タイムライン音声トラック毎のclipindex
     acur = 0
     for i, p in enumerate(parts):
         i_f, o_f = fr(p["start"]), fr(p["end"])
         d = o_f - i_f
         start = max(0, acur - (fr(xf) if i > 0 else 0))
         tr = i % 2
-        for ch in (1, 2):
-            a_tracks[tr].append(f"""<clipitem id="clipitem-a-{i}-{ch}">
-      <name>bed{i+1} {escape(src_name)}</name><enabled>TRUE</enabled>
+        tl1, tl2 = tr * 2 + 1, tr * 2 + 2  # タイムライン上の音声トラック番号(1-4)
+        clip_index[tl1 - 1] += 1
+        clip_index[tl2 - 1] += 1
+        ci1, ci2 = clip_index[tl1 - 1], clip_index[tl2 - 1]
+        id1, id2 = f"clipitem-a-{i}-1", f"clipitem-a2-{i}-2"
+        links = f"""<link><linkclipref>{id1}</linkclipref><mediatype>audio</mediatype><trackindex>{tl1}</trackindex><clipindex>{ci1}</clipindex><groupindex>1</groupindex></link>
+      <link><linkclipref>{id2}</linkclipref><mediatype>audio</mediatype><trackindex>{tl2}</trackindex><clipindex>{ci2}</clipindex><groupindex>1</groupindex></link>"""
+        for ch, cid in ((1, id1), (2, id2)):
+            a_tracks[tr].append(f"""<clipitem id="{cid}" premiereChannelType="stereo">
+      <name>bed{i+1} {escape(a_src_name)}</name><enabled>TRUE</enabled>
       <duration>{d}</duration>{rate}
       <start>{start}</start><end>{start + d}</end>
       <in>{i_f}</in><out>{o_f}</out>
-      {file_ref}
+      {audio_file_def}
       <sourcetrack><mediatype>audio</mediatype><trackindex>{ch}</trackindex></sourcetrack>
-    </clipitem>""" if ch == 1 else f"""<clipitem id="clipitem-a2-{i}-{ch}">
-      <name>bed{i+1} {escape(src_name)}</name><enabled>TRUE</enabled>
-      <duration>{d}</duration>{rate}
-      <start>{start}</start><end>{start + d}</end>
-      <in>{i_f}</in><out>{o_f}</out>
-      {file_ref}
-      <sourcetrack><mediatype>audio</mediatype><trackindex>{ch}</trackindex></sourcetrack>
+      {links}
     </clipitem>""")
         acur = start + d
 
