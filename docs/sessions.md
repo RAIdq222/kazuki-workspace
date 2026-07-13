@@ -10,6 +10,11 @@
   残タスクは `docs/TODO.md`（B残: 共通化/pytest/scene_understanding量産統合、per-cut situation充足）。
   未決: ボード2枚入力の本採用 / cut240ボード正誤 / 香盤表パーサの実xlsx確認（1コマンド、TODO参照）。
 - **新案件 = このワークスペースで開始**（原図修正タスクの2作品目）。作品情報は `runs/works.json` に登録する。
+- **愛知医大ショートアニメ（B669）= 設計開始（2026-07-13）**。30〜60秒×20話・納期2026-11末・CBC経由。
+  天使ちゃんスタジオ（Higgsfieldアプリ）の仕組みを応用したプラットフォーム設計 =
+  `docs/aichi-anime-platform.md`。脚本1〜5話の整形テキストと設定の種 = `runs/aichi/`。
+  ブランチ: `claude/aichi-medical-anime-platform-14se4t`。次の一手は設計書§9（キャラ定型
+  プロンプト案／ep2パイロットコンテ／アプリのフォーク判断）。
 
 ## 並行ブランチの地図
 | ブランチ | 役割 | 主な成果物 |

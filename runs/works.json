@@ -1,5 +1,18 @@
 {
   "_comment": "作品レジストリ。新作品はここに1エントリ足す（コードは触らない）。prefix=原図ファイル名の接頭辞。",
+  "愛知医大": {
+    "prefix": "aichi",
+    "aliases": ["aichi", "愛知医大", "B669"],
+    "type": "short_anime",
+    "_note": "原図修正ではなくショートアニメ制作（脚本→コンテ→設定→生成→編集）。設計は docs/aichi-anime-platform.md、脚本と設定の種は runs/aichi/",
+    "eps": {
+      "01-05": {
+        "status": "脚本1稿入稿済（2026-07）。設計段階",
+        "scripts": "runs/aichi/scripts/",
+        "bible": "runs/aichi/series_bible.md"
+      }
+    }
+  },
   "尚善": {
     "prefix": "shz",
     "aliases": ["shz", "尚善"],
