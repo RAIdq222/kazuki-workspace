@@ -16,8 +16,16 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bpy  # noqa: E402
-from stagelib import (reset_scene, mat, box, cyl, sphere, torus, plane,  # noqa: E402
+from stagelib import (reset_scene, mat, mat_image, box, cyl, sphere, torus, plane,  # noqa: E402
                       add_camera, area_light, sun_light, set_world, render_cli)
+
+SPR = "work/sprites"  # 原画から切り出したテクスチャ (room_textures.py で生成)
+
+
+def rtex(name, **kw):
+    """原画テクスチャがあれば返す (なければ None → 従来のフラット色)."""
+    p = f"{SPR}/room_{name}.png"
+    return mat_image(f"room_{name}", p, blend="OPAQUE", **kw) if os.path.exists(p) else None
 
 R = random.Random(5)
 
@@ -61,12 +69,17 @@ def floor_mat():
 
 
 def build_room():
-    fm = floor_mat()
-    plank_w = 0.24
-    n = int(ROOM_X / plank_w) + 1
-    for i in range(n):  # 床板は南北方向(画像の縦)に走る
-        x = min(plank_w * i + plank_w / 2, ROOM_X - plank_w / 2)
-        box(f"plank_{i}", plank_w - 0.006, ROOM_Y, 0.03, (x, ROOM_Y / 2, -0.015), fm)
+    ftex = rtex("floor", rough=0.42, uv_scale=(4.6, 2.1))
+    if ftex:
+        # 原画から切り出した床板テクスチャを1枚のプレーンに (板目はY方向)
+        plane("floor", ROOM_X, ROOM_Y, (ROOM_X / 2, ROOM_Y / 2, 0), ftex)
+    else:
+        fm = floor_mat()
+        plank_w = 0.24
+        n = int(ROOM_X / plank_w) + 1
+        for i in range(n):  # 床板は南北方向(画像の縦)に走る
+            x = min(plank_w * i + plank_w / 2, ROOM_X - plank_w / 2)
+            box(f"plank_{i}", plank_w - 0.006, ROOM_Y, 0.03, (x, ROOM_Y / 2, -0.015), fm)
     pm = mat("plaster", PAL["plaster"], rough=0.9)
     sk = mat("skirt", PAL["skirt_gray"], rough=0.85)
     # 南壁はなし (ボードと同じく手前を開けたステージセット構成)
@@ -98,27 +111,33 @@ def lattice_panel(idx, cx, w, h, z0):
     for k in range(3):
         box(f"lp{idx}_gbar{k}", 0.035, 0.05, h * 0.22,
             (cx - w / 4 + k * w / 4, y - 0.05, lz), red)
-    # 中央 5.5/8: 格子 + 中心の花飾り
-    mz = z0 + h * 0.42
-    mh = h * 0.62
-    box(f"lp{idx}_back", w - 0.14, 0.02, mh, (cx, y - 0.025, mz), deep)
-    nvert = 5
-    for k in range(nvert):
-        dx = -w / 2 + 0.10 + k * (w - 0.2) / (nvert - 1)
-        box(f"lp{idx}_gv{k}", 0.028, 0.045, mh, (cx + dx, y - 0.05, mz), gold)
-    for k in range(4):
-        dz = -mh / 2 + 0.06 + k * (mh - 0.12) / 3
-        box(f"lp{idx}_gh{k}", w - 0.16, 0.045, 0.028, (cx, y - 0.05, mz + dz), gold)
-    torus(f"lp{idx}_rose", 0.11, 0.030, (cx, y - 0.06, mz), gold,
-          rot=(math.pi / 2, 0, 0))
-    cyl(f"lp{idx}_rosec", 0.05, 0.03, (cx, y - 0.06, mz), gold,
-        rot=(math.pi / 2, 0, 0), verts=12)
-    # 下部帯: 彫刻帯 (金の帯 + 刻み)
-    bz = z0 + h * 0.085
-    box(f"lp{idx}_band", w - 0.14, 0.04, h * 0.10, (cx, y - 0.04, bz), deep)
-    for k in range(6):
-        dx = -w / 2 + 0.12 + k * (w - 0.24) / 5
-        box(f"lp{idx}_bd{k}", 0.09, 0.05, 0.05, (cx + dx, y - 0.045, bz), gold)
+    ltex = rtex("lattice", rough=0.55)
+    if ltex:
+        # 原画から切り出した格子パネル (花飾り・彫刻帯込み) を1枚に
+        mz = z0 + h * 0.375
+        plane(f"lp{idx}_tex", w - 0.12, h * 0.75, (cx, y - 0.045, mz), ltex,
+              rot=(math.pi / 2, 0, 0))
+    else:
+        # 中央: 格子 + 中心の花飾り
+        mz = z0 + h * 0.42
+        mh = h * 0.62
+        box(f"lp{idx}_back", w - 0.14, 0.02, mh, (cx, y - 0.025, mz), deep)
+        nvert = 5
+        for k in range(nvert):
+            dx = -w / 2 + 0.10 + k * (w - 0.2) / (nvert - 1)
+            box(f"lp{idx}_gv{k}", 0.028, 0.045, mh, (cx + dx, y - 0.05, mz), gold)
+        for k in range(4):
+            dz = -mh / 2 + 0.06 + k * (mh - 0.12) / 3
+            box(f"lp{idx}_gh{k}", w - 0.16, 0.045, 0.028, (cx, y - 0.05, mz + dz), gold)
+        torus(f"lp{idx}_rose", 0.11, 0.030, (cx, y - 0.06, mz), gold,
+              rot=(math.pi / 2, 0, 0))
+        cyl(f"lp{idx}_rosec", 0.05, 0.03, (cx, y - 0.06, mz), gold,
+            rot=(math.pi / 2, 0, 0), verts=12)
+        bz = z0 + h * 0.085
+        box(f"lp{idx}_band", w - 0.14, 0.04, h * 0.10, (cx, y - 0.04, bz), deep)
+        for k in range(6):
+            dx = -w / 2 + 0.12 + k * (w - 0.24) / 5
+            box(f"lp{idx}_bd{k}", 0.09, 0.05, 0.05, (cx + dx, y - 0.045, bz), gold)
 
 
 def build_north_windows():
@@ -139,6 +158,9 @@ def build_north_windows():
 def build_center():
     # 白い敷物
     box("rug", 2.7, 2.7, 0.035, (3.35, 2.55, 0.018), mat("rug_white", PAL["rug_white"], rough=1.0))
+    rtex_rug = rtex("rug", rough=0.95)
+    if rtex_rug:
+        plane("rug_top", 2.68, 2.68, (3.35, 2.55, 0.037), rtex_rug)
     # ローテーブル
     tw = mat("table_wood", PAL["table_wood"], rough=0.5)
     wd = mat("wood_dark", PAL["wood_dark"], rough=0.6)
@@ -163,16 +185,21 @@ def build_east_side():
     lac = mat("black_lac", PAL["black_lac"], rough=0.35)
     gold = mat("gold", PAL["gold"], rough=0.45)
     # 箪笥 2棹
+    wtex = rtex("wardrobe", rough=0.45)
     for i, cx in enumerate((ROOM_X - 0.40, ROOM_X - 0.40)):
         cy = 4.55 - i * 1.15
         box(f"cab{i}", 0.62, 1.05, 2.35, (ROOM_X - 0.33, cy, 1.175), lac)
-        # 金の縁取りと丸金具
-        for dz in (0.35, 1.15, 1.95):
-            box(f"cab{i}_tr{dz}", 0.03, 0.95, 0.03, (ROOM_X - 0.65, cy, dz), gold)
-        torus(f"cab{i}_ring", 0.10, 0.02, (ROOM_X - 0.66, cy, 1.55), gold,
-              rot=(0, math.pi / 2, 0))
-        for dy in (-0.35, 0.35):
-            box(f"cab{i}_knob{dy}", 0.03, 0.10, 0.05, (ROOM_X - 0.65, cy + dy, 0.72), gold)
+        if wtex:
+            # 原画の飾り扉テクスチャを正面(西向き)に貼る
+            plane(f"cab{i}_face", 1.0, 2.30, (ROOM_X - 0.645, cy, 1.2), wtex,
+                  rot=(math.pi / 2, 0, -math.pi / 2))
+        else:
+            for dz in (0.35, 1.15, 1.95):
+                box(f"cab{i}_tr{dz}", 0.03, 0.95, 0.03, (ROOM_X - 0.65, cy, dz), gold)
+            torus(f"cab{i}_ring", 0.10, 0.02, (ROOM_X - 0.66, cy, 1.55), gold,
+                  rot=(0, math.pi / 2, 0))
+            for dy in (-0.35, 0.35):
+                box(f"cab{i}_knob{dy}", 0.03, 0.10, 0.05, (ROOM_X - 0.65, cy + dy, 0.72), gold)
     # 寝台
     wd = mat("wood_dark", PAL["wood_dark"], rough=0.6)
     cloth = mat("white_cloth", PAL["white_cloth"], rough=0.95)
@@ -191,18 +218,23 @@ def build_west_side():
     lac = mat("black_lac", PAL["black_lac"], rough=0.4)
     gold = mat("gold", PAL["gold"], rough=0.5)
     # 屏風 4曲 (ジグザグ)
+    stex = rtex("screen", rough=0.5)
     px, py = 0.28, 3.4
     for i in range(4):
         ang = math.radians(12 if i % 2 == 0 else -12)
         w = 0.72
         cy = py - i * (w * 0.97)
-        p = box(f"screen_{i}", 0.05, w, 2.35, (px + (0.10 if i % 2 else 0), cy - w / 2 + w / 2, 1.175),
-                lac, rot=(0, 0, ang))
-        # 金の飾り(簡略): パネル中央に矩形
-        box(f"screen_g{i}", 0.02, w * 0.55, 0.5, (px + 0.05 + (0.10 if i % 2 else 0), cy, 1.5),
-            gold, rot=(0, 0, ang))
-        box(f"screen_g2{i}", 0.02, w * 0.4, 0.3, (px + 0.05 + (0.10 if i % 2 else 0), cy, 0.7),
-            gold, rot=(0, 0, ang))
+        xoff = 0.10 if i % 2 else 0
+        box(f"screen_{i}", 0.05, w, 2.35, (px + xoff, cy, 1.175), lac, rot=(0, 0, ang))
+        if stex:
+            # 原画の屏風パネルを東向きの面に貼る
+            plane(f"screen_tex{i}", w - 0.05, 2.28, (px + xoff + 0.03, cy, 1.175), stex,
+                  rot=(math.pi / 2, 0, math.pi / 2 + ang))
+        else:
+            box(f"screen_g{i}", 0.02, w * 0.55, 0.5, (px + 0.05 + xoff, cy, 1.5),
+                gold, rot=(0, 0, ang))
+            box(f"screen_g2{i}", 0.02, w * 0.4, 0.3, (px + 0.05 + xoff, cy, 0.7),
+                gold, rot=(0, 0, ang))
     # 花瓶の小机 (北西)
     tw = mat("table_wood", PAL["table_wood"], rough=0.5)
     box("side_top", 0.62, 0.62, 0.05, (0.95, 4.95, 0.62), tw)
