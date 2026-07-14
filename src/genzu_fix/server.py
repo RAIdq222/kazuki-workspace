@@ -198,24 +198,45 @@ def _units_from_csv(csv_path):
 
 
 def _units_from_folder(genzu_dir):
-    """フォルダ走査でカット表を作る（scene/assignee はサブフォルダ名から）。"""
+    """フォルダ走査でカット表を作る（scene/assignee はサブフォルダ名から）。
+
+    - 並びは**カット番号順**（フォルダの走査順ではない）。
+    - 同名PSDが複数フォルダにある場合は最初に見つかった方を採用し、警告を出す
+      （黙って上書きするとカット数が減って見える）。
+    """
     units = {}
+    dup = []
+    n_psd = 0
     gd = os.path.abspath(genzu_dir)
     for root, _, files in os.walk(gd):
-        for fn in files:
+        for fn in sorted(files):
             if not fn.lower().endswith(".psd"):
                 continue
+            n_psd += 1
             uid = os.path.splitext(fn)[0]
+            rel = os.path.relpath(os.path.join(root, fn), gd)
+            if uid in units:
+                dup.append((rel, units[uid]["_rel"]))
+                continue
             info = naming.parse_cut_codes(fn)
             cuts = info.get("cuts") or [uid]
-            rel = os.path.relpath(os.path.join(root, fn), gd)
             parts = rel.split(os.sep)
             scene = next((p for p in parts[:-1] if re.search(r"c\d", p)), "")
             parent = parts[-2] if len(parts) >= 2 else ""
             assignee = parent if (parent and not re.search(r"c\d", parent)) else "(直下)"
             units[uid] = {"id": uid, "filename": fn, "cuts": cuts,
-                          "assignee": assignee, "scene": scene, "board": ""}
-    return units
+                          "assignee": assignee, "scene": scene, "board": "", "_rel": rel}
+
+    def cut_key(u):
+        m = re.match(r"(\d+)([A-Za-z]*)", (u["cuts"][0] if u["cuts"] else ""))
+        return (int(m.group(1)), m.group(2)) if m else (10 ** 9, u["id"])
+
+    ordered = {u["id"]: {k: v for k, v in u.items() if k != "_rel"}
+               for u in sorted(units.values(), key=cut_key)}
+    print(f"[scan] {gd}: PSD {n_psd}枚 → {len(ordered)}ユニット")
+    for a, b in dup:
+        print(f"  [warn] 同名PSDが複数あります（採用: {b} / 無視: {a}）")
+    return ordered
 
 
 def _make_project(key, work, ep, genzu_dir, boards_dir=None, csv_path=None, source="scan",
