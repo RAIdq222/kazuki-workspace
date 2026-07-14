@@ -122,14 +122,14 @@ PY
 
 ### 起動（原図とHiggsfield CLIがあるマシンで）
 
-**いちばん簡単（推奨）**: リポジトリ直下の `run_console.bat` を実行。PYTHONPATH 設定は不要
-（ランチャが `src/` を自動で通す）。依存が無ければ入れるコマンドを表示する。
+**いちばん簡単（推奨）**: リポジトリ直下の `run_console.bat` を実行。PYTHONPATH 設定は不要。
 ```
 python -m pip install flask psd-tools pillow numpy   ← 初回だけ
 run_console.bat
 ```
-`run_console.bat` は原図=`..\00.原図` / 出力=`..\10.生成結果`（リポジトリの一つ上）を既定にしてある。
-場所が違う場合は `.bat` 内の `GENZU` / `OUT` / `BOARDS` を書き換える。
+**登録済みの全作品（`runs/project_*.json`）が読み込まれ、タブ（作品 ▸ 話数）で切り替えられる**。
+起動コマンドは作品によらず同じ。新作品は `runs/project_<work>_<ep>.json` を足すだけ
+（`discover_assets` が生成。カット表CSVが無い作品は原図フォルダ走査で自動構成）。
 
 **コマンドで起動する場合**（ランチャ経由なので PYTHONPATH 不要）:
 ```

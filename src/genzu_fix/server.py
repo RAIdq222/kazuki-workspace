@@ -218,7 +218,8 @@ def _units_from_folder(genzu_dir):
     return units
 
 
-def _make_project(key, work, ep, genzu_dir, boards_dir=None, csv_path=None, source="scan"):
+def _make_project(key, work, ep, genzu_dir, boards_dir=None, csv_path=None, source="scan",
+                  out_dir=None, cut_info=None):
     if source == "csv":
         units = _units_from_csv(csv_path)
     else:
@@ -234,9 +235,17 @@ def _make_project(key, work, ep, genzu_dir, boards_dir=None, csv_path=None, sour
         boards_opts = _load_json(CFG["boards_json"], [])
     if boards_dir:
         print(f"[boards] {boards_dir}: {len(board_idx)} 枚 索引（{key}）")
+    # カット別 situation/remove（プロンプトCUT層）は作品ごと（他作品の同番カットに混ぜない）
+    cut_info_map = {}
+    if cut_info and os.path.exists(cut_info):
+        try:
+            cut_info_map = batch.promptlib.load_cut_info(cut_info)
+        except Exception:
+            pass
     return {
         "key": key, "work": work, "ep": ep, "group": f"{work} #{ep}",
         "genzu_dir": genzu_dir, "boards_dir": boards_dir, "csv": csv_path, "source": source,
+        "out_dir": out_dir or CFG.get("out"), "cut_info_map": cut_info_map,
         "units": units, "psd_idx": _index_dir(genzu_dir, (".psd",)),
         "board_idx": board_idx, "board_norm": board_norm, "boards_opts": boards_opts,
     }
@@ -259,7 +268,10 @@ def _find_unit(uid):
 
 
 def _unit_dir(uid):
-    return os.path.join(CFG["out"], uid)
+    # 出力は作品(プロジェクト)ごとの out_dir 配下（尚善とSP2の生成結果を混ぜない）
+    proj, _ = _find_unit(uid)
+    base = (proj or {}).get("out_dir") or CFG["out"]
+    return os.path.join(base, uid)
 
 
 def _result_path(uid):
@@ -352,7 +364,7 @@ def _effective_prompt(proj, u):
     # プロンプトは genzu_fix.prompt（3層）に委譲（great-edisonの設計と統合）。
     # 表示と生成を一致させるため cut_info_map（situation/remove）も渡す。
     en, _ = batch.build_prompt_pair(board, u["scene"], None, cut=cut,
-                                    cut_info_map=CFG.get("cut_info_map"))
+                                    cut_info_map=(proj.get("cut_info_map") or CFG.get("cut_info_map")))
     return en
 
 
@@ -389,7 +401,8 @@ def _run_generate(uid):
     if note:
         cut0 = u["cuts"][0] if u.get("cuts") else ""
         eff = base_prompt or batch.build_prompt_pair(
-            board, u["scene"], None, cut=cut0, cut_info_map=CFG.get("cut_info_map"))[0]
+            board, u["scene"], None, cut=cut0,
+            cut_info_map=(proj.get("cut_info_map") or CFG.get("cut_info_map")))[0]
         base_prompt = eff + "\n\n[RETAKE CORRECTION — apply with top priority]: " + note
     try:
         log("prep→生成→finish 実行中…" + (f"（指示: {note[:30]}）" if note else ""))
@@ -400,7 +413,7 @@ def _run_generate(uid):
                           genzu_source=st.get("genzu_source", "base"),
                           genzu_layers=st.get("layers_show"),
                           cut_num=(u["cuts"][0] if u.get("cuts") else ""),
-                          cut_info_map=CFG.get("cut_info_map"),
+                          cut_info_map=(proj.get("cut_info_map") or CFG.get("cut_info_map")),
                           qc_vision=CFG.get("qc_vision", False))
         n = _snapshot_take(uid)   # 上書きせず takes/take_NN/ に保存（S5・前版を失わない）
         with STATE_LOCK:
@@ -1113,6 +1126,8 @@ def main(argv=None):
     p = argparse.ArgumentParser(prog="genzu_fix.server", description="原図修正コンソール")
     p.add_argument("--project", default=None,
                    help="discover_assets が作る project json。genzu_dir/boards_dir/out/work/ep を補完")
+    p.add_argument("--projects-glob", default="runs/project_*.json",
+                   help="起動時に読み込む作品レジストリ（全作品がタブに載る）")
     p.add_argument("--genzu-dir", default=None)
     p.add_argument("--out", default="work/console")
     p.add_argument("--csv", default="runs/cut_board_map_ep7.csv")
@@ -1153,8 +1168,6 @@ def main(argv=None):
             a.overview_json = pj["overview"]
         if a.cut_info == "runs/cut_scene_info_ep7.csv":
             a.cut_info = pj.get("cut_info") or ""
-    if not a.genzu_dir:
-        p.error("--genzu-dir か --project のどちらかが必要です")
     # カット別 situation/remove（great-edisonの3層プロンプトCUT層）。在ればプロンプトに反映。
     cut_info_map = {}
     try:
@@ -1169,21 +1182,48 @@ def main(argv=None):
     OVERVIEWS.update(_load_json(a.overview_json, {}))
     global STATE
     STATE = _load_json(_state_path(), {})
-    # 既定プロジェクト（起動引数のCSV）
-    dkey = f"{a.work}#{a.ep}"
-    # CSV(カット表)が無い作品は原図フォルダ走査でカット表を組む（SP2等・香盤表なし運用）
-    default_source = "csv" if (a.csv and os.path.exists(a.csv)) else "scan"
-    if default_source == "scan":
-        print(f"[info] カット表CSVが無いため原図フォルダ走査で構成します: {a.genzu_dir}")
-    PROJECTS[dkey] = _make_project(dkey, a.work, a.ep, a.genzu_dir, a.boards_dir,
-                                   a.csv if default_source == "csv" else None,
-                                   source=default_source)
-    # 永続化された追加プロジェクトを復元
+
+    def add_project(work, ep, genzu_dir, boards_dir, csv_path, out_dir, cut_info, label):
+        """genzu_dir が実在すれば PROJECTS に登録。csv が実在すれば csv、無ければ scan。"""
+        if not (genzu_dir and os.path.isdir(genzu_dir)):
+            print(f"[skip] {label}: 原図フォルダが見つかりません: {genzu_dir}")
+            return None
+        key = f"{work}#{ep}"
+        source = "csv" if (csv_path and os.path.exists(csv_path)) else "scan"
+        if source == "scan":
+            print(f"[info] {label}: カット表CSVなし→原図フォルダ走査で構成: {genzu_dir}")
+        PROJECTS[key] = _make_project(key, work, ep, genzu_dir, boards_dir,
+                                      csv_path if source == "csv" else None,
+                                      source=source, out_dir=out_dir, cut_info=cut_info)
+        # 各作品の過去state(OK判定/プロンプト編集等)を取り込む。
+        # その作品のユニットに属する uid だけ・既存キーは上書きしない（他作品の混入や汚染を防ぐ）。
+        if out_dir:
+            units = PROJECTS[key]["units"]
+            for k, v in _load_json(os.path.join(out_dir, "console_state.json"), {}).items():
+                if k in units:
+                    STATE.setdefault(k, v)
+        return key
+
+    # 1) 作品レジストリ（runs/project_*.json）を全部読み込む → 全作品がタブに載る
+    import glob as _glob
+    for pjpath in sorted(_glob.glob(a.projects_glob)):
+        pj = _load_json(pjpath, {})
+        if not pj.get("work"):
+            continue
+        add_project(pj["work"], str(pj.get("ep", "00")), pj.get("genzu_dir"),
+                    pj.get("boards_dir"), pj.get("csv"), pj.get("out_dir"),
+                    pj.get("cut_info"), os.path.basename(pjpath))
+    # 2) CLI 指定があれば従来どおり追加/上書き（後方互換）
+    if a.genzu_dir:
+        add_project(a.work, a.ep, a.genzu_dir, a.boards_dir, a.csv, a.out, a.cut_info, "CLI引数")
+    # 3) 永続化された追加プロジェクト（＋作品ボタン由来）を復元
     for rec in _load_json(_projects_path(), []):
         if rec["key"] not in PROJECTS and os.path.isdir(rec.get("genzu_dir", "")):
             PROJECTS[rec["key"]] = _make_project(rec["key"], rec["work"], rec["ep"],
                                                  rec["genzu_dir"], rec.get("boards_dir"),
                                                  rec.get("csv"), rec.get("source", "scan"))
+    if not PROJECTS:
+        p.error("作品が1つも見つかりません（runs/project_*.json を作るか --genzu-dir を指定）")
     _save_projects()
     app = create_app()
     print(f"原図修正コンソール: http://127.0.0.1:{a.port}  (out={a.out})")
