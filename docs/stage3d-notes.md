@@ -79,7 +79,28 @@ python3 src/stage3d/build_viewer.py --blend work/kitchen_stage.blend \
 - Three.js のライトは Cycles と単位が違うため強度は別調整
   (Playwright+Chromium のヘッドレススクショで確認しながら詰めた)。
 
-## 7. 次アクション(案)
+## 7. 追加シーン (2026-07-14): 竹林の山道 / 俯瞰の寝室
+
+チャット貼付の2ボードを同じ手法で立体化 (画像はチャット貼付だとファイル保存されないため、
+内容を読み取ってパラメータ化。今後は Drive 経由が確実)。
+
+- `src/stage3d/stagelib.py` … box/cyl/sphere/mat/カメラ/レンダCLIを共通化
+- `src/stage3d/bamboo_path.py` … 竹林の山道。**大量配置は ops で作らず、テンプレートを
+  `object.copy()`(リンク複製) でばら撒く**(opsで1本ずつ作ると数千opsで数十分かかる)。
+  遠景の岩山 + 半透明板を重ねたアニメ的な霧 (`fog_` 接頭辞、ビューワーでは three.js の
+  Fog に置き換えるため `--exclude_prefix fog_` でGLBから除外)
+- `src/stage3d/topdown_room.py` … 俯瞰の寝室 (朱の飾り格子建具・屏風・黒漆箪笥・寝台・
+  衣桁・行灯)。手前の南壁は作らないステージセット構成 (ボードの俯瞰を遮らない)
+- `src/stage3d/configs/*.json` … ビューワーのシーン設定 (カメラプリセット/ライト/フォグ/露出)。
+  `build_viewer.py --config` で注入。座標は three.js 系 (Blender `(x,y,z)` → `(x, z, -y)`)
+
+ハマりどころ追記:
+- Blender カメラの `clip_end` は既定100m → 遠景の山が切れる。`stagelib.add_camera` で500mに
+- 俯瞰ボードの部屋は「カメラ側の壁を作らない」が正解 (壁があると外側しか映らない)
+- Playwright での動作確認は `click()` がWebGL負荷でタイムアウトすることがある
+  → `page.evaluate()` で直接 onclick を呼ぶ
+
+## 8. 次アクション(案)
 
 - [ ] 尚善の他ボードの立体化(線画設定 `shz_b01_04_食堂` はパース図+立面図で好条件)
 - [ ] カメラパス(ゆっくりPAN)の連番レンダ → 動画化(ツイートの0:19動画相当)
