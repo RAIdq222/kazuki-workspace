@@ -63,8 +63,9 @@ def export_glb(blend_path, glb_path, exclude_prefixes=()):
     for o in list(bpy.data.objects):
         if o.type != "MESH" or any(o.name.startswith(p) for p in exclude_prefixes):
             bpy.data.objects.remove(o)
-    # Base Color にノードが刺さっているマテリアル(床の色ムラ等)は glTF に変換できず
-    # 白になってしまうため、リンクを外して固定色に落とす
+    # Base Color にプロシージャルノードが刺さっているマテリアル(床の色ムラ等)は
+    # glTF に変換できず白になるため、リンクを外して固定色に落とす。
+    # 画像テクスチャ(リーフカード等)はそのまま glTF に変換できるので残す。
     for m in bpy.data.materials:
         if not m.node_tree:
             continue
@@ -72,7 +73,7 @@ def export_glb(blend_path, glb_path, exclude_prefixes=()):
         if not bsdf:
             continue
         base = bsdf.inputs["Base Color"]
-        if base.is_linked:
+        if base.is_linked and base.links[0].from_node.type != "TEX_IMAGE":
             for link in list(base.links):
                 m.node_tree.links.remove(link)
             if m.name.startswith("m_floor"):
