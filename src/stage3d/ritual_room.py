@@ -15,7 +15,8 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bpy  # noqa: E402
-from stagelib import (reset_scene, mat, mat_image, box, cyl, sphere, torus, plane,  # noqa: E402
+from stagelib import (reset_scene, mat, mat_image, mat_wood, mat_plaster, mat_cloth,  # noqa: E402
+                      box, cyl, sphere, torus, plane,
                       add_camera, area_light, set_world, render_cli)
 
 R = random.Random(3)
@@ -51,16 +52,15 @@ def build_shell():
           ftex or mat("floor_dark", PAL["floor_dark"], rough=0.6))
     # 中央の畳の通路 (入口→儀式壇)
     plane("tatami", 1.5, 4.6, (ROOM_X / 2, 2.3, 0.012),
-          mat("tatami_pale", (0.510, 0.485, 0.400), rough=0.9))
+          mat_plaster("tatami_pale", (0.510, 0.485, 0.400), rough=0.9, scale=40.0, strength=0.10))
     # 壁: 茶色い土壁 (原画切り出し)
-    wtex = rtex("wall", rough=0.9, uv_scale=(3.0, 2.0))
-    wm = wtex or mat("wall_brown", (0.26, 0.16, 0.08), rough=0.9)
+    wm = mat_plaster("wall_brown", (0.235, 0.150, 0.080), rough=0.92, scale=5.0)
     box("wall_N", ROOM_X, 0.06, WALL_H, (ROOM_X / 2, ROOM_Y + 0.03, WALL_H / 2), wm)
     box("wall_W", 0.06, ROOM_Y, WALL_H, (-0.03, ROOM_Y / 2, WALL_H / 2), wm)
     box("wall_E", 0.06, ROOM_Y, WALL_H, (ROOM_X + 0.03, ROOM_Y / 2, WALL_H / 2), wm)
     box("wall_S", ROOM_X, 0.06, WALL_H, (ROOM_X / 2, -0.03, WALL_H / 2), wm)
     # 南壁の両開き戸 (逆アングル生成画から切り出したテクスチャ)
-    wd = mat("wood_red", PAL["wood_red"], rough=0.6)
+    wd = mat_wood("wood_red", PAL["wood_red"], rough=0.55, scale=2.2, along="Y")
     dtex = rtex("door", rough=0.6)
     if dtex:
         plane("door", 2.1, 2.2, (ROOM_X / 2, 0.02, 1.1), dtex,
@@ -83,7 +83,7 @@ def build_shell():
     plane("ceiling", ROOM_X, ROOM_Y, (ROOM_X / 2, ROOM_Y / 2, WALL_H),
           mat("wood_dark", PAL["wood_dark"], rough=0.9))
     # 側面の白幕 (原画切り出し)
-    cm = mat("cloth", PAL["cloth"], rough=0.95)
+    cm = mat_cloth("cloth", PAL["cloth"], drape_scale=2.4)
     for x, sgn in ((0.12, 1), (ROOM_X - 0.12, -1)):
         for i in range(4):
             y0 = 0.35 + i * 1.62
@@ -101,7 +101,7 @@ def build_shell():
 
 def altar(idx, cx):
     """白布の祭壇 + 短剣."""
-    cloth = mat("altar_white", (0.720, 0.710, 0.680), rough=0.9)
+    cloth = mat_cloth("altar_white", (0.720, 0.710, 0.680), drape_scale=1.6)
     box(f"altar{idx}_body", 1.0, 2.0, 0.72, (cx, 4.35, 0.36),
         mat("wood_dark", PAL["wood_dark"]))
     box(f"altar{idx}_cloth", 1.08, 2.08, 0.74, (cx, 4.35, 0.38), cloth)

@@ -205,3 +205,109 @@ def render_cli(cams, argv=None, default_res="1280x830", view_transform="AgX",
     if args.blend:
         bpy.ops.wm.save_as_mainfile(filepath=os.path.abspath(args.blend))
         print("saved", args.blend)
+
+
+# ---- プロシージャルマテリアル (blender-shader-nodesスキル準拠) ----
+# glTFには変換できないため、fallback色をカスタムプロパティに保存しておき、
+# build_viewer.export_glb がGLB用にその色へ落とす。
+
+def _proc_base(name, color, rough):
+    key = f"m_{name}"
+    if key in _mats:
+        return None, None
+    m = bpy.data.materials.new(key)
+    m.use_nodes = True
+    m["fallback"] = list(color)
+    nt = m.node_tree
+    bsdf = nt.nodes["Principled BSDF"]
+    bsdf.inputs["Roughness"].default_value = rough
+    _mats[key] = m
+    return m, bsdf
+
+
+def mat_wood(name, color, rough=0.55, scale=3.0, along="Y", strength=0.35):
+    """木目: Wave Texture をノイズで歪ませ ColorRamp で濃淡 + バンプ."""
+    m, bsdf = _proc_base(name, color, rough)
+    if m is None:
+        return _mats[f"m_{name}"]
+    nt = m.node_tree
+    tc = nt.nodes.new("ShaderNodeTexCoord")
+    mp = nt.nodes.new("ShaderNodeMapping")
+    mp.inputs["Scale"].default_value = (scale, scale, scale)
+    wave = nt.nodes.new("ShaderNodeTexWave")
+    wave.bands_direction = "X" if along == "X" else "Y"
+    wave.inputs["Scale"].default_value = 1.6
+    wave.inputs["Distortion"].default_value = 3.5
+    wave.inputs["Detail"].default_value = 2.5
+    ramp = nt.nodes.new("ShaderNodeValToRGB")
+    lo = [max(0.0, c * (1 - strength)) for c in color]
+    hi = [min(1.0, c * (1 + strength * 0.7)) for c in color]
+    ramp.color_ramp.elements[0].color = (*lo, 1)
+    ramp.color_ramp.elements[1].color = (*hi, 1)
+    bump = nt.nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = 0.12
+    nt.links.new(tc.outputs["Object"], mp.inputs["Vector"])
+    nt.links.new(mp.outputs["Vector"], wave.inputs["Vector"])
+    nt.links.new(wave.outputs["Fac"], ramp.inputs["Fac"])
+    nt.links.new(ramp.outputs["Color"], bsdf.inputs["Base Color"])
+    nt.links.new(wave.outputs["Fac"], bump.inputs["Height"])
+    nt.links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
+    return m
+
+
+def mat_plaster(name, color, rough=0.9, scale=8.0, strength=0.16):
+    """漆喰・土壁: 大小ノイズの重ねで色ムラ + 細かいバンプ."""
+    m, bsdf = _proc_base(name, color, rough)
+    if m is None:
+        return _mats[f"m_{name}"]
+    nt = m.node_tree
+    tc = nt.nodes.new("ShaderNodeTexCoord")
+    n1 = nt.nodes.new("ShaderNodeTexNoise")
+    n1.inputs["Scale"].default_value = scale * 0.4
+    n1.inputs["Detail"].default_value = 4.0
+    ramp = nt.nodes.new("ShaderNodeValToRGB")
+    lo = [max(0.0, c * (1 - strength)) for c in color]
+    hi = [min(1.0, c * (1 + strength)) for c in color]
+    ramp.color_ramp.elements[0].color = (*lo, 1)
+    ramp.color_ramp.elements[1].color = (*hi, 1)
+    n2 = nt.nodes.new("ShaderNodeTexNoise")
+    n2.inputs["Scale"].default_value = scale * 6
+    bump = nt.nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = 0.06
+    nt.links.new(tc.outputs["Object"], n1.inputs["Vector"])
+    nt.links.new(tc.outputs["Object"], n2.inputs["Vector"])
+    nt.links.new(n1.outputs["Fac"], ramp.inputs["Fac"])
+    nt.links.new(ramp.outputs["Color"], bsdf.inputs["Base Color"])
+    nt.links.new(n2.outputs["Fac"], bump.inputs["Height"])
+    nt.links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
+    return m
+
+
+def mat_cloth(name, color, rough=0.95, scale=90.0, drape_scale=1.2):
+    """布: 細かい織り目バンプ + 縦ドレープの明暗 (幕・布掛け用)."""
+    m, bsdf = _proc_base(name, color, rough)
+    if m is None:
+        return _mats[f"m_{name}"]
+    nt = m.node_tree
+    bsdf.inputs["Sheen Weight"].default_value = 0.4
+    tc = nt.nodes.new("ShaderNodeTexCoord")
+    # 縦ドレープ: X方向のWaveで柔らかい明暗
+    wave = nt.nodes.new("ShaderNodeTexWave")
+    wave.inputs["Scale"].default_value = drape_scale
+    wave.inputs["Distortion"].default_value = 1.5
+    ramp = nt.nodes.new("ShaderNodeValToRGB")
+    lo = [max(0.0, c * 0.78) for c in color]
+    hi = [min(1.0, c * 1.10) for c in color]
+    ramp.color_ramp.elements[0].color = (*lo, 1)
+    ramp.color_ramp.elements[1].color = (*hi, 1)
+    weave = nt.nodes.new("ShaderNodeTexNoise")
+    weave.inputs["Scale"].default_value = scale
+    bump = nt.nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = 0.04
+    nt.links.new(tc.outputs["Object"], wave.inputs["Vector"])
+    nt.links.new(tc.outputs["Object"], weave.inputs["Vector"])
+    nt.links.new(wave.outputs["Fac"], ramp.inputs["Fac"])
+    nt.links.new(ramp.outputs["Color"], bsdf.inputs["Base Color"])
+    nt.links.new(weave.outputs["Fac"], bump.inputs["Height"])
+    nt.links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
+    return m

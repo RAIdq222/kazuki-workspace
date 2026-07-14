@@ -76,7 +76,9 @@ def export_glb(blend_path, glb_path, exclude_prefixes=()):
         if base.is_linked and base.links[0].from_node.type != "TEX_IMAGE":
             for link in list(base.links):
                 m.node_tree.links.remove(link)
-            if m.name.startswith("m_floor"):
+            if "fallback" in m:  # プロシージャルマテリアルの代替色
+                base.default_value = (*m["fallback"], 1.0)
+            elif m.name.startswith("m_floor"):
                 base.default_value = (0.19, 0.12, 0.07, 1.0)
     bpy.ops.export_scene.gltf(filepath=os.path.abspath(glb_path), export_format="GLB",
                               export_apply=True, export_lights=False, export_cameras=False)
