@@ -15,7 +15,8 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bpy  # noqa: E402
-from stagelib import (reset_scene, mat, mat_image, box, cyl, sphere, torus, plane,  # noqa: E402
+from stagelib import (reset_scene, mat, mat_image, mat_wood, mat_plaster,  # noqa: E402
+                      box, cyl, sphere, torus, plane,
                       add_camera, area_light, sun_light, set_world, render_cli)
 
 R = random.Random(9)
@@ -60,7 +61,7 @@ def build_shell():
         ("wall_S", ROOM_X, 0.06, (ROOM_X / 2, -0.03, 0)),
     ]:
         box(nm, sx, sy, WALL_H, (loc[0], loc[1], WALL_H / 2), wm)
-    wd = mat("wood_dark", PAL["wood_dark"], rough=0.7)
+    wd = mat_wood("wood_dark", PAL["wood_dark"], rough=0.7, scale=2.6)
     # 柱
     for x, y in [(0.12, 0.12), (ROOM_X - 0.12, 0.12), (0.12, ROOM_Y - 0.12),
                  (ROOM_X - 0.12, ROOM_Y - 0.12), (3.8, ROOM_Y - 0.12), (0.12, 2.9)]:
@@ -92,7 +93,7 @@ def build_deck():
     """上がり座敷 (板の間) + ローテーブル + 敷物."""
     dtex = ktex("deck", rough=0.6, uv_scale=(3.2, 2.4))
     dm = dtex or mat("wood_deck", PAL["wood_deck"], rough=0.7)
-    wd = mat("wood_dark", PAL["wood_dark"], rough=0.7)
+    wd = mat_wood("wood_dark", PAL["wood_dark"], rough=0.7, scale=2.6)
     x0, x1 = 1.9, ROOM_X
     y0, y1 = 0.0, 3.1
     box("deck", x1 - x0, y1 - y0, DECK_H, ((x0 + x1) / 2, (y0 + y1) / 2, DECK_H / 2), dm)
@@ -105,7 +106,7 @@ def build_deck():
     box("mat", 2.0, 1.6, 0.02, (4.6, 1.7, DECK_H + 0.01),
         mat("cloth_gray", PAL["cloth_gray"], rough=0.95))
     # ローテーブル
-    tm = mat("wood_deck", (0.24, 0.165, 0.105), rough=0.5)
+    tm = mat_wood("table_wood", (0.24, 0.165, 0.105), rough=0.5, scale=4.0, along="X")
     box("table_top", 1.35, 0.75, 0.05, (4.6, 1.7, DECK_H + 0.42), tm)
     for sx in (-1, 1):
         for sy in (-1, 1):
@@ -136,7 +137,7 @@ def build_stoves():
     stex = ktex("stove", rough=0.85, uv_scale=(2.5, 1.2))
     sm = stex or mat("stove", PAL["stove"], rough=0.9)
     iron = mat("iron_pot", PAL["iron_pot"], rough=0.35)
-    wd = mat("wood_dark", PAL["wood_dark"], rough=0.7)
+    wd = mat_wood("wood_dark", PAL["wood_dark"], rough=0.7, scale=2.6)
     y0 = ROOM_Y - 0.85
     # 3段構成: 低い作業台 - かまど本体(高) - 低い台
     box("bench_w", 1.5, 0.75, 0.72, (0.9, y0 + 0.375, 0.36), sm)
@@ -177,7 +178,7 @@ def build_stoves():
 def build_east():
     """東壁: 飾り棚 (原画テクスチャの張りぼて) + 蒸し饅頭の小机."""
     ctex = ktex("cabinet", rough=0.6)
-    wd = mat("wood_dark", PAL["wood_dark"], rough=0.7)
+    wd = mat_wood("wood_dark", PAL["wood_dark"], rough=0.7, scale=2.6)
     if ctex:
         box("cab_body", 0.45, 1.55, 2.62, (ROOM_X - 0.24, 3.95, DECK_H + 1.31), wd)
         plane("cab_face", 1.5, 2.58, (ROOM_X - 0.475, 3.95, DECK_H + 1.31), ctex,
