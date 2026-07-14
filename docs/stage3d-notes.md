@@ -115,7 +115,27 @@ python3 src/stage3d/build_viewer.py --blend work/kitchen_stage.blend \
   - 左ドラッグのモード切替: 周回(対象の周りを回る) / 見回し(その場で首を振る)
   - カメラプリセットに `mm` を持たせると画角も同時に切替
 
-## 9. 次アクション(案)
+## 9. GPT Image 2 で別アングル生成 → 空間化 (2026-07-14)
+
+「1アングルのボードでは使いどころが乏しい」問題への対応フロー (儀式部屋・雨の台所で実証):
+
+1. ボード原画を Higgsfield に直接アップロード
+   (**環境のNetwork許可により `upload.higgsfield.ai` へのPUTが初めてin-sandboxで成功**。
+   design-notes §8 の本番バッチ経路がこの環境で完結できることを確認)
+2. GPT Image 2 (model `gpt_image_2`, 画像入力+編集) で「同じ部屋の逆アングル/90°横」を生成。
+   プロンプトは英語で「REVERSE SHOT / 90-DEGREE SIDE VIEW, keep identical layout・lighting・style」
+   → レイアウト整合性はかなり高い (入口壁のディテールなど、原画に無い情報が得られる)
+3. 原画 + 生成画からテクスチャを切り出し (`rit_*` / `kit_*`)、bpyで空間化
+   - 入口の戸は生成画(逆アングル)からの切り出しを使用 = 生成画が「見えない壁の資料」になる
+4. Drive の10MB超ファイルは `drive.usercontent.google.com/download?id=..&confirm=t` で直接取得可
+   (リンク共有されている場合)。PSD由来の巨大iTXtチャンクは `PngImagePlugin.MAX_TEXT_MEMORY` を拡大
+
+シーン: `src/stage3d/ritual_room.py` (夜・蝋燭光), `src/stage3d/kitchen_rain.py` (雨・寒色光)。
+ビューワー設定: `configs/ritual_room.json`, `configs/kitchen_rain.json`。
+
+注意: `build_viewer.py --glb` は既存GLBを再利用する (シーン変更後は付けずに再エクスポートすること)。
+
+## 10. 次アクション(案)
 
 - [ ] 尚善の他ボードの立体化(線画設定 `shz_b01_04_食堂` はパース図+立面図で好条件)
 - [ ] カメラパス(ゆっくりPAN)の連番レンダ → 動画化(ツイートの0:19動画相当)
