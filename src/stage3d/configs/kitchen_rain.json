@@ -1,5 +1,5 @@
 {
-  "exposure": 1.05,
+  "exposure": 1.25,
   "background": "#14161a",
   "moveSpeed": 2.2,
   "eyeRange": [0.3, 2.8],
@@ -10,11 +10,11 @@
     "T": { "pos": [1.2, 4.6, 1.5], "tgt": [4.8, 0.3, -3.6], "label": "俯瞰", "mm": 30 }
   },
   "lights": [
-    { "type": "hemi", "sky": "#c8ccd4", "ground": "#3a3a38", "i": 0.85 },
+    { "type": "hemi", "sky": "#c8ccd4", "ground": "#3a3a38", "i": 1.35 },
     { "type": "dir", "p": [3.6, 4.5, -9.5], "tgt": [3.6, 0.0, -1.8],
-      "c": "#b8c4d8", "i": 2.2, "shadow": true, "shadowExtent": 10 },
-    { "type": "point", "p": [1.4, 2.0, -5.3], "c": "#cdd6e4", "i": 6 },
-    { "type": "point", "p": [3.6, 2.0, -5.3], "c": "#cdd6e4", "i": 6 },
-    { "type": "point", "p": [6.3, 2.0, -5.3], "c": "#cdd6e4", "i": 5 }
+      "c": "#b8c4d8", "i": 3.0, "shadow": true, "shadowExtent": 10 },
+    { "type": "point", "p": [1.4, 2.0, -5.3], "c": "#cdd6e4", "i": 10 },
+    { "type": "point", "p": [3.6, 2.0, -5.3], "c": "#cdd6e4", "i": 10 },
+    { "type": "point", "p": [6.3, 2.0, -5.3], "c": "#cdd6e4", "i": 8 }
   ]
 }

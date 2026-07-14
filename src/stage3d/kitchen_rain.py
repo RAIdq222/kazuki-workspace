@@ -184,24 +184,24 @@ def build_east():
               rot=(math.pi / 2, 0, -math.pi / 2))
     # 蒸し饅頭の小机 (南西の土間)
     tm = mat("wood_deck", PAL["wood_deck"], rough=0.6)
-    box("side_top", 0.95, 0.55, 0.05, (0.85, 0.65, 0.66), tm)
+    box("side_top", 0.95, 0.55, 0.05, (0.85, 2.10, 0.66), tm)
     for sx in (-1, 1):
         for sy in (-1, 1):
             box(f"side_leg{sx}{sy}", 0.06, 0.06, 0.63,
-                (0.85 + sx * 0.4, 0.65 + sy * 0.21, 0.315), wd)
+                (0.85 + sx * 0.4, 2.10 + sy * 0.21, 0.315), wd)
     bm = mat("buns", PAL["buns"], rough=0.8)
-    cyl("plate", 0.16, 0.03, (0.75, 0.62, 0.70), mat("cloth_gray", (0.6, 0.58, 0.54), rough=0.5), verts=18)
+    cyl("plate", 0.16, 0.03, (0.75, 2.07, 0.70), mat("cloth_gray", (0.6, 0.58, 0.54), rough=0.5), verts=18)
     for i in range(5):
         a = i * 2 * math.pi / 5
-        sphere(f"bun_{i}", 0.05, (0.75 + math.cos(a) * 0.08, 0.62 + math.sin(a) * 0.08, 0.735), bm)
-    sphere("bun_c", 0.05, (0.75, 0.62, 0.78), bm)
+        sphere(f"bun_{i}", 0.05, (0.75 + math.cos(a) * 0.08, 2.07 + math.sin(a) * 0.08, 0.735), bm)
+    sphere("bun_c", 0.05, (0.75, 2.07, 0.78), bm)
     # 竹の花瓶
-    cyl("vase", 0.045, 0.24, (1.08, 0.78, 0.78), mat("cloth_gray", (0.62, 0.62, 0.58), rough=0.5), verts=12)
+    cyl("vase", 0.045, 0.24, (1.08, 2.28, 0.78), mat("cloth_gray", (0.62, 0.62, 0.58), rough=0.5), verts=12)
     for i in range(3):
-        box(f"leafb_{i}", 0.012, 0.07, 0.26, (1.08 + 0.02 * i, 0.78, 0.98 + 0.04 * i),
+        box(f"leafb_{i}", 0.012, 0.07, 0.26, (1.08 + 0.02 * i, 2.28, 0.98 + 0.04 * i),
             mat("leaf_green", PAL["leaf_green"], rough=0.8), rot=(0.25 * i - 0.25, 0.15, 0.5 * i))
     # 巻物 (机上)
-    cyl("makimono", 0.045, 0.5, (1.15, 0.5, 0.71), mat("cloth_gray", (0.66, 0.63, 0.56), rough=0.7),
+    cyl("makimono", 0.045, 0.5, (1.15, 1.95, 0.71), mat("cloth_gray", (0.66, 0.63, 0.56), rough=0.7),
         rot=(0, math.pi / 2, 0.3), verts=12)
 
 
