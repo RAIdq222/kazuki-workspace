@@ -50,6 +50,7 @@ function applyPreset(k) {
   controls.target.set(...p.tgt);
   controls.update();
   if (typeof syncEyeUI === 'function') syncEyeUI();
+  fisheyeState.on = false;
   if (p.mm) setFov((360 / Math.PI) * Math.atan(21.6 / p.mm));
 }
 
@@ -97,11 +98,69 @@ new GLTFLoader().parse(bin.buffer, '', (gltf) => {
     if (o.isMesh) {
       o.castShadow = true;
       o.receiveShadow = true;
+      // 張りぼて(遠景ビルボード)は距離フォグの対象外にする。
+      // 絵の中に霧が描き込まれているため、フォグを重ねると白飛びして見えなくなる。
+      const nm = o.name || '';
+      const pnm = (o.parent && o.parent.name) || '';
+      if (nm.startsWith('mtn') || pnm.startsWith('mtn') || nm.startsWith('farwall') || pnm.startsWith('farwall')) {
+        if (o.material) o.material.fog = false;
+        o.castShadow = false;
+      }
     }
   });
   scene.add(gltf.scene);
   applyPreset(Object.keys(PRESETS)[0]);
 });
+
+// ---------- 魚眼ポストパス (樽型歪み: 透視画像→等距離射影の近似) ----------
+const fisheyeState = { on: false };
+const rtSize = () => [innerWidth * renderer.getPixelRatio(), innerHeight * renderer.getPixelRatio()];
+let rt = new THREE.WebGLRenderTarget(...rtSize());
+const postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+const postScene = new THREE.Scene();
+const postMat = new THREE.ShaderMaterial({
+  uniforms: {
+    tex: { value: rt.texture },
+    thetaMax: { value: 0.9 },
+    aspect: { value: innerWidth / innerHeight },
+  },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+  fragmentShader: [
+    'varying vec2 vUv;',
+    'uniform sampler2D tex;',
+    'uniform float thetaMax;',
+    'uniform float aspect;',
+    'void main(){',
+    '  vec2 c = vUv * 2.0 - 1.0;',
+    '  c.x *= aspect;',
+    '  float maxR = length(vec2(aspect, 1.0));',
+    '  float rn = length(c) / maxR;',
+    '  float k = tan(thetaMax);',
+    '  float rs = (rn < 1e-5) ? 0.0 : tan(rn * thetaMax) / k;',
+    '  vec2 dir = (rn < 1e-5) ? vec2(0.0) : normalize(c);',
+    '  vec2 src = dir * rs * maxR;',
+    '  src.x /= aspect;',
+    '  vec2 uv = (src + 1.0) * 0.5;',
+    '  gl_FragColor = texture2D(tex, clamp(uv, 0.0, 1.0));',
+    '  #include <colorspace_fragment>',  // RT経由でも出力色空間変換を適用 (暗くなるのを防ぐ)
+    '}',
+  ].join('\n'),
+  depthTest: false,
+});
+postScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), postMat));
+
+function renderFrame() {
+  if (fisheyeState.on) {
+    postMat.uniforms.thetaMax.value = (camera.fov * Math.PI) / 360;
+    postMat.uniforms.aspect.value = camera.aspect;
+    renderer.setRenderTarget(rt);
+    renderer.render(scene, camera);
+    renderer.setRenderTarget(null);
+    renderer.render(postScene, postCam);
+  } else {
+    renderer.render(scene, camera);
+  }
+}
 
 // ---------- UI ----------
 const EYE_RANGE = CFG.eyeRange || [0.2, 6.0];
@@ -113,7 +172,8 @@ ui.innerHTML =
   `<div style="font-weight:bold;margin-bottom:6px">${TITLE}</div>` +
   '<div id="btns" style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap"></div>' +
   '<div style="margin-bottom:2px">レンズ</div>' +
-  '<div id="lens" style="display:flex;gap:5px;margin-bottom:6px"></div>' +
+  '<div id="lens" style="display:flex;gap:5px;margin-bottom:4px"></div>' +
+  '<label style="font-size:12px"><input type="checkbox" id="dolly" checked> 構図を保って切替(ドリー補正)</label><br>' +
   '<label>画角 <input id="fov" type="range" min="15" max="110" step="1" style="vertical-align:middle;width:110px"> ' +
   '<span id="fovv"></span>mm相当</label><br>' +
   '<label>アイレベル <input id="eye" type="range" step="0.05" style="vertical-align:middle;width:96px"> ' +
@@ -146,16 +206,45 @@ function setFov(deg) {
   fov.value = camera.fov;
   fovv.textContent = fovToMm(camera.fov);
 }
-fov.oninput = () => setFov(+fov.value);
+fov.oninput = () => {
+  fisheyeState.on = false;  // スライダー操作は通常レンズ扱い
+  setFov(+fov.value);
+};
 setFov(camera.fov);
 
-// レンズプリセット (魚眼風は超広角の近似。実際の歪みはBlenderの魚眼カメラで)
+// レンズプリセット。ドリー補正ON時は注視点の写る大きさを保ったままカメラが前後する
+// (=単なるズームではなく、広角のパース誇張/望遠の圧縮が出る)
 const lensRow = ui.querySelector('#lens');
-for (const [label, mm] of [['魚眼風', 14], ['広角', 24], ['標準', 50], ['望遠', 85]]) {
+function mmToFov(mm) {
+  return (360 / Math.PI) * Math.atan(21.6 / mm);
+}
+function setLens(mm, fisheye = false) {
+  const newFov = fisheye ? 100 : mmToFov(mm);
+  const dolly = ui.querySelector('#dolly').checked;
+  if (dolly && !fisheye) {
+    const scale = Math.tan((camera.fov * Math.PI) / 360) / Math.tan((newFov * Math.PI) / 360);
+    const off = new THREE.Vector3().subVectors(camera.position, controls.target);
+    const d = off.length();
+    let newD = d * scale;
+    // ステージから飛び出さないよう制限: 距離60mまで・カメラは地上0.25m以上
+    newD = Math.min(newD, 60);
+    if (off.y < 0) {
+      const maxD = (0.25 - controls.target.y) / (off.y / d);
+      if (maxD > 0) newD = Math.min(newD, maxD);
+    }
+    off.setLength(newD);
+    camera.position.copy(controls.target).add(off);
+    controls.update();
+    syncEyeUI();
+  }
+  fisheyeState.on = fisheye;
+  setFov(newFov);
+}
+for (const [label, mm, fe] of [['魚眼', 0, true], ['広角', 24, false], ['標準', 50, false], ['望遠', 85, false]]) {
   const b = document.createElement('button');
   b.textContent = label;
   b.style.cssText = btnCss;
-  b.onclick = () => setFov((360 / Math.PI) * Math.atan(21.6 / mm));
+  b.onclick = () => setLens(mm, fe);
   lensRow.appendChild(b);
 }
 
@@ -224,7 +313,7 @@ addEventListener('pointermove', (e) => {
 addEventListener('pointerup', () => { look.drag = false; });
 
 ui.querySelector('#shot').onclick = () => {
-  renderer.render(scene, camera);
+  renderFrame();
   renderer.domElement.toBlob((blob) => {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -264,6 +353,7 @@ addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  rt.setSize(...rtSize());
 });
 
 let prev = performance.now();
@@ -272,7 +362,7 @@ function loop(now) {
   prev = now;
   moveCamera(dt);
   controls.update();
-  renderer.render(scene, camera);
+  renderFrame();
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
