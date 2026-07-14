@@ -71,14 +71,17 @@ def parse_cut_codes(filename: str) -> dict:
     """原図ファイル名からエピソードとカット番号群を取り出す。
     例: shz_07_091_101_116_genzu -> {'work':'shz','ep':'07','cuts':['091','101','116']}
         shz_07_239B_genzu_BGonly -> cuts ['239B']
+        SP2_10_022_025           -> {'work':'SP2','ep':'10','cuts':['022','025']}
+        SP2_10_290_R / SP2_10_258_BG only -> cuts ['290'] / ['258']（R=リテイク版, BG only は修飾）
     複数番号は離散カットの束として返す（連番レンジ展開は香盤表規則で別途）。
+    prefix は英字始まりの英数字（shz / SP2 …）。_genzu サフィックスは無くてもよい。
     """
     name = re.sub(r"\.(png|jpg|jpeg|psd)$", "", filename, flags=re.I)
-    m = re.match(r"([a-zA-Z]+)_(\d+)_(.+)", name)
+    m = re.match(r"([A-Za-z][A-Za-z0-9]*)_(\d+)_(.+)", name)
     if not m:
         return {"work": "", "ep": "", "cuts": [], "raw": filename}
     work, ep, rest = m.group(1), m.group(2), m.group(3)
-    # rest の先頭から続く「数字(+英字枝番)」トークンを集める
+    # rest の先頭から続く「数字(+英字枝番)」トークンを集める（genzu 以降の修飾は無視）
     cuts = re.findall(r"\d+[A-Za-z]?", rest.split("genzu")[0])
     return {"work": work, "ep": ep, "cuts": cuts, "raw": filename}
 
