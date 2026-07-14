@@ -55,7 +55,31 @@ python3 src/stage3d/kitchen_stage.py -- --views A,B --samples 96 \
   (半分にすると全部品が½サイズになり、床に隙間・家具が浮く)。
 - bpy 5.0 で `use_nodes` に DeprecationWarning が出るが動く(Blender 6.0 で削除予定)。
 
-## 6. 次アクション(案)
+## 6. 単一HTMLビューワー (2026-07-14 追加)
+
+Blenderを使わずにカメラ操作+スクショだけできる閲覧用ビューワーを追加。
+
+- `src/stage3d/viewer_app.js` … Three.js のビューワー本体(プリセットカメラ/画角スライダー/
+  WASD移動/スクショ保存ボタン)。編集機能なし。
+- `src/stage3d/build_viewer.py` … .blend → GLB(メッシュのみ) → esbuild でバンドルした JS と
+  GLB(base64) を1つのHTMLに埋め込む。**出来た HTML はブラウザで開くだけで動く(オフライン可)**。
+
+```bash
+# 前提: npm i three esbuild 済みのディレクトリ (node_modules) を用意
+python3 src/stage3d/build_viewer.py --blend work/kitchen_stage.blend \
+    --title "尚善 台所 3Dステージ" --node_dir <node_modulesのある場所> \
+    --out work/kitchen_viewer.html
+```
+
+ハマりどころ:
+- Base Color にノードが刺さったマテリアル(床の色ムラ)は glTF 変換で白落ちする
+  → エクスポート前にリンクを外し固定色に落とす処理を入れた。
+- esbuild はエントリファイルの場所から node_modules を解決する → エントリを node_dir 側へ
+  コピーしてからバンドル。
+- Three.js のライトは Cycles と単位が違うため強度は別調整
+  (Playwright+Chromium のヘッドレススクショで確認しながら詰めた)。
+
+## 7. 次アクション(案)
 
 - [ ] 尚善の他ボードの立体化(線画設定 `shz_b01_04_食堂` はパース図+立面図で好条件)
 - [ ] カメラパス(ゆっくりPAN)の連番レンダ → 動画化(ツイートの0:19動画相当)
