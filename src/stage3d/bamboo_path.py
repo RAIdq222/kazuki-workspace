@@ -28,7 +28,7 @@ PAL = {
     "dirt":        (0.430, 0.300, 0.140),
     "dirt_edge":   (0.300, 0.210, 0.100),
     "ground":      (0.070, 0.120, 0.045),
-    "grass":       (0.110, 0.230, 0.060),
+    "grass":       (0.085, 0.200, 0.048),
     "grass_dry":   (0.280, 0.290, 0.095),
     "rock":        (0.300, 0.295, 0.270),
     "rock_dark":   (0.185, 0.185, 0.170),
@@ -149,7 +149,7 @@ def build_ground():
         y = R.uniform(-4, 32)
         shrink = max(0.45, 1.0 - 0.55 * ((y + 4) / 42))
         x = side * (1.6 * shrink + R.uniform(0, 1.6))
-        s = R.uniform(0.15, 0.5) * (0.5 + shrink)
+        s = R.uniform(0.12, 0.32) * (0.5 + shrink)
         scatter_copy(R.choice(grass_tpls), f"grass_{i}", (x, y, 0),
                      rot=(0, 0, R.uniform(0, 6.28)), scale=s)
     # 道端の茂み (bushカード)
@@ -220,9 +220,9 @@ def build_backdrop():
     ma = mat_image("mountain_a", f"{SPR}/mountain_a.png", rough=1.0, blend="BLEND")
     mb = mat_image("mountain_b", f"{SPR}/mountain_b.png", rough=1.0, blend="BLEND")
     # plane は XY面 → X軸90°回転で立てる (カメラ正面向き)
-    plane("mtn_main", 55, 55, (0, 78, 20.5), ma, rot=(math.pi / 2, 0, 0))
-    plane("mtn_l", 38, 38, (-26, 92, 13.5), mb, rot=(math.pi / 2, 0, 0))
-    plane("mtn_r", 34, 34, (24, 96, 12.0), mb, rot=(math.pi / 2, 0, 0))
+    plane("mtn_main", 62, 62, (0, 66, 24.0), ma, rot=(math.pi / 2, 0, 0))
+    plane("mtn_l", 38, 38, (-26, 80, 14.5), mb, rot=(math.pi / 2, 0, 0))
+    plane("mtn_r", 34, 34, (24, 84, 13.0), mb, rot=(math.pi / 2, 0, 0))
     # 奥の竹の壁 (遠景のシルエット): 濃緑の背の高い板
     wall = mat("far_bamboo", (0.24, 0.34, 0.26), rough=1.0)
     for i, (x, y, w, h) in enumerate([(-9, 42, 10, 12), (9, 44, 10, 13),
@@ -232,9 +232,9 @@ def build_backdrop():
 
 def build_fog_and_sky():
     """霧: 下ほど濃いグラデ板 (fog_ 接頭辞: GLBから除外しビューワーはFogで代替)."""
-    mist = mat_image("mist", f"{SPR}/mist.png", rough=1.0, blend="BLEND", emit=0.5)
-    defs = [(10, 5, 0.0), (18, 8, 0.0), (28, 12, 0.0), (40, 20, 0.0), (58, 30, 0.0)]
-    for i, (y, h, _) in enumerate(defs):
+    mist = mat_image("mist", f"{SPR}/mist.png", rough=1.0, blend="BLEND", emit=0.4)
+    defs = [(12, 4), (20, 7), (32, 11), (48, 18)]
+    for i, (y, h) in enumerate(defs):
         # mist.png は上が透明・下が濃い → そのまま立てる
         plane(f"fog_{i}", 200, h, (0, y, h / 2 - 0.2), mist, rot=(math.pi / 2, 0, 0))
     set_world((0.80, 0.84, 0.82), strength=1.0)

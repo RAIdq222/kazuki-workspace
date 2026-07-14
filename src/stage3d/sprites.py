@@ -61,7 +61,7 @@ def bush_sprite(path, size=512):
     """道端の下草・灌木の茂み (下が接地するシルエット)."""
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
-    tones = [(58, 112, 44), (78, 138, 56), (100, 158, 70), (46, 92, 40)]
+    tones = [(40, 84, 34), (56, 106, 42), (74, 124, 50), (32, 68, 30)]
     for _ in range(70):
         x = R.uniform(size * 0.1, size * 0.9)
         y = size - abs(R.gauss(0, size * 0.28)) - size * 0.05
@@ -147,7 +147,7 @@ def mist_sprite(path, size=512):
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     px = img.load()
     for yy in range(size):
-        a = int(235 * (yy / size) ** 1.6)
+        a = int(185 * (yy / size) ** 2.4)
         for xx in range(size):
             px[xx, yy] = (235, 240, 237, a)
     img.save(path)
