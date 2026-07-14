@@ -49,6 +49,8 @@ function applyPreset(k) {
   camera.position.set(...p.pos);
   controls.target.set(...p.tgt);
   controls.update();
+  if (typeof syncEyeUI === 'function') syncEyeUI();
+  if (p.mm) setFov((360 / Math.PI) * Math.atan(21.6 / p.mm));
 }
 
 // ---------- lights ----------
@@ -102,26 +104,33 @@ new GLTFLoader().parse(bin.buffer, '', (gltf) => {
 });
 
 // ---------- UI ----------
+const EYE_RANGE = CFG.eyeRange || [0.2, 6.0];
 const ui = document.createElement('div');
 ui.style.cssText =
   'position:fixed;top:12px;left:12px;z-index:10;background:rgba(20,15,10,.82);color:#f0e8dc;' +
-  'padding:12px 14px;border-radius:10px;font:13px/1.6 sans-serif;user-select:none;max-width:270px';
+  'padding:12px 14px;border-radius:10px;font:13px/1.7 sans-serif;user-select:none;max-width:280px';
 ui.innerHTML =
   `<div style="font-weight:bold;margin-bottom:6px">${TITLE}</div>` +
   '<div id="btns" style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap"></div>' +
-  '<label>画角 <input id="fov" type="range" min="15" max="75" step="1" style="vertical-align:middle;width:120px"> ' +
-  '<span id="fovv"></span>mm相当</label>' +
+  '<div style="margin-bottom:2px">レンズ</div>' +
+  '<div id="lens" style="display:flex;gap:5px;margin-bottom:6px"></div>' +
+  '<label>画角 <input id="fov" type="range" min="15" max="110" step="1" style="vertical-align:middle;width:110px"> ' +
+  '<span id="fovv"></span>mm相当</label><br>' +
+  '<label>アイレベル <input id="eye" type="range" step="0.05" style="vertical-align:middle;width:96px"> ' +
+  '<span id="eyev"></span>m</label>' +
+  '<div style="margin:6px 0 2px">左ドラッグの操作</div>' +
+  '<div id="modes" style="display:flex;gap:5px;margin-bottom:6px"></div>' +
   '<div style="margin:8px 0"><button id="shot" style="width:100%;padding:7px;border:0;border-radius:7px;' +
   'background:#c96;color:#221;font-weight:bold;cursor:pointer">📷 スクリーンショット保存</button></div>' +
-  '<div style="opacity:.75;font-size:12px">左ドラッグ: 回転 / 右ドラッグ: 平行移動<br>' +
-  'ホイール: ズーム / WASD+QE: 移動</div>';
+  '<div style="opacity:.75;font-size:12px">右ドラッグ: 平行移動 / ホイール: ズーム<br>WASD+QE: 移動</div>';
 document.body.appendChild(ui);
 
+const btnCss = 'flex:1;padding:6px 8px;border:0;border-radius:7px;background:#554636;color:#f0e8dc;cursor:pointer;white-space:nowrap';
 const btns = ui.querySelector('#btns');
 for (const k of Object.keys(PRESETS)) {
   const b = document.createElement('button');
   b.textContent = PRESETS[k].label || k;
-  b.style.cssText = 'flex:1;padding:6px 10px;border:0;border-radius:7px;background:#554636;color:#f0e8dc;cursor:pointer;white-space:nowrap';
+  b.style.cssText = btnCss;
   b.onclick = () => applyPreset(k);
   btns.appendChild(b);
 }
@@ -131,13 +140,88 @@ const fovv = ui.querySelector('#fovv');
 function fovToMm(deg) {
   return Math.round(21.6 / Math.tan((deg * Math.PI) / 360));
 }
-fov.value = camera.fov;
-fovv.textContent = fovToMm(camera.fov);
-fov.oninput = () => {
-  camera.fov = +fov.value;
+function setFov(deg) {
+  camera.fov = Math.min(110, Math.max(15, deg));
   camera.updateProjectionMatrix();
+  fov.value = camera.fov;
   fovv.textContent = fovToMm(camera.fov);
+}
+fov.oninput = () => setFov(+fov.value);
+setFov(camera.fov);
+
+// レンズプリセット (魚眼風は超広角の近似。実際の歪みはBlenderの魚眼カメラで)
+const lensRow = ui.querySelector('#lens');
+for (const [label, mm] of [['魚眼風', 14], ['広角', 24], ['標準', 50], ['望遠', 85]]) {
+  const b = document.createElement('button');
+  b.textContent = label;
+  b.style.cssText = btnCss;
+  b.onclick = () => setFov((360 / Math.PI) * Math.atan(21.6 / mm));
+  lensRow.appendChild(b);
+}
+
+// アイレベル (カメラ高さを注視点ごと上下)
+const eye = ui.querySelector('#eye');
+const eyev = ui.querySelector('#eyev');
+eye.min = EYE_RANGE[0];
+eye.max = EYE_RANGE[1];
+function syncEyeUI() {
+  eye.value = camera.position.y;
+  eyev.textContent = (+camera.position.y).toFixed(2);
+}
+eye.oninput = () => {
+  const dy = +eye.value - camera.position.y;
+  camera.position.y += dy;
+  controls.target.y += dy;
+  eyev.textContent = (+eye.value).toFixed(2);
 };
+
+// 操作モード: 周回(対象の周りを回る) / 見回し(その場で首を振る)
+let mode = 'orbit';
+const modeRow = ui.querySelector('#modes');
+const modeBtns = {};
+for (const [key, label] of [['orbit', '周回'], ['look', '見回し']]) {
+  const b = document.createElement('button');
+  b.textContent = label;
+  b.style.cssText = btnCss;
+  b.onclick = () => setMode(key);
+  modeRow.appendChild(b);
+  modeBtns[key] = b;
+}
+function setMode(m) {
+  mode = m;
+  controls.enableRotate = m === 'orbit';
+  modeBtns.orbit.style.background = m === 'orbit' ? '#c96' : '#554636';
+  modeBtns.orbit.style.color = m === 'orbit' ? '#221' : '#f0e8dc';
+  modeBtns.look.style.background = m === 'look' ? '#c96' : '#554636';
+  modeBtns.look.style.color = m === 'look' ? '#221' : '#f0e8dc';
+}
+setMode('orbit');
+
+// 見回しモードのドラッグ処理 (カメラ位置を固定して注視点を回す)
+const look = { drag: false, x: 0, y: 0 };
+renderer.domElement.addEventListener('pointerdown', (e) => {
+  if (mode === 'look' && e.button === 0) {
+    look.drag = true;
+    look.x = e.clientX;
+    look.y = e.clientY;
+  }
+});
+addEventListener('pointermove', (e) => {
+  if (!look.drag) return;
+  const dx = e.clientX - look.x;
+  const dy = e.clientY - look.y;
+  look.x = e.clientX;
+  look.y = e.clientY;
+  const off = new THREE.Vector3().subVectors(controls.target, camera.position);
+  const sph = new THREE.Spherical().setFromVector3(off);
+  sph.theta -= dx * 0.0035;
+  sph.phi = Math.min(Math.PI - 0.05, Math.max(0.05, sph.phi - dy * 0.0035));
+  sph.radius = 5;
+  off.setFromSpherical(sph);
+  controls.target.copy(camera.position).add(off);
+  controls.update();
+});
+addEventListener('pointerup', () => { look.drag = false; });
 
 ui.querySelector('#shot').onclick = () => {
   renderer.render(scene, camera);

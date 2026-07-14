@@ -217,10 +217,17 @@ def build_bamboo_groves():
 
 def build_backdrop():
     """張りぼての山 + 奥の竹の壁."""
-    ma = mat_image("mountain_a", f"{SPR}/mountain_a.png", rough=1.0, blend="BLEND", emit=0.15)
+    # 主峰: ボード原画から切り出した張りぼて (あれば優先)
+    board_mtn = f"{SPR}/mountain_board.png"
+    if os.path.exists(board_mtn):
+        ma = mat_image("mountain_board", board_mtn, rough=1.0, blend="BLEND", emit=0.5)
+        mw = 46.0
+        mh = mw / 0.932  # スプライトのアスペクト比
+        plane("mtn_main", mw, mh, (0, 88, 21.0), ma, rot=(math.pi / 2, 0, 0))
+    else:
+        ma = mat_image("mountain_a", f"{SPR}/mountain_a.png", rough=1.0, blend="BLEND", emit=0.15)
+        plane("mtn_main", 95, 95, (0, 90, 26.0), ma, rot=(math.pi / 2, 0, 0))
     mb = mat_image("mountain_b", f"{SPR}/mountain_b.png", rough=1.0, blend="BLEND", emit=0.15)
-    # plane は XY面 → X軸90°回転で立てる (カメラ正面向き)
-    plane("mtn_main", 95, 95, (0, 90, 26.0), ma, rot=(math.pi / 2, 0, 0))
     plane("mtn_l", 45, 45, (-30, 105, 16.0), mb, rot=(math.pi / 2, 0, 0))
     plane("mtn_r", 40, 40, (28, 110, 14.0), mb, rot=(math.pi / 2, 0, 0))
     # 奥の竹の壁 (遠景のシルエット): 濃緑の背の高い板
@@ -259,6 +266,18 @@ def build_scene():
         "U": add_camera("cam_U", (0.3, 6.0, 1.2), (1.5, 9.0, 30.0), lens=20),
         "T": add_camera("cam_T", (0.0, -14.0, 14.0), (0.0, 22.0, 2.0), lens=35),
     }
+    # 本物の魚眼 (Cycles equisolid): 見上げ位置から180°
+    f = add_camera("cam_F", (0.3, 6.0, 1.2), (0.5, 6.5, 30.0), lens=10)
+    f.data.type = "PANO"
+    try:
+        f.data.panorama_type = "FISHEYE_EQUISOLID"
+        f.data.fisheye_lens = 10.5
+        f.data.fisheye_fov = math.radians(180)
+    except AttributeError:  # 旧API (cycles名前空間)
+        f.data.cycles.panorama_type = "FISHEYE_EQUISOLID"
+        f.data.cycles.fisheye_lens = 10.5
+        f.data.cycles.fisheye_fov = math.radians(180)
+    cams["F"] = f
     return cams
 
 
