@@ -165,6 +165,9 @@ def build_center():
     tw = mat("table_wood", PAL["table_wood"], rough=0.5)
     wd = mat("wood_dark", PAL["wood_dark"], rough=0.6)
     box("table_top", 1.55, 0.85, 0.06, (3.35, 2.55, 0.42), tw)
+    ttex = rtex("table", rough=0.35)
+    if ttex:
+        plane("table_top_tex", 1.54, 0.84, (3.35, 2.55, 0.452), ttex)
     for sx in (-1, 1):
         for sy in (-1, 1):
             box(f"table_leg{sx}{sy}", 0.09, 0.09, 0.39,
