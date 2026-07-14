@@ -177,7 +177,7 @@ def build_lights():
         (0.45, 2.9, 2.3, 13, (1.0, 0.58, 0.24)),                # 壁蝋燭
         (ROOM_X - 0.45, 2.9, 2.3, 13, (1.0, 0.58, 0.24)),
         (ROOM_X / 2, 3.6, 1.3, 9, (0.9, 0.62, 0.32)),           # 中央の淡い返し
-        (ROOM_X / 2, 1.2, 2.6, 6, (0.55, 0.60, 0.75)),          # 入口側の冷えた微光
+        (ROOM_X / 2, 1.2, 2.6, 12, (0.55, 0.60, 0.75)),         # 入口側の冷えた微光
     ]):
         d = bpy.data.lights.new(f"pl_{i}", type="POINT")
         d.energy = e
@@ -194,8 +194,8 @@ def build_scene():
     build_props()
     build_lights()
     cams = {
-        # ボード再現 (正面)
-        "A": add_camera("cam_A", (ROOM_X / 2, 0.6, 1.35), (ROOM_X / 2, 6.5, 1.45), lens=30),
+        # ボード再現 (正面・引き)
+        "A": add_camera("cam_A", (ROOM_X / 2, 0.15, 1.5), (ROOM_X / 2, 6.5, 1.35), lens=23),
         # 逆アングル (祭壇側から入口へ)
         "B": add_camera("cam_B", (ROOM_X / 2, 6.4, 1.5), (ROOM_X / 2, 0.3, 1.2), lens=26),
         # 横アングル

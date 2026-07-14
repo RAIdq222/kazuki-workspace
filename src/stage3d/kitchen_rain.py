@@ -74,7 +74,7 @@ def build_shell():
     box("cbeam_main", 0.20, ROOM_Y, 0.26, (3.8, ROOM_Y / 2, WALL_H - 0.13), wd)
     # 雨の格子窓 (原画の窓バンドをそのまま貼る + 弱発光)
     wtex2 = mat_image("kit_window", f"{SPR}/kit_window.png", blend="OPAQUE",
-                      rough=0.8, emit=1.3)
+                      rough=0.8, emit=0.9)
     # 北壁: かまど上の長窓
     plane("win_N", 4.6, 0.85, (2.6, ROOM_Y - 0.045, 2.05), wtex2, rot=(math.pi / 2, 0, 0))
     box("win_N_sill", 4.7, 0.08, 0.08, (2.6, ROOM_Y - 0.06, 1.58), wd)
@@ -196,23 +196,23 @@ def build_east():
         sphere(f"bun_{i}", 0.05, (0.75 + math.cos(a) * 0.08, 0.62 + math.sin(a) * 0.08, 0.735), bm)
     sphere("bun_c", 0.05, (0.75, 0.62, 0.78), bm)
     # 竹の花瓶
-    cyl("vase", 0.05, 0.28, (1.1, 0.75, 0.80), mat("cloth_gray", (0.62, 0.62, 0.58), rough=0.5), verts=12)
+    cyl("vase", 0.045, 0.24, (1.08, 0.78, 0.78), mat("cloth_gray", (0.62, 0.62, 0.58), rough=0.5), verts=12)
     for i in range(3):
-        box(f"leafb_{i}", 0.02, 0.18, 0.5, (1.1 + 0.03 * i, 0.75, 1.05 + 0.06 * i),
-            mat("leaf_green", PAL["leaf_green"], rough=0.8), rot=(0.3 * i - 0.3, 0.2, 0.4 * i))
+        box(f"leafb_{i}", 0.012, 0.07, 0.26, (1.08 + 0.02 * i, 0.78, 0.98 + 0.04 * i),
+            mat("leaf_green", PAL["leaf_green"], rough=0.8), rot=(0.25 * i - 0.25, 0.15, 0.5 * i))
     # 巻物 (机上)
     cyl("makimono", 0.045, 0.5, (1.15, 0.5, 0.71), mat("cloth_gray", (0.66, 0.63, 0.56), rough=0.7),
         rot=(0, math.pi / 2, 0.3), verts=12)
 
 
 def build_lights():
-    set_world((0.10, 0.11, 0.12), strength=1.0)  # 雨の日の冷えた環境光
+    set_world((0.16, 0.17, 0.185), strength=1.0)  # 雨の日の冷えた環境光
     # 窓からの雨天光 (青灰色)
     for i, (x, w) in enumerate([(1.4, 2.0), (3.6, 2.0), (6.3, 1.6)]):
         area_light(f"win_l{i}", (x, ROOM_Y - 0.2, 2.05), (math.radians(105), 0, 0),
-                   w, 65, (0.72, 0.78, 0.88), size_y=0.8)
+                   w, 115, (0.72, 0.78, 0.88), size_y=0.8)
     # 全体の淡いフィル
-    area_light("fill", (3.8, 2.6, WALL_H - 0.15), (0, 0, 0), 3.5, 45, (0.80, 0.82, 0.86))
+    area_light("fill", (3.8, 2.6, WALL_H - 0.15), (0, 0, 0), 3.5, 75, (0.80, 0.82, 0.86))
 
 
 def build_scene():
@@ -237,4 +237,4 @@ def build_scene():
 
 if __name__ == "__main__":
     cams = build_scene()
-    render_cli(cams, default_res="1280x800", view_transform="AgX", exposure=0.7)
+    render_cli(cams, default_res="1280x800", view_transform="AgX", exposure=0.95)
