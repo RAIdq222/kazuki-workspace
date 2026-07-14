@@ -51,7 +51,7 @@ def scatter_copy(tpl, name, loc, rot=(0, 0, 0), scale=1.0):
 
 def leaf_card(name, key, size, loc, rot):
     """垂直基準のリーフカード1枚 (plane は XY 面なので X軸90°回転を足す)."""
-    m = mat_image(key, f"{SPR}/{key}.png", rough=0.9)
+    m = mat_image(key, f"{SPR}/{key}.png", rough=0.9, emit=0.15)
     return plane(name, size, size, loc, m,
                  rot=(rot[0] + math.pi / 2, rot[1], rot[2]))
 
@@ -217,10 +217,10 @@ def build_bamboo_groves():
 
 def build_backdrop():
     """張りぼての山 + 奥の竹の壁."""
-    ma = mat_image("mountain_a", f"{SPR}/mountain_a.png", rough=1.0, blend="BLEND")
-    mb = mat_image("mountain_b", f"{SPR}/mountain_b.png", rough=1.0, blend="BLEND")
+    ma = mat_image("mountain_a", f"{SPR}/mountain_a.png", rough=1.0, blend="BLEND", emit=0.3)
+    mb = mat_image("mountain_b", f"{SPR}/mountain_b.png", rough=1.0, blend="BLEND", emit=0.3)
     # plane は XY面 → X軸90°回転で立てる (カメラ正面向き)
-    plane("mtn_main", 62, 62, (0, 66, 24.0), ma, rot=(math.pi / 2, 0, 0))
+    plane("mtn_main", 78, 78, (0, 66, 30.0), ma, rot=(math.pi / 2, 0, 0))
     plane("mtn_l", 38, 38, (-26, 80, 14.5), mb, rot=(math.pi / 2, 0, 0))
     plane("mtn_r", 34, 34, (24, 84, 13.0), mb, rot=(math.pi / 2, 0, 0))
     # 奥の竹の壁 (遠景のシルエット): 濃緑の背の高い板
@@ -251,7 +251,7 @@ def build_scene():
     # 逆光気味の主光 (奥から手前へ) + 手前からの弱い返し
     sun_light("sun_back", rot=(math.radians(-52), 0, math.radians(8)), energy=3.4,
               color=(1.0, 0.99, 0.94), angle_deg=15)
-    sun_light("sun_fill", rot=(math.radians(50), 0, math.radians(-12)), energy=1.1,
+    sun_light("sun_fill", rot=(math.radians(50), 0, math.radians(-12)), energy=1.5,
               color=(0.95, 1.0, 0.96), angle_deg=25)
     cams = {
         "A": add_camera("cam_A", (0.0, -6.5, 1.3), (0.0, 20.0, 6.2), lens=24),

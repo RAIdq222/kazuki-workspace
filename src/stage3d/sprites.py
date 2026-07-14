@@ -90,9 +90,9 @@ def mountain_sprite(path, size=1024, seed=1, towers=3):
     green = (96, 128, 78)
     green_d = (72, 104, 62)
     for t in range(towers):
-        cx = size * (0.5 + (t - (towers - 1) / 2) * rr.uniform(0.22, 0.3))
+        cx = size * (0.5 + (t - (towers - 1) / 2) * rr.uniform(0.24, 0.3))
         top = size * rr.uniform(0.06, 0.22) + t * size * 0.06
-        base_w = size * rr.uniform(0.16, 0.24)
+        base_w = size * rr.uniform(0.26, 0.36)
         # 岩塔本体: 縦長の不規則シルエット
         pts = []
         n = 14
@@ -130,7 +130,7 @@ def mountain_sprite(path, size=1024, seed=1, towers=3):
     for yy in range(size):
         fade = min(1.0, max(0.0, (size * 0.92 - yy) / (size * 0.45)))  # 下端ほど0
         fade = fade if yy > size * 0.5 else 1.0
-        haze = 0.22
+        haze = 0.12
         for xx in range(size):
             r0, g0, b0, a0 = px[xx, yy]
             if a0 == 0:
