@@ -1,33 +1,48 @@
-// 尚善 3Dステージ 簡易ビューワー (編集不可・カメラ操作+スクショのみ)
+// 3Dステージ 簡易ビューワー (編集不可・カメラ操作+スクショのみ)
 // esbuild で IIFE にバンドルし、GLB(base64) と共に単一HTMLへ埋め込む。
-// HTML 側で window.__GLB_B64 / window.__STAGE_TITLE を定義しておくこと。
+// HTML 側で window.__GLB_B64 と window.__VIEWER_CFG を定義しておくこと。
+//
+// __VIEWER_CFG = {
+//   title: 'タイトル',
+//   exposure: 1.0,
+//   background: '#17120d',
+//   fog: { color: '#e8ece9', near: 10, far: 90 },      // 省略可
+//   presets: { A: {pos:[x,y,z], tgt:[x,y,z], label:'かまど側'}, ... },
+//   lights: [
+//     { type:'hemi', sky:'#fff1dd', ground:'#2e2418', i:0.35 },
+//     { type:'point', p:[x,y,z], c:'#fff2d8', i:9, shadow:true },
+//     { type:'dir', p:[x,y,z], tgt:[x,y,z], c:'#ffffff', i:3, shadow:true },
+//   ],
+// }
+// ※座標は three.js 系 (Blender の (x,y,z) → (x, z, -y))
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
-const TITLE = window.__STAGE_TITLE || '3Dステージ';
+const CFG = window.__VIEWER_CFG || {};
+const TITLE = CFG.title || '3Dステージ';
 
 // ---------- renderer / scene ----------
 const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0;
+renderer.toneMappingExposure = CFG.exposure ?? 1.0;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x17120d);
+scene.background = new THREE.Color(CFG.background || '#17120d');
+if (CFG.fog) scene.fog = new THREE.Fog(CFG.fog.color, CFG.fog.near, CFG.fog.far);
 
-const camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.05, 100);
+const camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.05, 500);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.12;
 
-// Blender(Z-up) の座標 → three(Y-up):  (x, y, z) → (x, z, -y)
-const PRESETS = {
-  A: { pos: [5.55, 1.40, -0.55], tgt: [1.35, 1.15, -4.05], label: 'かまど側' },
-  B: { pos: [0.75, 1.45, -3.75], tgt: [5.90, 1.05, -1.35], label: '入口側' },
-  T: { pos: [3.20, 7.20, 2.80], tgt: [3.20, 0.30, -2.20], label: '俯瞰' },
+const PRESETS = CFG.presets || {
+  A: { pos: [5.55, 1.4, -0.55], tgt: [1.35, 1.15, -4.05], label: '視点A' },
 };
 function applyPreset(k) {
   const p = PRESETS[k];
@@ -37,25 +52,38 @@ function applyPreset(k) {
 }
 
 // ---------- lights ----------
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-scene.add(new THREE.HemisphereLight(0xfff1dd, 0x2e2418, 0.35));
-const lightDefs = [
-  // 窓の外光 (N/W/S) — 影あり
-  { p: [3.9, 1.7, -4.1], c: 0xfff2d8, i: 9, shadow: true },
-  { p: [0.3, 1.7, -1.55], c: 0xfff2d8, i: 9, shadow: true },
-  { p: [2.2, 1.7, -0.3], c: 0xfff2d8, i: 7, shadow: true },
-  // 天井下の暖色フィル
-  { p: [1.8, 2.3, -2.2], c: 0xffdfb0, i: 5 },
-  { p: [4.6, 2.3, -2.2], c: 0xffdfb0, i: 5 },
+const LIGHTS = CFG.lights || [
+  { type: 'hemi', sky: '#fff1dd', ground: '#2e2418', i: 0.35 },
+  { type: 'point', p: [3.9, 1.7, -4.1], c: '#fff2d8', i: 9, shadow: true },
 ];
-for (const d of lightDefs) {
-  const l = new THREE.PointLight(d.c, d.i, 0, 2);
-  l.position.set(...d.p);
-  if (d.shadow) {
-    l.castShadow = true;
-    l.shadow.bias = -0.004;
-    l.shadow.mapSize.set(1024, 1024);
+for (const d of LIGHTS) {
+  let l;
+  if (d.type === 'hemi') {
+    l = new THREE.HemisphereLight(d.sky, d.ground, d.i);
+  } else if (d.type === 'dir') {
+    l = new THREE.DirectionalLight(d.c, d.i);
+    l.position.set(...d.p);
+    if (d.tgt) {
+      l.target.position.set(...d.tgt);
+      scene.add(l.target);
+    }
+    if (d.shadow) {
+      l.castShadow = true;
+      l.shadow.bias = -0.002;
+      l.shadow.mapSize.set(2048, 2048);
+      const ext = d.shadowExtent ?? 20;
+      l.shadow.camera.left = -ext; l.shadow.camera.right = ext;
+      l.shadow.camera.top = ext; l.shadow.camera.bottom = -ext;
+      l.shadow.camera.far = 300;
+    }
+  } else {
+    l = new THREE.PointLight(d.c, d.i, 0, 2);
+    l.position.set(...d.p);
+    if (d.shadow) {
+      l.castShadow = true;
+      l.shadow.bias = -0.004;
+      l.shadow.mapSize.set(1024, 1024);
+    }
   }
   scene.add(l);
 }
@@ -70,7 +98,7 @@ new GLTFLoader().parse(bin.buffer, '', (gltf) => {
     }
   });
   scene.add(gltf.scene);
-  applyPreset('A');
+  applyPreset(Object.keys(PRESETS)[0]);
 });
 
 // ---------- UI ----------
@@ -80,20 +108,20 @@ ui.style.cssText =
   'padding:12px 14px;border-radius:10px;font:13px/1.6 sans-serif;user-select:none;max-width:270px';
 ui.innerHTML =
   `<div style="font-weight:bold;margin-bottom:6px">${TITLE}</div>` +
-  '<div id="btns" style="display:flex;gap:6px;margin-bottom:8px"></div>' +
-  '<label>画角 <input id="fov" type="range" min="20" max="70" step="1" style="vertical-align:middle;width:120px"> ' +
+  '<div id="btns" style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap"></div>' +
+  '<label>画角 <input id="fov" type="range" min="15" max="75" step="1" style="vertical-align:middle;width:120px"> ' +
   '<span id="fovv"></span>mm相当</label>' +
   '<div style="margin:8px 0"><button id="shot" style="width:100%;padding:7px;border:0;border-radius:7px;' +
   'background:#c96;color:#221;font-weight:bold;cursor:pointer">📷 スクリーンショット保存</button></div>' +
   '<div style="opacity:.75;font-size:12px">左ドラッグ: 回転 / 右ドラッグ: 平行移動<br>' +
-  'ホイール: ズーム / WASD+QE: 移動<br><span id="hint"></span></div>';
+  'ホイール: ズーム / WASD+QE: 移動</div>';
 document.body.appendChild(ui);
 
 const btns = ui.querySelector('#btns');
 for (const k of Object.keys(PRESETS)) {
   const b = document.createElement('button');
-  b.textContent = PRESETS[k].label;
-  b.style.cssText = 'flex:1;padding:6px;border:0;border-radius:7px;background:#554636;color:#f0e8dc;cursor:pointer';
+  b.textContent = PRESETS[k].label || k;
+  b.style.cssText = 'flex:1;padding:6px 10px;border:0;border-radius:7px;background:#554636;color:#f0e8dc;cursor:pointer;white-space:nowrap';
   b.onclick = () => applyPreset(k);
   btns.appendChild(b);
 }
@@ -101,7 +129,6 @@ for (const k of Object.keys(PRESETS)) {
 const fov = ui.querySelector('#fov');
 const fovv = ui.querySelector('#fovv');
 function fovToMm(deg) {
-  // 35mm判換算 (対角) の近似表示
   return Math.round(21.6 / Math.tan((deg * Math.PI) / 360));
 }
 fov.value = camera.fov;
@@ -130,7 +157,7 @@ addEventListener('keydown', (e) => keys.add(e.code));
 addEventListener('keyup', (e) => keys.delete(e.code));
 
 function moveCamera(dt) {
-  const speed = 1.6 * dt;
+  const speed = (CFG.moveSpeed ?? 1.6) * dt;
   const fwd = new THREE.Vector3().subVectors(controls.target, camera.position);
   fwd.y = 0;
   fwd.normalize();
