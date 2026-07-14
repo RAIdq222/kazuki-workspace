@@ -96,34 +96,45 @@ def make_bamboo_template(idx):
     return o
 
 
+PATH_HALF = 2.15  # 道の半幅 (手前) — ボードの幅広な道に合わせる
+
+
 def build_ground():
-    plane("ground", 90, 140, (0, 45, 0), mat("ground", PAL["ground"], rough=1.0))
-    dirt = mat("dirt", PAL["dirt"], rough=0.95)
-    dirt_e = mat("dirt_edge", PAL["dirt_edge"], rough=1.0)
+    gm = mat_image("ground_tex", f"{SPR}/ground.png", rough=1.0, blend="OPAQUE",
+                   uv_scale=(16, 24))
+    plane("ground", 90, 140, (0, 45, 0), gm)
+    pm = mat_image("path_tex", f"{SPR}/path.png", rough=0.95, blend="OPAQUE")
     n = 14
     for i in range(n):
         y0 = -4 + i * 3.0
         wshrink = 1.0 - 0.55 * (i / n)
-        wob = R.uniform(-0.12, 0.12)
-        plane(f"path_{i}", 2.5 * wshrink, 3.2, (wob, y0 + 1.5, 0.012 + 0.0004 * i), dirt)
-        plane(f"pathe_{i}", 3.1 * wshrink, 3.2, (wob, y0 + 1.5, 0.008 + 0.0004 * i), dirt_e)
-    # 道端の石
-    rock = mat("rock", PAL["rock"], rough=0.9)
-    rock_d = mat("rock_dark", PAL["rock_dark"], rough=0.9)
+        wob = R.uniform(-0.10, 0.10)
+        # テクスチャのu方向が道の横断方向 (両端が暗い) になる
+        plane(f"path_{i}", PATH_HALF * 2 * wshrink, 3.25,
+              (wob, y0 + 1.5, 0.012 + 0.0004 * i), pm)
+    # 道端の石: 頂点を歪ませた岩 + 岩肌テクスチャ
+    rock_m = mat_image("rock_tex", f"{SPR}/rock.png", rough=0.9, blend="OPAQUE")
     rock_tpls = []
     for i in range(4):
-        rock_tpls.append(sphere(f"rock_tpl_{i}", 1.0, (0, -60, -5),
-                                rock if i < 3 else rock_d,
-                                scale=(1, R.uniform(0.7, 1.3), R.uniform(0.4, 0.6)),
-                                smooth=False))
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2, radius=1.0,
+                                              location=(0, -60, -5))
+        o = bpy.context.object
+        o.name = f"rock_tpl_{i}"
+        rr = random.Random(100 + i)
+        for v in o.data.vertices:
+            v.co *= 1.0 + rr.uniform(-0.22, 0.22)
+        o.scale = (1, rr.uniform(0.7, 1.3), rr.uniform(0.42, 0.62))
+        o.data.materials.append(rock_m)
+        rock_tpls.append(o)
     for i in range(110):
         side = 1 if i % 2 == 0 else -1
         y = R.uniform(-4, 30)
         shrink = max(0.45, 1.0 - 0.55 * ((y + 4) / 42))
-        x = side * (1.35 * shrink + R.uniform(0, 0.9))
-        s = R.uniform(0.08, 0.30) * (0.5 + shrink)
+        x = side * ((PATH_HALF - 0.15) * shrink + R.uniform(0, 1.0))
+        s = R.uniform(0.09, 0.34) * (0.5 + shrink)
         scatter_copy(R.choice(rock_tpls), f"rock_{i}", (x, y, s * 0.35),
-                     rot=(0, 0, R.uniform(0, 6.28)), scale=s)
+                     rot=(R.uniform(-0.2, 0.2), R.uniform(-0.2, 0.2), R.uniform(0, 6.28)),
+                     scale=s)
     # 草 (円錐の束)
     grass_tpls = []
     for i in range(3):
@@ -148,7 +159,7 @@ def build_ground():
         side = 1 if i % 2 == 0 else -1
         y = R.uniform(-4, 32)
         shrink = max(0.45, 1.0 - 0.55 * ((y + 4) / 42))
-        x = side * (1.6 * shrink + R.uniform(0, 1.6))
+        x = side * ((PATH_HALF + 0.25) * shrink + R.uniform(0, 1.6))
         s = R.uniform(0.12, 0.32) * (0.5 + shrink)
         scatter_copy(R.choice(grass_tpls), f"grass_{i}", (x, y, 0),
                      rot=(0, 0, R.uniform(0, 6.28)), scale=s)
@@ -158,7 +169,7 @@ def build_ground():
         side = 1 if i % 2 == 0 else -1
         y = R.uniform(0, 34)
         shrink = max(0.45, 1.0 - 0.55 * ((y + 4) / 42))
-        x = side * (1.9 * shrink + R.uniform(0, 1.3))
+        x = side * ((PATH_HALF + 0.55) * shrink + R.uniform(0, 1.3))
         s = R.uniform(0.7, 1.5) * (0.45 + shrink)
         plane(f"bushcard_{i}", s, s, (x, y, s * 0.42),
               bush, rot=(math.pi / 2, 0, R.uniform(-0.5, 0.5)))
@@ -176,7 +187,7 @@ def build_bamboo_groves():
         while y < band_y1:
             for side in (-1, 1):
                 shrink = max(0.4, 1.0 - 0.55 * ((y + 4) / 42))
-                x_in = side * (2.1 * shrink + R.uniform(0.1, 0.6))
+                x_in = side * ((PATH_HALF + 0.75) * shrink + R.uniform(0.1, 0.6))
                 n_row = 4 if y < 12 else 3
                 for k in range(n_row):
                     x = x_in + side * (k * R.uniform(0.7, 1.2) + R.uniform(0, 0.4))
@@ -201,7 +212,7 @@ def build_bamboo_groves():
         shrink = max(0.4, 1.0 - 0.55 * ((y + 4) / 42))
         # 道の真上は手前側のみ薄く (奥は山への抜けを確保)、両脇に濃く
         if i % 3 == 0 and y < 18:
-            x = R.uniform(-1.2, 1.2) * shrink
+            x = R.uniform(-1.8, 1.8) * shrink
             z = R.uniform(7.0, 9.5) * (0.55 + 0.45 * shrink)
         else:
             side = 1 if i % 2 == 0 else -1

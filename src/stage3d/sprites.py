@@ -153,6 +153,85 @@ def mist_sprite(path, size=512):
     img.save(path)
 
 
+def ground_texture(path, size=768):
+    """地面: 苔・下草のまだら (不透明・タイル用)."""
+    img = Image.new("RGB", (size, size), (28, 46, 20))
+    d = ImageDraw.Draw(img)
+    tones = [(24, 42, 18), (34, 56, 24), (44, 68, 30), (52, 76, 34),
+             (38, 50, 22), (58, 66, 30), (30, 38, 18)]
+    for _ in range(650):
+        x, y = R.uniform(0, size), R.uniform(0, size)
+        r = R.uniform(size * 0.008, size * 0.05)
+        col = R.choice(tones)
+        jitter = tuple(max(0, min(255, c + R.randint(-8, 8))) for c in col)
+        d.ellipse([x - r, y - r * 0.7, x + r, y + r * 0.7], fill=jitter)
+    for _ in range(220):  # 細かい草ストローク
+        x, y = R.uniform(0, size), R.uniform(0, size)
+        ln = R.uniform(size * 0.01, size * 0.03)
+        ang = R.uniform(-0.6, 0.6) - math.pi / 2
+        col = R.choice(tones[2:5])
+        d.line([(x, y), (x + math.cos(ang) * ln, y + math.sin(ang) * ln)],
+               fill=col, width=2)
+    img = img.filter(ImageFilter.GaussianBlur(1.0))
+    img.save(path)
+
+
+def path_texture(path, size=768):
+    """道: 乾いた土 + 轍 + 小石。u方向(横断方向)の両端を暗く."""
+    img = Image.new("RGB", (size, size), (168, 128, 76))
+    d = ImageDraw.Draw(img)
+    tones = [(150, 112, 64), (178, 138, 84), (190, 152, 96), (140, 104, 60), (162, 124, 74)]
+    for _ in range(420):
+        x, y = R.uniform(0, size), R.uniform(0, size)
+        r = R.uniform(size * 0.01, size * 0.06)
+        d.ellipse([x - r, y - r * 0.5, x + r, y + r * 0.5], fill=R.choice(tones))
+    for _ in range(70):  # 縦方向(進行方向)の轍・筋
+        x = R.uniform(0, size)
+        y0 = R.uniform(0, size * 0.7)
+        ln = R.uniform(size * 0.15, size * 0.5)
+        c = R.choice([(146, 108, 62), (184, 146, 92)])
+        d.line([(x, y0), (x + R.uniform(-10, 10), y0 + ln)], fill=c, width=R.randint(2, 5))
+    for _ in range(90):  # 小石
+        x, y = R.uniform(0, size), R.uniform(0, size)
+        r = R.uniform(2, 6)
+        g = R.randint(120, 175)
+        d.ellipse([x - r, y - r * 0.8, x + r, y + r * 0.8],
+                  fill=(g, g - R.randint(5, 20), g - R.randint(20, 40)))
+    img = img.filter(ImageFilter.GaussianBlur(1.2))
+    # 両端(u=0,1)を暗く湿った感じに
+    px = img.load()
+    for x in range(size):
+        u = x / size
+        edge = min(u, 1 - u) / 0.18
+        f = 0.72 + 0.28 * min(1.0, edge)
+        for y in range(size):
+            r0, g0, b0 = px[x, y]
+            px[x, y] = (int(r0 * f), int(g0 * f), int(b0 * f))
+    img.save(path)
+
+
+def rock_texture(path, size=512):
+    """石: 水彩の岩肌 (濃淡のウォッシュ + ひび)."""
+    img = Image.new("RGB", (size, size), (142, 140, 132))
+    d = ImageDraw.Draw(img)
+    tones = [(118, 118, 112), (156, 154, 144), (170, 168, 158), (128, 124, 114),
+             (104, 106, 102), (148, 142, 128)]
+    for _ in range(160):
+        x, y = R.uniform(0, size), R.uniform(0, size)
+        r = R.uniform(size * 0.03, size * 0.16)
+        d.ellipse([x - r, y - r * 0.7, x + r, y + r * 0.7], fill=R.choice(tones))
+    for _ in range(26):  # ひび・陰線
+        x, y = R.uniform(0, size), R.uniform(0, size)
+        pts = [(x, y)]
+        for _ in range(4):
+            x += R.uniform(-size * 0.08, size * 0.08)
+            y += R.uniform(size * 0.02, size * 0.09)
+            pts.append((x, y))
+        d.line(pts, fill=(92, 94, 92), width=R.randint(2, 4))
+    img = img.filter(ImageFilter.GaussianBlur(1.6))
+    img.save(path)
+
+
 def generate_all(out_dir):
     os.makedirs(out_dir, exist_ok=True)
     leaf_cluster_sprite(os.path.join(out_dir, "leaf_dark.png"),
@@ -165,6 +244,9 @@ def generate_all(out_dir):
     mountain_sprite(os.path.join(out_dir, "mountain_a.png"), seed=3, towers=3)
     mountain_sprite(os.path.join(out_dir, "mountain_b.png"), seed=8, towers=2)
     mist_sprite(os.path.join(out_dir, "mist.png"))
+    ground_texture(os.path.join(out_dir, "ground.png"))
+    path_texture(os.path.join(out_dir, "path.png"))
+    rock_texture(os.path.join(out_dir, "rock.png"))
     print("sprites ->", out_dir)
 
 

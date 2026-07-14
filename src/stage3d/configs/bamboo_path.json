@@ -10,8 +10,8 @@
     "T": { "pos": [0.0, 14.0, 14.0], "tgt": [0.0, 2.0, -22.0], "label": "俯瞰", "mm": 35 }
   },
   "lights": [
-    { "type": "hemi", "sky": "#f2f5ef", "ground": "#2a3a20", "i": 1.6 },
+    { "type": "hemi", "sky": "#f2f5ef", "ground": "#2a3a20", "i": 1.15 },
     { "type": "dir", "p": [10.0, 30.0, 5.0], "tgt": [0.0, 0.0, -20.0],
-      "c": "#fff8e8", "i": 3.0, "shadow": true, "shadowExtent": 45 }
+      "c": "#fff6e0", "i": 3.6, "shadow": true, "shadowExtent": 45 }
   ]
 }

@@ -33,7 +33,7 @@ def mat(name, color, rough=0.65, emit=0.0, alpha=1.0, emit_color=None):
     return m
 
 
-def mat_image(name, img_path, rough=0.9, blend="CLIP", emit=0.0):
+def mat_image(name, img_path, rough=0.9, blend="CLIP", emit=0.0, uv_scale=None):
     """画像テクスチャ(アルファ付き)マテリアル。リーフカード・張りぼて用."""
     key = f"m_{name}"
     if key in _mats:
@@ -45,6 +45,14 @@ def mat_image(name, img_path, rough=0.9, blend="CLIP", emit=0.0):
     bsdf.inputs["Roughness"].default_value = rough
     tex = nt.nodes.new("ShaderNodeTexImage")
     tex.image = bpy.data.images.load(os.path.abspath(img_path))
+    if uv_scale:
+        # UVタイル: Mappingノードのscale (glTFでは KHR_texture_transform に変換される)
+        uvn = nt.nodes.new("ShaderNodeUVMap")
+        mp = nt.nodes.new("ShaderNodeMapping")
+        mp.inputs["Scale"].default_value = (uv_scale[0], uv_scale[1], 1)
+        nt.links.new(uvn.outputs["UV"], mp.inputs["Vector"])
+        nt.links.new(mp.outputs["Vector"], tex.inputs["Vector"])
+        tex.extension = "REPEAT"
     nt.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
     nt.links.new(tex.outputs["Alpha"], bsdf.inputs["Alpha"])
     if emit > 0:
