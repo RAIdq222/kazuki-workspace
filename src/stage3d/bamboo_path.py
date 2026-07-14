@@ -26,15 +26,15 @@ PAL = {
     "ground":      (0.055, 0.085, 0.035),
     "grass":       (0.100, 0.190, 0.055),
     "grass_dry":   (0.230, 0.240, 0.080),
-    "rock":        (0.280, 0.290, 0.280),
-    "rock_dark":   (0.160, 0.170, 0.165),
-    "bamboo1":     (0.130, 0.240, 0.080),
-    "bamboo2":     (0.180, 0.290, 0.100),
-    "bamboo3":     (0.090, 0.190, 0.070),
-    "bamboo_node": (0.280, 0.330, 0.150),
-    "leaf_dark":   (0.055, 0.140, 0.050),
-    "leaf_mid":    (0.095, 0.200, 0.070),
-    "leaf_light":  (0.160, 0.280, 0.100),
+    "rock":        (0.185, 0.195, 0.185),
+    "rock_dark":   (0.105, 0.115, 0.110),
+    "bamboo1":     (0.095, 0.215, 0.055),
+    "bamboo2":     (0.135, 0.260, 0.070),
+    "bamboo3":     (0.065, 0.165, 0.045),
+    "bamboo_node": (0.210, 0.270, 0.100),
+    "leaf_dark":   (0.040, 0.120, 0.038),
+    "leaf_mid":    (0.075, 0.180, 0.055),
+    "leaf_light":  (0.130, 0.250, 0.080),
     "cliff":       (0.340, 0.260, 0.210),
     "cliff_green": (0.120, 0.200, 0.090),
     "fog_white":   (0.900, 0.930, 0.910),
@@ -72,17 +72,18 @@ def make_bamboo_template(idx):
                              (0, 0, z + seg / 2), node, verts=10))
     key_leaf = R.choice(("leaf_dark", "leaf_mid", "leaf_light"))
     m = mat(key_leaf, PAL[key_leaf], rough=0.9)
-    for i in range(R.randint(3, 5)):
-        rr = R.uniform(0.35, 0.75)
+    # 上部のまとまった葉 + 中段〜上段に散る葉 (ポッキー化を防ぐ)
+    for i in range(R.randint(5, 7)):
+        rr = R.uniform(0.45, 0.95)
         parts.append(sphere(f"tpl{idx}_lf{i}", rr,
-                            (R.uniform(-0.6, 0.6), R.uniform(-0.6, 0.6),
-                             h * R.uniform(0.82, 0.98)),
-                            m, scale=(1, 1, R.uniform(0.4, 0.65))))
-    if R.random() < 0.6:
-        parts.append(sphere(f"tpl{idx}_lm", R.uniform(0.2, 0.4),
-                            (R.uniform(-0.4, 0.4), R.uniform(-0.4, 0.4),
-                             h * R.uniform(0.5, 0.7)),
-                            m, scale=(1, 1, 0.5)))
+                            (R.uniform(-0.9, 0.9), R.uniform(-0.9, 0.9),
+                             h * R.uniform(0.78, 1.02)),
+                            m, scale=(1.3, 1.3, R.uniform(0.35, 0.55))))
+    for i in range(R.randint(2, 4)):
+        parts.append(sphere(f"tpl{idx}_lm{i}", R.uniform(0.25, 0.5),
+                            (R.uniform(-0.7, 0.7), R.uniform(-0.7, 0.7),
+                             h * R.uniform(0.45, 0.75)),
+                            m, scale=(1.4, 1.4, 0.4)))
     bpy.ops.object.select_all(action="DESELECT")
     for p in parts:
         p.select_set(True)
@@ -202,6 +203,19 @@ def build_bamboo_groves():
                    (x + R.uniform(-s, s) * 0.5, y + R.uniform(-s, s) * 0.5,
                     R.uniform(1.5, 3.5) + k * 0.6),
                    mat(key, PAL[key], rough=0.95), scale=(1, 1, 0.7))
+    # 頭上の葉 (両脇から張り出す梢。道の真上センターはV字に空を残す)
+    for i in range(16):
+        side = 1 if i % 2 == 0 else -1
+        y = 2 + i * 2.2
+        shrink = max(0.4, 1.0 - 0.55 * ((y + 4) / 42))
+        x = side * (1.4 + R.uniform(0.2, 1.6)) * shrink
+        key = R.choice(("leaf_dark", "leaf_mid", "leaf_light"))
+        m = mat(key, PAL[key], rough=0.9)
+        for k in range(R.randint(1, 2)):
+            sphere(f"arch_{i}_{k}", R.uniform(0.45, 0.9) * (0.5 + shrink),
+                   (x + side * R.uniform(0, 0.6), y + R.uniform(-0.6, 0.6),
+                    R.uniform(6.5, 9.0) * (0.6 + 0.4 * shrink)),
+                   m, scale=(1.4, 1.4, R.uniform(0.35, 0.5)))
 
 
 def build_cliffs():
@@ -209,11 +223,11 @@ def build_cliffs():
     cliff = mat("cliff", PAL["cliff"], rough=0.95)
     green = mat("cliff_green", PAL["cliff_green"], rough=0.95)
     defs = [
-        (0, 95, 14, 34),    # 主峰 (道の正面)
-        (-16, 105, 12, 26),
-        (14, 110, 10, 22),
-        (-30, 120, 14, 20),
-        (30, 125, 16, 24),
+        (0, 55, 17, 42),    # 主峰 (道の正面, 霧の上に頭を出す)
+        (-14, 66, 12, 30),
+        (12, 70, 10, 26),
+        (-26, 80, 14, 22),
+        (26, 84, 16, 25),
     ]
     for i, (x, y, w, h) in enumerate(defs):
         cyl(f"cliff_{i}", w * 0.5, h, (x, y, h * 0.45), cliff, verts=9, r2=w * 0.33)
@@ -226,10 +240,14 @@ def build_cliffs():
 
 
 def build_fog_and_sky():
-    """アニメ的な霧: 半透明の白い板を奥行きに重ねる (名前は fog_ 始まり)."""
-    for i, (y, a) in enumerate([(30, 0.18), (45, 0.30), (62, 0.42), (80, 0.55)]):
+    """アニメ的な霧: 半透明の白い板を奥行きに重ねる (名前は fog_ 始まり).
+
+    板の高さを抑えて山の上部は霧の上に出す。ビューワー用GLBからは除外する。
+    """
+    for i, (y, a, top) in enumerate([(32, 0.10, 24), (42, 0.16, 28),
+                                     (50, 0.22, 32), (64, 0.30, 36)]):
         m = mat(f"fog{i}", PAL["fog_white"], rough=1.0, emit=0.35, alpha=a)
-        plane(f"fog_{i}", 220, 60, (0, y, 25), m, rot=(math.pi / 2, 0, 0))
+        plane(f"fog_{i}", 240, top, (0, y, top / 2), m, rot=(math.pi / 2, 0, 0))
     set_world((0.72, 0.76, 0.74), strength=1.0)
 
 
@@ -242,7 +260,7 @@ def build_scene():
     sun_light("sun", rot=(math.radians(58), 0, math.radians(15)), energy=3.2,
               color=(1.0, 0.98, 0.92), angle_deg=12)
     cams = {
-        "A": add_camera("cam_A", (0.0, -6.5, 1.3), (0.0, 20.0, 5.2), lens=24),
+        "A": add_camera("cam_A", (0.0, -6.5, 1.3), (0.0, 20.0, 6.2), lens=24),
         "B": add_camera("cam_B", (-3.2, -2.0, 1.6), (2.5, 18.0, 3.5), lens=28),
         "T": add_camera("cam_T", (0.0, -14.0, 14.0), (0.0, 22.0, 2.0), lens=35),
     }

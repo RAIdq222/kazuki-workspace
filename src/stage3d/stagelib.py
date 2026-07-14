@@ -83,6 +83,7 @@ def plane(name, sx, sy, loc, material, rot=(0, 0, 0)):
 def add_camera(name, loc, look_at, lens=24):
     cam = bpy.data.cameras.new(name)
     cam.lens = lens
+    cam.clip_end = 500.0  # 遠景の山などが既定の100mで切れないように
     o = bpy.data.objects.new(name, cam)
     o.location = loc
     d = (look_at[0] - loc[0], look_at[1] - loc[1], look_at[2] - loc[2])
