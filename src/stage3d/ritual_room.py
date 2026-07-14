@@ -26,13 +26,13 @@ ROOM_Y = 7.2
 WALL_H = 3.4
 
 PAL = {
-    "wood_red":   (0.170, 0.055, 0.030),   # 赤茶の柱・梁
+    "wood_red":   (0.085, 0.032, 0.022),   # 赤茶の柱・梁
     "wood_dark":  (0.060, 0.030, 0.020),
     "floor_dark": (0.140, 0.060, 0.035),
     "black_lac":  (0.020, 0.018, 0.016),   # 燭台の黒木枠
     "candle_wax": (0.850, 0.780, 0.620),
     "flame":      (1.000, 0.640, 0.240),
-    "cloth":      (0.780, 0.760, 0.730),
+    "cloth":      (0.640, 0.660, 0.700),
     "statue":     (0.420, 0.360, 0.240),
     "blade":      (0.550, 0.560, 0.580),
     "handle_red": (0.350, 0.060, 0.040),
@@ -50,9 +50,8 @@ def build_shell():
     plane("floor", ROOM_X, ROOM_Y, (ROOM_X / 2, ROOM_Y / 2, 0),
           ftex or mat("floor_dark", PAL["floor_dark"], rough=0.6))
     # 中央の畳の通路 (入口→儀式壇)
-    ttex = rtex("tatami", rough=0.8, uv_scale=(1, 3.2))
     plane("tatami", 1.5, 4.6, (ROOM_X / 2, 2.3, 0.012),
-          ttex or mat("cloth", PAL["cloth"], rough=0.9))
+          mat("tatami_pale", (0.510, 0.485, 0.400), rough=0.9))
     # 壁: 茶色い土壁 (原画切り出し)
     wtex = rtex("wall", rough=0.9, uv_scale=(3.0, 2.0))
     wm = wtex or mat("wall_brown", (0.26, 0.16, 0.08), rough=0.9)
@@ -84,11 +83,10 @@ def build_shell():
     plane("ceiling", ROOM_X, ROOM_Y, (ROOM_X / 2, ROOM_Y / 2, WALL_H),
           mat("wood_dark", PAL["wood_dark"], rough=0.9))
     # 側面の白幕 (原画切り出し)
-    ctex = rtex("curtain", rough=0.95)
-    cm = ctex or mat("cloth", PAL["cloth"], rough=0.95)
+    cm = mat("cloth", PAL["cloth"], rough=0.95)
     for x, sgn in ((0.12, 1), (ROOM_X - 0.12, -1)):
-        for i in range(3):
-            y0 = 1.4 + i * 1.75
+        for i in range(4):
+            y0 = 0.35 + i * 1.62
             plane(f"curtain_{x:.1f}_{i}", 1.7, 3.1,
                   (x + sgn * 0.02, y0 + 0.85, 1.72),
                   cm, rot=(math.pi / 2, 0, sgn * math.pi / 2))
@@ -103,15 +101,18 @@ def build_shell():
 
 def altar(idx, cx):
     """白布の祭壇 + 短剣."""
-    cloth = rtex("altar", rough=0.9) or mat("cloth", PAL["cloth"], rough=0.9)
+    cloth = mat("altar_white", (0.720, 0.710, 0.680), rough=0.9)
     box(f"altar{idx}_body", 1.0, 2.0, 0.72, (cx, 4.35, 0.36),
         mat("wood_dark", PAL["wood_dark"]))
     box(f"altar{idx}_cloth", 1.08, 2.08, 0.74, (cx, 4.35, 0.38), cloth)
     # 短剣 (刀身+柄)
-    box(f"altar{idx}_blade", 0.05, 0.5, 0.015, (cx, 4.1, 0.77),
-        mat("blade", PAL["blade"], rough=0.25), rot=(0, 0, 0.25))
-    box(f"altar{idx}_hilt", 0.045, 0.18, 0.03, (cx + 0.07, 4.38, 0.77),
-        mat("handle_red", PAL["handle_red"], rough=0.5), rot=(0, 0, 0.25))
+    box(f"altar{idx}_blade", 0.045, 0.40, 0.012, (cx - 0.05, 4.05, 0.765),
+        mat("blade", PAL["blade"], rough=0.25), rot=(0, 0, 0.35))
+    cyl(f"altar{idx}_hilt", 0.016, 0.15, (cx + 0.045, 4.31, 0.768),
+        mat("handle_red", PAL["handle_red"], rough=0.5),
+        rot=(math.pi / 2, 0, -0.35), verts=10)
+    box(f"altar{idx}_guard", 0.06, 0.02, 0.02, (cx + 0.014, 4.225, 0.768),
+        mat("blade", PAL["blade"], rough=0.3), rot=(0, 0, 0.35))
 
 
 def candle(name, loc, s=1.0, lit=True):
@@ -170,14 +171,15 @@ def build_lights():
     set_world((0.010, 0.008, 0.007), strength=1.0)
     # 蝋燭・燈籠まわりの補助光 (emitだけだとCPUレンダでノイズが多いため)
     for i, (x, y, z, e, col) in enumerate([
-        (ROOM_X / 2 - 1.6, 4.9, 2.35, 55, (1.0, 0.65, 0.28)),   # 吊り燈籠
-        (ROOM_X / 2 + 1.6, 4.9, 2.35, 55, (1.0, 0.65, 0.28)),
-        (ROOM_X / 2 - 2.3, 4.3, 1.35, 24, (1.0, 0.58, 0.24)),   # 燭台列
-        (ROOM_X / 2 + 2.3, 4.3, 1.35, 24, (1.0, 0.58, 0.24)),
-        (0.45, 2.9, 2.3, 13, (1.0, 0.58, 0.24)),                # 壁蝋燭
-        (ROOM_X - 0.45, 2.9, 2.3, 13, (1.0, 0.58, 0.24)),
-        (ROOM_X / 2, 3.6, 1.3, 9, (0.9, 0.62, 0.32)),           # 中央の淡い返し
-        (ROOM_X / 2, 1.2, 2.6, 12, (0.55, 0.60, 0.75)),         # 入口側の冷えた微光
+        (ROOM_X / 2 - 1.6, 4.9, 2.35, 26, (1.0, 0.68, 0.32)),   # 吊り燈籠
+        (ROOM_X / 2 + 1.6, 4.9, 2.35, 26, (1.0, 0.68, 0.32)),
+        (ROOM_X / 2 - 2.3, 4.3, 1.35, 11, (1.0, 0.62, 0.28)),   # 燭台列
+        (ROOM_X / 2 + 2.3, 4.3, 1.35, 11, (1.0, 0.62, 0.28)),
+        (0.45, 2.9, 2.3, 6, (1.0, 0.62, 0.28)),                # 壁蝋燭
+        (ROOM_X - 0.45, 2.9, 2.3, 6, (1.0, 0.62, 0.28)),
+        (ROOM_X / 2, 3.6, 1.3, 4, (0.9, 0.62, 0.32)),           # 中央の淡い返し
+        (ROOM_X / 2, 1.2, 2.6, 10, (0.52, 0.58, 0.74)),         # 入口側の冷えた微光
+        (ROOM_X / 2, 5.8, 2.9, 5, (0.45, 0.50, 0.65)),
     ]):
         d = bpy.data.lights.new(f"pl_{i}", type="POINT")
         d.energy = e
@@ -208,4 +210,4 @@ def build_scene():
 
 if __name__ == "__main__":
     cams = build_scene()
-    render_cli(cams, default_res="1280x800", view_transform="AgX", exposure=1.2)
+    render_cli(cams, default_res="1280x800", view_transform="AgX", exposure=1.0)
