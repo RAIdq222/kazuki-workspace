@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
-"""美術ボード「竹林の山道」の3Dステージ化。
+"""美術ボード「竹林の山道」の3Dステージ化 (v2: リーフカード方式)。
 
-ボードの構成: 中央に土の一本道(消失点へ)、両脇に石垣と草、密な竹林、
-中景に広葉樹の茂み、遠景に霧に霞むカルスト状の岩山、明るい曇り空。
+- 葉: 水彩風スプライト(sprites.py生成)を貼った板ポリ(リーフカード)を稈に沿って大量配置
+- 頭上: 見上げカット用に道の上空へ天蓋カードを重ねる
+- 遠景の山: 張りぼて(ビルボード板)
+- 霧: 下ほど濃いグラデ板を奥行きに重ねる (fog_ 接頭辞 → ビューワーGLBからは除外)
 
 実行例:
-    python3 src/stage3d/bamboo_path.py -- --views A --samples 64 \
-        --res 1280x720 --blend work/bamboo_path.blend
+    python3 src/stage3d/bamboo_path.py -- --views A,U --samples 48 \
+        --res 1600x900 --blend work/bamboo_path.blend
 """
 import math
 import random
@@ -15,75 +17,75 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bpy  # noqa: E402
-from stagelib import (reset_scene, mat, box, cyl, sphere, plane, add_camera,  # noqa: E402
-                      sun_light, set_world, render_cli)
+from stagelib import (reset_scene, mat, mat_image, box, cyl, sphere, plane,  # noqa: E402
+                      add_camera, sun_light, set_world, render_cli)
+import sprites  # noqa: E402
 
 R = random.Random(11)
+SPR = "work/sprites"
 
 PAL = {
-    "dirt":        (0.360, 0.240, 0.110),
-    "dirt_edge":   (0.240, 0.170, 0.080),
-    "ground":      (0.055, 0.085, 0.035),
-    "grass":       (0.100, 0.190, 0.055),
-    "grass_dry":   (0.230, 0.240, 0.080),
-    "rock":        (0.185, 0.195, 0.185),
-    "rock_dark":   (0.105, 0.115, 0.110),
-    "bamboo1":     (0.095, 0.215, 0.055),
-    "bamboo2":     (0.135, 0.260, 0.070),
-    "bamboo3":     (0.065, 0.165, 0.045),
-    "bamboo_node": (0.210, 0.270, 0.100),
-    "leaf_dark":   (0.040, 0.120, 0.038),
-    "leaf_mid":    (0.075, 0.180, 0.055),
-    "leaf_light":  (0.130, 0.250, 0.080),
-    "cliff":       (0.340, 0.260, 0.210),
-    "cliff_green": (0.120, 0.200, 0.090),
-    "fog_white":   (0.900, 0.930, 0.910),
+    "dirt":        (0.430, 0.300, 0.140),
+    "dirt_edge":   (0.300, 0.210, 0.100),
+    "ground":      (0.070, 0.120, 0.045),
+    "grass":       (0.110, 0.230, 0.060),
+    "grass_dry":   (0.280, 0.290, 0.095),
+    "rock":        (0.300, 0.295, 0.270),
+    "rock_dark":   (0.185, 0.185, 0.170),
+    "bamboo1":     (0.150, 0.290, 0.090),
+    "bamboo2":     (0.210, 0.340, 0.110),
+    "bamboo3":     (0.110, 0.230, 0.080),
+    "bamboo_node": (0.320, 0.380, 0.170),
 }
 
 
-def leaf_cluster(name, loc, r, key):
-    """アニメ的な葉の塊: 潰した球を数個."""
-    m = mat(key, PAL[key], rough=0.9)
-    n = R.randint(2, 4)
-    for i in range(n):
-        sphere(f"{name}_{i}", r * R.uniform(0.55, 0.95),
-               (loc[0] + R.uniform(-r, r) * 0.7,
-                loc[1] + R.uniform(-r, r) * 0.7,
-                loc[2] + R.uniform(-r, r) * 0.45),
-               m, scale=(1, 1, R.uniform(0.45, 0.7)))
+def scatter_copy(tpl, name, loc, rot=(0, 0, 0), scale=1.0):
+    o = tpl.copy()
+    o.name = name
+    o.location = loc
+    o.rotation_euler = rot
+    o.scale = (tpl.scale[0] * scale, tpl.scale[1] * scale, tpl.scale[2] * scale)
+    bpy.context.collection.objects.link(o)
+    return o
+
+
+def leaf_card(name, key, size, loc, rot):
+    """垂直基準のリーフカード1枚 (plane は XY 面なので X軸90°回転を足す)."""
+    m = mat_image(key, f"{SPR}/{key}.png", rough=0.9)
+    return plane(name, size, size, loc, m,
+                 rot=(rot[0] + math.pi / 2, rot[1], rot[2]))
 
 
 def make_bamboo_template(idx):
-    """テンプレート竹1本 (原点に直立): 節付きの稈 + 上部の葉 → 1メッシュに結合."""
-    h = R.uniform(6.0, 8.5)
-    r = R.uniform(0.04, 0.06)
+    """テンプレート竹: 細めの稈 + 節 + 中〜上部のリーフカード → 1メッシュ."""
+    h = R.uniform(6.5, 9.5)
+    r = R.uniform(0.028, 0.048)
     key = R.choice(("bamboo1", "bamboo2", "bamboo3"))
-    culm = mat(key, PAL[key], rough=0.55)
+    culm = mat(key, PAL[key], rough=0.5)
     node = mat("bamboo_node", PAL["bamboo_node"], rough=0.6)
     parts = []
-    seg = R.uniform(0.55, 0.7)
+    seg = R.uniform(0.5, 0.65)
     n_seg = int(h / seg)
     for i in range(n_seg):
         z = seg * (i + 0.5)
-        parts.append(cyl(f"tpl{idx}_c{i}", r * (1 - 0.3 * i / n_seg), seg - 0.015,
-                         (0, 0, z), culm, verts=10))
+        parts.append(cyl(f"tpl{idx}_c{i}", r * (1 - 0.35 * i / n_seg), seg - 0.012,
+                         (0, 0, z), culm, verts=8))
         if i < n_seg - 1:
-            parts.append(cyl(f"tpl{idx}_n{i}", r * (1 - 0.3 * i / n_seg) + 0.008, 0.035,
-                             (0, 0, z + seg / 2), node, verts=10))
-    key_leaf = R.choice(("leaf_dark", "leaf_mid", "leaf_light"))
-    m = mat(key_leaf, PAL[key_leaf], rough=0.9)
-    # 上部のまとまった葉 + 中段〜上段に散る葉 (ポッキー化を防ぐ)
-    for i in range(R.randint(5, 7)):
-        rr = R.uniform(0.45, 0.95)
-        parts.append(sphere(f"tpl{idx}_lf{i}", rr,
-                            (R.uniform(-0.9, 0.9), R.uniform(-0.9, 0.9),
-                             h * R.uniform(0.78, 1.02)),
-                            m, scale=(1.3, 1.3, R.uniform(0.35, 0.55))))
-    for i in range(R.randint(2, 4)):
-        parts.append(sphere(f"tpl{idx}_lm{i}", R.uniform(0.25, 0.5),
-                            (R.uniform(-0.7, 0.7), R.uniform(-0.7, 0.7),
-                             h * R.uniform(0.45, 0.75)),
-                            m, scale=(1.4, 1.4, 0.4)))
+            parts.append(cyl(f"tpl{idx}_n{i}", r * (1 - 0.35 * i / n_seg) + 0.006, 0.03,
+                             (0, 0, z + seg / 2), node, verts=8))
+    # リーフカード: 上部 55%〜頂部に密に、中部にまばらに
+    leaf_key = R.choice(("leaf_dark", "leaf_mid", "leaf_light"))
+    n_cards = R.randint(10, 15)
+    for i in range(n_cards):
+        zt = R.uniform(0.55, 1.02) if i > 2 else R.uniform(0.35, 0.6)
+        z = h * zt
+        off = R.uniform(0.15, 0.75)
+        ang = R.uniform(0, 2 * math.pi)
+        k = leaf_key if R.random() < 0.7 else R.choice(("leaf_dark", "leaf_mid", "leaf_light"))
+        parts.append(leaf_card(f"tpl{idx}_lc{i}", k, R.uniform(0.8, 1.5),
+                               (math.cos(ang) * off, math.sin(ang) * off, z),
+                               (R.uniform(-0.5, 0.5), R.uniform(-0.6, 0.6),
+                                R.uniform(0, 2 * math.pi))))
     bpy.ops.object.select_all(action="DESELECT")
     for p in parts:
         p.select_set(True)
@@ -94,20 +96,8 @@ def make_bamboo_template(idx):
     return o
 
 
-def scatter_copy(tpl, name, loc, rot=(0, 0, 0), scale=1.0):
-    """リンク複製 (メッシュ共有) の高速配置."""
-    o = tpl.copy()
-    o.name = name
-    o.location = loc
-    o.rotation_euler = rot
-    o.scale = (tpl.scale[0] * scale, tpl.scale[1] * scale, tpl.scale[2] * scale)
-    bpy.context.collection.objects.link(o)
-    return o
-
-
 def build_ground():
     plane("ground", 90, 140, (0, 45, 0), mat("ground", PAL["ground"], rough=1.0))
-    # 道: 消失点へ向かってわずかに細くなる台形を重ねる
     dirt = mat("dirt", PAL["dirt"], rough=0.95)
     dirt_e = mat("dirt_edge", PAL["dirt_edge"], rough=1.0)
     n = 14
@@ -117,16 +107,16 @@ def build_ground():
         wob = R.uniform(-0.12, 0.12)
         plane(f"path_{i}", 2.5 * wshrink, 3.2, (wob, y0 + 1.5, 0.012 + 0.0004 * i), dirt)
         plane(f"pathe_{i}", 3.1 * wshrink, 3.2, (wob, y0 + 1.5, 0.008 + 0.0004 * i), dirt_e)
-    # 道端の石 (テンプレート4種をリンク複製)
+    # 道端の石
     rock = mat("rock", PAL["rock"], rough=0.9)
     rock_d = mat("rock_dark", PAL["rock_dark"], rough=0.9)
     rock_tpls = []
     for i in range(4):
-        t = sphere(f"rock_tpl_{i}", 1.0, (0, -60, -5),
-                   rock if i < 3 else rock_d,
-                   scale=(1, R.uniform(0.7, 1.3), R.uniform(0.4, 0.6)), smooth=False)
-        rock_tpls.append(t)
-    for i in range(90):
+        rock_tpls.append(sphere(f"rock_tpl_{i}", 1.0, (0, -60, -5),
+                                rock if i < 3 else rock_d,
+                                scale=(1, R.uniform(0.7, 1.3), R.uniform(0.4, 0.6)),
+                                smooth=False))
+    for i in range(110):
         side = 1 if i % 2 == 0 else -1
         y = R.uniform(-4, 30)
         shrink = max(0.45, 1.0 - 0.55 * ((y + 4) / 42))
@@ -134,7 +124,7 @@ def build_ground():
         s = R.uniform(0.08, 0.30) * (0.5 + shrink)
         scatter_copy(R.choice(rock_tpls), f"rock_{i}", (x, y, s * 0.35),
                      rot=(0, 0, R.uniform(0, 6.28)), scale=s)
-    # 草むら (束を1メッシュ化したテンプレートを複製)
+    # 草 (円錐の束)
     grass_tpls = []
     for i in range(3):
         key = ("grass", "grass", "grass_dry")[i]
@@ -154,7 +144,7 @@ def build_ground():
         t.name = f"grass_tpl_{i}"
         t.location = (0, -60, -5)
         grass_tpls.append(t)
-    for i in range(140):
+    for i in range(150):
         side = 1 if i % 2 == 0 else -1
         y = R.uniform(-4, 32)
         shrink = max(0.45, 1.0 - 0.55 * ((y + 4) / 42))
@@ -162,106 +152,111 @@ def build_ground():
         s = R.uniform(0.15, 0.5) * (0.5 + shrink)
         scatter_copy(R.choice(grass_tpls), f"grass_{i}", (x, y, 0),
                      rot=(0, 0, R.uniform(0, 6.28)), scale=s)
+    # 道端の茂み (bushカード)
+    bush = mat_image("bush", f"{SPR}/bush.png", rough=0.95)
+    for i in range(46):
+        side = 1 if i % 2 == 0 else -1
+        y = R.uniform(0, 34)
+        shrink = max(0.45, 1.0 - 0.55 * ((y + 4) / 42))
+        x = side * (1.9 * shrink + R.uniform(0, 1.3))
+        s = R.uniform(0.7, 1.5) * (0.45 + shrink)
+        plane(f"bushcard_{i}", s, s, (x, y, s * 0.42),
+              bush, rot=(math.pi / 2, 0, R.uniform(-0.5, 0.5)))
 
 
 def build_bamboo_groves():
-    # テンプレート6種 (画面外に置いておく)
     tpls = []
     for i in range(6):
         t = make_bamboo_template(i)
         t.location = (0, -60, -20)
         tpls.append(t)
     idx = 0
-    # 手前〜中景: 道の両側に帯状に配置 (奥ほど道に寄る=遠近感)
-    for band_y0, band_y1, step in ((-6, 12, 1.15), (12, 26, 1.35), (26, 38, 1.6)):
+    for band_y0, band_y1, step in ((-7, 12, 0.85), (12, 26, 1.0), (26, 40, 1.2)):
         y = band_y0
         while y < band_y1:
             for side in (-1, 1):
                 shrink = max(0.4, 1.0 - 0.55 * ((y + 4) / 42))
-                x_in = side * (2.2 * shrink + R.uniform(0.1, 0.7))
-                n_row = 3 if y < 12 else 2
+                x_in = side * (2.1 * shrink + R.uniform(0.1, 0.6))
+                n_row = 4 if y < 12 else 3
                 for k in range(n_row):
-                    x = x_in + side * (k * R.uniform(0.9, 1.5) + R.uniform(0, 0.5))
-                    if abs(x) > 11:
+                    x = x_in + side * (k * R.uniform(0.7, 1.2) + R.uniform(0, 0.4))
+                    if abs(x) > 12:
                         continue
-                    # 道側へ軽く傾ける + 向き・大きさをばらす
-                    lean = R.uniform(0.0, math.radians(7)) * (-side)
+                    lean = R.uniform(math.radians(1), math.radians(8)) * (-side)
                     scatter_copy(R.choice(tpls), f"bamboo_{idx}",
-                                 (x, y + R.uniform(-0.5, 0.5), 0),
-                                 rot=(0, lean, R.uniform(0, 6.28)),
-                                 scale=R.uniform(0.8, 1.25))
+                                 (x, y + R.uniform(-0.4, 0.4), 0),
+                                 rot=(R.uniform(-0.03, 0.03), lean, R.uniform(0, 6.28)),
+                                 scale=R.uniform(0.75, 1.25))
                     idx += 1
             y += step
     print("bamboo count:", idx)
-    # 中景の広葉樹の茂み (板ではなく塊で)
-    for i, (x, y, s) in enumerate([(-4.5, 20, 2.2), (4.2, 18, 2.0), (-3.2, 27, 2.6),
-                                   (3.6, 28, 2.4), (0.0, 36, 3.0), (-6.5, 33, 2.8),
-                                   (6.4, 34, 2.6)]):
-        key = R.choice(("leaf_mid", "leaf_light"))
-        for k in range(4):
-            sphere(f"bush_{i}_{k}", s * R.uniform(0.5, 0.8),
-                   (x + R.uniform(-s, s) * 0.5, y + R.uniform(-s, s) * 0.5,
-                    R.uniform(1.5, 3.5) + k * 0.6),
-                   mat(key, PAL[key], rough=0.95), scale=(1, 1, 0.7))
-    # 頭上の葉 (両脇から張り出す梢。道の真上センターはV字に空を残す)
-    for i in range(16):
-        side = 1 if i % 2 == 0 else -1
-        y = 2 + i * 2.2
+    # 頭上の天蓋カード (見上げ用): 道の上空に大きめの葉カードを重ねる
+    canopy_tpls = {}
+    for key in ("leaf_dark", "leaf_mid", "leaf_light"):
+        m = mat_image(key, f"{SPR}/{key}.png", rough=0.9)
+        t = plane(f"canopy_tpl_{key}", 1, 1, (0, -60, -25), m)
+        canopy_tpls[key] = t
+    for i in range(120):
+        y = R.uniform(-6, 34)
         shrink = max(0.4, 1.0 - 0.55 * ((y + 4) / 42))
-        x = side * (1.4 + R.uniform(0.2, 1.6)) * shrink
-        key = R.choice(("leaf_dark", "leaf_mid", "leaf_light"))
-        m = mat(key, PAL[key], rough=0.9)
-        for k in range(R.randint(1, 2)):
-            sphere(f"arch_{i}_{k}", R.uniform(0.45, 0.9) * (0.5 + shrink),
-                   (x + side * R.uniform(0, 0.6), y + R.uniform(-0.6, 0.6),
-                    R.uniform(6.5, 9.0) * (0.6 + 0.4 * shrink)),
-                   m, scale=(1.4, 1.4, R.uniform(0.35, 0.5)))
+        # 道の真上にも薄く、両脇に濃く
+        if i % 3 == 0:
+            x = R.uniform(-1.2, 1.2) * shrink
+            z = R.uniform(7.0, 9.5) * (0.55 + 0.45 * shrink)
+        else:
+            side = 1 if i % 2 == 0 else -1
+            x = side * R.uniform(1.2, 5.0) * shrink
+            z = R.uniform(5.0, 9.0) * (0.55 + 0.45 * shrink)
+        key = R.choice(("leaf_dark", "leaf_dark", "leaf_mid", "leaf_light"))
+        s = R.uniform(1.6, 2.8) * (0.5 + 0.5 * shrink)
+        o = scatter_copy(canopy_tpls[key], f"canopy_{i}", (x, y, z),
+                         rot=(R.uniform(-0.35, 0.35), R.uniform(-0.35, 0.35),
+                              R.uniform(0, 6.28)),
+                         scale=s)
 
 
-def build_cliffs():
-    """遠景のカルスト岩山: 霧に霞む縦長の岩塔."""
-    cliff = mat("cliff", PAL["cliff"], rough=0.95)
-    green = mat("cliff_green", PAL["cliff_green"], rough=0.95)
-    defs = [
-        (0, 55, 17, 42),    # 主峰 (道の正面, 霧の上に頭を出す)
-        (-14, 66, 12, 30),
-        (12, 70, 10, 26),
-        (-26, 80, 14, 22),
-        (26, 84, 16, 25),
-    ]
-    for i, (x, y, w, h) in enumerate(defs):
-        cyl(f"cliff_{i}", w * 0.5, h, (x, y, h * 0.45), cliff, verts=9, r2=w * 0.33)
-        # 頂上と中腹の緑
-        sphere(f"cliffg_{i}", w * 0.42, (x, y, h * 0.95), green, scale=(1, 1, 0.5), smooth=False)
-        for k in range(3):
-            sphere(f"cliffg_{i}_{k}", w * R.uniform(0.15, 0.25),
-                   (x + R.uniform(-w, w) * 0.35, y - w * 0.3, h * R.uniform(0.35, 0.8)),
-                   green, scale=(1, 1, 0.6), smooth=False)
+def build_backdrop():
+    """張りぼての山 + 奥の竹の壁."""
+    ma = mat_image("mountain_a", f"{SPR}/mountain_a.png", rough=1.0, blend="BLEND")
+    mb = mat_image("mountain_b", f"{SPR}/mountain_b.png", rough=1.0, blend="BLEND")
+    # plane は XY面 → X軸90°回転で立てる (カメラ正面向き)
+    plane("mtn_main", 55, 55, (0, 78, 20.5), ma, rot=(math.pi / 2, 0, 0))
+    plane("mtn_l", 38, 38, (-26, 92, 13.5), mb, rot=(math.pi / 2, 0, 0))
+    plane("mtn_r", 34, 34, (24, 96, 12.0), mb, rot=(math.pi / 2, 0, 0))
+    # 奥の竹の壁 (遠景のシルエット): 濃緑の背の高い板
+    wall = mat("far_bamboo", (0.24, 0.34, 0.26), rough=1.0)
+    for i, (x, y, w, h) in enumerate([(-9, 42, 10, 12), (9, 44, 10, 13),
+                                      (-16, 48, 12, 14), (16, 50, 12, 14)]):
+        plane(f"farwall_{i}", w, h, (x, y, h / 2), wall, rot=(math.pi / 2, 0, 0))
 
 
 def build_fog_and_sky():
-    """アニメ的な霧: 半透明の白い板を奥行きに重ねる (名前は fog_ 始まり).
-
-    板の高さを抑えて山の上部は霧の上に出す。ビューワー用GLBからは除外する。
-    """
-    for i, (y, a, top) in enumerate([(32, 0.10, 24), (42, 0.16, 28),
-                                     (50, 0.22, 32), (64, 0.30, 36)]):
-        m = mat(f"fog{i}", PAL["fog_white"], rough=1.0, emit=0.35, alpha=a)
-        plane(f"fog_{i}", 240, top, (0, y, top / 2), m, rot=(math.pi / 2, 0, 0))
-    set_world((0.72, 0.76, 0.74), strength=1.0)
+    """霧: 下ほど濃いグラデ板 (fog_ 接頭辞: GLBから除外しビューワーはFogで代替)."""
+    mist = mat_image("mist", f"{SPR}/mist.png", rough=1.0, blend="BLEND", emit=0.5)
+    defs = [(10, 5, 0.0), (18, 8, 0.0), (28, 12, 0.0), (40, 20, 0.0), (58, 30, 0.0)]
+    for i, (y, h, _) in enumerate(defs):
+        # mist.png は上が透明・下が濃い → そのまま立てる
+        plane(f"fog_{i}", 200, h, (0, y, h / 2 - 0.2), mist, rot=(math.pi / 2, 0, 0))
+    set_world((0.80, 0.84, 0.82), strength=1.0)
 
 
 def build_scene():
+    if not os.path.exists(f"{SPR}/leaf_mid.png"):
+        sprites.generate_all(SPR)
     reset_scene()
     build_ground()
     build_bamboo_groves()
-    build_cliffs()
+    build_backdrop()
     build_fog_and_sky()
-    sun_light("sun", rot=(math.radians(58), 0, math.radians(15)), energy=3.2,
-              color=(1.0, 0.98, 0.92), angle_deg=12)
+    # 逆光気味の主光 (奥から手前へ) + 手前からの弱い返し
+    sun_light("sun_back", rot=(math.radians(-52), 0, math.radians(8)), energy=3.4,
+              color=(1.0, 0.99, 0.94), angle_deg=15)
+    sun_light("sun_fill", rot=(math.radians(50), 0, math.radians(-12)), energy=1.1,
+              color=(0.95, 1.0, 0.96), angle_deg=25)
     cams = {
         "A": add_camera("cam_A", (0.0, -6.5, 1.3), (0.0, 20.0, 6.2), lens=24),
         "B": add_camera("cam_B", (-3.2, -2.0, 1.6), (2.5, 18.0, 3.5), lens=28),
+        "U": add_camera("cam_U", (0.3, 6.0, 1.2), (1.5, 9.0, 30.0), lens=20),
         "T": add_camera("cam_T", (0.0, -14.0, 14.0), (0.0, 22.0, 2.0), lens=35),
     }
     return cams
@@ -269,4 +264,4 @@ def build_scene():
 
 if __name__ == "__main__":
     cams = build_scene()
-    render_cli(cams, default_res="1280x720", exposure=0.55)
+    render_cli(cams, default_res="1600x900", view_transform="Standard", exposure=0.0)
