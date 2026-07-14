@@ -1144,6 +1144,15 @@ def main(argv=None):
             a.work = pj["work"]
         if pj.get("ep"):
             a.ep = pj["ep"]
+        # カット表は project 側を正とする。project に csv が無い作品（SP2等・香盤表なし）は
+        # --csv の既定値(ep7)を引きずらず、原図フォルダ走査で組む。
+        if a.csv == "runs/cut_board_map_ep7.csv":
+            a.csv = pj.get("csv")
+        # 話数概要・cut_info も既定(尚善ep7)のままなら project 側を正とする
+        if a.overview_json == "runs/ep_overview.json" and pj.get("overview"):
+            a.overview_json = pj["overview"]
+        if a.cut_info == "runs/cut_scene_info_ep7.csv":
+            a.cut_info = pj.get("cut_info") or ""
     if not a.genzu_dir:
         p.error("--genzu-dir か --project のどちらかが必要です")
     # カット別 situation/remove（great-edisonの3層プロンプトCUT層）。在ればプロンプトに反映。
@@ -1162,7 +1171,13 @@ def main(argv=None):
     STATE = _load_json(_state_path(), {})
     # 既定プロジェクト（起動引数のCSV）
     dkey = f"{a.work}#{a.ep}"
-    PROJECTS[dkey] = _make_project(dkey, a.work, a.ep, a.genzu_dir, a.boards_dir, a.csv, source="csv")
+    # CSV(カット表)が無い作品は原図フォルダ走査でカット表を組む（SP2等・香盤表なし運用）
+    default_source = "csv" if (a.csv and os.path.exists(a.csv)) else "scan"
+    if default_source == "scan":
+        print(f"[info] カット表CSVが無いため原図フォルダ走査で構成します: {a.genzu_dir}")
+    PROJECTS[dkey] = _make_project(dkey, a.work, a.ep, a.genzu_dir, a.boards_dir,
+                                   a.csv if default_source == "csv" else None,
+                                   source=default_source)
     # 永続化された追加プロジェクトを復元
     for rec in _load_json(_projects_path(), []):
         if rec["key"] not in PROJECTS and os.path.isdir(rec.get("genzu_dir", "")):

@@ -1,0 +1,15 @@
+{
+  "work": "佐々木とピーちゃん第2期",
+  "ep": "10",
+  "root": "C:\\Users\\kuror\\OneDrive\\デスクトップ\\佐々木とピーちゃん\\佐々木とピーちゃん_原図修正自動化検証",
+  "genzu_dir": "C:\\Users\\kuror\\OneDrive\\デスクトップ\\佐々木とピーちゃん\\佐々木とピーちゃん_原図修正自動化検証\\00.原図",
+  "boards_dir": "C:\\Users\\kuror\\OneDrive\\デスクトップ\\佐々木とピーちゃん\\佐々木とピーちゃん_原図修正自動化検証\\01.美術ボード",
+  "out_dir": "C:\\Users\\kuror\\OneDrive\\デスクトップ\\佐々木とピーちゃん\\佐々木とピーちゃん_原図修正自動化検証\\10.生成結果",
+  "script": null,
+  "koban": null,
+  "conte": "C:\\Users\\kuror\\OneDrive\\デスクトップ\\佐々木とピーちゃん\\佐々木とピーちゃん_原図修正自動化検証\\03.設定資料\\SP2#10_決定稿コンテ.pdf",
+  "settings": [],
+  "found": ["genzu_dir", "boards_dir", "out_dir", "conte"],
+  "missing": ["script", "koban"],
+  "_note": "discover 実走(2026-07-14)の結果を確定版として手書き。設定資料=絵コンテ＋アニメ1期参考カットのみ（1期参考カットが画調の正解）。香盤表は無し→カット表は原図フォルダ走査(scan)で組む。"
+}
