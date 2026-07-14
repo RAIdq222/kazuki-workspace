@@ -91,6 +91,38 @@ for (const d of LIGHTS) {
   scene.add(l);
 }
 
+// ---------- 移動可能範囲 (壁抜け・迷子防止) ----------
+// CFG.bounds = {min:[x,y,z], max:[x,y,z]} (three座標系)。未指定ならGLBのバウンディング
+// ボックスから自動計算 (水平方向は内側に0.35m、上方向は+4m)。
+let BOUNDS = null;
+function setBoundsFromBox(bbox) {
+  const m = CFG.boundsMargin ?? 0.35;
+  BOUNDS = {
+    min: new THREE.Vector3(bbox.min.x + m, 0.12, bbox.min.z + m),
+    max: new THREE.Vector3(bbox.max.x - m, bbox.max.y + 4.0, bbox.max.z - m),
+  };
+}
+if (CFG.bounds) {
+  BOUNDS = {
+    min: new THREE.Vector3(...CFG.bounds.min),
+    max: new THREE.Vector3(...CFG.bounds.max),
+  };
+}
+function clampCamera() {
+  if (!BOUNDS) return;
+  const p = camera.position;
+  const cx = Math.min(BOUNDS.max.x, Math.max(BOUNDS.min.x, p.x));
+  const cy = Math.min(BOUNDS.max.y, Math.max(BOUNDS.min.y, p.y));
+  const cz = Math.min(BOUNDS.max.z, Math.max(BOUNDS.min.z, p.z));
+  const dx = cx - p.x, dy = cy - p.y, dz = cz - p.z;
+  if (dx || dy || dz) {
+    p.set(cx, cy, cz);
+    controls.target.x += dx;  // 視線方向を保ったまま押し戻す
+    controls.target.y += dy;
+    controls.target.z += dz;
+  }
+}
+
 // ---------- load GLB ----------
 const bin = Uint8Array.from(atob(window.__GLB_B64), (c) => c.charCodeAt(0));
 new GLTFLoader().parse(bin.buffer, '', (gltf) => {
@@ -109,6 +141,7 @@ new GLTFLoader().parse(bin.buffer, '', (gltf) => {
     }
   });
   scene.add(gltf.scene);
+  if (!BOUNDS) setBoundsFromBox(new THREE.Box3().setFromObject(gltf.scene));
   applyPreset(Object.keys(PRESETS)[0]);
 });
 
@@ -362,6 +395,7 @@ function loop(now) {
   prev = now;
   moveCamera(dt);
   controls.update();
+  clampCamera();
   renderFrame();
   requestAnimationFrame(loop);
 }
