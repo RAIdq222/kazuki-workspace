@@ -49,6 +49,20 @@ def main():
     check("欠落は missing に", "koban" in m2["missing"] and "conte" in m2["missing"])
     check("部分成功で genzu/script は取れる", m2["genzu_dir"] and m2["script"])
 
+    # SP2 #10 実構成（ユーザーが整えた形）: 03.設定資料 配下＋「<ep>…コンテ」語順
+    r3 = tempfile.mkdtemp()
+    os.makedirs(os.path.join(r3, "00.原図", "談"))
+    os.makedirs(os.path.join(r3, "01.美術ボード"))
+    os.makedirs(os.path.join(r3, "10.生成結果"))
+    _touch(os.path.join(r3, "03.設定資料", "SP2#10_決定稿コンテ.pdf"))
+    _touch(os.path.join(r3, "03.設定資料", "隔離空間の輪郭線について.jpg"))
+    _touch(os.path.join(r3, "03.設定資料", "SP2_現実世界_隔離空間_夜.psd"))
+    m3 = assets.discover(r3, "佐々木とピーちゃん第2期", "10")
+    check("SP2: コンテは conte に（scriptでない）",
+          m3["conte"] and "コンテ" in os.path.basename(m3["conte"]) and not m3["script"])
+    check("SP2: 設定資料フォルダ配下を収集(コンテ除く)",
+          len(m3["settings"]) == 2 and all("コンテ" not in s for s in m3["settings"]))
+
     if fails:
         print("FAIL:", fails)
         return 1
