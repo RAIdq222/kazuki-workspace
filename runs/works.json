@@ -3,10 +3,28 @@
   "佐々木とピーちゃん第2期": {
     "prefix": "SP2",
     "aliases": ["SP2", "佐々木とピーちゃん", "佐々木とピーちゃん第2期"],
-    "status": "準備中（素材=会社Google Drive、未着手）",
-    "ep_count": 10,
-    "note": "原図修正。出力体裁（白黒線画か原図の体裁保持か）はユーザー確認待ち＝docs/sessions.md参照",
-    "eps": {}
+    "status": "着手（#10テスト）。原図修正=ラフ原図→修正済み原図（PSD入出力）",
+    "note": "原図は担当別フォルダ直下・_genzuサフィックス無し（SP2_10_006.psd / 束=022_025 / _R=リテイク版 / 'BG only'修飾）。香盤表は未確認（コンテPDFあり）",
+    "eps": {
+      "10": {
+        "status": "テスト準備（2026-07-14 HOSHI様向けテストフォルダ確認）",
+        "drive": {
+          "genzu_folder": "15etNV3IXsM0p_bPz0oWDwXfaiA-RarbS",
+          "genzu_folder_name": "#10_佐々木とピーちゃん（担当別: 談/野田/西脇）",
+          "test_package": "1u-NqFXiql5aMyKBEiD2hFmoOapRbqfQp",
+          "test_package_name": "HOSHI様_20260714_佐々木とピーちゃん#10_テスト",
+          "conte_pdf": "1gjUR-_K45zUUcAQ44uKH66s9VS7-FUdp",
+          "genzu_zip_20260709": "1yQDIKgVweIs84wPQpQrLJjHtYKMnwnb0"
+        },
+        "style_refs": [
+          "密度参考BG(場所やシーンは違います)/",
+          "隔離空間の輪郭線について.jpg",
+          "SP2_現実世界_隔離空間_夜.psd",
+          "SP2_10_283～_場所参考/",
+          "BGサイズ_144dpi基本.psd / 216dpi基本.psd"
+        ]
+      }
+    }
   },
   "尚善": {
     "prefix": "shz",
