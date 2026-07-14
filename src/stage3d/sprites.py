@@ -85,8 +85,8 @@ def mountain_sprite(path, size=1024, seed=1, towers=3):
     rr = random.Random(seed)
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
-    rock = (168, 148, 132)
-    rock_sh = (128, 118, 112)
+    rock = (150, 148, 138)
+    rock_sh = (114, 118, 116)
     green = (96, 128, 78)
     green_d = (72, 104, 62)
     for t in range(towers):

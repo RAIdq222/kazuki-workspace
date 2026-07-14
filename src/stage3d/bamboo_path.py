@@ -217,12 +217,12 @@ def build_bamboo_groves():
 
 def build_backdrop():
     """張りぼての山 + 奥の竹の壁."""
-    ma = mat_image("mountain_a", f"{SPR}/mountain_a.png", rough=1.0, blend="BLEND", emit=0.3)
-    mb = mat_image("mountain_b", f"{SPR}/mountain_b.png", rough=1.0, blend="BLEND", emit=0.3)
+    ma = mat_image("mountain_a", f"{SPR}/mountain_a.png", rough=1.0, blend="BLEND", emit=0.15)
+    mb = mat_image("mountain_b", f"{SPR}/mountain_b.png", rough=1.0, blend="BLEND", emit=0.15)
     # plane は XY面 → X軸90°回転で立てる (カメラ正面向き)
-    plane("mtn_main", 78, 78, (0, 66, 30.0), ma, rot=(math.pi / 2, 0, 0))
-    plane("mtn_l", 38, 38, (-26, 80, 14.5), mb, rot=(math.pi / 2, 0, 0))
-    plane("mtn_r", 34, 34, (24, 84, 13.0), mb, rot=(math.pi / 2, 0, 0))
+    plane("mtn_main", 95, 95, (0, 90, 26.0), ma, rot=(math.pi / 2, 0, 0))
+    plane("mtn_l", 45, 45, (-30, 105, 16.0), mb, rot=(math.pi / 2, 0, 0))
+    plane("mtn_r", 40, 40, (28, 110, 14.0), mb, rot=(math.pi / 2, 0, 0))
     # 奥の竹の壁 (遠景のシルエット): 濃緑の背の高い板
     wall = mat("far_bamboo", (0.24, 0.34, 0.26), rough=1.0)
     for i, (x, y, w, h) in enumerate([(-9, 42, 10, 12), (9, 44, 10, 13),

@@ -8,7 +8,7 @@
 
 使い方: python3 src/stage3d/post_watercolor.py in.png [out.png]
 """
-import random
+
 import sys
 
 from PIL import Image, ImageChops, ImageEnhance, ImageFilter
@@ -24,22 +24,18 @@ def watercolor(im, bloom=0.20, lift=0.14, desat=0.94, grain=0.045):
     blur = im.filter(ImageFilter.GaussianBlur(max(2, w // 180)))
     im = ImageChops.blend(im, ImageChops.screen(im, blur), bloom)
 
-    # 2) シャドウリフト: 紙色を加算気味にブレンド (暗部ほど効く)
+    # 2) シャドウリフト: 暗部ほど紙色へ寄せる
     paper = Image.new("RGB", im.size, PAPER)
-    inv = im.convert("L").point(lambda v: int(255 - v))  # 暗いほど255
-    mask = inv.point(lambda v: int(v * lift))
-    im = Image.composite(paper, im, mask.point(lambda v: v))  # 弱いリフト
-    im = ImageChops.blend(im, Image.composite(paper, im, inv), lift * 0.35)
+    inv = im.convert("L").point(lambda v: int((255 - v) * lift))  # 暗いほど大きい
+    im = Image.composite(paper, im, inv)
 
     # 3) 彩度控えめ
     im = ImageEnhance.Color(im).enhance(desat)
 
-    # 4) 紙目: 細かいノイズを重ねる
-    rnd = random.Random(7)
-    noise = Image.effect_noise((w // 2, h // 2), 22).resize((w, h))
-    noise = noise.point(lambda v: int(128 + (v - 128) * grain * 8))
+    # 4) 紙目: 255付近を中心にしたノイズを乗算 (わずかに凹むだけ)
+    noise = Image.effect_noise((w // 2, h // 2), 26).resize((w, h))
+    noise = noise.point(lambda v: int(255 - abs(v - 128) * grain * 5))
     im = ImageChops.multiply(im, Image.merge("RGB", (noise, noise, noise)))
-    im = ImageEnhance.Brightness(im).enhance(1.0 + grain * 0.9)
 
     return im
 
