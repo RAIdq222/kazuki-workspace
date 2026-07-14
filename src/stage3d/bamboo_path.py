@@ -199,8 +199,8 @@ def build_bamboo_groves():
     for i in range(120):
         y = R.uniform(-6, 34)
         shrink = max(0.4, 1.0 - 0.55 * ((y + 4) / 42))
-        # 道の真上にも薄く、両脇に濃く
-        if i % 3 == 0:
+        # 道の真上は手前側のみ薄く (奥は山への抜けを確保)、両脇に濃く
+        if i % 3 == 0 and y < 18:
             x = R.uniform(-1.2, 1.2) * shrink
             z = R.uniform(7.0, 9.5) * (0.55 + 0.45 * shrink)
         else:
@@ -221,9 +221,9 @@ def build_backdrop():
     board_mtn = f"{SPR}/mountain_board.png"
     if os.path.exists(board_mtn):
         ma = mat_image("mountain_board", board_mtn, rough=1.0, blend="BLEND", emit=0.5)
-        mw = 46.0
+        mw = 58.0
         mh = mw / 0.932  # スプライトのアスペクト比
-        plane("mtn_main", mw, mh, (0, 88, 21.0), ma, rot=(math.pi / 2, 0, 0))
+        plane("mtn_main", mw, mh, (0, 88, 23.5), ma, rot=(math.pi / 2, 0, 0))
     else:
         ma = mat_image("mountain_a", f"{SPR}/mountain_a.png", rough=1.0, blend="BLEND", emit=0.15)
         plane("mtn_main", 95, 95, (0, 90, 26.0), ma, rot=(math.pi / 2, 0, 0))
