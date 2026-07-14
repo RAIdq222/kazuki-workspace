@@ -155,10 +155,10 @@ def mist_sprite(path, size=512):
 
 def ground_texture(path, size=768):
     """地面: 苔・下草のまだら (不透明・タイル用)."""
-    img = Image.new("RGB", (size, size), (28, 46, 20))
+    img = Image.new("RGB", (size, size), (34, 54, 24))
     d = ImageDraw.Draw(img)
-    tones = [(24, 42, 18), (34, 56, 24), (44, 68, 30), (52, 76, 34),
-             (38, 50, 22), (58, 66, 30), (30, 38, 18)]
+    tones = [(30, 50, 22), (42, 66, 28), (54, 80, 36), (64, 90, 40),
+             (46, 60, 26), (70, 80, 36), (38, 46, 22)]
     for _ in range(650):
         x, y = R.uniform(0, size), R.uniform(0, size)
         r = R.uniform(size * 0.008, size * 0.05)
@@ -185,12 +185,12 @@ def path_texture(path, size=768):
         x, y = R.uniform(0, size), R.uniform(0, size)
         r = R.uniform(size * 0.01, size * 0.06)
         d.ellipse([x - r, y - r * 0.5, x + r, y + r * 0.5], fill=R.choice(tones))
-    for _ in range(70):  # 縦方向(進行方向)の轍・筋
+    for _ in range(18):  # 進行方向のかすかな筋 (轍)。強すぎると板張りに見えるので控えめに
         x = R.uniform(0, size)
         y0 = R.uniform(0, size * 0.7)
-        ln = R.uniform(size * 0.15, size * 0.5)
-        c = R.choice([(146, 108, 62), (184, 146, 92)])
-        d.line([(x, y0), (x + R.uniform(-10, 10), y0 + ln)], fill=c, width=R.randint(2, 5))
+        ln = R.uniform(size * 0.1, size * 0.35)
+        c = R.choice([(158, 120, 70), (176, 138, 86)])
+        d.line([(x, y0), (x + R.uniform(-24, 24), y0 + ln)], fill=c, width=2)
     for _ in range(90):  # 小石
         x, y = R.uniform(0, size), R.uniform(0, size)
         r = R.uniform(2, 6)
@@ -212,23 +212,30 @@ def path_texture(path, size=768):
 
 def rock_texture(path, size=512):
     """石: 水彩の岩肌 (濃淡のウォッシュ + ひび)."""
-    img = Image.new("RGB", (size, size), (142, 140, 132))
+    img = Image.new("RGB", (size, size), (128, 126, 120))
     d = ImageDraw.Draw(img)
-    tones = [(118, 118, 112), (156, 154, 144), (170, 168, 158), (128, 124, 114),
-             (104, 106, 102), (148, 142, 128)]
-    for _ in range(160):
+    tones = [(96, 98, 94), (146, 144, 134), (168, 166, 156), (112, 108, 100),
+             (84, 88, 86), (140, 132, 118), (158, 152, 138)]
+    for _ in range(220):
         x, y = R.uniform(0, size), R.uniform(0, size)
-        r = R.uniform(size * 0.03, size * 0.16)
+        r = R.uniform(size * 0.03, size * 0.18)
         d.ellipse([x - r, y - r * 0.7, x + r, y + r * 0.7], fill=R.choice(tones))
-    for _ in range(26):  # ひび・陰線
+    for _ in range(40):  # ひび・陰線
         x, y = R.uniform(0, size), R.uniform(0, size)
         pts = [(x, y)]
         for _ in range(4):
             x += R.uniform(-size * 0.08, size * 0.08)
             y += R.uniform(size * 0.02, size * 0.09)
             pts.append((x, y))
-        d.line(pts, fill=(92, 94, 92), width=R.randint(2, 4))
-    img = img.filter(ImageFilter.GaussianBlur(1.6))
+        d.line(pts, fill=(70, 74, 74), width=R.randint(2, 5))
+    img = img.filter(ImageFilter.GaussianBlur(1.4))
+    # 上面ほど明るく (立体感)
+    px = img.load()
+    for yy in range(size):
+        f = 1.14 - 0.34 * (yy / size)
+        for xx in range(size):
+            r0, g0, b0 = px[xx, yy]
+            px[xx, yy] = (min(255, int(r0 * f)), min(255, int(g0 * f)), min(255, int(b0 * f)))
     img.save(path)
 
 
