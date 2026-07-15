@@ -43,6 +43,9 @@ def main(argv=None) -> int:
     p.add_argument("--out", default="runs/layers_dump.txt")
     p.add_argument("--samples", type=int, default=0, help="先頭Nカットの抽出プレビューも書き出す")
     p.add_argument("--samples-out", default="handoff/genzu_sample")
+    p.add_argument("--explode", type=int, default=0,
+                   help="先頭NカットについてトップレベルのレイヤーorグループをNずつ単体レンダ"
+                        "（どのレイヤーが何の絵かを目視で確定するための調査モード）")
     a = p.parse_args(argv)
 
     psds = []
@@ -112,6 +115,35 @@ def main(argv=None) -> int:
                 except Exception as e:  # noqa
                     print(f"  [warn] {stem} {kind}: {str(e)[:100]}")
         print(f"サンプル書き出し: {os.path.abspath(a.samples_out)}（縮小jpg・git push 可）")
+
+    if a.explode > 0:
+        # トップレベル要素を1つずつ単体表示で合成（同名レイヤーがあっても取り違えないよう
+        # オブジェクト直指定で可視状態を切り替える）
+        from psd_tools import PSDImage
+        for path in psds[: a.explode]:
+            stem = os.path.splitext(os.path.basename(path))[0]
+            try:
+                psd = PSDImage.open(path)
+            except Exception as e:  # noqa
+                print(f"  [warn] explode {stem}: {str(e)[:100]}")
+                continue
+            top = list(psd)
+            for idx, target in enumerate(top):
+                for l in top:
+                    l.visible = (l is target)
+                img = psd.composite(force=True)
+                safe = "".join(c if c.isalnum() or c in "._-" else "_" for c in (target.name or "noname"))
+                outp = os.path.join(a.samples_out, f"{stem}__L{idx:02d}_{safe}.png")
+                from PIL import Image
+                canvas = Image.new("RGB", img.size, (255, 255, 255))
+                if img.mode == "RGBA":
+                    canvas.paste(img, mask=img.split()[-1])
+                else:
+                    canvas.paste(img)
+                canvas.save(outp)
+                _downscale_save(outp, maxside=900)
+            print(f"  explode: {stem} → トップレベル{len(top)}要素を単体レンダ")
+        print(f"explode書き出し: {os.path.abspath(a.samples_out)}")
     return 0
 
 

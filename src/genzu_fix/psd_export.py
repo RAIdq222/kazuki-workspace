@@ -153,24 +153,32 @@ def export_background_layer(psd_path: str, out_path: str, bg=(255, 255, 255),
     def is_pixel(l):
         return str(l.kind) != "group"
 
-    def starts(l, p):
-        return (l.name or "").lower().startswith(p)
+    def norm(l):
+        # SP2等は "_BG" "_PAN" のように先頭 _ が付く。判定は _ を剥がして行う。
+        return (l.name or "").lstrip("_").lower()
 
-    bg_layers = [l for l in top if is_pixel(l) and starts(l, "bg") and not excluded(l.name)]
+    def starts(l, p):
+        return norm(l).startswith(p)
+
+    # 選択対象はトップレベルの pixel と group の両方
+    # （SP2の一部PSDは BG がグループ: BG[group]>0[pixel] / LO[group]>_BG+A1）。
+    # bg: BG/_BG/_BG_Q.TB…（book含みは除外） / pan: _PAN=引き背景（PANカットのBG本体）
+    bg_layers = [l for l in top if starts(l, "bg") and not is_book(l.name) and not excluded(l.name)]
+    pan_layers = [l for l in top if starts(l, "pan") and not excluded(l.name)]
     lo_layers = [l for l in top if is_pixel(l) and starts(l, "lo") and not excluded(l.name)]
     haikei = [l for l in top if l.name == "背景"]
-    book_layers = [l for l in top if is_pixel(l) and is_book(l.name)]
-    target = bg_layers or lo_layers or haikei
+    book_layers = [l for l in top if is_book(l.name)]
+    target = (bg_layers + pan_layers) or lo_layers or haikei
 
     if target:
-        strategy = "BG" if bg_layers else ("LO" if lo_layers else "背景")
+        strategy = "BG" if bg_layers else ("PAN" if pan_layers else ("LO" if lo_layers else "背景"))
         keep = {id(l) for l in target}
         if include_book:
             keep |= {id(l) for l in book_layers}
-        # 選択レイヤー(+任意でBOOK)以外のトップレベル画像は隠す（参考フレーム等を排除）。
-        # グループ（セル参考/美監補足等）も一律オフ（背景作画はトップレベルのpixel）。
+        # 選択レイヤー(+任意でBOOK)以外のトップレベルを隠す（セル・参考フレーム・指示等を排除）。
+        # 選択がグループの場合は中身の保存時可視状態のまま合成される。
         for l in top:
-            l.visible = is_pixel(l) and (id(l) in keep)
+            l.visible = id(l) in keep
     else:
         strategy = "fallback"
         if not include_book:

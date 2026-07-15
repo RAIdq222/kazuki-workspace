@@ -353,9 +353,12 @@ def _adopt_take(uid, n):
     return True
 
 
+_PREVIEW_REV = "r2"   # 抽出規則を変えたら上げる（旧キャッシュを使わせない）
+
+
 def _genzu_preview(uid, psd_path, source="base", force=False):
     # ソース別ファイル名（base/visible を分離）＋ process_cut の中間 visible.png と衝突させない。
-    out = os.path.join(_unit_dir(uid), f"genzu_{source}.png")
+    out = os.path.join(_unit_dir(uid), f"genzu_{source}_{_PREVIEW_REV}.png")
     stale = bool(psd_path and os.path.exists(out) and os.path.exists(psd_path)
                  and os.path.getmtime(psd_path) > os.path.getmtime(out))  # PSD更新で再取得
     if (force or stale or not os.path.exists(out)) and psd_path:
