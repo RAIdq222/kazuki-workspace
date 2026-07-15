@@ -353,7 +353,7 @@ def _adopt_take(uid, n):
     return True
 
 
-_PREVIEW_REV = "r2"   # 抽出規則を変えたら上げる（旧キャッシュを使わせない）
+_PREVIEW_REV = "r3"   # 抽出規則を変えたら上げる（旧キャッシュを使わせない）
 
 
 def _genzu_preview(uid, psd_path, source="base", force=False):
