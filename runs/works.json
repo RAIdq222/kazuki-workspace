@@ -8,6 +8,16 @@
     "eps": {
       "10": {
         "status": "テスト準備（2026-07-14 HOSHI様向けテストフォルダ確認）",
+        "total_cuts": 314,
+        "cuts_breakdown": {"アバン": 24, "A": 204, "B": 86},
+        "genzu_delivered": 83,
+        "conte": {
+          "paper": "SILVER LINK.（印字ヘッダ Cut|Picture|Action|Dialog|Sec）",
+          "cols": "0.53,0.71,0.91",
+          "first_content_page": 3,
+          "glossary": "runs/conte_glossary_sp2_10.md",
+          "note": "p1=表紙(カット数集計) p2=白紙。赤バツ=欠番。Sec=丸数字(秒)"
+        },
         "drive": {
           "genzu_folder": "15etNV3IXsM0p_bPz0oWDwXfaiA-RarbS",
           "genzu_folder_name": "#10_佐々木とピーちゃん（担当別: 談/野田/西脇）",

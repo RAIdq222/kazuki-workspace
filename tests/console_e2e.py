@@ -32,8 +32,8 @@ def _make_fixture(root):
     for d in (out, boards, gz, os.path.join(out, "testcut01")):
         os.makedirs(d, exist_ok=True)
     # 原図(前)=赤 / 最終結果(後)=青。比較で左右に出る。
-    # 原図プレビューはソース別ファイル名（genzu_<source>.png）。既定 source=base。
-    _solid(os.path.join(out, "testcut01", "genzu_base.png"), (220, 60, 60))
+    # 原図プレビューはソース別+規則rev付きファイル名（server._PREVIEW_REV と一致させる）。
+    _solid(os.path.join(out, "testcut01", "genzu_base_r2.png"), (220, 60, 60))
     _solid(os.path.join(out, "testcut01", "restored_full.png"), (60, 80, 220))
     _solid(os.path.join(boards, "BoardA.png"), (60, 200, 90))
     # QC結果（S3）: カードにバッジ／フィルタが出るか検証するため
