@@ -530,7 +530,8 @@ def _attach_continuations(frames: list[dict]) -> list[dict]:
 def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.json",
              model: str = DEFAULT_MODEL, api_key: str | None = None,
              glossary_path: str = GLOSSARY_MD, debug_crops: str | None = None,
-             cols_override=None, resume: bool = False) -> list[dict]:
+             cols_override=None, resume: bool = False,
+             cut_map: str = "runs/cut_board_map_ep7.csv") -> list[dict]:
     """ページPNG群を、表の行検出→列ごと(番号+絵/action/dialogue/time)に切り出し→用語集付きOCR で読む。
     フィールドは「文字がどの列にあるか」で機械的に決まる（モデルに割り当てを選ばせない）。
     debug_crops を指定すると API を叩かず、各列クロップ＋列境界オーバーレイを保存して切り出しを目視確認できる。
@@ -548,8 +549,9 @@ def extract2(page_paths: list[str], out_json: str = "runs/conte_frames_v2_ep7.js
                 "`set ANTHROPIC_API_KEY=sk-ant-...` で設定してください。")
     glossary = load_glossary(glossary_path)
     prompt = _extraction_prompt_page(glossary)
-    # 正規の枝番カット一覧を cut_board_map から注入＝枝番の位置をモデルに教える(捏造防止/読み落とし防止)
-    ref = "runs/cut_board_map_ep7.csv"
+    # 正規の枝番カット一覧を cut_map から注入＝枝番の位置をモデルに教える(捏造防止/読み落とし防止)
+    # ※作品ごとに指定する。空文字なら注入しない（別作品のカット表を誤適用しない）。
+    ref = cut_map or ""
     if os.path.exists(ref):
         with open(ref, encoding="utf-8-sig") as rf:
             br = sorted({_cut_key(r.get("cut", "")) for r in csv.DictReader(rf)
@@ -826,16 +828,18 @@ def ensure_overrides_template(overrides_csv: str = OVERRIDES_CSV) -> None:
 
 
 def consolidate(frames_json: str = "runs/conte_frames_v2_ep7.json",
-                out_csv: str = "runs/conte_v2_ep7.csv") -> int:
+                out_csv: str = "runs/conte_v2_ep7.csv",
+                cut_map: str = "runs/cut_board_map_ep7.csv") -> int:
     """extract2 の frames を cut 番号で統合（跨り/重複を1カットに結合）して per-cut CSV を書く。
     列: cut, action, dialogue, se, time, characters, confidence, notes。これが新しいコンテ読みの正。"""
     with open(frames_json, encoding="utf-8") as f:
         frames = json.load(f).get("frames", [])
     order: list[str] = []
     by: dict[str, dict] = {}
-    # 正規のカット一覧(枝番含む)を cut_board_map から読み、これをホワイトリストにする。
+    # 正規のカット一覧(枝番含む)を cut_map から読み、これをホワイトリストにする。
+    # 空文字なら無効（カット表が未整備の作品＝SP2初回などは枝番をそのまま信用する）。
     valid = set()
-    ref = "runs/cut_board_map_ep7.csv"
+    ref = cut_map or ""
     if os.path.exists(ref):
         with open(ref, encoding="utf-8-sig") as rf:
             for rr in csv.DictReader(rf):
@@ -914,7 +918,8 @@ def consolidate(frames_json: str = "runs/conte_frames_v2_ep7.json",
     return len(rows)
 
 
-def verify(csv_path: str = "runs/conte_v2_ep7.csv") -> int:
+def verify(csv_path: str = "runs/conte_v2_ep7.csv",
+           cut_map: str = "runs/cut_board_map_ep7.csv") -> int:
     """構造不変条件を機械チェックする（API不要・決定論）。再OCR後に通して、列の取り違え/
     枝番の崩れ/欠番を目視でなく自動で洗い出す。corrected があればそちらを優先して読む。
     返り値=異常件数（0なら構造的にクリーン）。"""
@@ -949,7 +954,7 @@ def verify(csv_path: str = "runs/conte_v2_ep7.csv") -> int:
     #   台本は番号が飛ぶ(原図なしカットは正典に無い)ので「1..maxの抜け」では測れない。
     #   正典カットがコンテに全部あるか／重複していないか、で集計の正しさを測る。
     canon = []                                  # 正典の順序付きカットキー
-    ref = "runs/cut_board_map_ep7.csv"
+    ref = cut_map or ""
     if os.path.exists(ref):
         with open(ref, encoding="utf-8-sig") as rf:
             for rr in csv.DictReader(rf):
@@ -1245,6 +1250,8 @@ def main(argv=None) -> None:
                     help=f"列境界の固定比率 pic|act,act|dia,dia|time（既定={EP7_COLS}＝ep7 DANGUN用紙で目視確認済）。"
                          "用紙が違う場合のみ変更。'auto' で自動検出に戻す")
     e2.add_argument("--first-page", type=int, default=None, help="先頭Nページだけ（試走用）")
+    e2.add_argument("--cut-map", default="runs/cut_board_map_ep7.csv",
+                    help="正規カット表（枝番ホワイトリスト用）。別作品では必ず指定。空文字で無効")
     e2.add_argument("--resume", action="store_true",
                     help="前回の途中まで(.ckpt)を引き継ぎ、未処理/失敗ページだけ実行する")
 
@@ -1268,8 +1275,12 @@ def main(argv=None) -> None:
     cs = sub.add_parser("consolidate", help="extract2のframesをcut番号で統合しper-cut CSVに")
     cs.add_argument("--frames", default="runs/conte_frames_v2_ep7.json")
     cs.add_argument("--out", default="runs/conte_v2_ep7.csv")
+    cs.add_argument("--cut-map", default="runs/cut_board_map_ep7.csv",
+                    help="正規カット表。別作品では必ず指定（空文字で無効）")
 
     vf = sub.add_parser("verify", help="構造不変条件を機械チェック(列取り違え/枝番/欠番)。API不要")
+    vf.add_argument("--cut-map", default="runs/cut_board_map_ep7.csv",
+                    help="正典カット表（照合用）。空文字で照合スキップ")
     vf.add_argument("--csv", default="runs/conte_v2_ep7.csv",
                     help="検査対象(corrected があれば自動でそれを優先)")
 
@@ -1311,7 +1322,7 @@ def main(argv=None) -> None:
                 assert len(cols_override) == 3
             except (ValueError, AssertionError):
                 sys.exit("--cols は比率3つ（例 0.50,0.70,0.90）または 'auto' を指定してください。")
-        extract2(imgs, a.out, a.model, glossary_path=a.glossary,
+        extract2(imgs, a.out, a.model, glossary_path=a.glossary, cut_map=a.cut_map,
                  debug_crops=a.debug_crops, cols_override=cols_override, resume=a.resume)
     elif a.cmd == "merge":
         frames = json.load(open(a.frames, encoding="utf-8")).get("frames", [])
@@ -1334,9 +1345,9 @@ def main(argv=None) -> None:
     elif a.cmd == "init-overrides":
         ensure_overrides_template(a.overrides)
     elif a.cmd == "consolidate":
-        consolidate(a.frames, a.out)
+        consolidate(a.frames, a.out, cut_map=a.cut_map)
     elif a.cmd == "verify":
-        verify(a.csv)
+        verify(a.csv, cut_map=a.cut_map)
     elif a.cmd == "corrections-report":
         corrections_report(a.baseline, a.overrides, a.out)
     elif a.cmd == "review2":
