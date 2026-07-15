@@ -1,9 +1,8 @@
 # レイヤー構成ダンプ: C:\Users\kuror\OneDrive\デスクトップ\佐々木とピーちゃん\佐々木とピーちゃん_原図修正自動化検証\00.原図  PSD 86本
 
 ## Base抽出 strategy 内訳（BG/LO/背景/fallback の比率＝規則が合っているかの目安）
-  BG: 75
-  fallback: 7
-  PAN: 4
+  BG: 85
+  BG(nested): 1
 
 ## トップレベルのレイヤー名 頻度（上位40）
     67x  _BG
@@ -116,7 +115,7 @@
     * _BG [pixel]
     * A1 [pixel]
   . fr [pixel]
-  -> Base抽出: strategy=BG layers=['BG'] (1672x1180)
+  -> Base抽出: strategy=BG(nested) layers=['_BG'] (1672x1180)
 
 === [2/86] 社内\談\済み\SP2_10_006.psd ===
   * _BG_Book0 [pixel]
@@ -126,12 +125,12 @@
   * Book_2 [pixel]
   * D0001 [pixel]
   * Book_3 [pixel]
-  -> Base抽出: strategy=PAN layers=['_PAN'] (3766x2715)
+  -> Base抽出: strategy=BG layers=['_BG_Book0', '_PAN'] (3766x2715)
 
 === [3/86] 社内\談\済み\SP2_10_007.psd ===
   * _BG_Book [pixel]
   * A0002 [pixel]
-  -> Base抽出: strategy=fallback layers=[] (1672x1180)
+  -> Base抽出: strategy=BG layers=['_BG_Book'] (1672x1180)
 
 === [4/86] 社内\野田\sumi\SP2_10_008.psd ===
   * _BG [pixel]
@@ -147,7 +146,7 @@
   * B1 [pixel]
   * B1_e [pixel]
   * C1 [pixel]
-  -> Base抽出: strategy=fallback layers=[] (2508x1770)
+  -> Base抽出: strategy=BG layers=['_BG_Book_T.B'] (2508x1770)
 
 === [6/86] 社内\野田\sumi\SP2_10_010.psd ===
   * _BG [pixel]
@@ -244,7 +243,7 @@
   * Book_1 [pixel]
   * A0001 [pixel]
   * Book_2 [pixel]
-  -> Base抽出: strategy=fallback layers=[] (1677x1185)
+  -> Base抽出: strategy=BG layers=['_BG_book0'] (1677x1185)
 
 === [18/86] 社内\西脇\SP2_10_022_025.psd ===
   * _BG_Book0 [pixel]
@@ -261,7 +260,7 @@
   * E0001 [pixel]
   * Book_8 [pixel]
   * Book_9 [pixel]
-  -> Base抽出: strategy=fallback layers=[] (1677x1185)
+  -> Base抽出: strategy=BG layers=['_BG_Book0'] (1677x1185)
 
 === [19/86] 社内\西脇\SP2_10_023.psd ===
   * _BG [pixel]
@@ -273,7 +272,7 @@
   * _T.U [pixel]
   * A0001 [pixel]
   * _book_e [pixel]
-  -> Base抽出: strategy=fallback layers=[] (4995x3136)
+  -> Base抽出: strategy=BG layers=['_BG_Book'] (4995x3136)
 
 === [21/86] 社内\野田\sumi\SP2_10_026.psd ===
   * _BG [pixel]
@@ -283,7 +282,7 @@
 === [22/86] 社内\談\済み\SP2_10_027.psd ===
   * _BG_Book [pixel]
   * A3 [pixel]
-  -> Base抽出: strategy=fallback layers=[] (1677x1185)
+  -> Base抽出: strategy=BG layers=['_BG_Book'] (1677x1185)
 
 === [23/86] 社内\野田\sumi\SP2_10_028.psd ===
   * _BG [pixel]
@@ -296,7 +295,7 @@
   * PAN [pixel]
   * _BG_book1_book2_book3 [pixel]
   * A1 [pixel]
-  -> Base抽出: strategy=PAN layers=['PAN'] (1822x1582)
+  -> Base抽出: strategy=BG layers=['_BG_book1_book2_book3', 'PAN'] (1822x1582)
 
 === [25/86] 社内\西脇\SP2_10_030.psd ===
   * _BG [pixel]
@@ -318,7 +317,7 @@
   * A1 [pixel]
   * B1 [pixel]
   * C0 [pixel]
-  -> Base抽出: strategy=fallback layers=[] (1677x1185)
+  -> Base抽出: strategy=BG layers=['_BG_Book1_Book2_Book3_Book4'] (1677x1185)
 
 === [28/86] 社内\西脇\SP2_10_033.psd ===
   * _BG [pixel]
@@ -329,13 +328,13 @@
   * _BG_Book1_Book2_Book3 [pixel]
   * _PAN [pixel]
   * A1 [pixel]
-  -> Base抽出: strategy=PAN layers=['_PAN'] (1823x1449)
+  -> Base抽出: strategy=BG layers=['_BG_Book1_Book2_Book3', '_PAN'] (1823x1449)
 
 === [30/86] 社内\野田\sumi\SP2_10_035.psd ===
   * _PAN [pixel]
   * _BG_Book [pixel]
   * A1 [pixel]
-  -> Base抽出: strategy=PAN layers=['_PAN'] (2030x1354)
+  -> Base抽出: strategy=BG layers=['_BG_Book', '_PAN'] (2030x1354)
 
 === [31/86] 社内\野田\sumi\SP2_10_036.psd ===
   * _BG [pixel]
