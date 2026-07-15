@@ -32,7 +32,12 @@
   合成PSDテスト `tests/psd_export_test.py` で3構造＋尚善回帰を固定。
   → **v3で確定（2026-07-15）**: 実データ86本＝BG 85 / BG(nested) 1 / fallback 0。
   base画像の目視OK（005=LO内_BGのブラインド窓が復活、007=_BG_Book採用、006=BG+PAN合成）。
-  レイヤー抽出はこれで確定。**次: SP2テスト生成1〜2カット（style_refs準拠のプロンプト層）**。
+  レイヤー抽出はこれで確定。
+  **コンテ→プロンプト配線 完了（2026-07-15）**: `scripts/build_cut_info_from_conte.py` で
+  `runs/conte_v2_sp2_10.csv`＋シーン範囲表(`runs/scene_ranges_sp2_10.csv`)→
+  `runs/cut_scene_info_sp2_10.csv`（312カット・era=現代日本明示・低信頼OCRのsituationは不採用）。
+  project json の cut_info に配線済み＝コンソール/batchのプロンプトに[シーン][カット]が入る。
+  **次: SP2テスト生成1〜2カット（コンソールから005/010等）→ 画調を見て style_refs の効かせ方を決める**。
 
 ## 並行ブランチの地図
 | ブランチ | 役割 | 主な成果物 |
