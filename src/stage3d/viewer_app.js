@@ -206,6 +206,8 @@ ui.innerHTML =
   '<div id="btns" style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap"></div>' +
   '<div style="margin-bottom:2px">レンズ</div>' +
   '<div id="lens" style="display:flex;gap:5px;margin-bottom:4px"></div>' +
+  '<div style="margin-bottom:2px">表示</div>' +
+  '<div id="styles" style="display:flex;gap:5px;margin-bottom:4px"></div>' +
   '<label style="font-size:12px"><input type="checkbox" id="dolly" checked> 構図を保って切替(ドリー補正)</label><br>' +
   '<label>画角 <input id="fov" type="range" min="15" max="110" step="1" style="vertical-align:middle;width:110px"> ' +
   '<span id="fovv"></span>mm相当</label><br>' +
@@ -318,6 +320,81 @@ function setMode(m) {
   modeBtns.look.style.color = m === 'look' ? '#221' : '#f0e8dc';
 }
 setMode('orbit');
+
+// ---------- 表示スタイル (カラー / グレーモデル / 線画) ----------
+const styleState = { mode: 'color', saved: null, edges: null };
+const grayMat = new THREE.MeshStandardMaterial({ color: 0x8c8c8c, roughness: 0.9 });
+const whiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+const edgeMat = new THREE.LineBasicMaterial({ color: 0x1a1a1a });
+
+function eachMesh(fn) {
+  scene.traverse((o) => { if (o.isMesh && !o.userData.isEdge) fn(o); });
+}
+function setStyle(mode) {
+  if (!styleState.saved) {  // 初回: 元マテリアルと背景/フォグを保存
+    styleState.saved = { bg: scene.background, fog: scene.fog, mats: new Map() };
+    eachMesh((o) => styleState.saved.mats.set(o, o.material));
+  }
+  styleState.mode = mode;
+  const s = styleState.saved;
+  if (mode === 'color') {
+    eachMesh((o) => { const m = s.mats.get(o); if (m) o.material = m; });
+    scene.background = s.bg;
+    scene.fog = s.fog;
+  } else {
+    const base = mode === 'gray' ? grayMat : whiteMat;
+    eachMesh((o) => {
+      const orig = s.mats.get(o);
+      if (orig && orig.alphaTest > 0) {  // 抜きテクスチャ(葉など)のみシルエット保持
+        // 葉などの抜きテクスチャはシルエット保持のため map を残しグレー化
+        if (!o.userData.styleClone || o.userData.styleCloneMode !== mode) {
+          const c = mode === 'gray'
+            ? new THREE.MeshStandardMaterial({ map: orig.map, alphaTest: orig.alphaTest || 0.3,
+                transparent: orig.transparent, color: 0x777777, roughness: 0.95 })
+            : new THREE.MeshBasicMaterial({ map: orig.map, alphaTest: orig.alphaTest || 0.3,
+                transparent: orig.transparent, color: 0xffffff });
+          o.userData.styleClone = c;
+          o.userData.styleCloneMode = mode;
+        }
+        o.material = o.userData.styleClone;
+      } else {
+        o.material = base;
+      }
+    });
+    scene.background = new THREE.Color(mode === 'line' ? 0xffffff : 0x2a2a2e);
+    scene.fog = null;
+  }
+  // 線画: エッジ線オーバーレイ (初回に生成)
+  if (mode === 'line' && !styleState.edges) {
+    styleState.edges = [];
+    eachMesh((o) => {
+      const tri = o.geometry.index ? o.geometry.index.count / 3 : o.geometry.attributes.position.count / 3;
+      if (tri > 30000) return;  // 重すぎるメッシュはスキップ
+      const e = new THREE.LineSegments(new THREE.EdgesGeometry(o.geometry, 32), edgeMat);
+      e.userData.isEdge = true;
+      o.add(e);
+      styleState.edges.push(e);
+    });
+  }
+  if (styleState.edges) styleState.edges.forEach((e) => { e.visible = mode === 'line'; });
+}
+const styleRow = ui.querySelector('#styles');
+const styleBtns = {};
+for (const [key, label] of [['color', 'カラー'], ['gray', 'グレー'], ['line', '線画']]) {
+  const b = document.createElement('button');
+  b.textContent = label;
+  b.style.cssText = btnCss;
+  b.onclick = () => { setStyle(key); syncStyleBtns(); };
+  styleRow.appendChild(b);
+  styleBtns[key] = b;
+}
+function syncStyleBtns() {
+  for (const k in styleBtns) {
+    styleBtns[k].style.background = styleState.mode === k ? '#c96' : '#554636';
+    styleBtns[k].style.color = styleState.mode === k ? '#221' : '#f0e8dc';
+  }
+}
+syncStyleBtns();
 
 // 見回しモードのドラッグ処理 (カメラ位置を固定して注視点を回す)
 const look = { drag: false, x: 0, y: 0 };

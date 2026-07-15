@@ -54,7 +54,10 @@ def mat_image(name, img_path, rough=0.9, blend="CLIP", emit=0.0, uv_scale=None):
         nt.links.new(mp.outputs["Vector"], tex.inputs["Vector"])
         tex.extension = "REPEAT"
     nt.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
-    nt.links.new(tex.outputs["Alpha"], bsdf.inputs["Alpha"])
+    if blend != "OPAQUE":
+        # 不透明素材でアルファを繋ぐと glTF が alphaMode=BLEND になり
+        # ビューワー側で半透明扱いされてしまうため、抜きが必要な時だけ繋ぐ
+        nt.links.new(tex.outputs["Alpha"], bsdf.inputs["Alpha"])
     if emit > 0:
         nt.links.new(tex.outputs["Color"], bsdf.inputs["Emission Color"])
         bsdf.inputs["Emission Strength"].default_value = emit
@@ -179,6 +182,8 @@ def render_cli(cams, argv=None, default_res="1280x830", view_transform="AgX",
     ap.add_argument("--out", default="work/renders")
     ap.add_argument("--blend", default="")
     ap.add_argument("--tag", default="")
+    ap.add_argument("--style", default="color", choices=["color", "gray", "line"],
+                    help="color=通常 / gray=グレーモデル / line=線画(Freestyle)")
     if argv is None:
         argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     args = ap.parse_args(argv)
@@ -195,6 +200,34 @@ def render_cli(cams, argv=None, default_res="1280x830", view_transform="AgX",
     if view_transform == "AgX":
         scn.view_settings.look = "AgX - Base Contrast"
     scn.view_settings.exposure = exposure
+
+    # ---- 出力スタイル切替 (グレーモデル / 線画) ----
+    if args.style == "gray":
+        gm = bpy.data.materials.new("m_override_gray")
+        gm.use_nodes = True
+        b = gm.node_tree.nodes["Principled BSDF"]
+        b.inputs["Base Color"].default_value = (0.55, 0.55, 0.55, 1)
+        b.inputs["Roughness"].default_value = 0.85
+        bpy.context.view_layer.material_override = gm
+    elif args.style == "line":
+        wm_ = bpy.data.materials.new("m_override_white")
+        wm_.use_nodes = True
+        b = wm_.node_tree.nodes["Principled BSDF"]
+        b.inputs["Base Color"].default_value = (1, 1, 1, 1)
+        b.inputs["Emission Color"].default_value = (1, 1, 1, 1)
+        b.inputs["Emission Strength"].default_value = 1.0
+        bpy.context.view_layer.material_override = wm_
+        set_world((1, 1, 1), strength=1.0)
+        scn.render.use_freestyle = True
+        scn.render.line_thickness = 1.4
+        fs = bpy.context.view_layer.freestyle_settings
+        ls = fs.linesets.new("lineart")
+        ls.select_silhouette = True
+        ls.select_border = True
+        ls.select_crease = True
+        fs.crease_angle = math.radians(134)
+        scn.view_settings.view_transform = "Standard"
+        scn.view_settings.exposure = 0.0
 
     os.makedirs(args.out, exist_ok=True)
     for v in args.views.split(","):
