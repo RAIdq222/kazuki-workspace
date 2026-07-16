@@ -37,7 +37,7 @@ if _SRC not in sys.path:
 
 from genzu_fix import psd_export, naming
 
-_MODEL = os.environ.get("STAGING_MODEL", "claude-opus-4-8")
+_MODEL = os.environ.get("STAGING_MODEL", "claude-fable-5")
 
 _SYSTEM = (
     "あなたはアニメ背景美術の演出助手。原図（背景レイアウト）から、そのカットの"

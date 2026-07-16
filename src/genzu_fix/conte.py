@@ -29,7 +29,7 @@ import urllib.error
 import urllib.request
 
 # Vision 既定モデル（手描き日本語の読みに強い順で opus を既定に）
-DEFAULT_MODEL = "claude-opus-4-8"
+DEFAULT_MODEL = "claude-fable-5"
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
 ANTHROPIC_VERSION = "2023-06-01"
 # ep7 DANGUN コンテ用紙の列境界比率（pic|act, act|dia, dia|time）。

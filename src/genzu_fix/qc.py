@@ -83,7 +83,7 @@ def evaluate(image_path: str, vision_verdicts: dict | None = None) -> QCResult:
 
 # --- 視覚判定（opt-in）。原図(before)と生成結果(after)を Claude に見せて3項目を判定する。
 #     ANTHROPIC_API_KEY が要る。失敗時は {} を返し、プログラム判定だけで評価される。 ---
-_VISION_MODEL = os.environ.get("QC_VISION_MODEL", "claude-opus-4-8")
+_VISION_MODEL = os.environ.get("QC_VISION_MODEL", "claude-sonnet-5")
 
 
 def _b64_downscaled(path: str, maxside: int = 1024) -> str:
