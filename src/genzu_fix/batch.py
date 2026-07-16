@@ -249,6 +249,33 @@ def _hf_generate(media_id: str, prompt: str, aspect: str, resolution: str,
     return url
 
 
+def _detect_eye_level(png_path: str) -> float | None:
+    """原図の赤いEYEライン（水平線）のY位置を検出し、画面高さに対する割合(0-1)を返す。
+
+    SILVER LINK等のレイアウト用紙はアイレベルを赤の水平線で明記する。これを数値化して
+    プロンプトに渡す（「アイレベルは上からN%」）。見つからなければ None。
+    """
+    from PIL import Image
+    im = Image.open(png_path).convert("RGB")
+    if im.width > 800:
+        im = im.resize((800, round(im.height * 800 / im.width)))
+    w, h = im.size
+    px = im.load()
+    best_y, best_n = None, 0
+    for y in range(h):
+        n = 0
+        for x in range(0, w, 2):  # 1行おきに間引き
+            r, g, b = px[x, y]
+            if r > 140 and (r - g) > 60 and (r - b) > 60:
+                n += 1
+        if n > best_n:
+            best_y, best_n = y, n
+    # 赤画素が行の30%以上を占める行だけ「線」とみなす（文字や小さな赤マークを弾く）
+    if best_y is not None and best_n >= (w // 2) * 0.30:
+        return best_y / h
+    return None
+
+
 def _trim_border(im):
     """ボード外周の黒/単色フチ（PSDキャンバスの余白）を落とし、絵の領域だけにする。"""
     from PIL import Image, ImageChops
@@ -338,6 +365,17 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
                 "禁止: 構図・カメラ・画角を取ること／1枚目に無い家具・什器・開口部・壁・部屋の続きの追加や補完／"
                 "1枚目の画角の外のレイアウト推定。"
                 "2枚目がこのカットに内容を足すことは決して無い — 足せるのは「描き方」の情報だけ。")
+    # 原図の赤いEYEライン→アイレベルを数値でプロンプトへ（言語化した幾何指示は画像より通る）
+    eye = _detect_eye_level(inp) if os.path.exists(inp) else None
+    if eye is not None:
+        pct = round(eye * 100)
+        prompt += (f"\n\n[EYE LEVEL] The red horizontal 'EYE' line in the layout marks the "
+                   f"camera's eye level: {pct}% of the frame height from the top. Build the "
+                   f"perspective so the horizon sits exactly there, then erase the red line "
+                   f"itself as a production mark.")
+        if prompt_jp:
+            prompt_jp += (f"\n\n[アイレベル] 原図の赤い水平線(EYE)がカメラのアイレベル＝画面上端から{pct}%の高さ。"
+                          f"地平線がそこに来るようにパースを組む。赤線自体は制作用マークとして消す。")
     with open(os.path.join(out_dir, "prompt.en.txt"), "w", encoding="utf-8") as f:
         f.write(prompt)
     if prompt_jp:
