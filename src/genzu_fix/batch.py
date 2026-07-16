@@ -47,14 +47,17 @@ def build_prompt(board: str, scene: str, prompt_override: str | None = None,
 
 def build_prompt_pair(board: str, scene: str, prompt_override: str | None = None,
                       registry=None, cut: str = "", cut_info_map=None,
-                      staging: str | None = None) -> tuple[str, str | None]:
+                      staging: str | None = None,
+                      genzu_trust: str = "rough") -> tuple[str, str | None]:
     """(EN, JP) を返す。EN はモデル入力、JP は人の確認用。
     cut_info_map があり当該カットの充足済み行が在れば situation/remove 込みで組む。
-    staging=画角・場面の言語記述（最優先ブロック）。prompt_override がある場合は (override, None)。"""
+    staging=画角・場面の言語記述（最優先ブロック）。genzu_trust="high"=忠実清書モード。
+    prompt_override がある場合は (override, None)。"""
     if prompt_override:
         return prompt_override, None
     p = promptlib.build_for_cut(cut, board, scene, registry=registry,
-                                cut_info_map=cut_info_map, staging=staging)
+                                cut_info_map=cut_info_map, staging=staging,
+                                genzu_trust=genzu_trust)
     return p.en, p.jp
 
 
@@ -306,7 +309,8 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
                 header_top: int | None = None, board_path: str | None = None,
                 genzu_source: str = "base", cut_num: str = "",
                 cut_info_map=None, qc_vision: bool = False,
-                genzu_layers=None, staging: str | None = None) -> dict:
+                genzu_layers=None, staging: str | None = None,
+                genzu_trust: str = "rough") -> dict:
     os.makedirs(out_dir, exist_ok=True)
     cut = os.path.splitext(os.path.basename(psd_path))[0]
     visible = os.path.join(out_dir, "visible.png")
@@ -339,7 +343,7 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
     # プロンプトは genzu_fix.prompt（3層）に委譲。EN=モデル入力 / JP=確認用を出力先へ残す。
     prompt, prompt_jp = build_prompt_pair(board, scene, prompt_override,
                                           cut=cut_num, cut_info_map=cut_info_map,
-                                          staging=staging)
+                                          staging=staging, genzu_trust=genzu_trust)
     if use_board:
         # ボード＝「同一ロケーションの意匠辞書」。許可と禁止を明示的に分ける。
         # 権限を広く渡す（room's structure / furniture 等）と、原図の曖昧部分を
@@ -372,13 +376,23 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
     eye = _detect_eye_level(inp) if os.path.exists(inp) else None
     if eye is not None:
         pct = round(eye * 100)
-        prompt += (f"\n\n[EYE LEVEL] The red horizontal 'EYE' line in the layout marks the "
-                   f"camera's eye level: {pct}% of the frame height from the top. Build the "
-                   f"perspective so the horizon sits exactly there, then erase the red line "
-                   f"itself as a production mark.")
-        if prompt_jp:
-            prompt_jp += (f"\n\n[アイレベル] 原図の赤い水平線(EYE)がカメラのアイレベル＝画面上端から{pct}%の高さ。"
-                          f"地平線がそこに来るようにパースを組む。赤線自体は制作用マークとして消す。")
+        if genzu_trust == "high":
+            # 忠実モード: アイレベルは「組み直す」対象ではなく「既に正しい」確認情報
+            prompt += (f"\n\n[EYE LEVEL] The red horizontal 'EYE' line marks the eye level, "
+                       f"{pct}% of the frame height from the top. The layout's perspective "
+                       f"already matches it — keep it as-is, and erase the red line itself "
+                       f"as a production mark.")
+            if prompt_jp:
+                prompt_jp += (f"\n\n[アイレベル] 赤い水平線(EYE)＝アイレベルは画面上端から{pct}%。"
+                              f"原図のパースは既にこれに一致している — そのまま維持し、赤線自体は消す。")
+        else:
+            prompt += (f"\n\n[EYE LEVEL] The red horizontal 'EYE' line in the layout marks the "
+                       f"camera's eye level: {pct}% of the frame height from the top. Build the "
+                       f"perspective so the horizon sits exactly there, then erase the red line "
+                       f"itself as a production mark.")
+            if prompt_jp:
+                prompt_jp += (f"\n\n[アイレベル] 原図の赤い水平線(EYE)がカメラのアイレベル＝画面上端から{pct}%の高さ。"
+                              f"地平線がそこに来るようにパースを組む。赤線自体は制作用マークとして消す。")
     with open(os.path.join(out_dir, "prompt.en.txt"), "w", encoding="utf-8") as f:
         f.write(prompt)
     if prompt_jp:
