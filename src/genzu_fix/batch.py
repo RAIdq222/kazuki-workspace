@@ -105,9 +105,24 @@ def _run(cmd: list[str], dry: bool, timeout: int = 900) -> str:
     return (out or "").strip()
 
 
+def _run_retry(cmd: list[str], dry: bool, timeout: int = 900, tries: int = 3) -> str:
+    """_run に一時エラー(HTTP 5xx)のリトライを足したもの。それ以外のエラーは即時raise。"""
+    for attempt in range(tries):
+        try:
+            return _run(cmd, dry, timeout=timeout)
+        except RuntimeError as e:
+            if attempt + 1 < tries and re.search(r"HTTP 5\d\d", str(e)):
+                wait = 8 * (attempt + 1)
+                print(f"    [retry] 一時エラー、{wait}s後に再試行 {attempt + 1}/{tries - 1}: {str(e)[:100]}")
+                time.sleep(wait)
+                continue
+            raise
+    return ""  # 到達しない
+
+
 def _hf_upload(path: str, dry: bool) -> str:
     """higgsfield upload create <path> → media UUID（--json 優先、無ければ出力からUUID抽出）。"""
-    out = _run(["higgsfield", "upload", "create", path, "--json"], dry)
+    out = _run_retry(["higgsfield", "upload", "create", path, "--json"], dry)
     if dry or not out:
         return "<uuid>"
     try:
@@ -166,34 +181,62 @@ def _hf_generate(media_id: str, prompt: str, aspect: str, resolution: str,
     # 改行以降（プロンプト残り・--aspect_ratio・--image・--wait）が全て失われる
     # （実測: ジョブに prompt=1行目のみ / medias=[] / aspect_ratio=既定 で記録されていた）。
     prompt = re.sub(r"\s*\n+\s*", " ", prompt or "").strip()
+    # create は待たずにジョブIDだけ受け取り、完了待ちは自前ループで行う。
+    # （create --wait はポーリング中の一時エラー(HTTP 502等)で即死し、走っている
+    #   リモートジョブを失敗扱いにしてしまう。ID さえあれば待ち直しは何度でも安全）
     cmd = ["higgsfield", "generate", "create", model,
            "--prompt", prompt, "--aspect_ratio", aspect,
            "--resolution", resolution, "--quality", quality,
            image_flag, media_id]
     for ex in (extra_images or []):
         cmd += [image_flag, ex]
-    cmd += ["--wait", "--wait-timeout", "13m", "--json"]
-    out = _run(cmd, dry)
+    cmd += ["--json"]
+    out = _run_retry(cmd, dry)
     if dry:
         return ""
     url = _find_result_url(out)
-    job_id_m = re.search(_UUID_RE, out or "")
-    if not url:
-        # URLが無い＝新CLI（ジョブIDだけ返る）。wait→get の順で結果を取りに行く。
-        if not job_id_m:
-            raise RuntimeError(f"生成結果URLもジョブIDも取得できませんでした: {(out or '')[:200]}")
-        job_id = job_id_m.group(0)
-        out = _run(["higgsfield", "generate", "wait", job_id, "--json"], dry)
-        url = _find_result_url(out)
-        if not url:
-            out = _run(["higgsfield", "generate", "get", job_id, "--json"], dry)
-            url = _find_result_url(out)
-        if not url:
-            raise RuntimeError(f"ジョブ {job_id} の結果URLを取得できませんでした: {(out or '')[:200]}")
-    # パラメータがジョブに正しく載ったかの事後検証（黙って捨てられる事故を早期検知）
-    if job_id_m:
+    m = re.search(_UUID_RE, out or "")
+    if not url and not m:
+        raise RuntimeError(f"生成結果URLもジョブIDも取得できませんでした: {(out or '')[:200]}")
+    job_id = m.group(0) if m else ""
+
+    # 完了待ち: wait → get を一時エラーに耐えながら繰り返す（予算 ~13分）
+    deadline = time.time() + 780
+    last_err = ""
+    while not url and time.time() < deadline:
         try:
-            got = json.loads(_run(["higgsfield", "generate", "get", job_id_m.group(0), "--json"], dry))
+            out = _run(["higgsfield", "generate", "wait", job_id, "--json"], dry, timeout=300)
+            url = _find_result_url(out)
+        except RuntimeError as e:  # 502等の一時エラー/タイムアウト → get で状態確認して継続
+            last_err = str(e)
+        if url:
+            break
+        try:
+            got = json.loads(_run(["higgsfield", "generate", "get", job_id, "--json"],
+                                  dry, timeout=120))
+            status = (got.get("status") or "").lower()
+            url = _find_result_url(json.dumps(got))
+            if url:
+                break
+            if status in ("failed", "canceled", "cancelled", "error"):
+                raise RuntimeError(f"ジョブ {job_id} が失敗しました: {str(got)[:200]}")
+            print(f"    [wait] ジョブ {job_id[:8]}… status={status or '?'} 待機継続"
+                  + (f"（直前: {last_err[:80]}）" if last_err else ""))
+        except RuntimeError as e:
+            if "が失敗しました" in str(e):
+                raise
+            last_err = str(e)  # get 自体の一時エラーも継続
+        except json.JSONDecodeError:
+            pass
+        time.sleep(10)
+    if not url:
+        raise RuntimeError(f"ジョブ {job_id} の結果を取得できませんでした: {last_err[:200]}")
+
+    # パラメータがジョブに正しく載ったかの事後検証（黙って捨てられる事故を早期検知）
+    if job_id:
+        try:
+            got = json.loads(_run(["higgsfield", "generate", "get", job_id, "--json"],
+                                  dry, timeout=120))
             p = got.get("params") or {}
             want_medias = 1 + len(extra_images or [])
             n_medias = len(p.get("medias") or [])
