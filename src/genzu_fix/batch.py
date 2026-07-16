@@ -162,31 +162,47 @@ def _hf_generate(media_id: str, prompt: str, aspect: str, resolution: str,
       旧: create --wait が完了まで待って結果URL入りJSONを返す
       新: create はジョブIDを即返す → `generate wait <job_id>` で完了を待って結果を取る
     """
+    # 改行はCLIに渡す前に畳む。Windowsではコマンドライン中の改行で引数列が分断され、
+    # 改行以降（プロンプト残り・--aspect_ratio・--image・--wait）が全て失われる
+    # （実測: ジョブに prompt=1行目のみ / medias=[] / aspect_ratio=既定 で記録されていた）。
+    prompt = re.sub(r"\s*\n+\s*", " ", prompt or "").strip()
     cmd = ["higgsfield", "generate", "create", model,
            "--prompt", prompt, "--aspect_ratio", aspect,
            "--resolution", resolution, "--quality", quality,
            image_flag, media_id]
     for ex in (extra_images or []):
         cmd += [image_flag, ex]
-    cmd += ["--wait", "--json"]
+    cmd += ["--wait", "--wait-timeout", "13m", "--json"]
     out = _run(cmd, dry)
     if dry:
         return ""
     url = _find_result_url(out)
-    if url:
-        return url
-    # URLが無い＝新CLI（ジョブIDだけ返る）。wait→get の順で結果を取りに行く。
-    m = re.search(_UUID_RE, out or "")
-    if not m:
-        raise RuntimeError(f"生成結果URLもジョブIDも取得できませんでした: {(out or '')[:200]}")
-    job_id = m.group(0)
-    out = _run(["higgsfield", "generate", "wait", job_id, "--json"], dry)
-    url = _find_result_url(out)
+    job_id_m = re.search(_UUID_RE, out or "")
     if not url:
-        out = _run(["higgsfield", "generate", "get", job_id, "--json"], dry)
+        # URLが無い＝新CLI（ジョブIDだけ返る）。wait→get の順で結果を取りに行く。
+        if not job_id_m:
+            raise RuntimeError(f"生成結果URLもジョブIDも取得できませんでした: {(out or '')[:200]}")
+        job_id = job_id_m.group(0)
+        out = _run(["higgsfield", "generate", "wait", job_id, "--json"], dry)
         url = _find_result_url(out)
-    if not url:
-        raise RuntimeError(f"ジョブ {job_id} の結果URLを取得できませんでした: {(out or '')[:200]}")
+        if not url:
+            out = _run(["higgsfield", "generate", "get", job_id, "--json"], dry)
+            url = _find_result_url(out)
+        if not url:
+            raise RuntimeError(f"ジョブ {job_id} の結果URLを取得できませんでした: {(out or '')[:200]}")
+    # パラメータがジョブに正しく載ったかの事後検証（黙って捨てられる事故を早期検知）
+    if job_id_m:
+        try:
+            got = json.loads(_run(["higgsfield", "generate", "get", job_id_m.group(0), "--json"], dry))
+            p = got.get("params") or {}
+            want_medias = 1 + len(extra_images or [])
+            n_medias = len(p.get("medias") or [])
+            if n_medias < want_medias:
+                print(f"    [warn] 参照画像がジョブに {n_medias}/{want_medias} 枚しか載っていません")
+            if p.get("aspect_ratio") and p["aspect_ratio"] != aspect:
+                print(f"    [warn] aspect_ratio がジョブに反映されていません: {p['aspect_ratio']} (指定 {aspect})")
+        except Exception:  # noqa 検証失敗は本体を止めない
+            pass
     return url
 
 
