@@ -110,19 +110,22 @@ def _ask(key: str, base_im, vis_im, context: str, place: str, time_: str,
         "https://api.anthropic.com/v1/messages", data=json.dumps(body).encode(),
         headers={"content-type": "application/json", "x-api-key": key,
                  "anthropic-version": "2023-06-01"})
-    # 一時エラー(429/500/529=過負荷)は待って再試行（実測: --limit 5 の試走で529が頻発）
+    # 一時エラー(429/500/529=Anthropic側の過負荷)は待って再試行。529は波状に続くことが
+    # あるため待ちは長め（30/60/120/240s）。それでも駄目なら諦めて次のカットへ
+    # （--resume で後から埋められる）。
     data = None
-    for attempt in range(4):
+    waits = (30, 60, 120, 240)
+    for attempt in range(len(waits) + 1):
         try:
             with urllib.request.urlopen(req, timeout=timeout) as r:
                 data = json.loads(r.read())
             break
         except urllib.error.HTTPError as e:
-            if attempt < 3 and e.code in (429, 500, 502, 503, 529):
-                wait = 20 * (attempt + 1)
-                print(f"    [retry] HTTP {e.code} → {wait}s待って再試行 {attempt + 1}/3")
+            if attempt < len(waits) and e.code in (429, 500, 502, 503, 529):
+                w = waits[attempt]
+                print(f"    [retry] HTTP {e.code} → {w}s待って再試行 {attempt + 1}/{len(waits)}")
                 import time as _time
-                _time.sleep(wait)
+                _time.sleep(w)
                 continue
             raise
     text = "".join(b.get("text", "") for b in data.get("content", []))
@@ -139,7 +142,11 @@ def main(argv=None) -> int:
     p.add_argument("--out", required=True)
     p.add_argument("--limit", type=int, default=5, help="先頭N本だけ（試走用）。0=全数")
     p.add_argument("--resume", action="store_true", help="outに既にあるカットをスキップ")
+    p.add_argument("--model", default="", help="モデルID上書き（529が続く時は claude-sonnet-5 等へ切替）")
     a = p.parse_args(argv)
+    if a.model:
+        global _MODEL
+        _MODEL = a.model
 
     key = os.environ.get("ANTHROPIC_API_KEY")
     if not key:
