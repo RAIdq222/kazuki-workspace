@@ -445,7 +445,10 @@ def _run_generate(uid):
     st = STATE.get(uid, {})
     prev_status = st.get("status", "todo")   # 失敗時に戻す（「生成中」で固まらせない）
     board = st.get("board", u["board"])
-    board_path = _board_png(proj, board) if (proj.get("boards_dir") and board) else None
+    # ボードは既定で「表示・比較用」のみ。生成の参照に入れるのはカードで明示ONの時だけ
+    # （完成画ボードが原図の構図を乗っ取る事故の防止。詳細は api_board_ref のコメント）。
+    use_ref = bool(st.get("use_board_ref"))
+    board_path = _board_png(proj, board) if (use_ref and proj.get("boards_dir") and board) else None
     # リテイク指示（端的な修正メモ）があれば、最終プロンプト末尾へ最優先の修正指示として足す。
     note = (st.get("retake_note") or "").strip()
     base_prompt = st.get("prompt") or None
@@ -533,6 +536,7 @@ def create_app():
                 "work": proj["work"], "ep": proj["ep"],
                 "has_psd": u["filename"] in proj["psd_idx"],
                 "status": st.get("status", "todo"), "running": running, "gen_error": gen_error,
+                "use_board_ref": bool(st.get("use_board_ref")),
                 "genzu_source": st.get("genzu_source", "base"),
                 "has_result": _result_path(uid) is not None,
                 "qc_verdict": q.get("verdict"), "qc_reasons": q.get("reasons", []),
@@ -630,6 +634,14 @@ def create_app():
     @app.post("/api/unit/<uid>/board")
     def api_board(uid):
         _update_state(uid, board=(request.json or {}).get("board", ""))
+        return jsonify({"ok": True})
+
+    @app.post("/api/unit/<uid>/board_ref")
+    def api_board_ref(uid):
+        # ボードを生成の参照画像に含めるか（既定オフ）。
+        # 完成画のボードは原図より信号が強く、[IMAGES]役割宣言でも構図を
+        # 乗っ取ることがある（SP2 c005実測）ため、明示オプトインにする。
+        _update_state(uid, use_board_ref=bool((request.json or {}).get("value")))
         return jsonify({"ok": True})
 
     @app.post("/api/unit/<uid>/retake_note")
@@ -828,6 +840,7 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
  .takes{font-size:11px;color:#666;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
  .takechip{font-size:11px;padding:2px 7px;border:1px solid #ccc;border-radius:10px;background:#fff;cursor:pointer}
  .takechip.on{background:#1a5fb4;color:#fff;border-color:#1a5fb4}
+ .bref{display:flex;align-items:center;gap:3px;font-size:11px;color:#57606a;white-space:nowrap}
  .generr{color:#d1242f;background:#ffefef;border:1px solid #ffc9c9;border-radius:6px;
    padding:4px 8px;font-size:12px;margin:4px 0;word-break:break-all}
  .prog{height:6px;background:#ffe6a8;border-radius:4px;overflow:hidden;display:none}
@@ -1088,7 +1101,9 @@ function card(u){
    ${u.gen_error?`<div class="generr" title="${esc(u.gen_error)}">⚠ 生成失敗: ${esc(u.gen_error.slice(0,120))}</div>`:''}
    <div class="prog ${RUN.has(u.id)?'on':''}" id="prog_${u.id}"><i></i></div>
    <div class="bar"><select style="flex:1;width:auto" onchange="setBoard('${u.id}',this.value)">${opts}</select>
-     <button onclick="showBoard('${u.id}')" onmousemove="boardHover('${u.id}',event)" onmouseleave="boardOut()" title="クリックで拡大／ホバーでプレビュー">ボード表示</button></div>
+     <button onclick="showBoard('${u.id}')" onmousemove="boardHover('${u.id}',event)" onmouseleave="boardOut()" title="クリックで拡大／ホバーでプレビュー">ボード表示</button>
+     <label class="bref" title="ONにするとボード画像を生成の参照に含める（構図が引っ張られる場合はOFF）">
+       <input type="checkbox" ${u.use_board_ref?'checked':''} onchange="setBoardRef('${u.id}',this.checked)">参照に使う</label></div>
    <details><summary>プロンプト${u.prompt_edited?'（編集済）':''}</summary>
      <textarea id="pr_${u.id}" placeholder="（自動生成。編集して保存で上書き）"></textarea>
      <div class="bar"><button onclick="savePrompt('${u.id}')">保存</button>
@@ -1133,6 +1148,7 @@ async function loadPrompt(id){const d=await (await fetch('/api/unit/'+id)).json(
 async function savePrompt(id){const t=document.getElementById('pr_'+id); await post('/api/unit/'+id+'/prompt',{prompt:t?t.value:''}); slog(id,'保存しました');}
 async function resetPrompt(id){await post('/api/unit/'+id+'/prompt',{prompt:''}); const t=document.getElementById('pr_'+id); if(t)t.value=''; slog(id,'自動に戻しました');}
 async function setBoard(id,v){await post('/api/unit/'+id+'/board',{board:v}); slog(id,'ボード保存');}
+async function setBoardRef(id,v){await post('/api/unit/'+id+'/board_ref',{value:v}); slog(id,v?'ボードを生成参照に含める':'ボードは表示のみ');}
 async function accept(id,v){await post('/api/unit/'+id+'/accept',{value:v}); const u=unit(id); if(u)u.status=v; render();}
 function slog(id,m){const l=document.getElementById('log_'+id); if(l){l.style.display='block';l.textContent=m;}}
 async function saveNote(id){const e=document.getElementById('rn_'+id);
