@@ -23,6 +23,13 @@ from stagelib import (reset_scene, mat, mat_wood, mat_plaster,  # noqa: E402
 
 R = random.Random(7)
 
+# 時間帯 (--time morning|evening|night)。render_cli の前に取り出す
+TIME = "night"
+if "--time" in sys.argv:
+    i = sys.argv.index("--time")
+    TIME = sys.argv[i + 1]
+    del sys.argv[i:i + 2]
+
 ROOM_X = 6.6
 ROOM_Y = 7.0
 WALL_H = 2.9
@@ -100,7 +107,8 @@ def build_shell():
     ]:
         box(nm, sx, sy, 0.28, (loc[0], loc[1], WALL_H + 0.14), trim)
     # ダウンライト (外周天井に発光ディスク)
-    dl = mat("downlight", (0.95, 0.93, 0.85), rough=0.4, emit=6.0)
+    dl_emit = {"morning": 0.0, "evening": 3.0, "night": 6.0}.get(TIME, 6.0)
+    dl = mat("downlight", (0.95, 0.93, 0.85), rough=0.4, emit=dl_emit)
     for x, y in [(0.65, 1.2), (0.65, 3.0), (0.65, 4.8), (0.65, 6.4),
                  (ROOM_X - 0.65, 1.2), (ROOM_X - 0.65, 3.0), (ROOM_X - 0.65, 4.8),
                  (ROOM_X - 0.65, 6.4), (2.5, 6.6), (4.3, 6.6), (2.5, 0.5), (4.3, 0.5)]:
@@ -112,7 +120,13 @@ def build_shell():
 def window_with_blinds(idx, cy, w=1.7, z0=0.9, z1=2.5):
     """西壁の窓: 枠 + 縦ブラインド + 背後の外光."""
     trim = mat_wood("wood_trim", PAL["wood_trim"], rough=0.55, scale=2.0)
-    glow = mat("glow_win", PAL["glow_win"], rough=0.9, emit=2.6)
+    glow_defs = {
+        "morning": ((1.00, 0.92, 0.74), 5.5),
+        "evening": ((1.00, 0.62, 0.38), 4.0),
+        "night":   (PAL["glow_win"], 2.6),
+    }
+    gc, ge = glow_defs.get(TIME, glow_defs["night"])
+    glow = mat("glow_win", gc, rough=0.9, emit=ge)
     bm = mat("blind", PAL["blind"], rough=0.8)
     h = z1 - z0
     zc = (z0 + z1) / 2
@@ -130,8 +144,14 @@ def window_with_blinds(idx, cy, w=1.7, z0=0.9, z1=2.5):
         box(f"win{idx}_slat_{i}", 0.012, 0.075, h - 0.03, (0.10, y, zc), bm,
             rot=(0, 0, R.uniform(-0.18, 0.18)))
     # 外光 (エリアライト)
+    wl_defs = {
+        "morning": (170, (1.00, 0.90, 0.72)),
+        "evening": (120, (1.00, 0.55, 0.32)),
+        "night":   (55, (0.66, 0.73, 0.86)),
+    }
+    we, wc = wl_defs.get(TIME, wl_defs["night"])
     area_light(f"win{idx}_light", (0.18, cy, zc), (0, math.radians(90), 0),
-               w * 0.9, 55, (0.66, 0.73, 0.86), size_y=h * 0.9)
+               w * 0.9, we, wc, size_y=h * 0.9)
 
 
 def build_north_wall():
@@ -234,8 +254,21 @@ def build_table_chairs():
 
 
 def build_lights():
-    set_world((0.012, 0.016, 0.020), strength=1.0)  # 夜の青い闇
-    # ダウンライトの実光源 (弱い・寒色寄り)
+    from stagelib import sun_light
+    if TIME == "morning":
+        set_world((0.35, 0.38, 0.42), strength=1.0)  # 朝の明るい環境光
+        # 低い朝日がブラインド越しに差し込む (スラット影が床に落ちる)
+        sun_light("sun_morning", rot=(0, math.radians(78), math.radians(8)),
+                  energy=6.0, color=(1.0, 0.88, 0.68), angle_deg=1.5)
+    elif TIME == "evening":
+        set_world((0.10, 0.075, 0.065), strength=1.0)  # 夕方の沈んだ暖色
+        sun_light("sun_evening", rot=(0, math.radians(83), math.radians(-5)),
+                  energy=3.5, color=(1.0, 0.45, 0.22), angle_deg=2.5)
+    else:
+        set_world((0.012, 0.016, 0.020), strength=1.0)  # 夜の青い闇
+    # ダウンライトの実光源 (朝は消灯)
+    if TIME == "morning":
+        return
     for x, y in [(0.65, 3.0), (0.65, 4.8), (ROOM_X - 0.65, 3.0), (ROOM_X - 0.65, 4.8),
                  (2.5, 6.6), (4.3, 6.6)]:
         d = bpy.data.lights.new(f"pl_{x:.0f}_{y:.0f}", type="POINT")
@@ -273,4 +306,5 @@ def build_scene():
 
 if __name__ == "__main__":
     cams = build_scene()
-    render_cli(cams, default_res="1280x800", view_transform="AgX", exposure=0.75)
+    render_cli(cams, default_res="1280x800", view_transform="AgX",
+               exposure={"morning": 0.3, "evening": 0.55}.get(TIME, 0.75))

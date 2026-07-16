@@ -55,11 +55,8 @@ function applyPreset(k) {
 }
 
 // ---------- lights ----------
-const LIGHTS = CFG.lights || [
-  { type: 'hemi', sky: '#fff1dd', ground: '#2e2418', i: 0.35 },
-  { type: 'point', p: [3.9, 1.7, -4.1], c: '#fff2d8', i: 9, shadow: true },
-];
-for (const d of LIGHTS) {
+const activeLights = [];
+function makeLight(d) {
   let l;
   if (d.type === 'hemi') {
     l = new THREE.HemisphereLight(d.sky, d.ground, d.i);
@@ -69,6 +66,7 @@ for (const d of LIGHTS) {
     if (d.tgt) {
       l.target.position.set(...d.tgt);
       scene.add(l.target);
+      activeLights.push(l.target);
     }
     if (d.shadow) {
       l.castShadow = true;
@@ -89,6 +87,34 @@ for (const d of LIGHTS) {
     }
   }
   scene.add(l);
+  activeLights.push(l);
+}
+function setLights(defs) {
+  for (const l of activeLights) scene.remove(l);
+  activeLights.length = 0;
+  for (const d of defs) makeLight(d);
+}
+setLights(CFG.lights || [
+  { type: 'hemi', sky: '#fff1dd', ground: '#2e2418', i: 0.35 },
+  { type: 'point', p: [3.9, 1.7, -4.1], c: '#fff2d8', i: 9, shadow: true },
+]);
+
+// ---------- 時間帯 (ライティングプリセット) ----------
+// CFG.lightingPresets = { 名前: {lights, background, exposure, emissives: {マテリアル名: {c, i}}} }
+function applyLighting(preset) {
+  if (preset.lights) setLights(preset.lights);
+  if (preset.background) scene.background = new THREE.Color(preset.background);
+  if (preset.exposure != null) renderer.toneMappingExposure = preset.exposure;
+  if (preset.emissives) {
+    scene.traverse((o) => {
+      if (!o.isMesh || !o.material || !o.material.name) return;
+      const e = preset.emissives[o.material.name];
+      if (e) {
+        o.material.emissive = new THREE.Color(e.c || '#ffffff');
+        o.material.emissiveIntensity = e.i ?? 1.0;
+      }
+    });
+  }
 }
 
 // ---------- 移動可能範囲 (壁抜け・迷子防止) ----------
@@ -208,6 +234,8 @@ ui.innerHTML =
   '<div id="lens" style="display:flex;gap:5px;margin-bottom:4px"></div>' +
   '<div style="margin-bottom:2px">表示</div>' +
   '<div id="styles" style="display:flex;gap:5px;margin-bottom:4px"></div>' +
+  '<div id="todLabel" style="margin-bottom:2px;display:none">時間帯</div>' +
+  '<div id="tods" style="display:flex;gap:5px;margin-bottom:4px"></div>' +
   '<label style="font-size:12px"><input type="checkbox" id="dolly" checked> 構図を保って切替(ドリー補正)</label><br>' +
   '<label>画角 <input id="fov" type="range" min="15" max="110" step="1" style="vertical-align:middle;width:110px"> ' +
   '<span id="fovv"></span>mm相当</label><br>' +
@@ -395,6 +423,40 @@ function syncStyleBtns() {
   }
 }
 syncStyleBtns();
+
+// 時間帯ボタン (config に lightingPresets がある場合のみ表示)
+if (CFG.lightingPresets) {
+  ui.querySelector('#todLabel').style.display = 'block';
+  const todRow = ui.querySelector('#tods');
+  const todBtns = {};
+  let todCur = null;
+  function setTod(k) {
+    todCur = k;
+    applyLighting(CFG.lightingPresets[k]);
+    for (const kk in todBtns) {
+      todBtns[kk].style.background = kk === k ? '#c96' : '#554636';
+      todBtns[kk].style.color = kk === k ? '#221' : '#f0e8dc';
+    }
+  }
+  for (const k of Object.keys(CFG.lightingPresets)) {
+    const b = document.createElement('button');
+    b.textContent = k;
+    b.style.cssText = btnCss;
+    b.onclick = () => setTod(k);
+    todRow.appendChild(b);
+    todBtns[k] = b;
+  }
+  // GLB読み込み後に既定(先頭)を適用 (emissives がメッシュ走査を必要とするため)
+  const first = Object.keys(CFG.lightingPresets)[0];
+  const t0 = setInterval(() => {
+    if (styleStateReady()) { setTod(first); clearInterval(t0); }
+  }, 300);
+  function styleStateReady() {
+    let has = false;
+    scene.traverse((o) => { if (o.isMesh) has = true; });
+    return has;
+  }
+}
 
 // 見回しモードのドラッグ処理 (カメラ位置を固定して注視点を回す)
 const look = { drag: false, x: 0, y: 0 };
