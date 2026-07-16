@@ -81,15 +81,28 @@ def _run(cmd: list[str], dry: bool, timeout: int = 900) -> str:
     print("    $ " + " ".join(cmd))
     if dry:
         return ""
-    # timeout でハングを打ち切る（1本の生成停止でバッチ全体が固まらないように）
+    # - stdin=DEVNULL: CLIが対話入力（ログイン確認等）を求めても永久に待たず、即エラーで返す
+    # - timeout: ハングを打ち切る。Windowsのnpm系CLIは .cmd ラッパの下に node の孫プロセスが
+    #   いるため、親だけ kill するとパイプが閉じず communicate が解けない → taskkill /T で子孫ごと止める
+    proc = subprocess.Popen(_resolve(cmd), stdin=subprocess.DEVNULL,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                            text=True, encoding="utf-8")
     try:
-        r = subprocess.run(_resolve(cmd), capture_output=True, text=True,
-                           encoding="utf-8", timeout=timeout)
+        out, err = proc.communicate(timeout=timeout)
     except subprocess.TimeoutExpired:
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                           capture_output=True)
+        else:
+            proc.kill()
+        try:
+            proc.communicate(timeout=10)
+        except Exception:  # noqa 後始末失敗でも本体のエラーを優先
+            pass
         raise RuntimeError(f"command timed out after {timeout}s: {' '.join(cmd[:3])}…")
-    if r.returncode != 0:
-        raise RuntimeError(f"command failed ({r.returncode}): {(r.stderr or r.stdout).strip()[:400]}")
-    return r.stdout.strip()
+    if proc.returncode != 0:
+        raise RuntimeError(f"command failed ({proc.returncode}): {((err or out) or '').strip()[:400]}")
+    return (out or "").strip()
 
 
 def _hf_upload(path: str, dry: bool) -> str:

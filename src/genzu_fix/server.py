@@ -484,6 +484,8 @@ def _run_generate(uid):
         with JOBS_LOCK:
             JOBS[uid].update(status="error", error=str(e)[:300])
         log("失敗: " + str(e)[:200])
+        # コンソール窓にも必ず出す（UIを見ていなくても原因が分かるように）
+        print(f"    [gen] {uid} 失敗: {str(e)[:300]}")
 
 
 def _enqueue(uids, force):
@@ -522,13 +524,15 @@ def create_app():
         uid = u["id"]
         st = STATE.get(uid, {})
         with JOBS_LOCK:
-            running = JOBS.get(uid, {}).get("status") == "running"
+            j = JOBS.get(uid, {})
+            running = j.get("status") == "running"
+            gen_error = j.get("error") if j.get("status") == "error" else None
         q = _load_json(os.path.join(_unit_dir(uid), "qc.json"), {})
         return {"id": uid, "cuts": u["cuts"], "assignee": u["assignee"], "scene": u["scene"],
                 "board": st.get("board", u["board"]), "group": proj["group"], "project": proj["key"],
                 "work": proj["work"], "ep": proj["ep"],
                 "has_psd": u["filename"] in proj["psd_idx"],
-                "status": st.get("status", "todo"), "running": running,
+                "status": st.get("status", "todo"), "running": running, "gen_error": gen_error,
                 "genzu_source": st.get("genzu_source", "base"),
                 "has_result": _result_path(uid) is not None,
                 "qc_verdict": q.get("verdict"), "qc_reasons": q.get("reasons", []),
@@ -824,6 +828,8 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
  .takes{font-size:11px;color:#666;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
  .takechip{font-size:11px;padding:2px 7px;border:1px solid #ccc;border-radius:10px;background:#fff;cursor:pointer}
  .takechip.on{background:#1a5fb4;color:#fff;border-color:#1a5fb4}
+ .generr{color:#d1242f;background:#ffefef;border:1px solid #ffc9c9;border-radius:6px;
+   padding:4px 8px;font-size:12px;margin:4px 0;word-break:break-all}
  .prog{height:6px;background:#ffe6a8;border-radius:4px;overflow:hidden;display:none}
  .prog.on{display:block} .prog>i{display:block;height:100%;width:40%;background:#bf8700;animation:slide 1.1s infinite}
  @keyframes slide{0%{margin-left:-40%}100%{margin-left:100%}}
@@ -1079,6 +1085,7 @@ function card(u){
      <figure><figcaption>生成結果 ${u.has_result?`<a href="#" onclick="openCmp('${u.id}');return false">前後比較</a>`:''}</figcaption>${u.has_result?`<img loading="lazy" src="/img/${u.id}/result?t=${t}" onclick="openCmp('${u.id}')">`:'<div class="ph">未生成</div>'}</figure>
    </div>
    ${takeStrip(u)}
+   ${u.gen_error?`<div class="generr" title="${esc(u.gen_error)}">⚠ 生成失敗: ${esc(u.gen_error.slice(0,120))}</div>`:''}
    <div class="prog ${RUN.has(u.id)?'on':''}" id="prog_${u.id}"><i></i></div>
    <div class="bar"><select style="flex:1;width:auto" onchange="setBoard('${u.id}',this.value)">${opts}</select>
      <button onclick="showBoard('${u.id}')" onmousemove="boardHover('${u.id}',event)" onmouseleave="boardOut()" title="クリックで拡大／ホバーでプレビュー">ボード表示</button></div>
