@@ -894,14 +894,25 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
  .mboards .noimg{width:140px;height:90px;border:1px dashed #ccc;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:10px;text-align:center;padding:4px}
  .ovbox .note{font-size:10px;color:#999;margin-top:8px}
  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px}
- .card{background:#fff;border:1px solid #ddd;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px}
- .card.reject{border-color:#d1242f} .card.accepted{border-color:#1a7f37} .card.running{border-color:#bf8700;box-shadow:0 0 0 2px #ffe6a8}
+ .card{background:#fff;border:1px solid #ddd;border-left:4px solid #ddd;border-radius:10px;
+   padding:10px;display:flex;flex-direction:column;gap:6px}
+ /* カードは淡いアクセント（左帯＋薄い地）に留め、彩度の高い色はバッジ/ボタン専用にする
+    （旧: .done 等がカード全体を塗り潰し、OKボタンの緑と衝突していた） */
+ .card.generating{border-left-color:#d4a72c}
+ .card.done{border-left-color:#0969da}
+ .card.accepted{border-left-color:#1a7f37;background:#f6fcf8}
+ .card.reject{border-left-color:#d1242f;background:#fff7f7}
+ .card.running{box-shadow:0 0 0 2px #ffe6a8}
  .chead{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
- .cut{font-weight:700} .scene{color:#888;font-size:11px;width:100%}
+ .cut{font-weight:700} .scene{color:#888;font-size:11px}
  .who{display:inline-block;padding:1px 7px;border-radius:8px;color:#fff;font-size:10px}
  .gkv{background:#d1242f} .other{background:#1a5fb4}
  .b{display:inline-block;padding:1px 7px;border-radius:8px;font-size:11px;color:#fff}
- .todo{background:#9aa0a6}.generating{background:#bf8700}.done{background:#1a7f37}.accepted{background:#0a5}.reject{background:#d1242f}
+ .b.todo{background:#9aa0a6}.b.generating{background:#b07d00}.b.done{background:#0969da}
+ .b.accepted{background:#1a7f37}.b.reject{background:#d1242f}
+ .mini{padding:2px 9px;font-size:11px;border-radius:999px;background:#fff}
+ .mini.mok{color:#1a7f37;border-color:#a8d5b5} .mini.mok.on{background:#1a7f37;color:#fff;border-color:#1a7f37}
+ .mini.mng{color:#d1242f;border-color:#efb9b9} .mini.mng.on{background:#d1242f;color:#fff;border-color:#d1242f}
  .thumbs{display:flex;gap:6px}
  .thumbs figure{margin:0;flex:1} .thumbs figcaption{font-size:10px;color:#888}
  .thumbs img{width:100%;height:150px;object-fit:contain;border:1px solid #eee;background:#fff;cursor:zoom-in}
@@ -942,6 +953,7 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
  #dEn{width:100%;min-height:150px} #dStage{width:100%;min-height:84px}
  .ov .box{background:#fff;padding:16px;border-radius:10px;max-width:96vw;max-height:96vh;overflow:auto}
  #lb{z-index:70} #lb .box{background:none;padding:0} #lb img{max-width:94vw;max-height:90vh}
+ #cmp,#gmodal{z-index:65}  /* 詳細画面(dmodal)の上に重ねられるように */
  #bpop{position:fixed;z-index:80;display:none;pointer-events:none;background:#fff;border:1px solid #888;border-radius:6px;padding:3px;box-shadow:0 4px 16px rgba(0,0,0,.3)}
  #bpop img{display:block;max-width:300px;max-height:220px} #bpop .cap{font-size:10px;color:#666;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
  #gmodal .box{width:auto} #gmodal img{max-width:80vw;max-height:72vh;border:1px solid #ddd}
@@ -1027,7 +1039,10 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
       <button id="dbG" onclick="dShow('genzu')">原図</button>
       <button id="dbR" onclick="dShow('result')">生成結果</button>
       <button id="dbB" onclick="dShow('board')">ボード</button>
-      <button onclick="openCmp(DCUR)">前後比較</button></div></div>
+      <button onclick="openCmp(DCUR)">前後比較</button>
+      <span style="width:10px"></span>
+      <button onclick="openGenzu(DCUR)">拡大/取り直し</button>
+      <button onclick="openPsd(DCUR)">PSDを開く</button></div></div>
   <div class="dright">
     <div class="bar"><b id="dTitle"></b><span class="grow"></span>
       <button onclick="document.getElementById('dmodal').style.display='none'">閉じる</button></div>
@@ -1043,8 +1058,9 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
       <div class="bar"><button onclick="dSavePrompt()">保存</button>
         <button onclick="dResetPrompt()">自動に戻す</button></div></details>
     <h4>リテイク指示（最優先の修正指示としてプロンプト末尾に付く）</h4>
-    <input id="dNote" placeholder="例: 壁面とブラインドのみ。机・扉・部屋の奥行きは描かない">
-    <div class="bar"><button class="primary" onclick="dGenerate()">生成</button>
+    <input id="dNote" placeholder="例: 壁面とブラインドのみ。机・扉・部屋の奥行きは描かない"
+      onchange="post('/api/unit/'+DCUR+'/retake_note',{note:this.value})">
+    <div class="bar"><button class="primary" id="dGenBtn" onclick="dGenerate()">生成</button>
       <button class="ok" onclick="accept(DCUR,'accepted')">OK</button>
       <button class="ng" onclick="accept(DCUR,'reject')">要修正</button></div>
     <div id="dMsg" class="muted"></div>
@@ -1210,28 +1226,22 @@ function card(u){
      <span class="who ${u.assignee==='GKV'?'gkv':'other'}">${u.assignee}</span>
      <span class="b ${u.status}">${u.status}</span>${u.retakes?`<span class="muted">RT${u.retakes}</span>`:''}
      ${qcBadge(u)}
-     ${u.has_psd?'':'<span class="muted">PSD無</span>'}<span class="scene">${esc(u.scene)}</span></div>
+     ${u.has_psd?'':'<span class="muted">PSD無</span>'}
+     <span class="grow"></span>
+     <button class="mini mok ${u.status==='accepted'?'on':''}" title="承認" onclick="accept('${u.id}','accepted')">OK</button>
+     <button class="mini mng ${u.status==='reject'?'on':''}" title="要修正にする" onclick="accept('${u.id}','reject')">要修正</button></div>
+   ${u.scene?`<div class="scene">${esc(u.scene)}</div>`:''}
    <div class="thumbs">
-     <figure><figcaption>原図[${u.genzu_source}] ${u.has_psd?`<a href="#" onclick="openPsd('${u.id}');return false">PSDを開く</a> · <a href="#" onclick="openGenzu('${u.id}');return false">拡大/取り直し</a>`:''}</figcaption>
-       ${u.has_psd?`<img loading="lazy" src="/img/${u.id}/genzu?v=${u.genzu_source}${u.genzu_rev||0}" onclick="openGenzu('${u.id}')" onerror="this.outerHTML='<div class=ph>原図なし</div>'">`:'<div class="ph">PSD未検出</div>'}</figure>
-     <figure><figcaption>生成結果 ${u.has_result?`<a href="#" onclick="openCmp('${u.id}');return false">前後比較</a>`:''}</figcaption>${u.has_result?`<img loading="lazy" src="/img/${u.id}/result?t=${t}" onclick="openCmp('${u.id}')">`:'<div class="ph">未生成</div>'}</figure>
+     <figure><figcaption>原図[${u.genzu_source}]</figcaption>
+       ${u.has_psd?`<img loading="lazy" src="/img/${u.id}/genzu?v=${u.genzu_source}${u.genzu_rev||0}" title="クリックで詳細画面" onclick="openDetail('${u.id}')" onerror="this.outerHTML='<div class=ph>原図なし</div>'">`:'<div class="ph">PSD未検出</div>'}</figure>
+     <figure><figcaption>生成結果</figcaption>${u.has_result?`<img loading="lazy" src="/img/${u.id}/result?t=${t}" title="クリックで詳細画面" onclick="openDetail('${u.id}')">`:`<div class="ph" style="cursor:pointer" onclick="openDetail('${u.id}')">未生成</div>`}</figure>
    </div>
    ${takeStrip(u)}
    ${u.gen_error?`<div class="generr" title="${esc(u.gen_error)}">⚠ 生成失敗: ${esc(u.gen_error.slice(0,120))}</div>`:''}
    <div class="prog ${RUN.has(u.id)?'on':''}" id="prog_${u.id}"><i></i></div>
    <div class="bar"><select style="flex:1;width:auto" onchange="setBoard('${u.id}',this.value)">${opts}</select>
-     <button onclick="showBoard('${u.id}')" onmousemove="boardHover('${u.id}',event)" onmouseleave="boardOut()" title="クリックで拡大／ホバーでプレビュー">ボード表示</button></div>
-   <details><summary>プロンプト${u.prompt_edited?'（編集済）':''}</summary>
-     <textarea id="pr_${u.id}" placeholder="（自動生成。編集して保存で上書き）"></textarea>
-     <div class="bar"><button onclick="savePrompt('${u.id}')">保存</button>
-       <button onclick="loadPrompt('${u.id}')">自動表示</button>
-       <button onclick="resetPrompt('${u.id}')">自動に戻す</button></div></details>
-   ${u.has_result?`<input class="rnote" id="rn_${u.id}" value="${esc(u.retake_note||'')}"
-     placeholder="リテイク指示（例: 右の木の幹をつなげる / 奥行きを出す）"
-     onchange="saveNote('${u.id}')">`:''}
-   <div class="bar"><button class="primary" onclick="gen('${u.id}')">${u.has_result?'リテイク':'生成'}</button>
-     <button class="ok" onclick="accept('${u.id}','accepted')">OK</button>
-     <button class="ng" onclick="accept('${u.id}','reject')">要修正</button></div>
+     <button onclick="showBoard('${u.id}')" onmousemove="boardHover('${u.id}',event)" onmouseleave="boardOut()" title="クリックで拡大／ホバーでプレビュー">ボード表示</button>
+     ${u.has_result?'':`<button class="primary" onclick="gen('${u.id}')">生成</button>`}</div>
    <div class="log" id="log_${u.id}" style="display:none"></div></div>`;
 }
 function markRunning(id,on){const c=document.getElementById('card_'+id),p=document.getElementById('prog_'+id);
@@ -1265,6 +1275,7 @@ async function loadPrompt(id){const d=await (await fetch('/api/unit/'+id)).json(
 let DCUR=null;
 async function openDetail(id){DCUR=id; const u=unit(id); if(!u)return;
   $('#dTitle').textContent='c'+u.cuts.join(',')+'（'+u.assignee+'）';
+  $('#dGenBtn').textContent=u.has_result?'リテイク':'生成';
   $('#dBadges').innerHTML=`<span class="b ${u.status}">${u.status}</span> ${qcBadge(u)}${u.retakes?` <span class="muted">RT${u.retakes}</span>`:''}`;
   $('#dScene').textContent='読み込み中…'; $('#dJp').textContent='…'; $('#dEn').value=''; $('#dMsg').textContent='';
   $('#dmodal').style.display='flex'; dShow(u.has_result?'result':'genzu');
