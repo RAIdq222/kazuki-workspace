@@ -352,9 +352,16 @@ def _cut_block(info: CutInfo) -> tuple[str, str]:
     return en, jp
 
 
-def assemble(info: CutInfo, profile: SceneProfile | None) -> Prompt:
+def assemble(info: CutInfo, profile: SceneProfile | None,
+             staging: str | None = None) -> Prompt:
     en_blocks = [GLOBAL_EN]
     jp_blocks = [GLOBAL_JP]
+    if staging:
+        # 画角・場面の言語記述（人間指定 or scene_understanding 生成）。
+        # 画像参照では構図を拘束できない（SP2実測）ため、これが構図の主チャンネル。
+        # 日本語のままでも通る（黒江さんの手書きプロンプトで実証済み）。
+        en_blocks.append("[SHOT — specified by the art director, TOP PRIORITY] " + staging.strip())
+        jp_blocks.append("[画角・場面（指定・最優先）] " + staging.strip())
     if profile:
         en_blocks.append(profile.block_en())
         jp_blocks.append(profile.block_jp())
@@ -376,19 +383,20 @@ def assemble(info: CutInfo, profile: SceneProfile | None) -> Prompt:
 
 
 def build(board: str, scene: str, registry: SceneRegistry | None = None,
-          cut: str = "") -> Prompt:
+          cut: str = "", staging: str | None = None) -> Prompt:
     """表口: ボード名 + シーン名から EN/JP プロンプトの対を組み立てる。"""
     registry = registry or SceneRegistry.load()
     info = cut_info_from_board(board, scene, registry, cut=cut)
     prof = registry.resolve(board, scene)
-    return assemble(info, prof)
+    return assemble(info, prof, staging=staging)
 
 
-def build_from_info(info: CutInfo, registry: SceneRegistry | None = None) -> Prompt:
+def build_from_info(info: CutInfo, registry: SceneRegistry | None = None,
+                    staging: str | None = None) -> Prompt:
     """充足済み CutInfo（cut_scene_info_ep7.csv の行など）からプロンプトを組む。"""
     registry = registry or SceneRegistry.load()
     prof = next((p for p in registry.profiles if p.key == info.scene_key), None)
-    return assemble(info, prof)
+    return assemble(info, prof, staging=staging)
 
 
 def _norm_cut(label: str) -> str:
@@ -410,15 +418,17 @@ def load_cut_info(csv_path: str) -> dict[str, CutInfo]:
 
 def build_for_cut(cut: str, board: str, scene: str,
                   registry: SceneRegistry | None = None,
-                  cut_info_map: dict[str, CutInfo] | None = None) -> Prompt:
+                  cut_info_map: dict[str, CutInfo] | None = None,
+                  staging: str | None = None) -> Prompt:
     """カット番号があれば cut_scene_info の充足済み行（situation/remove 込み）を優先。
-    無ければ board/scene から機械生成（situation/remove は空）。"""
+    無ければ board/scene から機械生成（situation/remove は空）。
+    staging=画角・場面の言語記述（あれば最優先ブロックとして挿入）。"""
     registry = registry or SceneRegistry.load()
     if cut_info_map:
         info = cut_info_map.get(_norm_cut(cut))
         if info:
-            return build_from_info(info, registry)
-    return build(board, scene, registry=registry, cut=cut)
+            return build_from_info(info, registry, staging=staging)
+    return build(board, scene, registry=registry, cut=cut, staging=staging)
 
 
 # ---------------------------------------------------------------------------

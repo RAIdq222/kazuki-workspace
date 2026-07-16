@@ -253,8 +253,14 @@ def _load_board_map(path):
     return out
 
 
+def _proj_include_book(proj) -> bool:
+    """BOOKを原図に含めるか（作品ごと。SP2はBook=椅子等がシーンの空間アンカーなので含める）。"""
+    v = (proj or {}).get("include_book")
+    return bool(CFG.get("include_book")) if v is None else bool(v)
+
+
 def _make_project(key, work, ep, genzu_dir, boards_dir=None, csv_path=None, source="scan",
-                  out_dir=None, cut_info=None, board_map=None):
+                  out_dir=None, cut_info=None, board_map=None, include_book=None):
     if source == "csv":
         units = _units_from_csv(csv_path)
     else:
@@ -294,6 +300,7 @@ def _make_project(key, work, ep, genzu_dir, boards_dir=None, csv_path=None, sour
         "key": key, "work": work, "ep": ep, "group": f"{work} #{ep}",
         "genzu_dir": genzu_dir, "boards_dir": boards_dir, "csv": csv_path, "source": source,
         "out_dir": out_dir or CFG.get("out"), "cut_info_map": cut_info_map,
+        "include_book": include_book,
         "units": units, "psd_idx": _index_dir(genzu_dir, (".psd",)),
         "board_idx": board_idx, "board_norm": board_norm, "boards_opts": boards_opts,
     }
@@ -380,7 +387,7 @@ def _adopt_take(uid, n):
     return True
 
 
-_PREVIEW_REV = "r3"   # 抽出規則を変えたら上げる（旧キャッシュを使わせない）
+_PREVIEW_REV = "r4"   # 抽出規則を変えたら上げる（旧キャッシュを使わせない）
 
 
 def _genzu_preview(uid, psd_path, source="base", force=False):
@@ -399,7 +406,9 @@ def _genzu_preview(uid, psd_path, source="base", force=False):
                 psd_export.export_with_overrides(
                     psd_path, out, show=names, hide={n for n in allnames if n not in names})
             else:
-                psd_export.export_background_layer(psd_path, out, include_book=CFG["include_book"])
+                proj, _u = _find_unit(uid)
+                psd_export.export_background_layer(psd_path, out,
+                                                   include_book=_proj_include_book(proj))
         except Exception as e:  # noqa
             print(f"[warn] 原図プレビュー失敗 {uid}/{source}: {str(e)[:200]}")
             return None
@@ -415,7 +424,8 @@ def _effective_prompt(proj, u):
     # プロンプトは genzu_fix.prompt（3層）に委譲（great-edisonの設計と統合）。
     # 表示と生成を一致させるため cut_info_map（situation/remove）も渡す。
     en, _ = batch.build_prompt_pair(board, u["scene"], None, cut=cut,
-                                    cut_info_map=(proj.get("cut_info_map") or CFG.get("cut_info_map")))
+                                    cut_info_map=(proj.get("cut_info_map") or CFG.get("cut_info_map")),
+                                    staging=st.get("staging"))
     return en
 
 
@@ -455,13 +465,15 @@ def _run_generate(uid):
         cut0 = u["cuts"][0] if u.get("cuts") else ""
         eff = base_prompt or batch.build_prompt_pair(
             board, u["scene"], None, cut=cut0,
-            cut_info_map=(proj.get("cut_info_map") or CFG.get("cut_info_map")))[0]
+            cut_info_map=(proj.get("cut_info_map") or CFG.get("cut_info_map")),
+            staging=st.get("staging"))[0]
         base_prompt = eff + "\n\n[RETAKE CORRECTION — apply with top priority]: " + note
     try:
         log("prep→生成→finish 実行中…" + (f"（指示: {note[:30]}）" if note else ""))
         batch.process_cut(psd, board, u["scene"], _unit_dir(uid), base_prompt,
                           CFG["resolution"], CFG["quality"], CFG["model"], CFG["image_flag"],
-                          dry=False, include_book=CFG["include_book"],
+                          dry=False, include_book=_proj_include_book(proj),
+                          staging=st.get("staging"),
                           header_top=CFG["header_top"], board_path=board_path,
                           genzu_source=st.get("genzu_source", "base"),
                           genzu_layers=st.get("layers_show"),
@@ -540,7 +552,7 @@ def create_app():
                 "has_result": _result_path(uid) is not None,
                 "qc_verdict": q.get("verdict"), "qc_reasons": q.get("reasons", []),
                 "takes": st.get("takes", []), "adopted": st.get("adopted"),
-                "retake_note": st.get("retake_note", ""),
+                "retake_note": st.get("retake_note", ""), "staging": st.get("staging", ""),
                 "prompt_edited": bool(st.get("prompt")), "retakes": st.get("retakes", 0)}
 
     @app.get("/")
@@ -625,7 +637,8 @@ def create_app():
         board = st.get("board", u["board"])
         cut = (u["cuts"][0] if u.get("cuts") else "")
         cim = proj.get("cut_info_map") or CFG.get("cut_info_map") or {}
-        _, jp = batch.build_prompt_pair(board, u["scene"], None, cut=cut, cut_info_map=cim)
+        _, jp = batch.build_prompt_pair(board, u["scene"], None, cut=cut, cut_info_map=cim,
+                                        staging=st.get("staging"))
         # コンテ由来の場面情報（詳細画面の日本語概要＋OCR信頼度の表示に使う）
         info = cim.get(batch.promptlib._norm_cut(cut)) if cim else None
         ci = {}
@@ -651,6 +664,12 @@ def create_app():
     @app.post("/api/unit/<uid>/retake_note")
     def api_retake_note(uid):
         _update_state(uid, retake_note=(request.json or {}).get("note", "").strip())
+        return jsonify({"ok": True})
+
+    @app.post("/api/unit/<uid>/staging")
+    def api_staging(uid):
+        # 画角・場面の言語記述（構図の主チャンネル。日本語OK・最優先ブロックとして生成に入る）
+        _update_state(uid, staging=(request.json or {}).get("text", "").strip())
         return jsonify({"ok": True})
 
     @app.post("/api/unit/<uid>/accept")
@@ -875,7 +894,7 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
    white-space:pre-wrap;max-height:220px;overflow:auto}
  .dkv{font-size:12px;border-collapse:collapse} .dkv td{padding:2px 6px;vertical-align:top}
  .dkv td:first-child{color:#57606a;white-space:nowrap}
- #dEn{width:100%;min-height:150px}
+ #dEn{width:100%;min-height:150px} #dStage{width:100%;min-height:84px}
  .ov .box{background:#fff;padding:16px;border-radius:10px;max-width:96vw;max-height:96vh;overflow:auto}
  #lb{z-index:70} #lb .box{background:none;padding:0} #lb img{max-width:94vw;max-height:90vh}
  #bpop{position:fixed;z-index:80;display:none;pointer-events:none;background:#fff;border:1px solid #888;border-radius:6px;padding:3px;box-shadow:0 4px 16px rgba(0,0,0,.3)}
@@ -968,7 +987,10 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
     <div class="bar"><b id="dTitle"></b><span class="grow"></span>
       <button onclick="document.getElementById('dmodal').style.display='none'">閉じる</button></div>
     <div id="dBadges"></div>
-    <h4>場面（コンテ由来）</h4><div id="dScene" class="dscene"></div>
+    <h4>画角・場面の記述（生成の核・日本語OK・最優先で効く）</h4>
+    <textarea id="dStage" placeholder="例: カメラはモニター側にあり、ブラインドのある窓側へ向かって撮影。壁面とブラインドのみが写る。キャラクターや枠線は描かない。"></textarea>
+    <div class="bar"><button onclick="dSaveStage()">記述を保存</button></div>
+    <h4>コンテ情報（自動・記述の下書きに使う）</h4><div id="dScene" class="dscene"></div>
     <h4>詳細</h4><table class="dkv" id="dKv"></table>
     <h4>プロンプト（日本語・確認用）</h4><div id="dJp" class="djp"></div>
     <details><summary>英語プロンプト（生成に使われる・編集可）</summary>
@@ -1212,6 +1234,7 @@ async function openDetail(id){DCUR=id; const u=unit(id); if(!u)return;
   $('#dJp').textContent=d.prompt_jp||'（日本語プロンプトなし）';
   $('#dEn').value=d.prompt||'';
   $('#dNote').value=u.retake_note||'';
+  $('#dStage').value=(d.staging!==undefined?d.staging:u.staging)||'';
   $('#dKv').innerHTML=[['ファイル',d.filename],['原図ソース',u.genzu_source],
     ['ボード',u.board||'—'],['テイク',(u.takes||[]).length+(u.adopted?('（採用 T'+u.adopted+'）'):'')],
     ['OCR信頼度',ci.conf||'—'],['QC',(u.qc_reasons||[]).join(' / ')||'—']]
@@ -1226,10 +1249,14 @@ function dShow(which){const u=unit(DCUR); if(!u)return; const t=Date.now();
   Object.values(ids).forEach(b=>$('#'+b).classList.remove('primary'));
   if(ids[which])$('#'+ids[which]).classList.add('primary');
 }
+async function dSaveStage(){await post('/api/unit/'+DCUR+'/staging',{text:$('#dStage').value});
+  const d=await (await fetch('/api/unit/'+DCUR)).json(); $('#dJp').textContent=d.prompt_jp||''; $('#dEn').value=d.prompt||'';
+  $('#dMsg').textContent='画角・場面の記述を保存しました（プロンプトに反映済み）';}
 async function dSavePrompt(){await post('/api/unit/'+DCUR+'/prompt',{prompt:$('#dEn').value}); $('#dMsg').textContent='プロンプトを保存しました';}
 async function dResetPrompt(){await post('/api/unit/'+DCUR+'/prompt',{prompt:''});
   const d=await (await fetch('/api/unit/'+DCUR)).json(); $('#dEn').value=d.prompt||''; $('#dMsg').textContent='自動生成に戻しました';}
 async function dGenerate(){
+  await post('/api/unit/'+DCUR+'/staging',{text:$('#dStage').value});
   await post('/api/unit/'+DCUR+'/retake_note',{note:$('#dNote').value});
   const r=await post('/api/unit/'+DCUR+'/generate',{}); if(r.error){$('#dMsg').textContent='エラー: '+r.error;return;}
   RUN.add(DCUR); const u=unit(DCUR); if(u){u.status='generating';u.running=true;} render(); pollJobs();
@@ -1346,7 +1373,7 @@ def main(argv=None):
     STATE = _load_json(_state_path(), {})
 
     def add_project(work, ep, genzu_dir, boards_dir, csv_path, out_dir, cut_info, label,
-                    board_map=None):
+                    board_map=None, include_book=None):
         """genzu_dir が実在すれば PROJECTS に登録。csv が実在すれば csv、無ければ scan。"""
         if not (genzu_dir and os.path.isdir(genzu_dir)):
             print(f"[skip] {label}: 原図フォルダが見つかりません: {genzu_dir}")
@@ -1358,7 +1385,7 @@ def main(argv=None):
         PROJECTS[key] = _make_project(key, work, ep, genzu_dir, boards_dir,
                                       csv_path if source == "csv" else None,
                                       source=source, out_dir=out_dir, cut_info=cut_info,
-                                      board_map=board_map)
+                                      board_map=board_map, include_book=include_book)
         # 各作品の過去state(OK判定/プロンプト編集等)を取り込む。
         # その作品のユニットに属する uid だけ・既存キーは上書きしない（他作品の混入や汚染を防ぐ）。
         if out_dir:
@@ -1377,7 +1404,7 @@ def main(argv=None):
         add_project(pj["work"], str(pj.get("ep", "00")), pj.get("genzu_dir"),
                     pj.get("boards_dir"), pj.get("csv"), pj.get("out_dir"),
                     pj.get("cut_info"), os.path.basename(pjpath),
-                    board_map=pj.get("board_map"))
+                    board_map=pj.get("board_map"), include_book=pj.get("include_book"))
     # 2) CLI 指定があれば従来どおり追加/上書き（後方互換）
     if a.genzu_dir:
         add_project(a.work, a.ep, a.genzu_dir, a.boards_dir, a.csv, a.out, a.cut_info, "CLI引数")

@@ -46,13 +46,15 @@ def build_prompt(board: str, scene: str, prompt_override: str | None = None,
 
 
 def build_prompt_pair(board: str, scene: str, prompt_override: str | None = None,
-                      registry=None, cut: str = "", cut_info_map=None) -> tuple[str, str | None]:
+                      registry=None, cut: str = "", cut_info_map=None,
+                      staging: str | None = None) -> tuple[str, str | None]:
     """(EN, JP) を返す。EN はモデル入力、JP は人の確認用。
     cut_info_map があり当該カットの充足済み行が在れば situation/remove 込みで組む。
-    prompt_override がある場合は (override, None)。"""
+    staging=画角・場面の言語記述（最優先ブロック）。prompt_override がある場合は (override, None)。"""
     if prompt_override:
         return prompt_override, None
-    p = promptlib.build_for_cut(cut, board, scene, registry=registry, cut_info_map=cut_info_map)
+    p = promptlib.build_for_cut(cut, board, scene, registry=registry,
+                                cut_info_map=cut_info_map, staging=staging)
     return p.en, p.jp
 
 
@@ -304,7 +306,7 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
                 header_top: int | None = None, board_path: str | None = None,
                 genzu_source: str = "base", cut_num: str = "",
                 cut_info_map=None, qc_vision: bool = False,
-                genzu_layers=None) -> dict:
+                genzu_layers=None, staging: str | None = None) -> dict:
     os.makedirs(out_dir, exist_ok=True)
     cut = os.path.splitext(os.path.basename(psd_path))[0]
     visible = os.path.join(out_dir, "visible.png")
@@ -336,7 +338,8 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
     use_board = bool(board_path)
     # プロンプトは genzu_fix.prompt（3層）に委譲。EN=モデル入力 / JP=確認用を出力先へ残す。
     prompt, prompt_jp = build_prompt_pair(board, scene, prompt_override,
-                                          cut=cut_num, cut_info_map=cut_info_map)
+                                          cut=cut_num, cut_info_map=cut_info_map,
+                                          staging=staging)
     if use_board:
         # ボード＝「同一ロケーションの意匠辞書」。許可と禁止を明示的に分ける。
         # 権限を広く渡す（room's structure / furniture 等）と、原図の曖昧部分を
