@@ -88,7 +88,7 @@ python3 -m src.shorts.trends -o work/trends/trends_today.json [--youtube]
 
 ## 7. チーム用ダッシュボードアプリ「天使ちゃんスタジオ」（2026-07-06 稼働開始）
 
-- URL: https://summer-bell-707.higgsfield.app （Higgsfieldアカウントでサインインして使用）
+- URL: https://tenshichan-studio.higgsfield.app （Higgsfieldアカウントでサインインして使用）
 - 機能: 企画カードの表管理（アイデア/YouTube切り抜き、ステータス: アイデア→承認→生成中→レビュー→完成）、
   カード詳細でのSeedance縦型生成（参照画像プリセット=三面図/ぬい/スマホ、コスト表示+確認ゲート、
   生成は各ユーザー自身のHiggsfieldクレジット）、結果ギャラリー+採用マーク、

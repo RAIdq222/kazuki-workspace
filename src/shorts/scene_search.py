@@ -24,7 +24,7 @@ import subprocess
 import tempfile
 from urllib.parse import quote
 
-APP = "https://summer-bell-707.higgsfield.app"
+APP = "https://tenshichan-studio.higgsfield.app"
 ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 GEMINI_URL = ("https://generativelanguage.googleapis.com/v1beta/"
               "models/gemini-embedding-001:embedContent")

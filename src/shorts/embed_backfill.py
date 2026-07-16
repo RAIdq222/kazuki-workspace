@@ -1,7 +1,7 @@
 """335シーンをGeminiで埋め込み → agent APIでBLOB書き込み → セマンティック検索を実測。"""
 import base64, json, struct, math, time, subprocess, tempfile, os
 
-APP = "https://summer-bell-707.higgsfield.app"
+APP = "https://tenshichan-studio.higgsfield.app"
 TOKEN = open("/home/user/kazuki-workspace/work/agent_token.txt").read().strip()
 GKEY = open("/home/user/kazuki-workspace/work/gemini_api_key.txt").read().strip()
 GURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents"
