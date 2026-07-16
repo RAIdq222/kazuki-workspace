@@ -150,3 +150,14 @@ python3 src/stage3d/build_viewer.py --blend work/kitchen_stage.blend \
   シルエット保持。線画はEdgesGeometryのライン(32°閾値、30k tri超のメッシュはスキップ)。
 - ハマり: `mat_image` が不透明素材でもアルファをリンクしていたため glTF が alphaMode=BLEND になり、
   ビューワーの不透明判定が壊れていた → OPAQUE時はアルファを繋がない。
+
+## 12. 時間帯切替 + 設定資料フォーマット (2026-07-14)
+
+- **時間帯切替**: レンダーは `--time morning|evening|night` (meeting_room.pyで実装。
+  太陽光・窓の外光色・ダウンライトON/OFF・露出を切替)。ビューワーは config の
+  `lightingPresets` に時間帯ごとの {lights, background, exposure, emissives} を書くと
+  「時間帯」ボタンが出る。emissives はマテリアル名指定で発光(窓・照明)の色/強度を差し替え。
+- **設定資料フォーマットの威力**: 「美術ボード+簡易平面図+4方向ビュー+カラーパレット+
+  素材メモ」のシートがあると、レイアウトの推測が転記になり手戻りが消える。
+  会議室で実証 (椅子8脚・ワイドモニター・二段折り上げを資料から転記)。
+  → 今後ボードを依頼するときはこの形式が理想。
