@@ -202,6 +202,22 @@ def main():
 
             page.evaluate("()=>document.querySelector('#cmp').style.display='none'")
 
+            # カット詳細画面（Higgsfield風）: cut番号クリックで開き、場面・プロンプトが載る
+            page.click(".cut")
+            page.wait_for_selector("#dmodal", state="visible")
+            check("詳細画面が開く", page.locator("#dmodal").is_visible())
+            page.wait_for_timeout(500)
+            check("詳細: 日本語プロンプト表示", len(page.inner_text("#dJp")) > 10)
+            check("詳細: ENプロンプト表示", len(page.input_value("#dEn")) > 10)
+            check("詳細: 場面欄あり", page.locator("#dScene").count() == 1)
+            page.evaluate("()=>document.querySelector('#dmodal').style.display='none'")
+
+            # 再描画で編集が消えない（生成ポーリングの render() 対策）
+            page.fill("#rn_testcut01", "編集途中のテキスト")
+            page.evaluate("render()")
+            check("再描画で入力が保持される",
+                  page.input_value("#rn_testcut01") == "編集途中のテキスト")
+
             # ③ ボード表示ホバーでプレビュー
             page.eval_on_selector("button:has-text('ボード表示')",
                                   """el=>{const r=el.getBoundingClientRect();

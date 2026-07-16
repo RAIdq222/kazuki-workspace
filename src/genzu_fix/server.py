@@ -621,9 +621,22 @@ def create_app():
         proj, u = _find_unit(uid)
         if not u:
             return jsonify({"error": "not found"}), 404
+        st = STATE.get(uid, {})
+        board = st.get("board", u["board"])
+        cut = (u["cuts"][0] if u.get("cuts") else "")
+        cim = proj.get("cut_info_map") or CFG.get("cut_info_map") or {}
+        _, jp = batch.build_prompt_pair(board, u["scene"], None, cut=cut, cut_info_map=cim)
+        # コンテ由来の場面情報（詳細画面の日本語概要＋OCR信頼度の表示に使う）
+        info = cim.get(batch.promptlib._norm_cut(cut)) if cim else None
+        ci = {}
+        if info:
+            m = re.search(r"conf:(\w+)", info.source or "")
+            ci = {"place": info.place, "time": info.time, "situation": info.situation,
+                  "scene_key": info.scene_key, "conf": (m.group(1) if m else ""),
+                  "source": info.source}
         return jsonify({**unit_view(proj, u), "filename": u["filename"],
-                        "prompt": _effective_prompt(proj, u),
-                        "boards_opts": proj["boards_opts"]})
+                        "prompt": _effective_prompt(proj, u), "prompt_jp": jp or "",
+                        "cut_info": ci, "boards_opts": proj["boards_opts"]})
 
     @app.post("/api/unit/<uid>/prompt")
     def api_prompt(uid):
@@ -850,6 +863,19 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
  .log{white-space:pre-wrap;font-size:10px;color:#666;background:#fafafa;border:1px solid #eee;padding:4px;max-height:64px;overflow:auto}
  .muted{color:#999;font-size:11px}
  .ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:60}
+ .dbox{display:flex;padding:0;width:min(1500px,96vw);height:92vh;overflow:hidden}
+ .dleft{flex:1;background:#14161a;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0}
+ .dleft img{max-width:96%;max-height:calc(100% - 52px);object-fit:contain;cursor:zoom-in;background:#fff}
+ .dtabs{height:46px;display:flex;gap:6px;align-items:center}
+ .dright{width:400px;background:#fff;padding:12px 14px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+ .dright h4{margin:8px 0 2px;font-size:12px;color:#57606a}
+ .dscene{background:#f6f8fa;border:1px solid #d0d7de;border-radius:6px;padding:8px;font-size:13px;white-space:pre-wrap}
+ .dscene.lowconf{background:#fff5f5;border-color:#ffb3b3;color:#c1121f}
+ .djp{background:#f6f8fa;border:1px solid #d0d7de;border-radius:6px;padding:8px;font-size:12px;
+   white-space:pre-wrap;max-height:220px;overflow:auto}
+ .dkv{font-size:12px;border-collapse:collapse} .dkv td{padding:2px 6px;vertical-align:top}
+ .dkv td:first-child{color:#57606a;white-space:nowrap}
+ #dEn{width:100%;min-height:150px}
  .ov .box{background:#fff;padding:16px;border-radius:10px;max-width:96vw;max-height:96vh;overflow:auto}
  #lb{z-index:70} #lb .box{background:none;padding:0} #lb img{max-width:94vw;max-height:90vh}
  #bpop{position:fixed;z-index:80;display:none;pointer-events:none;background:#fff;border:1px solid #888;border-radius:6px;padding:3px;box-shadow:0 4px 16px rgba(0,0,0,.3)}
@@ -931,6 +957,31 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
   <div class="muted">PhotoshopでPSDを直して保存→「取得しなおす」。Base=背景レイヤー自動検出／visible=表示中の全レイヤー／レイヤー選択=チェックしたレイヤーだけを原図にする（025/052 の誤検出対策）。</div>
 </div></div>
 
+<div class="ov" id="dmodal" onclick="if(event.target===this)this.style.display='none'"><div class="box dbox">
+  <div class="dleft"><img id="dImg" onclick="lb(this.src)">
+    <div class="dtabs">
+      <button id="dbG" onclick="dShow('genzu')">原図</button>
+      <button id="dbR" onclick="dShow('result')">生成結果</button>
+      <button id="dbB" onclick="dShow('board')">ボード</button>
+      <button onclick="openCmp(DCUR)">前後比較</button></div></div>
+  <div class="dright">
+    <div class="bar"><b id="dTitle"></b><span class="grow"></span>
+      <button onclick="document.getElementById('dmodal').style.display='none'">閉じる</button></div>
+    <div id="dBadges"></div>
+    <h4>場面（コンテ由来）</h4><div id="dScene" class="dscene"></div>
+    <h4>詳細</h4><table class="dkv" id="dKv"></table>
+    <h4>プロンプト（日本語・確認用）</h4><div id="dJp" class="djp"></div>
+    <details><summary>英語プロンプト（生成に使われる・編集可）</summary>
+      <textarea id="dEn"></textarea>
+      <div class="bar"><button onclick="dSavePrompt()">保存</button>
+        <button onclick="dResetPrompt()">自動に戻す</button></div></details>
+    <h4>リテイク指示（最優先の修正指示としてプロンプト末尾に付く）</h4>
+    <input id="dNote" placeholder="例: 壁面とブラインドのみ。机・扉・部屋の奥行きは描かない">
+    <div class="bar"><button class="primary" onclick="dGenerate()">生成</button>
+      <button class="ok" onclick="accept(DCUR,'accepted')">OK</button>
+      <button class="ng" onclick="accept(DCUR,'reject')">要修正</button></div>
+    <div id="dMsg" class="muted"></div>
+  </div></div></div>
 <div class="ov" id="modal"><div class="box">
   <h3 style="margin:0 0 6px" id="mTitle">作品・話数を追加（フォルダから取得）</h3>
   <label>作品名</label><input id="mWork" placeholder="尚善">
@@ -1048,7 +1099,16 @@ function render(){
     +`<span class="pill">全${all.length}</span><span class="pill">生成済 ${gen}</span>`
     +`<span class="pill ok">OK ${ok}</span><span class="pill ng">要修正 ${ng}</span><span class="pill">未生成 ${all.length-gen}</span>`
     +`<div class="pbar"><i style="width:${pct}%"></i></div><span class="muted">${pct}% OK</span>`;
+  // 再描画で編集中の状態（開いたタブ・入力途中のテキスト・フォーカス）を失わないよう退避→復元。
+  // 生成ポーリングの度に render() が走るため、これが無いと編集がステータス更新で吹き飛ぶ。
+  const focusId=document.activeElement&&document.activeElement.id;
+  const keepVals={};
+  document.querySelectorAll('#grid textarea, #grid input[type=text], #grid input:not([type])').forEach(el=>{if(el.id)keepVals[el.id]=el.value;});
+  const openCards=[...document.querySelectorAll('#grid details[open]')].map(dt=>dt.closest('[id^=card_]')&&dt.closest('[id^=card_]').id).filter(Boolean);
   $('#grid').innerHTML=us.map(card).join('');
+  openCards.forEach(cid=>{const el=document.getElementById(cid); const dt=el&&el.querySelector('details'); if(dt)dt.open=true;});
+  Object.entries(keepVals).forEach(([id,v])=>{const el=document.getElementById(id); if(el&&v&&el.value!==v)el.value=v;});
+  if(focusId){const el=document.getElementById(focusId); if(el){el.focus(); try{el.setSelectionRange(el.value.length,el.value.length);}catch(e){}}}
   us.forEach(u=>{if(RUN.has(u.id))markRunning(u.id,true);});
 }
 function qcBadge(u){
@@ -1079,7 +1139,7 @@ function card(u){
   const t=Date.now();
   const opts='<option value="">— ボード未選択 —</option>'+BOARDS.map(b=>`<option ${b===u.board?'selected':''}>${esc(b)}</option>`).join('');
   return `<div class="card ${u.status} ${RUN.has(u.id)?'running':''}" id="card_${u.id}">
-   <div class="chead"><span class="cut">c${u.cuts.join(',')}</span>
+   <div class="chead"><span class="cut" style="cursor:pointer" title="クリックで詳細画面" onclick="openDetail('${u.id}')">c${u.cuts.join(',')}</span>
      <span class="who ${u.assignee==='GKV'?'gkv':'other'}">${u.assignee}</span>
      <span class="b ${u.status}">${u.status}</span>${u.retakes?`<span class="muted">RT${u.retakes}</span>`:''}
      ${qcBadge(u)}
@@ -1135,6 +1195,45 @@ async function recapture(){const src=document.querySelector('input[name=gsrc]:ch
   $('#gImg').src='/img/'+GCUR+'/genzu?t='+Date.now(); $('#gMsg').textContent='取得しました（'+src+'）'; await refresh();}
 async function openPsd(id){const r=await post('/api/unit/'+id+'/open',{}); slog(id,r.error?('開けません: '+r.error):'PSDを開きました');}
 async function loadPrompt(id){const d=await (await fetch('/api/unit/'+id)).json(); const t=document.getElementById('pr_'+id); if(t)t.value=d.prompt;}
+let DCUR=null;
+async function openDetail(id){DCUR=id; const u=unit(id); if(!u)return;
+  $('#dTitle').textContent='c'+u.cuts.join(',')+'（'+u.assignee+'）';
+  $('#dBadges').innerHTML=`<span class="b ${u.status}">${u.status}</span> ${qcBadge(u)}${u.retakes?` <span class="muted">RT${u.retakes}</span>`:''}`;
+  $('#dScene').textContent='読み込み中…'; $('#dJp').textContent='…'; $('#dEn').value=''; $('#dMsg').textContent='';
+  $('#dmodal').style.display='flex'; dShow(u.has_result?'result':'genzu');
+  const d=await (await fetch('/api/unit/'+id)).json();
+  const ci=d.cut_info||{};
+  const low=(ci.conf==='low')||!ci.place;
+  const sc=$('#dScene'); sc.classList.toggle('lowconf',low);
+  sc.textContent=ci.place
+    ?('場所: '+ci.place+'\n時刻: '+(ci.time||'—')+(ci.situation?('\n状況: '+ci.situation):'')
+      +(low?'\n⚠ コンテOCRの信頼度が低い/場面説明なし。内容を確認してください':''))
+    :'場面情報なし（コンテ未紐づけ）。⚠ 画角・場所はリテイク指示かプロンプトで手動指定してください';
+  $('#dJp').textContent=d.prompt_jp||'（日本語プロンプトなし）';
+  $('#dEn').value=d.prompt||'';
+  $('#dNote').value=u.retake_note||'';
+  $('#dKv').innerHTML=[['ファイル',d.filename],['原図ソース',u.genzu_source],
+    ['ボード',u.board||'—'],['テイク',(u.takes||[]).length+(u.adopted?('（採用 T'+u.adopted+'）'):'')],
+    ['OCR信頼度',ci.conf||'—'],['QC',(u.qc_reasons||[]).join(' / ')||'—']]
+    .map(([k,v])=>`<tr><td>${k}</td><td>${esc(String(v))}</td></tr>`).join('');
+}
+function dShow(which){const u=unit(DCUR); if(!u)return; const t=Date.now();
+  const srcs={genzu:`/img/${DCUR}/genzu?v=${u.genzu_source}${u.genzu_rev||0}`,
+              result:`/img/${DCUR}/result?t=${t}`, board:`/img/${DCUR}/board?t=${t}`};
+  const im=$('#dImg'); im.onerror=()=>{im.onerror=null;$('#dMsg').textContent='画像がありません（'+which+'）';};
+  $('#dMsg').textContent=''; im.src=srcs[which];
+  const ids={genzu:'dbG',result:'dbR',board:'dbB'};
+  Object.values(ids).forEach(b=>$('#'+b).classList.remove('primary'));
+  if(ids[which])$('#'+ids[which]).classList.add('primary');
+}
+async function dSavePrompt(){await post('/api/unit/'+DCUR+'/prompt',{prompt:$('#dEn').value}); $('#dMsg').textContent='プロンプトを保存しました';}
+async function dResetPrompt(){await post('/api/unit/'+DCUR+'/prompt',{prompt:''});
+  const d=await (await fetch('/api/unit/'+DCUR)).json(); $('#dEn').value=d.prompt||''; $('#dMsg').textContent='自動生成に戻しました';}
+async function dGenerate(){
+  await post('/api/unit/'+DCUR+'/retake_note',{note:$('#dNote').value});
+  const r=await post('/api/unit/'+DCUR+'/generate',{}); if(r.error){$('#dMsg').textContent='エラー: '+r.error;return;}
+  RUN.add(DCUR); const u=unit(DCUR); if(u){u.status='generating';u.running=true;} render(); pollJobs();
+  $('#dMsg').textContent='生成キューに投入しました（完了後「生成結果」タブで確認）';}
 async function savePrompt(id){const t=document.getElementById('pr_'+id); await post('/api/unit/'+id+'/prompt',{prompt:t?t.value:''}); slog(id,'保存しました');}
 async function resetPrompt(id){await post('/api/unit/'+id+'/prompt',{prompt:''}); const t=document.getElementById('pr_'+id); if(t)t.value=''; slog(id,'自動に戻しました');}
 async function setBoard(id,v){await post('/api/unit/'+id+'/board',{board:v}); slog(id,'ボード保存');}
