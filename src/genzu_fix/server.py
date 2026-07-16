@@ -445,10 +445,10 @@ def _run_generate(uid):
     st = STATE.get(uid, {})
     prev_status = st.get("status", "todo")   # 失敗時に戻す（「生成中」で固まらせない）
     board = st.get("board", u["board"])
-    # ボードは既定で「表示・比較用」のみ。生成の参照に入れるのはカードで明示ONの時だけ
-    # （完成画ボードが原図の構図を乗っ取る事故の防止。詳細は api_board_ref のコメント）。
-    use_ref = bool(st.get("use_board_ref"))
-    board_path = _board_png(proj, board) if (use_ref and proj.get("boards_dir") and board) else None
+    # ボードは常に参照する（画風・タッチの根拠）。既定は「ディテール断片」モード＝
+    # 構図の乗っ取りが起きない形で渡す。全景で渡すのはカードで明示ONの時だけ。
+    board_path = _board_png(proj, board) if (proj.get("boards_dir") and board) else None
+    board_mode = "full" if st.get("use_board_ref") else "patches"
     # リテイク指示（端的な修正メモ）があれば、最終プロンプト末尾へ最優先の修正指示として足す。
     note = (st.get("retake_note") or "").strip()
     base_prompt = st.get("prompt") or None
@@ -468,7 +468,7 @@ def _run_generate(uid):
                           genzu_layers=st.get("layers_show"),
                           cut_num=(u["cuts"][0] if u.get("cuts") else ""),
                           cut_info_map=(proj.get("cut_info_map") or CFG.get("cut_info_map")),
-                          qc_vision=CFG.get("qc_vision", False))
+                          qc_vision=CFG.get("qc_vision", False), board_mode=board_mode)
         n = _snapshot_take(uid)   # 上書きせず takes/take_NN/ に保存（S5・前版を失わない）
         with STATE_LOCK:
             s = STATE.setdefault(uid, {})
@@ -638,9 +638,9 @@ def create_app():
 
     @app.post("/api/unit/<uid>/board_ref")
     def api_board_ref(uid):
-        # ボードを生成の参照画像に含めるか（既定オフ）。
-        # 完成画のボードは原図より信号が強く、[IMAGES]役割宣言でも構図を
-        # 乗っ取ることがある（SP2 c005実測）ため、明示オプトインにする。
+        # ボード参照のモード。OFF(既定)=ディテール断片（タッチ・密度だけ運ぶ）/
+        # ON=全景（完成画は原図より信号が強く、[IMAGES]役割宣言でも構図を
+        # 乗っ取ることがある: SP2 c005実測。全景は明示オプトイン）。
         _update_state(uid, use_board_ref=bool((request.json or {}).get("value")))
         return jsonify({"ok": True})
 
@@ -1102,8 +1102,8 @@ function card(u){
    <div class="prog ${RUN.has(u.id)?'on':''}" id="prog_${u.id}"><i></i></div>
    <div class="bar"><select style="flex:1;width:auto" onchange="setBoard('${u.id}',this.value)">${opts}</select>
      <button onclick="showBoard('${u.id}')" onmousemove="boardHover('${u.id}',event)" onmouseleave="boardOut()" title="クリックで拡大／ホバーでプレビュー">ボード表示</button>
-     <label class="bref" title="ONにするとボード画像を生成の参照に含める（構図が引っ張られる場合はOFF）">
-       <input type="checkbox" ${u.use_board_ref?'checked':''} onchange="setBoardRef('${u.id}',this.checked)">参照に使う</label></div>
+     <label class="bref" title="ボードは常に参照される。OFF(既定)=拡大断片でタッチ・密度だけ渡す／ON=全景を渡す（構図が引っ張られるリスクあり）">
+       <input type="checkbox" ${u.use_board_ref?'checked':''} onchange="setBoardRef('${u.id}',this.checked)">全景</label></div>
    <details><summary>プロンプト${u.prompt_edited?'（編集済）':''}</summary>
      <textarea id="pr_${u.id}" placeholder="（自動生成。編集して保存で上書き）"></textarea>
      <div class="bar"><button onclick="savePrompt('${u.id}')">保存</button>
@@ -1148,7 +1148,7 @@ async function loadPrompt(id){const d=await (await fetch('/api/unit/'+id)).json(
 async function savePrompt(id){const t=document.getElementById('pr_'+id); await post('/api/unit/'+id+'/prompt',{prompt:t?t.value:''}); slog(id,'保存しました');}
 async function resetPrompt(id){await post('/api/unit/'+id+'/prompt',{prompt:''}); const t=document.getElementById('pr_'+id); if(t)t.value=''; slog(id,'自動に戻しました');}
 async function setBoard(id,v){await post('/api/unit/'+id+'/board',{board:v}); slog(id,'ボード保存');}
-async function setBoardRef(id,v){await post('/api/unit/'+id+'/board_ref',{value:v}); slog(id,v?'ボードを生成参照に含める':'ボードは表示のみ');}
+async function setBoardRef(id,v){await post('/api/unit/'+id+'/board_ref',{value:v}); slog(id,v?'ボード参照: 全景':'ボード参照: 断片(既定)');}
 async function accept(id,v){await post('/api/unit/'+id+'/accept',{value:v}); const u=unit(id); if(u)u.status=v; render();}
 function slog(id,m){const l=document.getElementById('log_'+id); if(l){l.style.display='block';l.textContent=m;}}
 async function saveNote(id){const e=document.getElementById('rn_'+id);
