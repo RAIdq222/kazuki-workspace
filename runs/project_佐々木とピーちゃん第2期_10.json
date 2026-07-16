@@ -8,6 +8,7 @@
   "cut_info": "runs/cut_scene_info_sp2_10.csv",
   "board_map": "runs/board_map_sp2_10.csv",
   "include_book": true,
+  "staging_map": "runs/staging_sp2_10.csv",
   "script": null,
   "koban": null,
   "conte": "C:\\Users\\kuror\\OneDrive\\デスクトップ\\佐々木とピーちゃん\\佐々木とピーちゃん_原図修正自動化検証\\03.設定資料\\SP2#10_決定稿コンテ.pdf",

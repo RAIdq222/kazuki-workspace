@@ -253,6 +253,36 @@ def _load_board_map(path):
     return out
 
 
+def _load_staging_map(path):
+    """cut,staging,confidence のCSV → {正規化カット番号: {"staging","confidence"}}。
+    scene_understanding(build_staging.py)の下書き。手動保存(state.staging)が常に優先。"""
+    out = {}
+    if not (path and os.path.exists(path)):
+        return out
+    import csv as _csv
+    with open(path, encoding="utf-8-sig") as f:
+        for r in _csv.DictReader(f):
+            m = re.match(r"0*(\d+)([A-Za-z]?)", (r.get("cut") or "").strip())
+            if m and (r.get("staging") or "").strip():
+                out[m.group(1) + m.group(2).upper()] = {
+                    "staging": r["staging"].strip(),
+                    "confidence": (r.get("confidence") or "").strip()}
+    return out
+
+
+def _unit_staging(proj, u, st):
+    """このユニットに効く staging を返す (text, source, confidence)。手動 > 自動下書き。"""
+    manual = (st.get("staging") or "").strip()
+    if manual:
+        return manual, "manual", ""
+    m = re.match(r"0*(\d+)([A-Za-z]?)", (u["cuts"][0] if u.get("cuts") else ""))
+    if m:
+        auto = (proj.get("staging_map") or {}).get(m.group(1) + m.group(2).upper())
+        if auto:
+            return auto["staging"], "auto", auto.get("confidence", "")
+    return "", "", ""
+
+
 def _proj_include_book(proj) -> bool:
     """BOOKを原図に含めるか（作品ごと。SP2はBook=椅子等がシーンの空間アンカーなので含める）。"""
     v = (proj or {}).get("include_book")
@@ -260,7 +290,8 @@ def _proj_include_book(proj) -> bool:
 
 
 def _make_project(key, work, ep, genzu_dir, boards_dir=None, csv_path=None, source="scan",
-                  out_dir=None, cut_info=None, board_map=None, include_book=None):
+                  out_dir=None, cut_info=None, board_map=None, include_book=None,
+                  staging_map=None):
     if source == "csv":
         units = _units_from_csv(csv_path)
     else:
@@ -300,7 +331,7 @@ def _make_project(key, work, ep, genzu_dir, boards_dir=None, csv_path=None, sour
         "key": key, "work": work, "ep": ep, "group": f"{work} #{ep}",
         "genzu_dir": genzu_dir, "boards_dir": boards_dir, "csv": csv_path, "source": source,
         "out_dir": out_dir or CFG.get("out"), "cut_info_map": cut_info_map,
-        "include_book": include_book,
+        "include_book": include_book, "staging_map": _load_staging_map(staging_map),
         "units": units, "psd_idx": _index_dir(genzu_dir, (".psd",)),
         "board_idx": board_idx, "board_norm": board_norm, "boards_opts": boards_opts,
     }
@@ -425,7 +456,7 @@ def _effective_prompt(proj, u):
     # 表示と生成を一致させるため cut_info_map（situation/remove）も渡す。
     en, _ = batch.build_prompt_pair(board, u["scene"], None, cut=cut,
                                     cut_info_map=(proj.get("cut_info_map") or CFG.get("cut_info_map")),
-                                    staging=st.get("staging"))
+                                    staging=_unit_staging(proj, u, st)[0] or None)
     return en
 
 
@@ -466,14 +497,14 @@ def _run_generate(uid):
         eff = base_prompt or batch.build_prompt_pair(
             board, u["scene"], None, cut=cut0,
             cut_info_map=(proj.get("cut_info_map") or CFG.get("cut_info_map")),
-            staging=st.get("staging"))[0]
+            staging=_unit_staging(proj, u, st)[0] or None)[0]
         base_prompt = eff + "\n\n[RETAKE CORRECTION — apply with top priority]: " + note
     try:
         log("prep→生成→finish 実行中…" + (f"（指示: {note[:30]}）" if note else ""))
         batch.process_cut(psd, board, u["scene"], _unit_dir(uid), base_prompt,
                           CFG["resolution"], CFG["quality"], CFG["model"], CFG["image_flag"],
                           dry=False, include_book=_proj_include_book(proj),
-                          staging=st.get("staging"),
+                          staging=_unit_staging(proj, u, st)[0] or None,
                           header_top=CFG["header_top"], board_path=board_path,
                           genzu_source=st.get("genzu_source", "base"),
                           genzu_layers=st.get("layers_show"),
@@ -637,8 +668,9 @@ def create_app():
         board = st.get("board", u["board"])
         cut = (u["cuts"][0] if u.get("cuts") else "")
         cim = proj.get("cut_info_map") or CFG.get("cut_info_map") or {}
+        stg_text, stg_src, stg_conf = _unit_staging(proj, u, st)
         _, jp = batch.build_prompt_pair(board, u["scene"], None, cut=cut, cut_info_map=cim,
-                                        staging=st.get("staging"))
+                                        staging=stg_text or None)
         # コンテ由来の場面情報（詳細画面の日本語概要＋OCR信頼度の表示に使う）
         info = cim.get(batch.promptlib._norm_cut(cut)) if cim else None
         ci = {}
@@ -649,6 +681,8 @@ def create_app():
                   "source": info.source}
         return jsonify({**unit_view(proj, u), "filename": u["filename"],
                         "prompt": _effective_prompt(proj, u), "prompt_jp": jp or "",
+                        "staging": stg_text, "staging_source": stg_src,
+                        "staging_conf": stg_conf,
                         "cut_info": ci, "boards_opts": proj["boards_opts"]})
 
     @app.post("/api/unit/<uid>/prompt")
@@ -989,7 +1023,7 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
     <div id="dBadges"></div>
     <h4>画角・場面の記述（生成の核・日本語OK・最優先で効く）</h4>
     <textarea id="dStage" placeholder="例: カメラはモニター側にあり、ブラインドのある窓側へ向かって撮影。壁面とブラインドのみが写る。キャラクターや枠線は描かない。"></textarea>
-    <div class="bar"><button onclick="dSaveStage()">記述を保存</button></div>
+    <div class="bar"><button onclick="dSaveStage()">記述を保存</button><span id="dStageHint" class="muted"></span></div>
     <h4>コンテ情報（自動・記述の下書きに使う）</h4><div id="dScene" class="dscene"></div>
     <h4>詳細</h4><table class="dkv" id="dKv"></table>
     <h4>プロンプト（日本語・確認用）</h4><div id="dJp" class="djp"></div>
@@ -1234,7 +1268,11 @@ async function openDetail(id){DCUR=id; const u=unit(id); if(!u)return;
   $('#dJp').textContent=d.prompt_jp||'（日本語プロンプトなし）';
   $('#dEn').value=d.prompt||'';
   $('#dNote').value=u.retake_note||'';
-  $('#dStage').value=(d.staging!==undefined?d.staging:u.staging)||'';
+  $('#dStage').value=d.staging||'';
+  $('#dStageHint').textContent=d.staging_source==='auto'
+    ?('自動下書き'+(d.staging_conf?('（信頼度 '+d.staging_conf+'）'):'')+' — 直して保存で確定')
+    :(d.staging_source==='manual'?'手動確定済み':'未記入（コンテ情報を下書きに書いてください）');
+  $('#dStageHint').style.color=(d.staging_conf==='low'||!d.staging)?'#c1121f':'';
   $('#dKv').innerHTML=[['ファイル',d.filename],['原図ソース',u.genzu_source],
     ['ボード',u.board||'—'],['テイク',(u.takes||[]).length+(u.adopted?('（採用 T'+u.adopted+'）'):'')],
     ['OCR信頼度',ci.conf||'—'],['QC',(u.qc_reasons||[]).join(' / ')||'—']]
@@ -1373,7 +1411,7 @@ def main(argv=None):
     STATE = _load_json(_state_path(), {})
 
     def add_project(work, ep, genzu_dir, boards_dir, csv_path, out_dir, cut_info, label,
-                    board_map=None, include_book=None):
+                    board_map=None, include_book=None, staging_map=None):
         """genzu_dir が実在すれば PROJECTS に登録。csv が実在すれば csv、無ければ scan。"""
         if not (genzu_dir and os.path.isdir(genzu_dir)):
             print(f"[skip] {label}: 原図フォルダが見つかりません: {genzu_dir}")
@@ -1385,7 +1423,8 @@ def main(argv=None):
         PROJECTS[key] = _make_project(key, work, ep, genzu_dir, boards_dir,
                                       csv_path if source == "csv" else None,
                                       source=source, out_dir=out_dir, cut_info=cut_info,
-                                      board_map=board_map, include_book=include_book)
+                                      board_map=board_map, include_book=include_book,
+                                      staging_map=staging_map)
         # 各作品の過去state(OK判定/プロンプト編集等)を取り込む。
         # その作品のユニットに属する uid だけ・既存キーは上書きしない（他作品の混入や汚染を防ぐ）。
         if out_dir:
@@ -1404,7 +1443,8 @@ def main(argv=None):
         add_project(pj["work"], str(pj.get("ep", "00")), pj.get("genzu_dir"),
                     pj.get("boards_dir"), pj.get("csv"), pj.get("out_dir"),
                     pj.get("cut_info"), os.path.basename(pjpath),
-                    board_map=pj.get("board_map"), include_book=pj.get("include_book"))
+                    board_map=pj.get("board_map"), include_book=pj.get("include_book"),
+                    staging_map=pj.get("staging_map"))
     # 2) CLI 指定があれば従来どおり追加/上書き（後方互換）
     if a.genzu_dir:
         add_project(a.work, a.ep, a.genzu_dir, a.boards_dir, a.csv, a.out, a.cut_info, "CLI引数")
