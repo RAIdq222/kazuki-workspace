@@ -37,8 +37,8 @@ WALL_H = 2.9
 PAL = {
     "wood_wall":  (0.110, 0.085, 0.055),   # 暗い木目パネル
     "wood_trim":  (0.060, 0.048, 0.034),
-    "wood_table": (0.300, 0.190, 0.100),   # テーブル天板
-    "carpet":     (0.130, 0.145, 0.150),   # 青灰のタイルカーペット
+    "wood_table": (0.285, 0.175, 0.095),   # テーブル天板
+    "carpet":     (0.150, 0.160, 0.165),   # 青灰のタイルカーペット
     "chair":      (0.035, 0.055, 0.055),   # 青緑の黒レザー
     "metal":      (0.250, 0.260, 0.270),
     "ceiling":    (0.050, 0.058, 0.064),
@@ -97,8 +97,20 @@ def build_shell():
     plane("ceil_outer", ROOM_X, ROOM_Y, (ROOM_X / 2, ROOM_Y / 2, WALL_H), cm)
     # 折り上げ部分: 内側リング(壁)+上面
     ix0, ix1, iy0, iy1 = 1.3, ROOM_X - 1.3, 1.6, ROOM_Y - 1.6
-    plane("ceil_inner", ix1 - ix0, iy1 - iy0,
-          ((ix0 + ix1) / 2, (iy0 + iy1) / 2, WALL_H + 0.28), cm)
+    # 二段の折り上げ (設定資料メモ: 段差のある折り上げ天井)
+    jx0, jx1, jy0, jy1 = ix0 + 0.55, ix1 - 0.55, iy0 + 0.55, iy1 - 0.55
+    plane("ceil_mid", ix1 - ix0, iy1 - iy0,
+          ((ix0 + ix1) / 2, (iy0 + iy1) / 2, WALL_H + 0.16), cm)
+    plane("ceil_inner", jx1 - jx0, jy1 - jy0,
+          ((jx0 + jx1) / 2, (jy0 + jy1) / 2, WALL_H + 0.30), cm)
+    for nm2, sx2, sy2, loc2 in [
+        ("coffer2S", jx1 - jx0, 0.04, ((jx0 + jx1) / 2, jy0, 0)),
+        ("coffer2N", jx1 - jx0, 0.04, ((jx0 + jx1) / 2, jy1, 0)),
+        ("coffer2W", 0.04, jy1 - jy0, (jx0, (jy0 + jy1) / 2, 0)),
+        ("coffer2E", 0.04, jy1 - jy0, (jx1, (jy0 + jy1) / 2, 0)),
+    ]:
+        box(nm2, sx2, sy2, 0.14, (loc2[0], loc2[1], WALL_H + 0.23),
+            mat("ceiling", PAL["ceiling"], rough=0.9))
     for nm, sx, sy, loc in [
         ("cofferS", ix1 - ix0, 0.04, ((ix0 + ix1) / 2, iy0, 0)),
         ("cofferN", ix1 - ix0, 0.04, ((ix0 + ix1) / 2, iy1, 0)),
@@ -189,12 +201,12 @@ def build_north_wall():
 
 def build_screen():
     """東壁の発光スクリーン."""
-    box("scr_frame", 0.06, 2.35, 1.65, (ROOM_X - 0.03, 3.0, 1.95),
+    box("scr_frame", 0.06, 2.55, 1.50, (ROOM_X - 0.03, 3.5, 1.85),
         mat("scr_frame", (0.03, 0.03, 0.03), rough=0.4))
-    plane("scr_face", 2.2, 1.5, (ROOM_X - 0.075, 3.0, 1.95),
+    plane("scr_face", 2.4, 1.35, (ROOM_X - 0.075, 3.5, 1.85),
           mat("glow_scr", PAL["glow_scr"], rough=0.6, emit=1.5),
           rot=(math.pi / 2, 0, -math.pi / 2))
-    area_light("scr_light", (ROOM_X - 0.25, 3.0, 1.95), (0, math.radians(-90), 0),
+    area_light("scr_light", (ROOM_X - 0.25, 3.5, 1.85), (0, math.radians(-90), 0),
                2.0, 16, (0.75, 0.85, 0.80), size_y=1.4)
 
 
@@ -245,12 +257,12 @@ def build_table_chairs():
             box(f"{name}_cast{k}", 0.30, 0.05, 0.04,
                 (lx, ly, 0.045), mm, rot=(0, 0, a2))
     # 配置: 左側2脚(窓側)・右手前1脚・右奥1脚・奥1脚
-    # 長辺の両側 (テーブル x 2.0..4.0 の外側) + 奥の誕生日席
-    chair("ch1", 1.52, 2.6, math.radians(-90 + 10))
-    chair("ch2", 1.55, 3.9, math.radians(-90 - 6))
-    chair("ch3", 4.48, 2.5, math.radians(90 - 12))
-    chair("ch4", 4.45, 4.0, math.radians(90 + 8))
-    chair("ch5", 3.0, 5.45, math.radians(0 + 4))
+    # 平面図どおり8脚: 長辺3+3 + 両端1+1
+    for i, yy in enumerate((2.15, 3.3, 4.45)):
+        chair(f"chW{i}", 1.52, yy, math.radians(-90 + R.uniform(-8, 8)))
+        chair(f"chE{i}", 4.48, yy, math.radians(90 + R.uniform(-8, 8)))
+    chair("chN", 3.0, 5.5, math.radians(0 + 3))
+    chair("chS", 3.0, 1.1, math.radians(180 - 4))
 
 
 def build_lights():
