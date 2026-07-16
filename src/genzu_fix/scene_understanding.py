@@ -38,7 +38,7 @@ from . import prompt as promptlib
 from . import psd_export
 
 # Anthropic REST（conte.py と同じ流儀＝標準ライブラリのみ・要 ANTHROPIC_API_KEY）
-DEFAULT_MODEL = "claude-opus-4-8"
+DEFAULT_MODEL = "claude-fable-5"
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
 ANTHROPIC_VERSION = "2023-06-01"
 

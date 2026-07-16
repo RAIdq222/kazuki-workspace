@@ -91,6 +91,11 @@
 - 2026-06 時点: main は great-edison の最新(d74b542系)＝stoic-hopperのマージを内包する superset から作成。
 
 ## 確定した決定
+- **APIモデルの使い分け（2026-07-17 黒江さん決定）**: 既定は **Fable 5**（`claude-fable-5`）
+  — コンテOCR(conte.py)・パース注釈(perspective.py)・scene_understanding・staging下書き
+  （誤りが下流に伝播する判断系）。**QC(qc.py)のみ Sonnet 5**（`claude-sonnet-5`）
+  — 全テイクで走る大量・定型の目視判定。全て環境変数/引数で上書き可。
+  Opus 4.8 は既定から外した。great-edisonセッションはscene_understandingの既定変更に注意。
 - レジストずれ＝入力=出力グリッドで解決。原図はフレームで切らない（ヘッダはプロンプト除去）。
 - 原図の取り出しはコンソールも別セッションも `psd_export` の同じ関数（`/read-genzu`）。
   PSDが手元にあるセッションは `gather` 不要。**ただし `handoff/ep7/` は PSD が無いセッションの
