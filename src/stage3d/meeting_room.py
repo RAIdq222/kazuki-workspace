@@ -169,12 +169,12 @@ def build_north_wall():
 
 def build_screen():
     """東壁の発光スクリーン."""
-    box("scr_frame", 0.06, 2.35, 1.65, (ROOM_X - 0.03, 3.1, 1.95),
+    box("scr_frame", 0.06, 2.35, 1.65, (ROOM_X - 0.03, 1.7, 1.95),
         mat("scr_frame", (0.03, 0.03, 0.03), rough=0.4))
-    plane("scr_face", 2.2, 1.5, (ROOM_X - 0.075, 3.1, 1.95),
+    plane("scr_face", 2.2, 1.5, (ROOM_X - 0.075, 1.7, 1.95),
           mat("glow_scr", PAL["glow_scr"], rough=0.6, emit=1.5),
           rot=(math.pi / 2, 0, -math.pi / 2))
-    area_light("scr_light", (ROOM_X - 0.25, 3.1, 1.95), (0, math.radians(-90), 0),
+    area_light("scr_light", (ROOM_X - 0.25, 1.7, 1.95), (0, math.radians(-90), 0),
                2.0, 16, (0.75, 0.85, 0.80), size_y=1.4)
 
 
@@ -252,15 +252,15 @@ def build_lights():
 def build_scene():
     reset_scene()
     build_shell()
-    window_with_blinds(0, 1.6)
-    window_with_blinds(1, 3.7)
+    window_with_blinds(0, 2.7)
+    window_with_blinds(1, 4.8)
     build_north_wall()
     build_screen()
     build_table_chairs()
     build_lights()
     cams = {
         # ボード再現 (南西寄りから北東へ)
-        "A": add_camera("cam_A", (2.15, 0.35, 1.5), (4.3, 6.9, 0.95), lens=22),
+        "A": add_camera("cam_A", (4.9, 0.4, 1.5), (2.3, 6.9, 0.95), lens=19),
         # 逆 (ドア側から)
         "B": add_camera("cam_B", (5.2, 6.5, 1.5), (1.2, 0.6, 1.0), lens=23),
         # スクリーン側から窓へ
