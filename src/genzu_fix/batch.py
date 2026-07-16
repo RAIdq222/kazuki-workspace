@@ -123,27 +123,11 @@ def _hf_upload(path: str, dry: bool) -> str:
     raise RuntimeError(f"uploadのUUIDを取得できませんでした: {out[:200]}")
 
 
-def _hf_generate(media_id: str, prompt: str, aspect: str, resolution: str,
-                 quality: str, model: str, image_flag: str, dry: bool,
-                 extra_images: list[str] | None = None) -> str:
-    """generate create → 結果画像URL。extra_images は追加の参照画像(UUID/パス)。"""
-    cmd = ["higgsfield", "generate", "create", model,
-           "--prompt", prompt, "--aspect_ratio", aspect,
-           "--resolution", resolution, "--quality", quality,
-           image_flag, media_id]
-    for ex in (extra_images or []):
-        cmd += [image_flag, ex]
-    cmd += ["--wait", "--json"]
-    out = _run(cmd, dry)
-    if dry or not out:
-        return ""
-    try:
-        data = json.loads(out)
-    except json.JSONDecodeError:
-        m = re.search(r"https?://\S+\.(?:png|webp|jpg)", out)
-        if m:
-            return m.group(0)
-        raise RuntimeError(f"生成結果URLを取得できませんでした: {out[:200]}")
+def _find_result_url(out: str) -> str | None:
+    """CLI出力（JSON or テキスト）から結果画像URLを探す。無ければ None。"""
+    if not out:
+        return None
+
     # JSON構造はバージョン差があるため複数候補を探索
     def find_url(o):
         if isinstance(o, str) and re.match(r"https?://.*\.(png|webp|jpg)", o):
@@ -159,9 +143,50 @@ def _hf_generate(media_id: str, prompt: str, aspect: str, resolution: str,
                 if u:
                     return u
         return None
-    url = find_url(data)
+    try:
+        return find_url(json.loads(out))
+    except json.JSONDecodeError:
+        m = re.search(r"https?://\S+\.(?:png|webp|jpg)", out)
+        return m.group(0) if m else None
+
+
+_UUID_RE = r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+
+
+def _hf_generate(media_id: str, prompt: str, aspect: str, resolution: str,
+                 quality: str, model: str, image_flag: str, dry: bool,
+                 extra_images: list[str] | None = None) -> str:
+    """generate create → 結果画像URL。extra_images は追加の参照画像(UUID/パス)。
+
+    CLIの世代差に両対応する:
+      旧: create --wait が完了まで待って結果URL入りJSONを返す
+      新: create はジョブIDを即返す → `generate wait <job_id>` で完了を待って結果を取る
+    """
+    cmd = ["higgsfield", "generate", "create", model,
+           "--prompt", prompt, "--aspect_ratio", aspect,
+           "--resolution", resolution, "--quality", quality,
+           image_flag, media_id]
+    for ex in (extra_images or []):
+        cmd += [image_flag, ex]
+    cmd += ["--wait", "--json"]
+    out = _run(cmd, dry)
+    if dry:
+        return ""
+    url = _find_result_url(out)
+    if url:
+        return url
+    # URLが無い＝新CLI（ジョブIDだけ返る）。wait→get の順で結果を取りに行く。
+    m = re.search(_UUID_RE, out or "")
+    if not m:
+        raise RuntimeError(f"生成結果URLもジョブIDも取得できませんでした: {(out or '')[:200]}")
+    job_id = m.group(0)
+    out = _run(["higgsfield", "generate", "wait", job_id, "--json"], dry)
+    url = _find_result_url(out)
     if not url:
-        raise RuntimeError(f"JSONから結果URLが見つかりません: {out[:200]}")
+        out = _run(["higgsfield", "generate", "get", job_id, "--json"], dry)
+        url = _find_result_url(out)
+    if not url:
+        raise RuntimeError(f"ジョブ {job_id} の結果URLを取得できませんでした: {(out or '')[:200]}")
     return url
 
 
