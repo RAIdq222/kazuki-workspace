@@ -257,33 +257,16 @@ def _trim_border(im):
     return im.crop(bbox) if bbox else im
 
 
-def _prep_board(src: str, out: str, maxside: int = 1536, mode: str = "patches"):
-    """美術ボードを参照入力用に加工する。
-
-    mode="patches"（既定）: 拡大ディテールを3枚切り出して横タイルにする。
-      断片には部屋全体の構図が無い＝構図の乗っ取りが起きない。タッチ・線密度・
-      材質・空気感だけを運ぶ（全景参照が原図の構図に勝つ事故はSP2 c005で2回実測）。
-    mode="full": 全景をそのまま縮小（明示オプトイン時のみ）。
-    """
+def _prep_board(src: str, out: str, maxside: int = 1536):
+    """美術ボードを参照入力用に整える（外周の黒フチをトリムし、縮小）。
+    全景で渡す＝「どの角度から見た場所か」の情報を保つ。構図の乗っ取りは
+    プロンプト側の意匠辞書ルール（許可/禁止の明示）で抑える。"""
     from PIL import Image
     im = _trim_border(Image.open(src).convert("RGB"))
-    if mode == "full":
-        if max(im.size) > maxside:
-            s = maxside / max(im.size)
-            im = im.resize((round(im.width * s), round(im.height * s)), Image.LANCZOS)
-        im.save(out)
-        return out
-    w, h = im.size
-    side = max(64, min(w, h) // 2)   # 元の1/2角＝タッチが読める拡大率
-    anchors = [(0.08, 0.30), (0.38, 0.48), (0.60, 0.12)]  # 左中/中央下/右上（重なりにくい散らし）
-    P, M = 512, 24
-    canvas = Image.new("RGB", (P * 3 + M * 4, P + M * 2), (255, 255, 255))
-    for i, (fx, fy) in enumerate(anchors):
-        x = max(0, min(int(w * fx), w - side))
-        y = max(0, min(int(h * fy), h - side))
-        patch = im.crop((x, y, x + side, y + side)).resize((P, P), Image.LANCZOS)
-        canvas.paste(patch, (M + i * (P + M), M))
-    canvas.save(out)
+    if max(im.size) > maxside:
+        s = maxside / max(im.size)
+        im = im.resize((round(im.width * s), round(im.height * s)), Image.LANCZOS)
+    im.save(out)
     return out
     return out
 
@@ -294,7 +277,7 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
                 header_top: int | None = None, board_path: str | None = None,
                 genzu_source: str = "base", cut_num: str = "",
                 cut_info_map=None, qc_vision: bool = False,
-                genzu_layers=None, board_mode: str = "patches") -> dict:
+                genzu_layers=None) -> dict:
     os.makedirs(out_dir, exist_ok=True)
     cut = os.path.splitext(os.path.basename(psd_path))[0]
     visible = os.path.join(out_dir, "visible.png")
@@ -327,36 +310,34 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
     # プロンプトは genzu_fix.prompt（3層）に委譲。EN=モデル入力 / JP=確認用を出力先へ残す。
     prompt, prompt_jp = build_prompt_pair(board, scene, prompt_override,
                                           cut=cut_num, cut_info_map=cut_info_map)
-    if use_board and board_mode != "full":
-        # 既定: ボードは「ディテール断片」で渡す（構図が存在しない＝乗っ取り不能。
-        # 全景渡しは[IMAGES]宣言でも原図の構図に勝つことをSP2 c005で2回実測）。
+    if use_board:
+        # ボード＝「同一ロケーションの意匠辞書」。許可と禁止を明示的に分ける。
+        # 権限を広く渡す（room's structure / furniture 等）と、原図の曖昧部分を
+        # ボードで補完する「再構成モード」に入り、構図が乗っ取られる（SP2 c005実測）。
         prompt += (
-            "\n\n[IMAGES] Two images are attached. IMAGE 1 is the rough layout (genzu) for THIS cut:"
-            " its composition, camera angle, framing and content are the ground truth — redraw exactly"
-            " this view and nothing else. IMAGE 2 shows magnified DETAIL FRAGMENTS cropped from the"
-            " art-setting board of the same location: use them ONLY as the authority for drawing touch,"
-            " line density, materials and mood. They are fragments, not a composition — the full view of"
-            " this shot is defined solely by IMAGE 1.")
+            "\n\n[IMAGES] Two images are attached."
+            " IMAGE 1 (the rough layout / genzu) is the sole authority for this shot:"
+            " composition, camera, framing, and WHAT IS VISIBLE. Everything you draw must be a"
+            " cleaned-up version of something IMAGE 1 already shows."
+            " IMAGE 2 (an art board of the same location) is a DESIGN DICTIONARY only — it tells"
+            " you how the things IMAGE 1 shows are designed."
+            " ALLOWED uses of IMAGE 2: reading the design, construction and materials of elements"
+            " that already appear in IMAGE 1; judging an appropriate level of line density."
+            " FORBIDDEN uses of IMAGE 2: taking its composition, camera or framing; adding or"
+            " completing furniture, fixtures, openings, walls or any part of the room that IMAGE 1"
+            " does not show; inferring the room layout beyond IMAGE 1's view."
+            " IMAGE 2 can never add content to this shot — it can only inform how IMAGE 1's"
+            " existing content is drawn.")
         if prompt_jp:
             prompt_jp += (
-                "\n\n[画像] 1枚目=このカットの原図（構図・画角・内容の正。この画角だけを描き直す）。"
-                "2枚目=同じ場所の美術ボードの拡大ディテール断片（タッチ・線密度・材質・空気感の根拠として"
-                "のみ使う。断片であり構図ではない。このカットの画角は1枚目だけが定義する）。")
-    elif use_board:
-        # 全景オプトイン時の役割宣言
-        prompt += (
-            "\n\n[IMAGES] Two images are attached. IMAGE 1 is the rough layout (genzu) for THIS cut:"
-            " its composition, camera angle, framing and content are the ground truth — redraw exactly"
-            " this view and nothing else. IMAGE 2 is an art-setting board of the same location,"
-            " for reference ONLY: use it to understand the room's structure, furniture, materials and"
-            " the intended line density, but do NOT copy its camera, framing or composition, and do NOT"
-            " add elements from it that lie outside IMAGE 1's view. If the two disagree about what is"
-            " visible in this shot, IMAGE 1 wins.")
-        if prompt_jp:
-            prompt_jp += (
-                "\n\n[画像] 1枚目=このカットの原図（構図・画角・内容の正。この画角だけを描き直す）。"
-                "2枚目=同じ場所の美術ボード（空間構造・什器・線の密度の参考のみ。"
-                "構図や画角は写さない。1枚目の画角外の要素は足さない。食い違う時は1枚目が正）。")
+                "\n\n[画像] 1枚目=原図。このカットの唯一の正: 構図・カメラ・画角・「何が写っているか」。"
+                "描いてよいのは1枚目に既に写っているものの清書だけ。"
+                "2枚目=同じ場所の美術ボード＝**意匠辞書**。1枚目に写っているものが"
+                "どうデザインされているかを知るためだけに使う。"
+                "許可: 1枚目に既に在る要素（壁・窓・扉・机・天井等）の意匠・作り・材質の解釈／線密度の目安。"
+                "禁止: 構図・カメラ・画角を取ること／1枚目に無い家具・什器・開口部・壁・部屋の続きの追加や補完／"
+                "1枚目の画角の外のレイアウト推定。"
+                "2枚目がこのカットに内容を足すことは決して無い — 足せるのは「描き方」の情報だけ。")
     with open(os.path.join(out_dir, "prompt.en.txt"), "w", encoding="utf-8") as f:
         f.write(prompt)
     if prompt_jp:
@@ -364,15 +345,14 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
             f.write(prompt_jp)
     print(f"    layer[{linfo['strategy']}]={linfo['layers']}  "
           f"crop={'no' if header_top is None else header_top}  "
-          f"board_img={board_mode if use_board else 'no'}  "
+          f"board_img={'yes' if use_board else 'no'}  "
           f"input {prep.canvas_w}x{prep.canvas_h} ({prep.aspect_ratio})")
     # 2. 生成（Higgsfield CLI）。gpt_image_2 の --image はパス可（MODELS.md）。
     gen_raw = os.path.join(out_dir, "gen_raw.png")
     uuid = _hf_upload(inp, dry)
     extra = []
     if use_board:
-        board_ref = (_prep_board(board_path, os.path.join(out_dir, "board_ref.png"),
-                                 mode=board_mode)
+        board_ref = (_prep_board(board_path, os.path.join(out_dir, "board_ref.png"))
                      if not dry else board_path)
         extra.append(_hf_upload(board_ref, dry))
     url = _hf_generate(uuid, prompt, prep.aspect_ratio, resolution, quality, model,

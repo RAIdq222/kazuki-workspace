@@ -445,10 +445,9 @@ def _run_generate(uid):
     st = STATE.get(uid, {})
     prev_status = st.get("status", "todo")   # 失敗時に戻す（「生成中」で固まらせない）
     board = st.get("board", u["board"])
-    # ボードは常に参照する（画風・タッチの根拠）。既定は「ディテール断片」モード＝
-    # 構図の乗っ取りが起きない形で渡す。全景で渡すのはカードで明示ONの時だけ。
+    # ボードは常に全景で参照する（画風・意匠・「どの角度から見た場所か」の根拠）。
+    # 構図の乗っ取りはプロンプトの意匠辞書ルール（batch側 [IMAGES]）で抑える。
     board_path = _board_png(proj, board) if (proj.get("boards_dir") and board) else None
-    board_mode = "full" if st.get("use_board_ref") else "patches"
     # リテイク指示（端的な修正メモ）があれば、最終プロンプト末尾へ最優先の修正指示として足す。
     note = (st.get("retake_note") or "").strip()
     base_prompt = st.get("prompt") or None
@@ -468,7 +467,7 @@ def _run_generate(uid):
                           genzu_layers=st.get("layers_show"),
                           cut_num=(u["cuts"][0] if u.get("cuts") else ""),
                           cut_info_map=(proj.get("cut_info_map") or CFG.get("cut_info_map")),
-                          qc_vision=CFG.get("qc_vision", False), board_mode=board_mode)
+                          qc_vision=CFG.get("qc_vision", False))
         n = _snapshot_take(uid)   # 上書きせず takes/take_NN/ に保存（S5・前版を失わない）
         with STATE_LOCK:
             s = STATE.setdefault(uid, {})
@@ -536,7 +535,6 @@ def create_app():
                 "work": proj["work"], "ep": proj["ep"],
                 "has_psd": u["filename"] in proj["psd_idx"],
                 "status": st.get("status", "todo"), "running": running, "gen_error": gen_error,
-                "use_board_ref": bool(st.get("use_board_ref")),
                 "genzu_source": st.get("genzu_source", "base"),
                 "has_result": _result_path(uid) is not None,
                 "qc_verdict": q.get("verdict"), "qc_reasons": q.get("reasons", []),
@@ -634,14 +632,6 @@ def create_app():
     @app.post("/api/unit/<uid>/board")
     def api_board(uid):
         _update_state(uid, board=(request.json or {}).get("board", ""))
-        return jsonify({"ok": True})
-
-    @app.post("/api/unit/<uid>/board_ref")
-    def api_board_ref(uid):
-        # ボード参照のモード。OFF(既定)=ディテール断片（タッチ・密度だけ運ぶ）/
-        # ON=全景（完成画は原図より信号が強く、[IMAGES]役割宣言でも構図を
-        # 乗っ取ることがある: SP2 c005実測。全景は明示オプトイン）。
-        _update_state(uid, use_board_ref=bool((request.json or {}).get("value")))
         return jsonify({"ok": True})
 
     @app.post("/api/unit/<uid>/retake_note")
@@ -840,7 +830,6 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
  .takes{font-size:11px;color:#666;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
  .takechip{font-size:11px;padding:2px 7px;border:1px solid #ccc;border-radius:10px;background:#fff;cursor:pointer}
  .takechip.on{background:#1a5fb4;color:#fff;border-color:#1a5fb4}
- .bref{display:flex;align-items:center;gap:3px;font-size:11px;color:#57606a;white-space:nowrap}
  .generr{color:#d1242f;background:#ffefef;border:1px solid #ffc9c9;border-radius:6px;
    padding:4px 8px;font-size:12px;margin:4px 0;word-break:break-all}
  .prog{height:6px;background:#ffe6a8;border-radius:4px;overflow:hidden;display:none}
@@ -1101,9 +1090,7 @@ function card(u){
    ${u.gen_error?`<div class="generr" title="${esc(u.gen_error)}">⚠ 生成失敗: ${esc(u.gen_error.slice(0,120))}</div>`:''}
    <div class="prog ${RUN.has(u.id)?'on':''}" id="prog_${u.id}"><i></i></div>
    <div class="bar"><select style="flex:1;width:auto" onchange="setBoard('${u.id}',this.value)">${opts}</select>
-     <button onclick="showBoard('${u.id}')" onmousemove="boardHover('${u.id}',event)" onmouseleave="boardOut()" title="クリックで拡大／ホバーでプレビュー">ボード表示</button>
-     <label class="bref" title="ボードは常に参照される。OFF(既定)=拡大断片でタッチ・密度だけ渡す／ON=全景を渡す（構図が引っ張られるリスクあり）">
-       <input type="checkbox" ${u.use_board_ref?'checked':''} onchange="setBoardRef('${u.id}',this.checked)">全景</label></div>
+     <button onclick="showBoard('${u.id}')" onmousemove="boardHover('${u.id}',event)" onmouseleave="boardOut()" title="クリックで拡大／ホバーでプレビュー">ボード表示</button></div>
    <details><summary>プロンプト${u.prompt_edited?'（編集済）':''}</summary>
      <textarea id="pr_${u.id}" placeholder="（自動生成。編集して保存で上書き）"></textarea>
      <div class="bar"><button onclick="savePrompt('${u.id}')">保存</button>
@@ -1148,7 +1135,6 @@ async function loadPrompt(id){const d=await (await fetch('/api/unit/'+id)).json(
 async function savePrompt(id){const t=document.getElementById('pr_'+id); await post('/api/unit/'+id+'/prompt',{prompt:t?t.value:''}); slog(id,'保存しました');}
 async function resetPrompt(id){await post('/api/unit/'+id+'/prompt',{prompt:''}); const t=document.getElementById('pr_'+id); if(t)t.value=''; slog(id,'自動に戻しました');}
 async function setBoard(id,v){await post('/api/unit/'+id+'/board',{board:v}); slog(id,'ボード保存');}
-async function setBoardRef(id,v){await post('/api/unit/'+id+'/board_ref',{value:v}); slog(id,v?'ボード参照: 全景':'ボード参照: 断片(既定)');}
 async function accept(id,v){await post('/api/unit/'+id+'/accept',{value:v}); const u=unit(id); if(u)u.status=v; render();}
 function slog(id,m){const l=document.getElementById('log_'+id); if(l){l.style.display='block';l.textContent=m;}}
 async function saveNote(id){const e=document.getElementById('rn_'+id);

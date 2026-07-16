@@ -32,6 +32,15 @@ from genzu_fix.prompt import CUT_INFO_FIELDS  # スキーマは prompt 側を正
 
 _CONF_ORDER = {"low": 0, "medium": 1, "high": 2}
 
+# situation に採用しないト書き＝キャラの芝居（人名・集団語を含む行）。
+# 背景線画のタスクには「誰が何をしているか」はノイズで、しかも
+# 「シーン設定に合わせて補完してよい」という誤読の燃料になる。
+_CHARACTER_WORDS = (
+    "佐々木", "二人静", "阿久津", "星崎", "お隣さん", "アバドン", "エリエル",
+    "ピーちゃん", "加藤", "加瀬", "マスター", "彼氏", "母", "女将", "野次馬",
+    "一同", "2人", "3人", "二人", "みんな", "こちらを見",
+)
+
 
 def _load_ranges(path: str) -> list[dict]:
     with open(path, encoding="utf-8-sig") as f:
@@ -80,6 +89,8 @@ def main(argv=None) -> int:
             situation = _clean(row.get("action") or "") if conf_ok else ""
             if not conf_ok:
                 dropped_conf += 1
+            if situation and any(wd in situation for wd in _CHARACTER_WORDS):
+                situation = ""  # キャラ芝居のト書きはプロンプトに流さない（環境描写のみ通す）
             seen[cut] = {
                 "cut": cut,
                 "scene_key": (rng or {}).get("scene_key", ""),

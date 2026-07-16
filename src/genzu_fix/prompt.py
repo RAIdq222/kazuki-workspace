@@ -40,16 +40,21 @@ GLOBAL_EN = (
     "the placement and front-to-back ordering of the major structures and natural elements; "
     "and the positions where characters stand, as spatial constraints. Do not zoom, crop, "
     "pan, re-center or re-stage what the layout shows.\n"
+    "WHAT EXISTS: the layout alone defines what is visible in this shot. If the layout "
+    "does not show it, it does not exist here — do not complete the rest of the room, and "
+    "do not add furniture, openings, walls or scenery of your own.\n"
     "CORRECT (fix what is wrong): resolve perspective so edges converge cleanly to the "
     "intended vanishing points; straighten weak or implausible structure and proportion; "
-    "make architecture and props era- and culture-correct for the setting below. Keep the "
-    "intended camera, but fix the geometry under it.\n"
+    "correct the shapes of what is drawn so they read right for the era and culture of the "
+    "setting below — by fixing existing forms, never by adding new ones. Keep the intended "
+    "camera, but fix the geometry under it.\n"
     "ELEVATE (raise the quality): render like a master background artist's careful "
     "hand-drawn pencil clean-up — line weight varied (heavier in the foreground, finer in "
     "the distance) with natural entry/exit tapering, texture suggested by light broken "
-    "strokes. Modestly add structurally- and stylistically-correct detail so it reads as a "
-    "finished drawing. Do NOT produce uniform vector outlines or a coloring-book look, and "
-    "do not glamorize or upgrade any element beyond its role.\n"
+    "strokes. Refine and articulate ONLY the forms the layout already shows: texture and "
+    "construction detail may be added on existing surfaces, but never as new objects. Do "
+    "NOT produce uniform vector outlines or a coloring-book look, and do not glamorize or "
+    "upgrade any element beyond its role.\n"
     "COLOR: monochrome output only — pure black ink lines on white, no grey shading or "
     "solid fills. Colored regions in the input are placeholder fills: read them as shapes "
     "and draw them as plain line work, never as color.\n"
@@ -69,10 +74,14 @@ GLOBAL_JP = (
     "これは「直して品位を引き上げる」クリーンアップであり、字義通りのトレースでも、自由な描き直しでもない。\n"
     "保持（指示として守る）: 構図・カメラアングル・アイレベル・画角／主要な建物と自然物の配置と前後関係／"
     "キャラの立ち位置（空間的な制約として）。原図が写しているものをズーム・トリミング・パン・再センタリング・再演出しない。\n"
+    "存在の定義: このカットに何が写っているかは原図だけが定義する。原図に無いものはこのカットには存在しない — "
+    "部屋の続きを補完しない。家具・開口部・壁・景物を自分で足さない。\n"
     "修正（狂いを直す）: エッジが意図した消失点へクリーンに収束するようパースを整える。弱い/不自然な構造と比率を正す。"
-    "建築・調度を下記の時代・文化に正しく合わせる。意図したカメラは保ったまま、その下の幾何を直す。\n"
+    "描かれているものの形を下記の時代・文化に照らして正す — 既存の形の修正であり、新しい物の追加ではない。"
+    "意図したカメラは保ったまま、その下の幾何を直す。\n"
     "品位向上: 一流の背景美術が丁寧に手描き鉛筆で清書したように描く — 線幅変調（近景は太く・遠景は繊細に）と"
-    "自然な入り抜き、質感は軽い擦れ/破線で示唆。様式的・構造的に正しいディテールを控えめに足し、仕上がった絵として読めるようにする。\n"
+    "自然な入り抜き、質感は軽い擦れ/破線で示唆。磨き込むのは**原図に既に写っている形だけ**: 既存の面への質感・"
+    "構造ディテールの追い込みは可、新しい物としての追加は不可。\n"
     "  均一なベクター輪郭や塗り絵調にしない。どの要素も役割以上に格上げ・豪華化しない。\n"
     "色: 出力は白黒のみ。白地に黒のインク線、グレーの陰影やベタ塗りは禁止。入力中の色面はプレースホルダの塗りで、"
     "形として読み取り、色ではなく素の線画として描く。\n"
@@ -348,8 +357,13 @@ def assemble(info: CutInfo, profile: SceneProfile | None) -> Prompt:
         jp_blocks.append(profile.block_jp())
     elif info.place:
         # プロファイル未整備でも place だけは渡す（最低限の B 層）
-        en_blocks.append(f"[SCENE] Setting: {info.place} — {info.era or DEFAULT_ERA_EN}.")
-        jp_blocks.append(f"[シーン] 舞台: {info.place}（{info.era or DEFAULT_ERA_JP}）。")
+        en_blocks.append(
+            f"[SCENE] Setting: {info.place} — {info.era or DEFAULT_ERA_EN}. "
+            "This names the location for context only — it does not license adding "
+            "anything the layout does not show.")
+        jp_blocks.append(
+            f"[シーン] 舞台: {info.place}（{info.era or DEFAULT_ERA_JP}）。"
+            "これは場所の文脈情報であり、原図に無いものを描く根拠にはならない。")
     c_en, c_jp = _cut_block(info)
     if c_en:
         en_blocks.append(c_en)
