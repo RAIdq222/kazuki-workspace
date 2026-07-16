@@ -109,7 +109,7 @@ def build_shell():
         cyl(f"dlg_{x:.1f}_{y:.1f}", 0.05, 0.015, (x, y, WALL_H - 0.012), dl, verts=12)
 
 
-def window_with_blinds(idx, cy, w=1.9, z0=0.9, z1=2.5):
+def window_with_blinds(idx, cy, w=1.7, z0=0.9, z1=2.5):
     """西壁の窓: 枠 + 縦ブラインド + 背後の外光."""
     trim = mat_wood("wood_trim", PAL["wood_trim"], rough=0.55, scale=2.0)
     glow = mat("glow_win", PAL["glow_win"], rough=0.9, emit=2.6)
@@ -122,7 +122,7 @@ def window_with_blinds(idx, cy, w=1.9, z0=0.9, z1=2.5):
     for dy in (-w / 2 - 0.045, w / 2 + 0.045):
         box(f"win{idx}_frame_{dy:.2f}", 0.10, 0.07, h + 0.14, (0.05, cy + dy, zc), trim)
     # 外光面
-    plane(f"win{idx}_glow", w, h, (0.005, cy, zc), glow, rot=(0, math.pi / 2, 0))
+    plane(f"win{idx}_glow", h - 0.08, w - 0.10, (0.02, cy, zc), glow, rot=(0, math.pi / 2, 0))
     # 縦ブラインド (少しずつ回転をばらす)
     n = int(w / 0.085)
     for i in range(n + 1):
@@ -252,8 +252,8 @@ def build_lights():
 def build_scene():
     reset_scene()
     build_shell()
-    window_with_blinds(0, 2.7)
-    window_with_blinds(1, 4.8)
+    window_with_blinds(0, 2.2)
+    window_with_blinds(1, 4.6)
     build_north_wall()
     build_screen()
     build_table_chairs()
