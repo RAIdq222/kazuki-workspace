@@ -539,3 +539,6 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
+
+// デバッグ/検証用ハンドル (Playwrightのヘッドレス確認でカメラを直接動かす)
+window.__V = { camera, controls, renderFrame };

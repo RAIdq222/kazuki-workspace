@@ -53,6 +53,9 @@ python3 src/stage3d/kitchen_stage.py -- --views A,B --samples 96 \
 
 - `primitive_cube_add(size=1)` は一辺1 → `scale` にはそのまま寸法を入れる
   (半分にすると全部品が½サイズになり、床に隙間・家具が浮く)。
+- **「ヨー+後傾」の回転は `rot=(tilt, 0, yaw)` と書く** (BlenderのXYZオイラーは
+  Rz@Ry@Rx なのでこれが正しい合成)。`(tilt·cosθ, tilt·sinθ, θ)` と成分分解すると
+  ±90°向きのオブジェクトが横に歪む (会議室の椅子で発生 → ヘッドレストが傾いて見えた)。
 - bpy 5.0 で `use_nodes` に DeprecationWarning が出るが動く(Blender 6.0 で削除予定)。
 
 ## 6. 単一HTMLビューワー (2026-07-14 追加)

@@ -250,18 +250,19 @@ def build_table_chairs():
         bevel(o, 0.03, 2)
         # 背もたれ (後ろへ8°傾く・面取り)
         bx, by = rot_off(0, -0.245)
+        # XYZオイラーは Rz(ang)@Rx(tilt) = ヨー+ローカルX軸の後傾。成分分解すると横に歪む
         o = box(f"{name}_back", 0.45, 0.075, 0.60, (bx, by, 0.80), lm,
-                rot=(math.radians(-8) * ca, math.radians(-8) * sa, ang))
+                rot=(math.radians(-8), 0, ang))
         bevel(o, 0.028, 2)
         # ヘッドレスト
         hx, hy = rot_off(0, -0.30)
         o = box(f"{name}_hrest", 0.30, 0.075, 0.15, (hx, hy, 1.14), lm,
-                rot=(math.radians(-8) * ca, math.radians(-8) * sa, ang))
+                rot=(math.radians(-8), 0, ang))
         bevel(o, 0.03, 2)
         # ランバー接続
         cx2, cy2 = rot_off(0, -0.26)
         box(f"{name}_spine", 0.08, 0.04, 0.30, (cx2, cy2, 0.60), mm,
-            rot=(math.radians(-8) * ca, math.radians(-8) * sa, ang))
+            rot=(math.radians(-8), 0, ang))
         # 肘掛け (支柱+パッド)
         for sgn in (-1, 1):
             ax, ay = rot_off(sgn * 0.27, 0.03)
