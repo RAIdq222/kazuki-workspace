@@ -31,10 +31,10 @@ PAL = {
     "wood_wall":  (0.110, 0.085, 0.055),   # 暗い木目パネル
     "wood_trim":  (0.060, 0.048, 0.034),
     "wood_table": (0.300, 0.190, 0.100),   # テーブル天板
-    "carpet":     (0.180, 0.195, 0.200),   # 青灰のタイルカーペット
-    "chair":      (0.055, 0.085, 0.085),   # 青緑の黒レザー
+    "carpet":     (0.130, 0.145, 0.150),   # 青灰のタイルカーペット
+    "chair":      (0.035, 0.055, 0.055),   # 青緑の黒レザー
     "metal":      (0.250, 0.260, 0.270),
-    "ceiling":    (0.085, 0.095, 0.100),
+    "ceiling":    (0.050, 0.058, 0.064),
     "blind":      (0.520, 0.560, 0.600),   # ブラインド(透過光で明るく見える)
     "glow_win":   (0.700, 0.760, 0.850),   # 窓の外光 (青白)
     "glow_scr":   (0.780, 0.850, 0.820),   # スクリーン (緑白)
@@ -54,8 +54,8 @@ def build_shell():
     ck = nt.nodes.new("ShaderNodeTexChecker")
     ck.inputs["Scale"].default_value = 12.0  # 0.5mタイル相当
     c = PAL["carpet"]
-    ck.inputs["Color1"].default_value = (*[v * 0.92 for v in c], 1)
-    ck.inputs["Color2"].default_value = (*[v * 1.08 for v in c], 1)
+    ck.inputs["Color1"].default_value = (*[v * 0.95 for v in c], 1)
+    ck.inputs["Color2"].default_value = (*[v * 1.05 for v in c], 1)
     noise = nt.nodes.new("ShaderNodeTexNoise")
     noise.inputs["Scale"].default_value = 250.0
     bump = nt.nodes.new("ShaderNodeBump")
@@ -68,8 +68,8 @@ def build_shell():
     plane("floor", ROOM_X, ROOM_Y, (ROOM_X / 2, ROOM_Y / 2, 0), m)
 
     # 壁: 暗い木目パネル (縦木目) + 幅木
-    wm = mat_wood("wood_wall", PAL["wood_wall"], rough=0.5, scale=1.8, along="X",
-                  strength=0.25)
+    wm = mat_wood("wood_wall", PAL["wood_wall"], rough=0.5, scale=1.0, along="X",
+                  strength=0.10)
     trim = mat_wood("wood_trim", PAL["wood_trim"], rough=0.55, scale=2.0)
     for nm, sx, sy, loc in [
         ("wall_W", 0.06, ROOM_Y, (-0.03, ROOM_Y / 2, 0)),
@@ -137,7 +137,7 @@ def window_with_blinds(idx, cy, w=1.9, z0=0.9, z1=2.5):
 def build_north_wall():
     """北壁: 収納扉の列 + 両開きドア(欄間付き)."""
     trim = mat_wood("wood_trim", PAL["wood_trim"], rough=0.55, scale=2.0)
-    doorw = mat_wood("wood_door", (0.130, 0.100, 0.062), rough=0.5, scale=2.4, along="X")
+    doorw = mat_wood("wood_door", (0.130, 0.100, 0.062), rough=0.5, scale=1.2, along="X", strength=0.10)
     metal = mat("metal", PAL["metal"], rough=0.3)
     # 収納扉 4枚 (x 0.5..3.9)
     for i in range(4):
@@ -163,7 +163,7 @@ def build_north_wall():
     box("door_top", dx1 - dx0 + 0.24, 0.09, 0.10, (dc, ROOM_Y - 0.045, 2.70), trim)
     # 欄間ガラス (ほんのり明るい)
     plane("transom", dx1 - dx0 - 0.1, 0.38, (dc, ROOM_Y - 0.055, 2.43),
-          mat("transom_glass", (0.45, 0.42, 0.35), rough=0.3, emit=0.5),
+          mat("transom_glass", (0.30, 0.28, 0.24), rough=0.3, emit=0.15),
           rot=(math.pi / 2, 0, 0))
 
 
@@ -172,15 +172,15 @@ def build_screen():
     box("scr_frame", 0.06, 2.35, 1.65, (ROOM_X - 0.03, 3.1, 1.95),
         mat("scr_frame", (0.03, 0.03, 0.03), rough=0.4))
     plane("scr_face", 2.2, 1.5, (ROOM_X - 0.075, 3.1, 1.95),
-          mat("glow_scr", PAL["glow_scr"], rough=0.6, emit=3.2),
+          mat("glow_scr", PAL["glow_scr"], rough=0.6, emit=1.5),
           rot=(math.pi / 2, 0, -math.pi / 2))
     area_light("scr_light", (ROOM_X - 0.25, 3.1, 1.95), (0, math.radians(-90), 0),
-               2.0, 40, (0.75, 0.85, 0.80), size_y=1.4)
+               2.0, 16, (0.75, 0.85, 0.80), size_y=1.4)
 
 
 def build_table_chairs():
     """楕円会議テーブル (配線スロット付き) + オフィスチェア."""
-    tm = mat_wood("wood_table", PAL["wood_table"], rough=0.35, scale=3.0, along="Y")
+    tm = mat_wood("wood_table", PAL["wood_table"], rough=0.35, scale=2.0, along="Y", strength=0.14)
     dark = mat("slot_dark", (0.030, 0.028, 0.026), rough=0.5)
     metal = mat("metal", PAL["metal"], rough=0.3)
     cx, cy = 3.0, 3.3
@@ -211,7 +211,7 @@ def build_table_chairs():
         box(f"{name}_back", 0.50, 0.09, 0.62, (bx, by, 0.85), lm,
             rot=(math.radians(-7) * 0, 0, ang))
         hx, hy = rot_off(0, -0.24)
-        box(f"{name}_hrest", 0.34, 0.10, 0.16, (hx, hy, 1.22), lm, rot=(0, 0, ang))
+        box(f"{name}_hrest", 0.30, 0.09, 0.12, (hx, hy, 1.18), lm, rot=(0, 0, ang))
         for s in (-1, 1):
             ax, ay = rot_off(s * 0.29, 0.02)
             box(f"{name}_arm{s}", 0.06, 0.30, 0.05, (ax, ay, 0.66), lm, rot=(0, 0, ang))
@@ -239,14 +239,14 @@ def build_lights():
     for x, y in [(0.65, 3.0), (0.65, 4.8), (ROOM_X - 0.65, 3.0), (ROOM_X - 0.65, 4.8),
                  (2.5, 6.6), (4.3, 6.6)]:
         d = bpy.data.lights.new(f"pl_{x:.0f}_{y:.0f}", type="POINT")
-        d.energy = 6
-        d.color = (0.75, 0.78, 0.75)
+        d.energy = 2.6
+        d.color = (0.72, 0.75, 0.72)
         d.shadow_soft_size = 0.1
         o = bpy.data.objects.new(f"pl_{x:.0f}_{y:.0f}", d)
         o.location = (x, y, WALL_H - 0.15)
         bpy.context.collection.objects.link(o)
     # 全体をほんの少し持ち上げる青緑のフィル
-    area_light("fill", (3.3, 3.5, WALL_H - 0.1), (0, 0, 0), 3.0, 26, (0.55, 0.68, 0.66))
+    area_light("fill", (3.3, 3.5, WALL_H - 0.1), (0, 0, 0), 3.0, 9, (0.50, 0.63, 0.62))
 
 
 def build_scene():
@@ -260,7 +260,7 @@ def build_scene():
     build_lights()
     cams = {
         # ボード再現 (南西寄りから北東へ)
-        "A": add_camera("cam_A", (1.15, 0.35, 1.45), (5.6, 6.6, 1.05), lens=21),
+        "A": add_camera("cam_A", (2.15, 0.35, 1.5), (4.3, 6.9, 0.95), lens=22),
         # 逆 (ドア側から)
         "B": add_camera("cam_B", (5.2, 6.5, 1.5), (1.2, 0.6, 1.0), lens=23),
         # スクリーン側から窓へ
@@ -273,4 +273,4 @@ def build_scene():
 
 if __name__ == "__main__":
     cams = build_scene()
-    render_cli(cams, default_res="1280x800", view_transform="AgX", exposure=0.9)
+    render_cli(cams, default_res="1280x800", view_transform="AgX", exposure=0.75)
