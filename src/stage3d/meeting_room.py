@@ -219,7 +219,7 @@ def build_table_chairs():
     # 天板: 8角形を丸めた楕円。長軸は奥行き(Y)方向 = ボードの向き
     cyl("table_top", 1.0, 0.05, (cx, cy, 0.725), tm, verts=8)
     o = bpy.data.objects["table_top"]
-    o.scale = (1.00, 1.70, 1.0)  # 長軸=奥行き。回転なし(スロット・脚と軸を揃える)
+    o.scale = (1.10, 1.80, 1.0)  # 長軸=奥行き。回転なし(スロット・脚と軸を揃える)
     # 中央の配線スロット (長軸に沿ってY方向)
     box("slot", 0.24, 1.5, 0.02, (cx, cy, 0.755), dark)
     # 脚 (X方向に渡す門型 ×3。天板短径±1.0の内側に収める)
@@ -237,32 +237,32 @@ def build_table_chairs():
             return (px + dx * ca - dy * sa, py + dx * sa + dy * ca)
         # 座面・背もたれ・肘掛け
         x, y = rot_off(0, 0)
-        box(f"{name}_seat", 0.50, 0.48, 0.10, (x, y, 0.47), lm, rot=(0, 0, ang))
+        box(f"{name}_seat", 0.46, 0.44, 0.09, (x, y, 0.46), lm, rot=(0, 0, ang))
         bx, by = rot_off(0, -0.235)
-        box(f"{name}_back", 0.50, 0.09, 0.62, (bx, by, 0.85), lm,
+        box(f"{name}_back", 0.46, 0.08, 0.58, (bx, by, 0.82), lm,
             rot=(math.radians(-7) * 0, 0, ang))
         hx, hy = rot_off(0, -0.24)
-        box(f"{name}_hrest", 0.30, 0.09, 0.12, (hx, hy, 1.18), lm, rot=(0, 0, ang))
+        box(f"{name}_hrest", 0.26, 0.08, 0.10, (hx, hy, 1.12), lm, rot=(0, 0, ang))
         for s in (-1, 1):
-            ax, ay = rot_off(s * 0.29, 0.02)
-            box(f"{name}_arm{s}", 0.06, 0.30, 0.05, (ax, ay, 0.66), lm, rot=(0, 0, ang))
+            ax, ay = rot_off(s * 0.26, 0.02)
+            box(f"{name}_arm{s}", 0.055, 0.27, 0.045, (ax, ay, 0.64), lm, rot=(0, 0, ang))
             box(f"{name}_armp{s}", 0.05, 0.05, 0.16, (ax, ay + 0.1 * 0, 0.56), mm,
                 rot=(0, 0, ang))
         # 支柱と5本脚
         cyl(f"{name}_post", 0.03, 0.36, (x, y, 0.24), mm, verts=10)
         for k in range(5):
             a2 = ang + k * 2 * math.pi / 5
-            lx = x + math.cos(a2) * 0.16
-            ly = y + math.sin(a2) * 0.16
-            box(f"{name}_cast{k}", 0.30, 0.05, 0.04,
+            lx = x + math.cos(a2) * 0.14
+            ly = y + math.sin(a2) * 0.14
+            box(f"{name}_cast{k}", 0.26, 0.05, 0.04,
                 (lx, ly, 0.045), mm, rot=(0, 0, a2))
     # 配置: 左側2脚(窓側)・右手前1脚・右奥1脚・奥1脚
-    # 平面図どおり8脚: 長辺3+3 + 両端1+1
-    for i, yy in enumerate((2.15, 3.3, 4.45)):
-        chair(f"chW{i}", 1.52, yy, math.radians(-90 + R.uniform(-8, 8)))
-        chair(f"chE{i}", 4.48, yy, math.radians(90 + R.uniform(-8, 8)))
-    chair("chN", 3.0, 5.5, math.radians(0 + 3))
-    chair("chS", 3.0, 1.1, math.radians(180 - 4))
+    # 平面図どおり8脚: 長辺3+3 + 両端1+1。座面前端を机の縁に少し差し込む
+    for i, yy in enumerate((2.3, 3.3, 4.3)):
+        chair(f"chW{i}", 1.66, yy, math.radians(-90))
+        chair(f"chE{i}", 4.34, yy, math.radians(90))
+    chair("chN", 3.0, 5.36, 0.0)
+    chair("chS", 3.0, 1.24, math.radians(180))
 
 
 def build_lights():
