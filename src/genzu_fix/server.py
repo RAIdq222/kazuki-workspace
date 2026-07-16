@@ -536,6 +536,7 @@ def create_app():
                 "has_psd": u["filename"] in proj["psd_idx"],
                 "status": st.get("status", "todo"), "running": running, "gen_error": gen_error,
                 "genzu_source": st.get("genzu_source", "base"),
+                "genzu_rev": st.get("genzu_rev", 0),
                 "has_result": _result_path(uid) is not None,
                 "qc_verdict": q.get("verdict"), "qc_reasons": q.get("reasons", []),
                 "takes": st.get("takes", []), "adopted": st.get("adopted"),
@@ -666,7 +667,9 @@ def create_app():
             return jsonify({"error": "not found"}), 404
         b = request.json or {}
         source = b.get("source", "base")
-        kw = {"genzu_source": source}
+        # genzu_rev: 取り直しごとに上げ、カードのサムネイルURLを変えてブラウザキャッシュを外す
+        kw = {"genzu_source": source,
+              "genzu_rev": int(STATE.get(uid, {}).get("genzu_rev", 0)) + 1}
         if source == "override":
             kw["layers_show"] = list(b.get("layers") or [])
         _update_state(uid, **kw)
@@ -1083,7 +1086,7 @@ function card(u){
      ${u.has_psd?'':'<span class="muted">PSD無</span>'}<span class="scene">${esc(u.scene)}</span></div>
    <div class="thumbs">
      <figure><figcaption>原図[${u.genzu_source}] ${u.has_psd?`<a href="#" onclick="openPsd('${u.id}');return false">PSDを開く</a> · <a href="#" onclick="openGenzu('${u.id}');return false">拡大/取り直し</a>`:''}</figcaption>
-       ${u.has_psd?`<img loading="lazy" src="/img/${u.id}/genzu" onclick="openGenzu('${u.id}')" onerror="this.outerHTML='<div class=ph>原図なし</div>'">`:'<div class="ph">PSD未検出</div>'}</figure>
+       ${u.has_psd?`<img loading="lazy" src="/img/${u.id}/genzu?v=${u.genzu_source}${u.genzu_rev||0}" onclick="openGenzu('${u.id}')" onerror="this.outerHTML='<div class=ph>原図なし</div>'">`:'<div class="ph">PSD未検出</div>'}</figure>
      <figure><figcaption>生成結果 ${u.has_result?`<a href="#" onclick="openCmp('${u.id}');return false">前後比較</a>`:''}</figcaption>${u.has_result?`<img loading="lazy" src="/img/${u.id}/result?t=${t}" onclick="openCmp('${u.id}')">`:'<div class="ph">未生成</div>'}</figure>
    </div>
    ${takeStrip(u)}
