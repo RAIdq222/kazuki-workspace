@@ -110,8 +110,21 @@ def _ask(key: str, base_im, vis_im, context: str, place: str, time_: str,
         "https://api.anthropic.com/v1/messages", data=json.dumps(body).encode(),
         headers={"content-type": "application/json", "x-api-key": key,
                  "anthropic-version": "2023-06-01"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        data = json.loads(r.read())
+    # 一時エラー(429/500/529=過負荷)は待って再試行（実測: --limit 5 の試走で529が頻発）
+    data = None
+    for attempt in range(4):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                data = json.loads(r.read())
+            break
+        except urllib.error.HTTPError as e:
+            if attempt < 3 and e.code in (429, 500, 502, 503, 529):
+                wait = 20 * (attempt + 1)
+                print(f"    [retry] HTTP {e.code} → {wait}s待って再試行 {attempt + 1}/3")
+                import time as _time
+                _time.sleep(wait)
+                continue
+            raise
     text = "".join(b.get("text", "") for b in data.get("content", []))
     m = re.search(r"\{.*\}", text, re.S)
     return json.loads(m.group(0)) if m else {"staging": "", "confidence": "low",
