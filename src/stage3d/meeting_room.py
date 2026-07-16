@@ -90,7 +90,8 @@ def build_shell():
     # パネルの目地 (西壁・東壁・北壁に細い縦トリム)
     for y in [0.9 + i * 0.75 for i in range(9)]:
         box(f"seamW_{y:.1f}", 0.02, 0.02, WALL_H, (0.055, y, WALL_H / 2), trim)
-        box(f"seamE_{y:.1f}", 0.02, 0.02, WALL_H, (ROOM_X - 0.055, y, WALL_H / 2), trim)
+        if not (2.1 < y < 4.9):  # モニター背面との干渉を避ける
+            box(f"seamE_{y:.1f}", 0.02, 0.02, WALL_H, (ROOM_X - 0.055, y, WALL_H / 2), trim)
 
     # 天井: 外周フラット + 中央の折り上げ(一段高い)
     cm = mat("ceiling", PAL["ceiling"], rough=0.9)
@@ -232,37 +233,62 @@ def build_table_chairs():
     def chair(name, px, py, ang):
         lm = mat("chair", PAL["chair"], rough=0.55)
         mm = mat("metal", PAL["metal"], rough=0.3)
+
+        def bevel(o, w=0.022, seg=2):
+            md = o.modifiers.new("bv", "BEVEL")
+            md.width = w
+            md.segments = seg
+            md.limit_method = "ANGLE"
+
         ca, sa = math.cos(ang), math.sin(ang)
+
         def rot_off(dx, dy):
             return (px + dx * ca - dy * sa, py + dx * sa + dy * ca)
-        # 座面・背もたれ・肘掛け
         x, y = rot_off(0, 0)
-        box(f"{name}_seat", 0.46, 0.44, 0.09, (x, y, 0.46), lm, rot=(0, 0, ang))
-        bx, by = rot_off(0, -0.235)
-        box(f"{name}_back", 0.46, 0.08, 0.58, (bx, by, 0.82), lm,
-            rot=(math.radians(-7) * 0, 0, ang))
-        hx, hy = rot_off(0, -0.24)
-        box(f"{name}_hrest", 0.26, 0.08, 0.10, (hx, hy, 1.12), lm, rot=(0, 0, ang))
-        for s in (-1, 1):
-            ax, ay = rot_off(s * 0.26, 0.02)
-            box(f"{name}_arm{s}", 0.055, 0.27, 0.045, (ax, ay, 0.64), lm, rot=(0, 0, ang))
-            box(f"{name}_armp{s}", 0.05, 0.05, 0.16, (ax, ay + 0.1 * 0, 0.56), mm,
-                rot=(0, 0, ang))
-        # 支柱と5本脚
-        cyl(f"{name}_post", 0.03, 0.36, (x, y, 0.24), mm, verts=10)
+        # 座面 (面取り)
+        o = box(f"{name}_seat", 0.46, 0.46, 0.11, (x, y, 0.46), lm, rot=(0, 0, ang))
+        bevel(o, 0.03, 2)
+        # 背もたれ (後ろへ8°傾く・面取り)
+        bx, by = rot_off(0, -0.245)
+        o = box(f"{name}_back", 0.45, 0.075, 0.60, (bx, by, 0.80), lm,
+                rot=(math.radians(-8) * ca, math.radians(-8) * sa, ang))
+        bevel(o, 0.028, 2)
+        # ヘッドレスト
+        hx, hy = rot_off(0, -0.30)
+        o = box(f"{name}_hrest", 0.30, 0.075, 0.15, (hx, hy, 1.14), lm,
+                rot=(math.radians(-8) * ca, math.radians(-8) * sa, ang))
+        bevel(o, 0.03, 2)
+        # ランバー接続
+        cx2, cy2 = rot_off(0, -0.26)
+        box(f"{name}_spine", 0.08, 0.04, 0.30, (cx2, cy2, 0.60), mm,
+            rot=(math.radians(-8) * ca, math.radians(-8) * sa, ang))
+        # 肘掛け (支柱+パッド)
+        for sgn in (-1, 1):
+            ax, ay = rot_off(sgn * 0.27, 0.03)
+            cyl(f"{name}_armp{sgn}", 0.018, 0.17, (ax, ay, 0.55), mm, verts=10)
+            o = box(f"{name}_arm{sgn}", 0.055, 0.26, 0.035, (ax, ay, 0.645), lm,
+                    rot=(0, 0, ang))
+            bevel(o, 0.016, 2)
+        # ガスリフト (2段)
+        cyl(f"{name}_lift1", 0.030, 0.16, (x, y, 0.33), mm, verts=12)
+        cyl(f"{name}_lift2", 0.021, 0.16, (x, y, 0.22), mm, verts=12)
+        # 星型5本脚 (先端へ細く・少し下がる) + キャスター
         for k in range(5):
-            a2 = ang + k * 2 * math.pi / 5
-            lx = x + math.cos(a2) * 0.14
-            ly = y + math.sin(a2) * 0.14
-            box(f"{name}_cast{k}", 0.26, 0.05, 0.04,
-                (lx, ly, 0.045), mm, rot=(0, 0, a2))
-    # 配置: 左側2脚(窓側)・右手前1脚・右奥1脚・奥1脚
+            a2 = ang + math.pi / 2 + k * 2 * math.pi / 5
+            mx = x + math.cos(a2) * 0.145
+            my = y + math.sin(a2) * 0.145
+            o = box(f"{name}_leg{k}", 0.29, 0.045, 0.045, (mx, my, 0.095), mm,
+                    rot=(0, math.radians(9), a2))
+            bevel(o, 0.014, 2)
+            ex = x + math.cos(a2) * 0.27
+            ey = y + math.sin(a2) * 0.27
+            sphere(f"{name}_cast{k}", 0.028, (ex, ey, 0.030), mm)
     # 平面図どおり8脚: 長辺3+3 + 両端1+1。座面前端を机の縁に少し差し込む
     for i, yy in enumerate((2.3, 3.3, 4.3)):
         chair(f"chW{i}", 1.66, yy, math.radians(-90))
         chair(f"chE{i}", 4.34, yy, math.radians(90))
-    chair("chN", 3.0, 5.36, 0.0)
-    chair("chS", 3.0, 1.24, math.radians(180))
+    chair("chN", 3.0, 5.36, math.radians(180))
+    chair("chS", 3.0, 1.24, 0.0)
 
 
 def build_lights():
