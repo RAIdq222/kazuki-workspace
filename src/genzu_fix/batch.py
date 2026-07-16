@@ -299,6 +299,22 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
     # プロンプトは genzu_fix.prompt（3層）に委譲。EN=モデル入力 / JP=確認用を出力先へ残す。
     prompt, prompt_jp = build_prompt_pair(board, scene, prompt_override,
                                           cut=cut_num, cut_info_map=cut_info_map)
+    if use_board:
+        # 参照2枚の役割宣言。これが無いと完成画のボードが原図に勝ち、
+        # 「ボードの線画化」（原図の構図・画角の無視）が起きる（SP2 c005で実測）。
+        prompt += (
+            "\n\n[IMAGES] Two images are attached. IMAGE 1 is the rough layout (genzu) for THIS cut:"
+            " its composition, camera angle, framing and content are the ground truth — redraw exactly"
+            " this view and nothing else. IMAGE 2 is an art-setting board of the same location,"
+            " for reference ONLY: use it to understand the room's structure, furniture, materials and"
+            " the intended line density, but do NOT copy its camera, framing or composition, and do NOT"
+            " add elements from it that lie outside IMAGE 1's view. If the two disagree about what is"
+            " visible in this shot, IMAGE 1 wins.")
+        if prompt_jp:
+            prompt_jp += (
+                "\n\n[画像] 1枚目=このカットの原図（構図・画角・内容の正。この画角だけを描き直す）。"
+                "2枚目=同じ場所の美術ボード（空間構造・什器・線の密度の参考のみ。"
+                "構図や画角は写さない。1枚目の画角外の要素は足さない。食い違う時は1枚目が正）。")
     with open(os.path.join(out_dir, "prompt.en.txt"), "w", encoding="utf-8") as f:
         f.write(prompt)
     if prompt_jp:
