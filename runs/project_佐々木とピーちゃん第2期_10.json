@@ -8,6 +8,7 @@
   "cut_info": "runs/cut_scene_info_sp2_10.csv",
   "board_map": "runs/board_map_sp2_10.csv",
   "include_book": true,
+  "genzu_trust": "high",
   "staging_map": "runs/staging_sp2_10.csv",
   "script": null,
   "koban": null,

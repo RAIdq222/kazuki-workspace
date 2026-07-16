@@ -283,6 +283,12 @@ def _unit_staging(proj, u, st):
     return "", "", ""
 
 
+def _proj_genzu_trust(proj) -> str:
+    """原図信頼度モード。"high"=3Dレイアウト出し等で幾何が正＝忠実清書（SP2）/
+    "rough"=手描きラフで狂いがある前提＝修正パス（尚善・既定）。project json で宣言。"""
+    return (proj or {}).get("genzu_trust") or "rough"
+
+
 def _proj_include_book(proj) -> bool:
     """BOOKを原図に含めるか（作品ごと。SP2はBook=椅子等がシーンの空間アンカーなので含める）。"""
     v = (proj or {}).get("include_book")
@@ -291,7 +297,7 @@ def _proj_include_book(proj) -> bool:
 
 def _make_project(key, work, ep, genzu_dir, boards_dir=None, csv_path=None, source="scan",
                   out_dir=None, cut_info=None, board_map=None, include_book=None,
-                  staging_map=None):
+                  staging_map=None, genzu_trust=None):
     if source == "csv":
         units = _units_from_csv(csv_path)
     else:
@@ -332,6 +338,7 @@ def _make_project(key, work, ep, genzu_dir, boards_dir=None, csv_path=None, sour
         "genzu_dir": genzu_dir, "boards_dir": boards_dir, "csv": csv_path, "source": source,
         "out_dir": out_dir or CFG.get("out"), "cut_info_map": cut_info_map,
         "include_book": include_book, "staging_map": _load_staging_map(staging_map),
+        "genzu_trust": genzu_trust,
         "units": units, "psd_idx": _index_dir(genzu_dir, (".psd",)),
         "board_idx": board_idx, "board_norm": board_norm, "boards_opts": boards_opts,
     }
@@ -456,7 +463,8 @@ def _effective_prompt(proj, u):
     # 表示と生成を一致させるため cut_info_map（situation/remove）も渡す。
     en, _ = batch.build_prompt_pair(board, u["scene"], None, cut=cut,
                                     cut_info_map=(proj.get("cut_info_map") or CFG.get("cut_info_map")),
-                                    staging=_unit_staging(proj, u, st)[0] or None)
+                                    staging=_unit_staging(proj, u, st)[0] or None,
+                                    genzu_trust=_proj_genzu_trust(proj))
     return en
 
 
@@ -497,7 +505,8 @@ def _run_generate(uid):
         eff = base_prompt or batch.build_prompt_pair(
             board, u["scene"], None, cut=cut0,
             cut_info_map=(proj.get("cut_info_map") or CFG.get("cut_info_map")),
-            staging=_unit_staging(proj, u, st)[0] or None)[0]
+            staging=_unit_staging(proj, u, st)[0] or None,
+            genzu_trust=_proj_genzu_trust(proj))[0]
         base_prompt = eff + "\n\n[RETAKE CORRECTION — apply with top priority]: " + note
     try:
         log("prep→生成→finish 実行中…" + (f"（指示: {note[:30]}）" if note else ""))
@@ -505,6 +514,7 @@ def _run_generate(uid):
                           CFG["resolution"], CFG["quality"], CFG["model"], CFG["image_flag"],
                           dry=False, include_book=_proj_include_book(proj),
                           staging=_unit_staging(proj, u, st)[0] or None,
+                          genzu_trust=_proj_genzu_trust(proj),
                           header_top=CFG["header_top"], board_path=board_path,
                           genzu_source=st.get("genzu_source", "base"),
                           genzu_layers=st.get("layers_show"),
@@ -670,7 +680,8 @@ def create_app():
         cim = proj.get("cut_info_map") or CFG.get("cut_info_map") or {}
         stg_text, stg_src, stg_conf = _unit_staging(proj, u, st)
         _, jp = batch.build_prompt_pair(board, u["scene"], None, cut=cut, cut_info_map=cim,
-                                        staging=stg_text or None)
+                                        staging=stg_text or None,
+                                        genzu_trust=_proj_genzu_trust(proj))
         # コンテ由来の場面情報（詳細画面の日本語概要＋OCR信頼度の表示に使う）
         info = cim.get(batch.promptlib._norm_cut(cut)) if cim else None
         ci = {}
@@ -1411,7 +1422,7 @@ def main(argv=None):
     STATE = _load_json(_state_path(), {})
 
     def add_project(work, ep, genzu_dir, boards_dir, csv_path, out_dir, cut_info, label,
-                    board_map=None, include_book=None, staging_map=None):
+                    board_map=None, include_book=None, staging_map=None, genzu_trust=None):
         """genzu_dir が実在すれば PROJECTS に登録。csv が実在すれば csv、無ければ scan。"""
         if not (genzu_dir and os.path.isdir(genzu_dir)):
             print(f"[skip] {label}: 原図フォルダが見つかりません: {genzu_dir}")
@@ -1424,7 +1435,7 @@ def main(argv=None):
                                       csv_path if source == "csv" else None,
                                       source=source, out_dir=out_dir, cut_info=cut_info,
                                       board_map=board_map, include_book=include_book,
-                                      staging_map=staging_map)
+                                      staging_map=staging_map, genzu_trust=genzu_trust)
         # 各作品の過去state(OK判定/プロンプト編集等)を取り込む。
         # その作品のユニットに属する uid だけ・既存キーは上書きしない（他作品の混入や汚染を防ぐ）。
         if out_dir:
@@ -1444,7 +1455,7 @@ def main(argv=None):
                     pj.get("boards_dir"), pj.get("csv"), pj.get("out_dir"),
                     pj.get("cut_info"), os.path.basename(pjpath),
                     board_map=pj.get("board_map"), include_book=pj.get("include_book"),
-                    staging_map=pj.get("staging_map"))
+                    staging_map=pj.get("staging_map"), genzu_trust=pj.get("genzu_trust"))
     # 2) CLI 指定があれば従来どおり追加/上書き（後方互換）
     if a.genzu_dir:
         add_project(a.work, a.ep, a.genzu_dir, a.boards_dir, a.csv, a.out, a.cut_info, "CLI引数")

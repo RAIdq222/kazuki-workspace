@@ -19,7 +19,7 @@ import glob
 import json
 import os
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from .naming import parse_board
 
@@ -92,6 +92,63 @@ GLOBAL_JP = (
     "  さらに、キャラ/人物/動物と、その持ち物・着衣・携行物を全て消し、背後の素の環境を再構成する。\n"
     "  その場所に属する家具・什器は残す（寝台・棚・燭台は残す／手に持つ本は消す）。\n"
     "過修正の禁止: 判断が本当に曖昧な所は、捏造せず原図の意図を尊重する。余白: 周囲の空白パディング帯は意図的なもの。空白のまま残す。"
+)
+
+# ---------------------------------------------------------------------------
+# genzu_trust="high" 用のA層 — 原図を「正」として扱う忠実清書モード。
+# SP2のように3Dレイアウト出しでパース・アイレベルが最初から正しい原図に、
+# 「狂いを直せ」と言うのは誤り（再解釈の権限を与え、構図が動く原因になる）。
+# 「守る」か「直す」かは作品/カットごとの宣言であり、決め打ちにしない（黒江さん指摘）。
+# ---------------------------------------------------------------------------
+GLOBAL_TRUST_EN = (
+    "You are a background art finishing pass. Take a background layout (genzu) exported "
+    "from an accurate 3D layout — its composition, camera, perspective, eye level and "
+    "proportions are ALREADY CORRECT — and redraw it as a delivery-quality BLACK-AND-WHITE "
+    "background line drawing (haikei). This is faithful finishing and densification, NOT "
+    "correction: change nothing about the geometry.\n"
+    "PRESERVE (absolute): the composition, camera angle, eye-level and framing; the exact "
+    "position, size and shape of every element. Do not zoom, crop, pan, re-center, "
+    "re-proportion, or 'improve' the perspective — it is already right.\n"
+    "WHAT EXISTS: the layout alone defines what is visible in this shot. If the layout "
+    "does not show it, it does not exist here — do not complete the rest of the room, and "
+    "do not add furniture, openings, walls or scenery of your own.\n"
+    "ELEVATE (raise the quality): render like a master background artist's careful "
+    "hand-drawn pencil finish laid over this exact layout — line weight varied (heavier in "
+    "the foreground, finer in the distance) with natural entry/exit tapering, texture "
+    "suggested by light broken strokes. Refine ONLY the surfaces the layout already shows, "
+    "adding construction and texture detail on them without altering their geometry. Do "
+    "NOT produce uniform vector outlines or a coloring-book look.\n"
+    "COLOR: monochrome output only — pure black ink lines on white, no grey shading or "
+    "solid fills. Colored regions in the input are placeholder fills: read them as shapes "
+    "and draw them as plain line work, never as color.\n"
+    "REMOVE: erase all production marks (handwritten notes, labels, numbers, frame borders, "
+    "perspective guide lines, registration tap-holes). Large pale-grey CHECKERBOARD areas "
+    "are transparency placeholders, not drawing: treat them as blank and never render the "
+    "checker pattern. Also remove any character/person/animal and everything they hold, "
+    "wear or carry, and rebuild the plain environment behind them. Keep furniture and "
+    "fixtures that belong to the space.\n"
+    "WHEN UNSURE: follow the layout literally. MARGINS: the blank padding bands are "
+    "intentional — leave them empty."
+)
+
+GLOBAL_TRUST_JP = (
+    "あなたは背景美術の「清書パス」である。この原図は正確な3Dレイアウトから出力されており、"
+    "構図・カメラ・パース・アイレベル・比率は**最初から正しい**。それを納品品質の白黒背景線画（背景）として"
+    "描き起こす。これは忠実な仕上げ・描き込みであり、修正ではない — 幾何は一切変えない。\n"
+    "保持（絶対）: 構図・カメラアングル・アイレベル・画角／全要素の正確な位置・大きさ・形。"
+    "ズーム・トリミング・パン・再センタリング・比率変更・パースの「改善」をしない — 既に正しい。\n"
+    "存在の定義: このカットに何が写っているかは原図だけが定義する。原図に無いものは存在しない — "
+    "部屋の続きを補完しない。家具・開口部・壁・景物を自分で足さない。\n"
+    "品位向上: 一流の背景美術がこのレイアウトの上に丁寧に手描き鉛筆で仕上げたように描く — "
+    "線幅変調（近景は太く・遠景は繊細に）と自然な入り抜き、質感は軽い擦れ/破線で示唆。"
+    "磨き込むのは原図に既に写っている面だけ: 幾何を変えずに質感・構造ディテールを足す。"
+    "均一なベクター輪郭や塗り絵調にしない。\n"
+    "色: 出力は白黒のみ。白地に黒のインク線、グレーの陰影やベタ塗りは禁止。入力中の色面はプレースホルダの塗りで、"
+    "形として読み取り、色ではなく素の線画として描く。\n"
+    "除去: 制作用マーク（手書き指示・ラベル・番号・フレーム枠・パース補助線・タップ穴）を全て消す。"
+    "薄いグレーの大きな市松模様は透明部分のプレースホルダであり絵ではない — 空白として扱い、市松柄を描かない。"
+    "キャラ/人物/動物とその持ち物・着衣は全て消し、背後の素の環境を再構成する。場所に属する家具・什器は残す。\n"
+    "迷ったら: 原図を字義通りに写す。余白: 周囲の空白パディング帯は意図的なもの。空白のまま残す。"
 )
 
 # era の既定値（作品共通の時代様式）。scene_profile 側で個別指定があればそちらを優先。
@@ -353,9 +410,15 @@ def _cut_block(info: CutInfo) -> tuple[str, str]:
 
 
 def assemble(info: CutInfo, profile: SceneProfile | None,
-             staging: str | None = None) -> Prompt:
-    en_blocks = [GLOBAL_EN]
-    jp_blocks = [GLOBAL_JP]
+             staging: str | None = None, genzu_trust: str = "rough") -> Prompt:
+    # genzu_trust: "rough"=修正パス（原図に狂いがある前提・尚善） /
+    #              "high"=忠実清書（原図の幾何が正・SP2の3Dレイアウト原図）
+    faithful = genzu_trust == "high"
+    en_blocks = [GLOBAL_TRUST_EN if faithful else GLOBAL_EN]
+    jp_blocks = [GLOBAL_TRUST_JP if faithful else GLOBAL_JP]
+    if staging:
+        # staging がある時はコンテ由来の situation を落とす（stagingが上位互換＝OCR誤読の混入も防ぐ）
+        info = replace(info, situation="", situation_en="")
     if staging:
         # 画角・場面の言語記述（人間指定 or scene_understanding 生成）。
         # 画像参照では構図を拘束できない（SP2実測）ため、これが構図の主チャンネル。
@@ -383,20 +446,20 @@ def assemble(info: CutInfo, profile: SceneProfile | None,
 
 
 def build(board: str, scene: str, registry: SceneRegistry | None = None,
-          cut: str = "", staging: str | None = None) -> Prompt:
+          cut: str = "", staging: str | None = None, genzu_trust: str = "rough") -> Prompt:
     """表口: ボード名 + シーン名から EN/JP プロンプトの対を組み立てる。"""
     registry = registry or SceneRegistry.load()
     info = cut_info_from_board(board, scene, registry, cut=cut)
     prof = registry.resolve(board, scene)
-    return assemble(info, prof, staging=staging)
+    return assemble(info, prof, staging=staging, genzu_trust=genzu_trust)
 
 
 def build_from_info(info: CutInfo, registry: SceneRegistry | None = None,
-                    staging: str | None = None) -> Prompt:
+                    staging: str | None = None, genzu_trust: str = "rough") -> Prompt:
     """充足済み CutInfo（cut_scene_info_ep7.csv の行など）からプロンプトを組む。"""
     registry = registry or SceneRegistry.load()
     prof = next((p for p in registry.profiles if p.key == info.scene_key), None)
-    return assemble(info, prof, staging=staging)
+    return assemble(info, prof, staging=staging, genzu_trust=genzu_trust)
 
 
 def _norm_cut(label: str) -> str:
@@ -419,16 +482,18 @@ def load_cut_info(csv_path: str) -> dict[str, CutInfo]:
 def build_for_cut(cut: str, board: str, scene: str,
                   registry: SceneRegistry | None = None,
                   cut_info_map: dict[str, CutInfo] | None = None,
-                  staging: str | None = None) -> Prompt:
+                  staging: str | None = None, genzu_trust: str = "rough") -> Prompt:
     """カット番号があれば cut_scene_info の充足済み行（situation/remove 込み）を優先。
     無ければ board/scene から機械生成（situation/remove は空）。
-    staging=画角・場面の言語記述（あれば最優先ブロックとして挿入）。"""
+    staging=画角・場面の言語記述（あれば最優先ブロックとして挿入）。
+    genzu_trust="high"=原図の幾何を正とする忠実清書 / "rough"=修正パス。"""
     registry = registry or SceneRegistry.load()
     if cut_info_map:
         info = cut_info_map.get(_norm_cut(cut))
         if info:
-            return build_from_info(info, registry, staging=staging)
-    return build(board, scene, registry=registry, cut=cut, staging=staging)
+            return build_from_info(info, registry, staging=staging, genzu_trust=genzu_trust)
+    return build(board, scene, registry=registry, cut=cut, staging=staging,
+                 genzu_trust=genzu_trust)
 
 
 # ---------------------------------------------------------------------------
