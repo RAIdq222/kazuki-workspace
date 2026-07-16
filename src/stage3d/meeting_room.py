@@ -169,12 +169,12 @@ def build_north_wall():
 
 def build_screen():
     """東壁の発光スクリーン."""
-    box("scr_frame", 0.06, 2.35, 1.65, (ROOM_X - 0.03, 1.7, 1.95),
+    box("scr_frame", 0.06, 2.35, 1.65, (ROOM_X - 0.03, 3.0, 1.95),
         mat("scr_frame", (0.03, 0.03, 0.03), rough=0.4))
-    plane("scr_face", 2.2, 1.5, (ROOM_X - 0.075, 1.7, 1.95),
+    plane("scr_face", 2.2, 1.5, (ROOM_X - 0.075, 3.0, 1.95),
           mat("glow_scr", PAL["glow_scr"], rough=0.6, emit=1.5),
           rot=(math.pi / 2, 0, -math.pi / 2))
-    area_light("scr_light", (ROOM_X - 0.25, 1.7, 1.95), (0, math.radians(-90), 0),
+    area_light("scr_light", (ROOM_X - 0.25, 3.0, 1.95), (0, math.radians(-90), 0),
                2.0, 16, (0.75, 0.85, 0.80), size_y=1.4)
 
 
@@ -184,19 +184,19 @@ def build_table_chairs():
     dark = mat("slot_dark", (0.030, 0.028, 0.026), rough=0.5)
     metal = mat("metal", PAL["metal"], rough=0.3)
     cx, cy = 3.0, 3.3
-    # 天板: 8角形を丸めた形 (シリンダー8面を楕円スケール)
+    # 天板: 8角形を丸めた楕円。長軸は奥行き(Y)方向 = ボードの向き
     cyl("table_top", 1.0, 0.05, (cx, cy, 0.725), tm, verts=8)
-    o = bpy.context.object if False else bpy.data.objects["table_top"]
-    o.scale = (1.75, 1.05, 1.0)
+    o = bpy.data.objects["table_top"]
+    o.scale = (1.00, 1.70, 1.0)
     o.rotation_euler = (0, 0, math.pi / 8)
-    # 中央の配線スロット
-    box("slot", 0.24, 1.5, 0.02, (cx, cy, 0.755), dark, rot=(0, 0, math.pi / 2))
-    # 脚 (角パイプ門型 ×3)
-    for dy in (-1.15, 0, 1.15):
-        for dx in (-0.55, 0.55):
+    # 中央の配線スロット (長軸に沿ってY方向)
+    box("slot", 0.24, 1.5, 0.02, (cx, cy, 0.755), dark)
+    # 脚 (X方向に渡す門型 ×3。天板短径±1.0の内側に収める)
+    for dy in (-1.05, 0, 1.05):
+        for dx in (-0.42, 0.42):
             box(f"leg_{dy:.1f}_{dx:.1f}", 0.06, 0.06, 0.70,
                 (cx + dx, cy + dy, 0.35), metal)
-        box(f"leg_{dy:.1f}_t", 1.16, 0.06, 0.05, (cx, cy + dy, 0.675), metal)
+        box(f"leg_{dy:.1f}_t", 0.90, 0.06, 0.05, (cx, cy + dy, 0.675), metal)
     # チェア (テンプレート + 複製)
     def chair(name, px, py, ang):
         lm = mat("chair", PAL["chair"], rough=0.55)
@@ -226,11 +226,12 @@ def build_table_chairs():
             box(f"{name}_cast{k}", 0.30, 0.05, 0.04,
                 (lx, ly, 0.045), mm, rot=(0, 0, a2))
     # 配置: 左側2脚(窓側)・右手前1脚・右奥1脚・奥1脚
-    chair("ch1", 1.85, 3.0, math.radians(90 + 12))
-    chair("ch2", 1.95, 4.05, math.radians(90 - 8))
-    chair("ch3", 4.15, 2.35, math.radians(-90 + 14))
-    chair("ch4", 4.25, 4.2, math.radians(-90 - 10))
-    chair("ch5", 3.1, 5.15, math.radians(180 + 6))
+    # 長辺の両側 (テーブル x 2.0..4.0 の外側) + 奥の誕生日席
+    chair("ch1", 1.52, 2.6, math.radians(-90 + 10))
+    chair("ch2", 1.55, 3.9, math.radians(-90 - 6))
+    chair("ch3", 4.48, 2.5, math.radians(90 - 12))
+    chair("ch4", 4.45, 4.0, math.radians(90 + 8))
+    chair("ch5", 3.0, 5.45, math.radians(0 + 4))
 
 
 def build_lights():
@@ -260,7 +261,7 @@ def build_scene():
     build_lights()
     cams = {
         # ボード再現 (南西寄りから北東へ)
-        "A": add_camera("cam_A", (4.9, 0.4, 1.5), (2.3, 6.9, 0.95), lens=19),
+        "A": add_camera("cam_A", (4.7, 0.5, 1.5), (2.5, 6.8, 0.95), lens=19),
         # 逆 (ドア側から)
         "B": add_camera("cam_B", (5.2, 6.5, 1.5), (1.2, 0.6, 1.0), lens=23),
         # スクリーン側から窓へ
