@@ -216,8 +216,16 @@ def _units_from_folder(genzu_dir):
             uid = os.path.splitext(fn)[0]
             rel = os.path.relpath(os.path.join(root, fn), gd)
             if uid in units:
-                dup.append((rel, units[uid]["_rel"]))
-                continue
+                # 同名PSD: 「old」フォルダ配下は常に負ける（旧版をGKV優先分より先に
+                # 拾ってしまう事故の防止）。それ以外は先勝ちのまま。
+                def _is_old(p):
+                    return re.search(r"(^|[\\/])(old|旧)([\\/]|$)", p, re.I) is not None
+                if _is_old(units[uid]["_rel"]) and not _is_old(rel):
+                    dup.append((units[uid]["_rel"], rel))  # (無視=old, 採用=新) に置き換え
+                    del units[uid]
+                else:
+                    dup.append((rel, units[uid]["_rel"]))  # (無視=新, 採用=既存) 先勝ち
+                    continue
             info = naming.parse_cut_codes(fn)
             cuts = info.get("cuts") or [uid]
             parts = rel.split(os.sep)
