@@ -187,8 +187,7 @@ def build_table_chairs():
     # 天板: 8角形を丸めた楕円。長軸は奥行き(Y)方向 = ボードの向き
     cyl("table_top", 1.0, 0.05, (cx, cy, 0.725), tm, verts=8)
     o = bpy.data.objects["table_top"]
-    o.scale = (1.00, 1.70, 1.0)
-    o.rotation_euler = (0, 0, math.pi / 8)
+    o.scale = (1.00, 1.70, 1.0)  # 長軸=奥行き。回転なし(スロット・脚と軸を揃える)
     # 中央の配線スロット (長軸に沿ってY方向)
     box("slot", 0.24, 1.5, 0.02, (cx, cy, 0.755), dark)
     # 脚 (X方向に渡す門型 ×3。天板短径±1.0の内側に収める)
