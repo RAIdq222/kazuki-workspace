@@ -59,6 +59,9 @@ def main(argv=None) -> int:
                    help="時代設定。空にしない（既定eraの誤適用防止）")
     p.add_argument("--min-conf", default="medium", choices=["low", "medium", "high"],
                    help="この信頼度未満の action は situation に採用しない（誤読の混入防止）")
+    p.add_argument("--board-map-out", default="",
+                   help="範囲表に board 列があれば、cut,board のCSVも書き出す"
+                        "（project json の board_map に指す＝コンソールのボード自動紐づけ）")
     a = p.parse_args(argv)
 
     ranges = _load_ranges(a.ranges)
@@ -102,6 +105,19 @@ def main(argv=None) -> int:
     n_sit = sum(1 for v in seen.values() if v["situation"])
     print(f"書き出し: {a.out}  {len(seen)}カット（place={n_place} / situation={n_sit} / "
           f"低信頼でsituation落とし={dropped_conf}）")
+
+    if a.board_map_out:
+        n_board = 0
+        with open(a.board_map_out, "w", encoding="utf-8-sig", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(["cut", "board"])
+            for cut in sorted(seen, key=lambda c: (int(re.match(r"0*(\d+)", c).group(1)), c)):
+                n = int(re.match(r"0*(\d+)", cut).group(1))
+                board = (_find_range(ranges, n) or {}).get("board", "")
+                if board:
+                    w.writerow([cut, board])
+                    n_board += 1
+        print(f"書き出し: {a.board_map_out}  board紐づけ {n_board}カット")
     return 0
 
 

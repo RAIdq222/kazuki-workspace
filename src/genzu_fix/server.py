@@ -239,12 +239,39 @@ def _units_from_folder(genzu_dir):
     return ordered
 
 
+def _load_board_map(path):
+    """cut,board のCSV → {正規化カット番号: ボード名}（前ゼロ落とし・枝番保持）。"""
+    out = {}
+    if not (path and os.path.exists(path)):
+        return out
+    import csv as _csv
+    with open(path, encoding="utf-8-sig") as f:
+        for r in _csv.DictReader(f):
+            m = re.match(r"0*(\d+)([A-Za-z]?)", (r.get("cut") or "").strip())
+            if m and (r.get("board") or "").strip():
+                out[m.group(1) + m.group(2).upper()] = r["board"].strip()
+    return out
+
+
 def _make_project(key, work, ep, genzu_dir, boards_dir=None, csv_path=None, source="scan",
-                  out_dir=None, cut_info=None):
+                  out_dir=None, cut_info=None, board_map=None):
     if source == "csv":
         units = _units_from_csv(csv_path)
     else:
         units = _units_from_folder(genzu_dir)
+    # カット→ボードの紐づけ表（scan構成の作品向け。CSV構成でも空欄の補完に使う）
+    bmap = _load_board_map(board_map)
+    if bmap:
+        n = 0
+        for u in units.values():
+            if u.get("board"):
+                continue
+            m = re.match(r"0*(\d+)([A-Za-z]?)", (u["cuts"][0] if u["cuts"] else ""))
+            b = bmap.get(m.group(1) + m.group(2).upper()) if m else None
+            if b:
+                u["board"] = b
+                n += 1
+        print(f"[board_map] {key}: {n}/{len(units)} ユニットにボードを紐づけ（{board_map}）")
     board_idx = _index_dir(boards_dir, _BOARD_EXTS)
     # 正規化キー（拡張子/全半角/空白ゆれ吸収）→ パス。PSDを先に書きPNG等を後で上書き＝軽いPNG優先。
     board_norm = {}
@@ -1207,7 +1234,8 @@ def main(argv=None):
     global STATE
     STATE = _load_json(_state_path(), {})
 
-    def add_project(work, ep, genzu_dir, boards_dir, csv_path, out_dir, cut_info, label):
+    def add_project(work, ep, genzu_dir, boards_dir, csv_path, out_dir, cut_info, label,
+                    board_map=None):
         """genzu_dir が実在すれば PROJECTS に登録。csv が実在すれば csv、無ければ scan。"""
         if not (genzu_dir and os.path.isdir(genzu_dir)):
             print(f"[skip] {label}: 原図フォルダが見つかりません: {genzu_dir}")
@@ -1218,7 +1246,8 @@ def main(argv=None):
             print(f"[info] {label}: カット表CSVなし→原図フォルダ走査で構成: {genzu_dir}")
         PROJECTS[key] = _make_project(key, work, ep, genzu_dir, boards_dir,
                                       csv_path if source == "csv" else None,
-                                      source=source, out_dir=out_dir, cut_info=cut_info)
+                                      source=source, out_dir=out_dir, cut_info=cut_info,
+                                      board_map=board_map)
         # 各作品の過去state(OK判定/プロンプト編集等)を取り込む。
         # その作品のユニットに属する uid だけ・既存キーは上書きしない（他作品の混入や汚染を防ぐ）。
         if out_dir:
@@ -1236,7 +1265,8 @@ def main(argv=None):
             continue
         add_project(pj["work"], str(pj.get("ep", "00")), pj.get("genzu_dir"),
                     pj.get("boards_dir"), pj.get("csv"), pj.get("out_dir"),
-                    pj.get("cut_info"), os.path.basename(pjpath))
+                    pj.get("cut_info"), os.path.basename(pjpath),
+                    board_map=pj.get("board_map"))
     # 2) CLI 指定があれば従来どおり追加/上書き（後方互換）
     if a.genzu_dir:
         add_project(a.work, a.ep, a.genzu_dir, a.boards_dir, a.csv, a.out, a.cut_info, "CLI引数")

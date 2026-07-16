@@ -37,6 +37,10 @@
   `runs/conte_v2_sp2_10.csv`＋シーン範囲表(`runs/scene_ranges_sp2_10.csv`)→
   `runs/cut_scene_info_sp2_10.csv`（312カット・era=現代日本明示・低信頼OCRのsituationは不採用）。
   project json の cut_info に配線済み＝コンソール/batchのプロンプトに[シーン][カット]が入る。
+  **ボード紐づけ 完了（2026-07-15）**: SP2ボードは`SP/SP2_世界_場所_時間帯`命名（104枚・1期流用込み）。
+  scene_ranges に board 列を追加→`runs/board_map_sp2_10.csv`(cut,board)を生成、
+  server の scan 構成が board_map で自動紐づけ（確信のある3レンジのみ: 会議室/お隣さんの部屋/
+  爆発後アパート＋発生前夜景。料亭・バー・夜の街対峙はボード未存在=空→プルダウン手動）。
   **次: SP2テスト生成1〜2カット（コンソールから005/010等）→ 画調を見て style_refs の効かせ方を決める**。
 
 ## 並行ブランチの地図
