@@ -58,7 +58,7 @@ def main(argv=None) -> int:
     bd = os.path.abspath(a.boards_dir)
     files = []
     for root, _, fns in os.walk(bd):
-        if a.subdir and a.subdir not in root.replace("\\", "/").split("/"):
+        if a.subdir and not any(a.subdir in c for c in root.replace("\\", "/").split("/")):
             continue
         for fn in sorted(fns):
             if fn.lower().endswith(EXTS):

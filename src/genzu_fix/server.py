@@ -128,12 +128,13 @@ def _load_json(path, default):
 
 
 def _index_dir(d, exts, subdir: str | None = None):
-    """d配下を再帰索引。subdir指定時は「その名前のフォルダ配下」のファイルだけ拾う
-    （例: 00_資料_#10 のシーン別フォルダから 01_ボード 配下のみ＝サンプルBG素材を除外）。"""
+    """d配下を再帰索引。subdir指定時は「その文字列を含む名前のフォルダ配下」だけ拾う
+    （例: subdir="ボード" → 00_ボード/01_ボード 配下のみ＝サンプルBG素材を除外。
+    フォルダ名の番号揺れを吸収するため部分一致）。"""
     idx = {}
     if d and os.path.isdir(d):
         for root, _, files in os.walk(d):
-            if subdir and subdir not in root.replace("\\", "/").split("/"):
+            if subdir and not any(subdir in c for c in root.replace("\\", "/").split("/")):
                 continue
             for fn in files:
                 if fn.lower().endswith(exts):
