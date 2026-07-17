@@ -339,6 +339,12 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
     else:
         region = frame.strip_header(visible, body, top_override=header_top)
     prep = image_aspect.build_input_image(body, inp, resolution=resolution)
+    # 幾何デバッグ用に前処理パラメータを残す（scripts/debug_geometry.py が読む）
+    with open(os.path.join(out_dir, "prep.json"), "w", encoding="utf-8") as f:
+        json.dump({k: getattr(prep, k) for k in (
+            "aspect_ratio", "canvas_w", "canvas_h", "paste_x", "paste_y",
+            "src_w", "src_h", "scale", "scaled_w", "scaled_h", "resolution")},
+            f, ensure_ascii=False)
     use_board = bool(board_path)
     # プロンプトは genzu_fix.prompt（3層）に委譲。EN=モデル入力 / JP=確認用を出力先へ残す。
     prompt, prompt_jp = build_prompt_pair(board, scene, prompt_override,
@@ -416,6 +422,14 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
         # timeout 付きDL（ハングでスレッド/バッチが永久 running 化するのを防ぐ）
         with urllib.request.urlopen(url, timeout=300) as r, open(gen_raw, "wb") as f:
             f.write(r.read())
+        # 生成寸の実測チェック: 想定グリッドと違えばrestoreで無言リサイズが入る＝
+        # 系統的なズレの温床なので、必ず警告に出す（縦長比率は転置推定のため特に要監視）
+        from PIL import Image as _Img
+        gw, gh = _Img.open(gen_raw).size
+        if (gw, gh) != (prep.canvas_w, prep.canvas_h):
+            print(f"    [warn] 生成寸が想定グリッドと不一致: 実測 {gw}x{gh} / "
+                  f"想定 {prep.canvas_w}x{prep.canvas_h}（{prep.aspect_ratio}）"
+                  f" → restoreでリサイズ整合。GPT_OUTPUT_SIZES の更新候補")
     # 3. finish（戻し→region復帰→PSD差し込み）
     out_psd = os.path.join(out_dir, f"{cut}_AI.psd")
     if not dry:
