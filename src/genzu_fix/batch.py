@@ -424,16 +424,33 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
         image_aspect.restore_output_image(gen_raw, restored, prep)
         frame.paste_into_region((vw, vh), tuple(region), restored, full)
         layer = psd_export.insert_result_layer(psd_path, full, out_psd, base_name="AI原図修正")
-        # 検品(QC): プログラム判定は常時（空白/破綻・色残り）。視覚判定は qc_vision 時のみ。
+        # 検品(QC): プログラム判定は常時（空白/破綻・色残り）。
+        # APIキーがあれば検品レポート（信頼度・エラー内容・プロンプト疑義・リテイク指示案）も付ける。
         qc_dict = {}
         try:
-            vv = None
-            if qc_vision and os.environ.get("ANTHROPIC_API_KEY"):
-                vv = qc.vision_check(visible, full)
-            qc_dict = qc.asdict(qc.evaluate(full, vision_verdicts=vv))
+            qc_dict = qc.asdict(qc.evaluate(full))
+            if os.environ.get("ANTHROPIC_API_KEY") and qc_vision is not False:
+                rep = qc.inspect(inp, full, staging=staging or "")
+                if rep:
+                    qc_dict.update({
+                        "trust": rep.get("trust"),
+                        "errors": rep.get("errors") or [],
+                        "suspect_prompt": rep.get("suspect_prompt", ""),
+                        "suggest_retake": rep.get("suggest_retake", ""),
+                    })
+                    t = rep.get("trust")
+                    if isinstance(t, (int, float)):
+                        if t < 50 and qc_dict.get("verdict") == "pass":
+                            qc_dict["verdict"] = "needs_retake"
+                        elif t < 80 and qc_dict.get("verdict") == "pass":
+                            qc_dict["verdict"] = "human"
+                    for e in (rep.get("errors") or []):
+                        qc_dict.setdefault("reasons", []).append(
+                            f"{e.get('type','')}: {e.get('desc','')}")
             with open(os.path.join(out_dir, "qc.json"), "w", encoding="utf-8") as f:
                 json.dump(qc_dict, f, ensure_ascii=False)
-            print(f"    qc[{qc_dict.get('verdict')}] {qc_dict.get('reasons')}")
+            print(f"    qc[{qc_dict.get('verdict')}] trust={qc_dict.get('trust','—')} "
+                  f"{[r[:40] for r in (qc_dict.get('reasons') or [])]}")
         except Exception as e:  # noqa QCで生成自体を失敗にしない
             print(f"    qc skip: {str(e)[:120]}")
         rec = ledger.GenRecord(

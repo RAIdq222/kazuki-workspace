@@ -86,6 +86,59 @@ def evaluate(image_path: str, vision_verdicts: dict | None = None) -> QCResult:
 _VISION_MODEL = os.environ.get("QC_VISION_MODEL", "claude-sonnet-5")
 
 
+def inspect(genzu_path: str, result_path: str, staging: str = "",
+            model: str | None = None, timeout: int = 150) -> dict:
+    """検品レポート: 「原図修正としてどのくらい信頼できるか」を構造化して返す。
+
+    返り値（失敗時は {}）:
+      trust: 0-100（原図修正として信頼できる度合い）
+      errors: [{type, desc}]  type=構図/配置/欠落/捏造/除去漏れ/画調
+      suspect_prompt: 疑わしいプロンプト要素（[SHOT]の比率不足/[IMAGES]ボード汚染/[EYE]/その他）
+      suggest_retake: そのまま使える1文のリテイク指示案
+    バッジの「QCをした事実」ではなく、エラー内容とプロンプトのどこが不安かまで返すのが目的。
+    """
+    import json as _json
+    import urllib.request
+    key = os.environ.get("ANTHROPIC_API_KEY")
+    if not key:
+        return {}
+    prompt = (
+        "アニメ背景の原図修正の検品です。IMAGE1=原図（正。構図・画角・内容の基準）、"
+        "IMAGE2=AIによる修正結果。"
+        + (f"このカットの画角指定:「{staging[:400]}」。" if staging else "")
+        + "IMAGE2がIMAGE1の忠実な清書になっているかを検品し、JSONのみ返してください: "
+        '{"trust": 0-100の整数（原図修正として信頼できる度合い。構図一致が最重要）, '
+        '"errors": [{"type": "構図|配置|欠落|捏造|除去漏れ|画調", "desc": "具体的に1文"}], '
+        '"suspect_prompt": "エラーの原因として疑わしい指示要素。候補: 画角記述の比率不足/'
+        'ボード参照の構図汚染/アイレベル不一致/画角記述の欠落/なし。理由も1文", '
+        '"suggest_retake": "次の生成で直すための端的なリテイク指示1文（問題なければ空文字）"}。'
+        "判定基準: 原図に無い物の追加=捏造、原図の物が無い=欠落、位置・大きさのズレ=配置、"
+        "画角・カメラが別物=構図（trustを大きく下げる）、市松柄・文字・キャラの残り=除去漏れ。")
+    body = {
+        "model": model or _VISION_MODEL, "max_tokens": 700,
+        "messages": [{"role": "user", "content": [
+            {"type": "text", "text": "IMAGE1 (原図・正):"},
+            {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg",
+                                         "data": _b64_downscaled(genzu_path)}},
+            {"type": "text", "text": "IMAGE2 (修正結果):"},
+            {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg",
+                                         "data": _b64_downscaled(result_path)}},
+            {"type": "text", "text": prompt}]}]}
+    req = urllib.request.Request(
+        "https://api.anthropic.com/v1/messages", data=_json.dumps(body).encode(),
+        headers={"content-type": "application/json", "x-api-key": key,
+                 "anthropic-version": "2023-06-01"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            data = _json.loads(r.read())
+        text = "".join(b.get("text", "") for b in data.get("content", []))
+        import re as _re
+        m = _re.search(r"\{.*\}", text, _re.S)
+        return _json.loads(m.group(0)) if m else {}
+    except Exception:  # noqa QC失敗で生成本体を止めない
+        return {}
+
+
 def _b64_downscaled(path: str, maxside: int = 1024) -> str:
     from PIL import Image
     import base64

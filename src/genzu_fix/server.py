@@ -605,6 +605,8 @@ def create_app():
                 "genzu_rev": st.get("genzu_rev", 0),
                 "has_result": _result_path(uid) is not None,
                 "qc_verdict": q.get("verdict"), "qc_reasons": q.get("reasons", []),
+                "qc_trust": q.get("trust"), "qc_suspect": q.get("suspect_prompt", ""),
+                "qc_suggest": q.get("suggest_retake", ""),
                 "takes": st.get("takes", []), "adopted": st.get("adopted"),
                 "retake_note": st.get("retake_note", ""), "staging": st.get("staging", ""),
                 "prompt_edited": bool(st.get("prompt")), "retakes": st.get("retakes", 0)}
@@ -1065,6 +1067,8 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
     <div class="bar"><button onclick="dSaveStage()">記述を保存</button><span id="dStageHint" class="muted"></span></div>
     <h4>コンテ情報（自動・記述の下書きに使う）</h4><div id="dScene" class="dscene"></div>
     <h4>詳細</h4><table class="dkv" id="dKv"></table>
+    <h4>検品レポート（生成のたびに自動）</h4><div id="dQC" class="dscene"></div>
+    <div class="bar"><button id="dQCApply" style="display:none" onclick="dApplySuggest()">指示に反映して次へ</button></div>
     <h4>プロンプト（日本語・確認用）</h4><div id="dJp" class="djp"></div>
     <details><summary>英語プロンプト（生成に使われる・編集可）</summary>
       <textarea id="dEn"></textarea>
@@ -1209,11 +1213,13 @@ function render(){
 }
 function qcBadge(u){
   if(!u.qc_verdict||u.qc_verdict==='unknown') return '';
-  const map={pass:['QC✓','#dff3e6','#0a5'],needs_retake:['QC⚠','#fde2e2','#d1242f'],
-             human:['QC要確認','#fff3d6','#a36a00']};
+  // 信頼度があれば数値で出す（「QCをした事実」でなく「どのくらい信頼できるか」を見せる）
+  const t=u.qc_trust;
+  const map={pass:['#dff3e6','#0a5'],needs_retake:['#fde2e2','#d1242f'],human:['#fff3d6','#a36a00']};
   const m=map[u.qc_verdict]; if(!m) return '';
-  const tip=(u.qc_reasons||[]).join(' / ');
-  return `<span class="b" style="background:${m[1]};color:${m[2]}" title="${esc(tip)}">${m[0]}</span>`;
+  const label=(t!==null&&t!==undefined)?`信頼${t}`:( {pass:'QC✓',needs_retake:'QC⚠',human:'QC要確認'}[u.qc_verdict] );
+  const tip=[(u.qc_reasons||[]).join(' / '),u.qc_suspect?('疑: '+u.qc_suspect):''].filter(Boolean).join('｜');
+  return `<span class="b" style="background:${m[0]};color:${m[1]}" title="${esc(tip)}">${label}</span>`;
 }
 function takeStrip(u){
   const tk=u.takes||[]; if(tk.length<2) return '';   // 2テイク以上で履歴を出す
@@ -1308,6 +1314,15 @@ async function openDetail(id){DCUR=id; const u=unit(id); if(!u)return;
     ?('自動下書き'+(d.staging_conf?('（信頼度 '+d.staging_conf+'）'):'')+' — 直して保存で確定')
     :(d.staging_source==='manual'?'手動確定済み':'未記入（コンテ情報を下書きに書いてください）');
   $('#dStageHint').style.color=(d.staging_conf==='low'||!d.staging)?'#c1121f':'';
+  const qcl=[];
+  if(u.qc_trust!==null&&u.qc_trust!==undefined)qcl.push('信頼度: '+u.qc_trust+'/100');
+  (u.qc_reasons||[]).forEach(r=>qcl.push('・'+r));
+  if(u.qc_suspect)qcl.push('疑わしい指示: '+u.qc_suspect);
+  if(u.qc_suggest)qcl.push('提案リテイク指示: '+u.qc_suggest);
+  $('#dQC').textContent=qcl.length?qcl.join('\n'):(u.has_result?'（レポートなし＝旧生成。次の生成から付きます）':'（未生成）');
+  $('#dQC').classList.toggle('lowconf',(u.qc_trust!==null&&u.qc_trust!==undefined&&u.qc_trust<50));
+  $('#dQCApply').style.display=u.qc_suggest?'':'none';
+  window._dSuggest=u.qc_suggest||'';
   $('#dKv').innerHTML=[['ファイル',d.filename],['原図ソース',u.genzu_source],
     ['ボード',u.board||'—'],['テイク',(u.takes||[]).length+(u.adopted?('（採用 T'+u.adopted+'）'):'')],
     ['OCR信頼度',ci.conf||'—'],['QC',(u.qc_reasons||[]).join(' / ')||'—']]
@@ -1322,6 +1337,10 @@ function dShow(which){const u=unit(DCUR); if(!u)return; const t=Date.now();
   Object.values(ids).forEach(b=>$('#'+b).classList.remove('primary'));
   if(ids[which])$('#'+ids[which]).classList.add('primary');
 }
+async function dApplySuggest(){if(!window._dSuggest)return;
+  $('#dNote').value=window._dSuggest;
+  await post('/api/unit/'+DCUR+'/retake_note',{note:window._dSuggest});
+  $('#dMsg').textContent='検品レポートの提案をリテイク指示に反映しました（「リテイク」で再生成）';}
 async function dSaveStage(){await post('/api/unit/'+DCUR+'/staging',{text:$('#dStage').value});
   const d=await (await fetch('/api/unit/'+DCUR)).json(); $('#dJp').textContent=d.prompt_jp||''; $('#dEn').value=d.prompt||'';
   $('#dMsg').textContent='画角・場面の記述を保存しました（プロンプトに反映済み）';}
@@ -1406,8 +1425,9 @@ def main(argv=None):
     p.add_argument("--header-top", type=int, default=None)
     p.add_argument("--cut-info", default="runs/cut_scene_info_ep7.csv")
     p.add_argument("--max-parallel", type=int, default=3, help="生成の同時実行数の上限")
-    p.add_argument("--qc-vision", action="store_true",
-                   help="生成後にAI視覚QC（人物残り/文字残り/画角）も走らせる（要 ANTHROPIC_API_KEY）")
+    p.add_argument("--qc-vision", action=argparse.BooleanOptionalAction, default=True,
+                   help="生成後にAI検品レポート（信頼度・エラー・プロンプト疑義・リテイク指示案）を付ける"
+                        "（要 ANTHROPIC_API_KEY・既定ON。--no-qc-vision で無効）")
     p.add_argument("--port", type=int, default=8765)
     a = p.parse_args(argv)
     # --project（discover_assets 出力）で未指定の genzu_dir/boards_dir/out/work/ep を補完。
