@@ -152,6 +152,18 @@ python3 src/stage3d/build_viewer.py --blend work/kitchen_stage.blend \
 - `viewer_app.js` に `window.__V = {camera, controls, renderFrame}` を追加。
   Playwright 検証でカメラを直接置けるようになった (プリセット外の視点確認が楽)。
 
+## 9.6 FBX書き出し (2026-07-17)
+
+- `bpy.ops.export_scene.fbx(path_mode="COPY", embed_textures=True)` で .blend → .fbx。
+  テクスチャ埋め込み・カメラ込み・寸法もそのまま往復できることを確認済み
+  (全7シーン 1〜2.5MB)。Maya/Unity/UE等で読む用。
+- プロシージャルマテリアル(木目など)はノードごとは渡らず、ベースカラー+質感数値のみに
+  落ちる (glTFと同じ制約)。画像テクスチャの面はそのまま出る。
+- この環境のbpy 5.0は **FBXインポータ側に既知バグ** (`lamp.cycles.cast_shadow` 参照で
+  AttributeError)。読み戻し検証するときはライト読込を try/except でパッチする。
+  エクスポートには影響なし。
+- 竹林の「同一メッシュ共有コピーのスロット警告」は実害なし (346本全部マテリアル付きで往復)。
+
 ## 10. 次アクション(案)
 
 - [ ] 尚善の他ボードの立体化(線画設定 `shz_b01_04_食堂` はパース図+立面図で好条件)
