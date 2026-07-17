@@ -1,0 +1,4942 @@
+{
+  "frames": [
+    {
+      "cut_label": "1",
+      "action": "超常現象対策局 朝 ①PAN UP. (BANKあり?)",
+      "dialogue": "",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "1",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "コマ0とコマ1(PAN UP部分)が同じカット1。time欄は4+12と読む。BANKありの指示",
+      "_page": "page_003.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "2",
+      "action": "阿久津 向かって座っている 顔から呼びかける 左っている 座休身体 一部 PAN 一部。二人静は眠そうにあくびをしている。",
+      "dialogue": "「朝ですよ 呼び出しにすまん。",
+      "se": "",
+      "time": "3",
+      "scene_mark": "2",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "二人静"
+      ],
+      "confidence": "low",
+      "notes": "action欄手書き崩れ大。dialogue『朝ですよ』は要確認。time欄丸囲み3",
+      "_page": "page_003.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "3",
+      "action": "モニターの向かい側に座っている阿久津。",
+      "dialogue": "早速だが これを見て欲しい。",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "3",
+      "numbered": true,
+      "characters": [
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "コマ3とコマ4が同じカット3。time欄2+12",
+      "_page": "page_003.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "4",
+      "action": "モニター。超常現象対策局のマークUP。(0f18k) / （続き）ニホンウナギの移動経路。画面切り変わり / 進路予想図に切り変わる。(赤い矢印。流れているようなモーションあり)",
+      "dialogue": "ピッ / ニホンウナギみたいじゃな… / このニホンウナギと同じルートを取った場合、黒潮に乗って本国に接近することが予想されている。",
+      "se": "SE「ピッ」",
+      "time": "14",
+      "scene_mark": "4",
+      "numbered": true,
+      "characters": [
+        "二人静",
+        "阿久津"
+      ],
+      "confidence": "low",
+      "notes": "コマ0(局章)は赤バツ＝削除指示。コマ0のaction末尾『2 画面切り変わり』は次コマへの繋ぎ。dialogue欄に二人静(off)『ニホンウナギみたいじゃ…』、阿久津(女)『まさにその通りだ。』のセリフあり。ニホンウナギ移動経路の海図画面(コマ1)、海図白コマ(コマ2)を含む。二人静セリフ。confidence中。 ｜ コマ1・2はカット4の続き（丸番号なし）。二人静(off)のセリフ。 ｜ コマ3は進路予想図(黒潮/海流図)。カット4の続き。dialogue欄に丸囲み『阿久津(女)』話者。time欄に丸14。",
+      "_page": "page_004.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "5",
+      "action": "佐々木。愕然。",
+      "dialogue": "い…！",
+      "se": "",
+      "time": "2",
+      "scene_mark": "5",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "コマ4=佐々木の顔アップ。dialogue欄丸囲み『佐々木』話者。time欄に丸2。action『愕然』は要確認。",
+      "_page": "page_004.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "6",
+      "action": "モンタージュ PAN T.B.（4面コスト 3面くらい カ）",
+      "dialogue": "「私たちに集まってもらったのは、こうした場合に備えて事前に情報を集めておきたかったからだ。",
+      "se": "",
+      "time": "7",
+      "scene_mark": "6",
+      "numbered": true,
+      "characters": [
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "action欄一部の指示（コスト・面数）は手書きが崩れており推測。dialogue話者は丸囲みで阿久津",
+      "_page": "page_005.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "7",
+      "action": "阿久津。佐々木を見て",
+      "dialogue": "佐々木君。実物を見ての率直な顔を聞かせて欲しい。」",
+      "se": "",
+      "time": "5",
+      "scene_mark": "7",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "",
+      "_page": "page_005.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "8",
+      "action": "佐々木、一瞬焦りつつも。（阿久津）／佐々木、前のモニターを見て",
+      "dialogue": "「て、そういった意味でも、異能力者に頼るような場面ではないと思われ。",
+      "se": "",
+      "time": "6",
+      "scene_mark": "8",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "カット8は2コマにまたがるため統合。dialogue話者は丸囲みで佐々木。末尾は文が途切れている可能性あり",
+      "_page": "page_005.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "9",
+      "action": "厳粛な表情の阿久津。クラーケンの分布データが大型モニターに映し出されている T.U.。二人静。",
+      "dialogue": "「攻撃に一定の効果はあるようですが、何もかも寄せつけないという訳ではないようで……」",
+      "se": "",
+      "time": "7",
+      "scene_mark": "9",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "action・dialogueとも崩し字のため一部推定",
+      "_page": "page_006.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "10",
+      "action": "二人静。何にもたれかかり(なが)。",
+      "dialogue": "二人静「その通りじゃ。」「台風に浮かんでるうちに、ジサイルでも積んで撃ち込んでしまえば、ええ」",
+      "se": "",
+      "time": "6+12",
+      "scene_mark": "10",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "low",
+      "notes": "コマ1(番号10)とコマ2(番号なし=継続)を統合。dialogue細部不確実、要確認",
+      "_page": "page_006.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "11",
+      "action": "星崎。そっけなく。",
+      "dialogue": "星崎「対象を隔離すれば、貴方なら簡単に対処出来るんじゃないのかしら?」",
+      "se": "",
+      "time": "5",
+      "scene_mark": "11",
+      "numbered": true,
+      "characters": [
+        "星崎"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue一部推定",
+      "_page": "page_006.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "12",
+      "action": "二人静。ちょっと顔を出し。",
+      "dialogue": "二人静「ねぇじーしてそういう事言うの?儂に死ねと?」",
+      "se": "",
+      "time": "4",
+      "scene_mark": "12",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue一部推定",
+      "_page": "page_006.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "13",
+      "action": "佐々木を挟み やいのやいの 気を遣う女子2人",
+      "dialogue": "星崎「だって気持ち悪いんじゃ？」二人静「海の藻屑となって延々と彷徨うことになるかもしれんが？」星崎「ちゃんと探してあげるわよ」二人静「(だが)…」",
+      "se": "",
+      "time": "9",
+      "scene_mark": "13",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "星崎",
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "13は2コマに跨る(picture上段=3人、下段=お隣さん手前)。continuationコマは番号なしのため統合。dialogue一部崩れ判読不確実",
+      "_page": "page_007.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "14",
+      "action": "阿久津 みか(?)",
+      "dialogue": "阿久津「星崎君はどうかね？」",
+      "se": "",
+      "time": "2+13",
+      "scene_mark": "14",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "星崎"
+      ],
+      "confidence": "medium",
+      "notes": "action2文字目要確認",
+      "_page": "page_007.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "15",
+      "action": "身を乗り出す二人静 星崎",
+      "dialogue": "二人静「無理じゃ」星崎「！」二人静「だって無理じゃもん」",
+      "se": "",
+      "time": "9",
+      "scene_mark": "15",
+      "numbered": true,
+      "characters": [
+        "二人静",
+        "星崎"
+      ],
+      "confidence": "medium",
+      "notes": "15は2コマに跨る(picture上段=3人、下段=キャラ2)。継続コマdialogue『どうして節が答えるのね』は判読不確実。統合済み",
+      "_page": "page_007.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "16",
+      "action": "星崎、阿久津を見て。",
+      "dialogue": "「きあ、私は今月の人員で対処するのは難しいと思うけれど…」",
+      "se": "",
+      "time": "6",
+      "scene_mark": "16",
+      "numbered": true,
+      "characters": [
+        "星崎",
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue話者は丸囲みで『局長』または星崎系。冒頭『きあ』は要確認",
+      "_page": "page_008.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "17",
+      "action": "",
+      "dialogue": "阿久津「……」わかった。詳細については改めて報告書を出してほしい。",
+      "se": "",
+      "time": "8",
+      "scene_mark": "17",
+      "numbered": true,
+      "characters": [
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue冒頭に丸囲み『阿久津』、続きは地の文的だがセリフとして統合",
+      "_page": "page_008.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "18",
+      "action": "真所はここで、改めて佐々木を見つめる阿久津。↑PAN",
+      "dialogue": "佐々木・星崎「ない」/阿久津「ところで、佐々木君とこの部屋に…」",
+      "se": "",
+      "time": "3+12",
+      "scene_mark": "18",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "星崎",
+        "阿久津"
+      ],
+      "confidence": "low",
+      "notes": "action冒頭『真所』は誤読可能性、要確認。time欄は3+12",
+      "_page": "page_008.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "19",
+      "action": "↑PAN …!?と3人。",
+      "dialogue": "「伝えたいことがある。」",
+      "se": "",
+      "time": "3",
+      "scene_mark": "19",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "",
+      "_page": "page_008.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "20",
+      "action": "↓PAN ざわざわめく間。佐々木、二人静。",
+      "dialogue": "佐々木「な…なんですか?」/二人静「なんじゃ?」",
+      "se": "",
+      "time": "4",
+      "scene_mark": "20",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue丸囲み『二人静』確認。action『ざわめく』推定",
+      "_page": "page_008.png",
+      "_idx": 4
+    },
+    {
+      "cut_label": "21",
+      "action": "阿久津。次シーン。（この阿久津モニターは超常現象対策局のマーク画面）",
+      "dialogue": "「思い起こせば君達の歓迎会を行っていなかったな」",
+      "se": "",
+      "time": "5+12",
+      "scene_mark": "21",
+      "numbered": true,
+      "characters": [
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue話者に丸囲み『阿久津』。台詞末尾やや不明瞭",
+      "_page": "page_009.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "22",
+      "action": "一同ざわめく…。自然な感じでゆっくり。",
+      "dialogue": "＜間＞「え…?」",
+      "se": "",
+      "time": "4",
+      "scene_mark": "22",
+      "numbered": true,
+      "characters": [
+        "星崎",
+        "佐々木"
+      ],
+      "confidence": "low",
+      "notes": "dialog列に丸囲み話者名あり(『佐々木』『星崎』等と推定)だが崩れで不確実。<間>3+12 の指示あり。会議室の各人物に丸囲み記号",
+      "_page": "page_009.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "23",
+      "action": "喋る…（口パク）",
+      "dialogue": "",
+      "se": "",
+      "time": "2+13",
+      "scene_mark": "23",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "action欄崩れ、口の動きに関する指示か。dialog欄は波線と『+』記号のみでセリフなし",
+      "_page": "page_009.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "24",
+      "action": "こちらをじっと見つめるクールな表情の阿久津。T.U.（大村個?）。キリッとかっこいい顔面",
+      "dialogue": "",
+      "se": "",
+      "time": "6",
+      "scene_mark": "24",
+      "numbered": true,
+      "characters": [
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "コマ4(阿久津バストの枠取り)とコマ5(顔アップ)は同カット24に統合。T.U.後の括弧内メモは不確実。time欄コマ5に丸囲み尺の一部",
+      "_page": "page_009.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "25",
+      "action": "会議室の続き。同ト書き。",
+      "dialogue": "",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "25",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "コマ0のOP(タイトルカード的な絵)は番号なしのため統合せず。action欄に『会議室の続き』等の走り書き。冒頭のOPコマは番号無し・本文なしのため出力に含めない",
+      "_page": "page_010.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "26",
+      "action": "えっ、と……切り出す佐々木。困惑。",
+      "dialogue": "佐々木「歓迎、ですか…？」",
+      "se": "",
+      "time": "3",
+      "scene_mark": "26",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "",
+      "_page": "page_010.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "27",
+      "action": "そうだ、と阿久津。淡々と。",
+      "dialogue": "阿久津「店は既に押さえてある。今日の定時後にどうだろう？」",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "27",
+      "numbered": true,
+      "characters": [
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "",
+      "_page": "page_010.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "28",
+      "action": "二人静。疑いの眼差しで、少し身を引く。 / 佐々木、阿久津を見る",
+      "dialogue": "二人静「奢ってもらえるフリかえ？」 佐々木「……」 / （佐々木M）「相変わらず仏頂面だ。」",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "28",
+      "numbered": true,
+      "characters": [
+        "二人静",
+        "佐々木",
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue末尾の佐々木の台詞は『……』のみで内容不明 ｜ ページ最上段コマ。scene欄に丸番号なし＝前ページ最後のカット(28)の続きとして統合。time欄は円囲みで『4+12』と読む",
+      "_page": "page_010.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": 29,
+      "action": "佐々木(のモモ)のカワからで阿久津、一同に話す。PAN UP",
+      "dialogue": "「阿久津さんのカワから歓迎会とか、怪しいけど程がある。この先日には喧嘩したばかりだというのに―」\n（阿久津）「その気になってあ人は、最初から○○君の受賞に爆発物を仕掛ける○○のことはしている。」",
+      "se": "",
+      "time": "12+12",
+      "scene_mark": "29",
+      "numbered": true,
+      "characters": [
+        "阿久津"
+      ],
+      "confidence": "low",
+      "notes": "action・dialogueとも崩し字が激しく判読困難。複数コマ(コマ1〜4)にまたがる同一カットとして結合。time欄は円囲みで『12+12』と読む。dialogue詳細は要確認",
+      "_page": "page_011.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": 30,
+      "action": "うわぁ…と一同（雨）→ PAN サブと星崎。佐々木、星崎を見る / 佐々木、阿久津君に微笑み。それに対し「えっ!?」となる二人静。",
+      "dialogue": "（一同）「え、ドンナ、なんとかで…」\n（阿久津(off)）「ささやかだが、星崎君も含めて女で行こうかね？」\n（星崎）「私は構わないけど…」\n（佐々木M）「さすが、全能千の帝のような星崎ってのは…」 / 佐々木「そういう事でしたら、ぜひ課長のご厚意に甘えさせて頂けたらと…」",
+      "se": "",
+      "time": "17",
+      "scene_mark": "30",
+      "numbered": true,
+      "characters": [
+        "星崎",
+        "佐々木",
+        "阿久津",
+        "二人静"
+      ],
+      "confidence": "low",
+      "notes": "コマ5・6にまたがる同一カットとして結合。崩し字が非常に激しく台詞は要確認。話者丸囲みは『一同』『阿久津(off)』『星崎』『佐々木M』 ｜ ページ冒頭の2コマは丸番号なし(scene欄空白)＝前ページのカット30の続きとして統合。time欄の丸囲み『17』はこのカットの尺",
+      "_page": "page_011.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "31",
+      "action": "ちょっと待って、二人静。",
+      "dialogue": "二人静「病で気ってる? 職場の飲み会とか、むしろ断わるのが流行じゃろ?」",
+      "se": "",
+      "time": "5+12",
+      "scene_mark": "31",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "action欄の判読難あり",
+      "_page": "page_012.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "32",
+      "action": "宥める佐々木。星崎、大伝と。",
+      "dialogue": "佐々木「民間はてつだ…役所さんはいまだに旧来の気質が根強いと聞きました。」 二人静「えー…そーなのか…?」 星崎「…」",
+      "se": "",
+      "time": "9",
+      "scene_mark": "32",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "二人静",
+        "星崎"
+      ],
+      "confidence": "low",
+      "notes": "dialogue欄の判読難。赤字『二人静の自然治癒って.』は演出/取り消しメモ扱いでセリフに含めず。32は2コマ(佐々木宥める＋星崎)にまたがるため統合",
+      "_page": "page_012.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "33",
+      "action": "佐々木\nはん目を考える",
+      "dialogue": "毒物を口にしたらどうなるのかしら？",
+      "se": "",
+      "time": "5+13",
+      "scene_mark": "33",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue欄に赤字セリフ『毒物を口にしたらどうなるのかしら？』、話者マーク『二人静?』と佐々木のMセリフが続く。『パイセン、この場でそういうこと聞いちゃうの？』『怪しいには違いないけど上司と仲良くしておくに越したことはない。』も佐々木のM。time欄丸囲み『5+13』読み取り。",
+      "_page": "page_013.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "34",
+      "action": "腕を組んでる阿久津\nPAN\n伏しつつ阿久津",
+      "dialogue": "あと個人的に、じんぼ的居的のは、ちょっと気になる\n「まぁ決して無理には合わないがね」",
+      "se": "",
+      "time": "6+12",
+      "scene_mark": "34",
+      "numbered": true,
+      "characters": [
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "複数コマ(コマ2〜5)にまたがる1カット。コマ3・4はscene欄縦棒/空白で継続。dialogue欄に話者丸囲み『阿久津』。time欄下部丸囲み『6+12』。中間セリフ一部判読困難のため confidence medium。",
+      "_page": "page_013.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "35",
+      "action": "こ静。ムぬぬ…と。観念して仏にもたれかかる。俯瞰PAN。",
+      "dialogue": "「…\n…\nわか、たわか、た。作ればいいんじゃろ？作れば+",
+      "se": "",
+      "time": "6",
+      "scene_mark": "35",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "action欄の『こ静』『ムぬぬ』は二人静の芝居。dialogue欄の話者丸囲みは判読難、二人静の台詞と推定。time欄丸囲み⑥",
+      "_page": "page_014.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "36",
+      "action": "阿久津(からしり)。星崎、あ。と手を上げる",
+      "dialogue": "阿久津「では、本日は定時上りでよろしく頼みたい。」\n星崎「あっ、ところで課長。",
+      "se": "",
+      "time": "5",
+      "scene_mark": "36",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "星崎"
+      ],
+      "confidence": "medium",
+      "notes": "36は2コマにまたがる(会議俯瞰＋星崎手を上げる)。dialogue話者丸囲みは阿久津・星崎。time欄丸囲み⑤",
+      "_page": "page_014.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "37",
+      "action": "曇りけた眼で問う",
+      "dialogue": "歓迎会は業務時間に入るのゆい？",
+      "se": "",
+      "time": "3+12",
+      "scene_mark": "37",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "dialogueの『歓迎○』は赤字で『会は』と訂正。『ゆい』は判読難、要確認。time欄は3+12(秒+コマ)と読む",
+      "_page": "page_014.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "38",
+      "action": "阿久津。少しの間の後、答える。顔はしかめずに淡々と対応。PAN UP。去ってゆく。OHまで。",
+      "dialogue": "…………ゆるきにくだれ。",
+      "se": "",
+      "time": "6",
+      "scene_mark": "38",
+      "numbered": true,
+      "characters": [
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "モニター(画面上部にモニター指示あり)。dialogue欄の話者丸囲みは阿久津。台詞の一部崩れあり要確認",
+      "_page": "page_015.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "39",
+      "action": "阿久津。出ていった。阿久津のハケを無しにチキンの佐々木ちょっと入れる。二人静。もう1人の星崎。",
+      "dialogue": "二人静「…」佐々木(off)「…」星崎「…」",
+      "se": "SE「ピッ」",
+      "time": "",
+      "scene_mark": "39",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "二人静",
+        "佐々木",
+        "星崎"
+      ],
+      "confidence": "medium",
+      "notes": "会議室(対策局)。dialogueは話者丸囲み=二人静・佐々木(off)・星崎。赤字演出メモ『そういうところだけ今時なのじゃな…』『何事もごねてみるものよね』は演出注記のため参考。下部赤字『セリフ順を星崎→二人静→佐々木でお願いします』はページ末指示。action中の佐々木は書字上ちょっと不明瞭",
+      "_page": "page_015.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "40",
+      "action": "夜。高級料亭の庭の鹿威し。",
+      "dialogue": "",
+      "se": "カコーン…",
+      "time": "4",
+      "scene_mark": "40",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "コマ0(丸40)とコマ1(縦棒=続き)を統合。SEは丸囲みで冒頭に記載",
+      "_page": "page_016.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "41",
+      "action": "個室。上等な座敷の席についている佐々木、二人静。周囲を見て。→ 普通の様子に(赤字修正)",
+      "dialogue": "「……」",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "41",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue欄に丸囲みの話者名(佐々木・二人静)と沈黙記号。赤字『普通の様子に』はaction修正指示",
+      "_page": "page_016.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "42",
+      "action": "個室から見える庭園の池。FIX(+12)。やがて動き出した面持ちの一人(はっとした)",
+      "dialogue": "",
+      "se": "",
+      "time": "6",
+      "scene_mark": "42",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "コマ3(丸42)とコマ4(縦棒=続き)を統合。action末尾は手書き崩れのため一部推測、要確認",
+      "_page": "page_016.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "43",
+      "action": "星崎、モジモジしながら",
+      "dialogue": "星崎「か、課長、今日は私、その、お礼が言いたくて。」",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "43",
+      "numbered": true,
+      "characters": [
+        "星崎"
+      ],
+      "confidence": "medium",
+      "notes": "action・dialogueとも手書き崩し字。星崎のセリフ末尾は次コマへ続く可能性",
+      "_page": "page_017.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "44",
+      "action": "阿久津、クールに。PAN UP",
+      "dialogue": "阿久津「今夜は私の奢りだ。星崎君も存分に楽しむといい。」",
+      "se": "",
+      "time": "5+13",
+      "scene_mark": "44",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "星崎"
+      ],
+      "confidence": "medium",
+      "notes": "2コマにまたがる(阿久津の顔アップ＋PAN UP)。1カットに統合",
+      "_page": "page_017.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "45",
+      "action": "ほろ酔い星崎。(佐々木・二人静)／女性の所にやたらと入り込むのを見てる。",
+      "dialogue": "星崎「ありがとうございます!」／女性(off)「失礼いたします」／佐々木・二人静・星崎「!!」",
+      "se": "",
+      "time": "あ？／4",
+      "scene_mark": "45",
+      "numbered": true,
+      "characters": [
+        "星崎",
+        "佐々木",
+        "二人静"
+      ],
+      "confidence": "low",
+      "notes": "2コマにまたがり統合。action欄『(佐々木・二人静)』は判読困難。dialogueの話者丸囲みは佐々木・二人静・星崎と推定するが崩れており要確認。time欄下部に丸囲み『4』(ページ番号の可能性あり)",
+      "_page": "page_017.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "46",
+      "action": "庭園からカメラ。池の中、ブラブラ泳ぐ錦鯉。",
+      "dialogue": "お料理をお持ちしました",
+      "se": "",
+      "time": "3",
+      "scene_mark": "46",
+      "numbered": true,
+      "characters": [
+        "女将"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue話者は丸囲みで『女将』と読める。台詞冒頭『「お料理をお持ちしました」』",
+      "_page": "page_018.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "47",
+      "action": "庭の池。絹をおさえるように泳ぐ鯉たち。",
+      "dialogue": "",
+      "se": "",
+      "time": "3",
+      "scene_mark": "47",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "",
+      "_page": "page_018.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "48",
+      "action": "料理に戻って星崎。鰻を口に運ぶ。美味しい～。",
+      "dialogue": "あー…ん～っ！ん～～っ!!",
+      "se": "",
+      "time": "4",
+      "scene_mark": "48",
+      "numbered": true,
+      "characters": [
+        "星崎"
+      ],
+      "confidence": "medium",
+      "notes": "48は3コマにまたがる(丸番号は48のみ、下2コマは番号なしの続き)。dialogue話者は丸囲みで『星崎』。台詞は複数コマに分割された『あー…／ん…っ！／ん…っ!!』を結合。time欄の縦棒/空白コマを含め尺は最終④=4秒",
+      "_page": "page_018.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "49",
+      "action": "机の上 豪華な料理 メインの鰻 PAN T.B.",
+      "dialogue": "「鰻なんて久しぶり！鯖の話を聞いて食べたかったのね！」",
+      "se": "",
+      "time": "5",
+      "scene_mark": "49",
+      "numbered": true,
+      "characters": [
+        "星崎"
+      ],
+      "confidence": "medium",
+      "notes": "dialog話者は丸囲みで『星崎(off)』。time欄丸囲み5",
+      "_page": "page_019.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "50",
+      "action": "鰻を頬張り ご満悦のご一同 奥の佐々木 机の上の鰻を見ながら悔む 阿久津を発見",
+      "dialogue": "「んまぁ〜」 M「タイミングが良すぎて逆に怪しさを感じる…ところがで…」",
+      "se": "",
+      "time": "6",
+      "scene_mark": "50",
+      "numbered": true,
+      "characters": [
+        "二人静",
+        "佐々木",
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "dialog冒頭に丸囲み『二人静』、続いて丸囲み『佐々木』M。time欄に丸囲み6。跨ぐ複数コマを統合",
+      "_page": "page_019.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "51",
+      "action": "食べてる阿久津へ (ピン送り) / 阿久津。二人静を見て。",
+      "dialogue": "「二人静君は",
+      "se": "",
+      "time": "3",
+      "scene_mark": "51",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "ページ最初のコマは丸番号なし＝前ページ最後のカット51の続き。Sec欄丸囲み③",
+      "_page": "page_019.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "52",
+      "action": "食べてる二人静。阿久津に肘掛をやり。 / 10%。急に気地悪く笑う。",
+      "dialogue": "休日は何をして過ごしているのかね？ / 「そうじゃのう。やっぱり人並みに休日ぐらい？」",
+      "se": "",
+      "time": "8+12",
+      "scene_mark": "52",
+      "numbered": true,
+      "characters": [
+        "二人静",
+        "阿久津"
+      ],
+      "confidence": "low",
+      "notes": "次コマ(action『10%』)は番号なしで52に統合。dialogueは前コマからの続き ｜ 番号なし＝52の続きだが独立コマ表示のため参考記載。本来は52に統合すべき。dialogue話者は丸囲み『二人静』。time丸囲み『8+12』要確認",
+      "_page": "page_020.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "53",
+      "action": "阿久津。クールな表情で。缶酒のようなものを持ちながら。",
+      "dialogue": "「君の音楽であればぜひとも聞いてみたい」",
+      "se": "",
+      "time": "4",
+      "scene_mark": "53",
+      "numbered": true,
+      "characters": [
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue話者は丸囲み『阿久津』。Sec欄丸囲み④",
+      "_page": "page_020.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "54",
+      "action": "その返答に対し。同。やれやれと答える",
+      "dialogue": "「……(2モク)」 普通に家でゲームをしたり、最近は",
+      "se": "",
+      "time": "",
+      "scene_mark": "54",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "コマ0(番号54)とコマ1(縦棒/番号なし)を統合。話者は丸囲み『二人静』",
+      "_page": "page_021.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "55",
+      "action": "PAN→。佐々木、食べながら二人の話を聞き。ツッコむ内心か？",
+      "dialogue": "別荘でホームパーティーを開いたりしてる↑ 「今のところ普通に上司の飲み会って感じだけど…↑」",
+      "se": "",
+      "time": "",
+      "scene_mark": "55",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "コマ2(番号55)とコマ3(空白/番号なし)を統合。dialogue内に丸囲み『佐々木M(モノローグ)』の話者記号あり。timeにSt13(尺)",
+      "_page": "page_021.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "56",
+      "action": "急に振られ、ハッと顔を上げる佐々木",
+      "dialogue": "「佐々木君は? 街はどう過ごしているのかな?」",
+      "se": "",
+      "time": "3",
+      "scene_mark": "56",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "dialogueに丸囲み話者『阿久津』『佐々木』あり。time欄に丸囲み③(3秒)",
+      "_page": "page_021.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "57",
+      "action": "佐々木、微笑み。ふと間を置く",
+      "dialogue": "佐々木「そうですね…買い物に行ったペットと一緒に道こしたりしてます。」二人静M「ピーちゃんたち、ちゃんとご飯食べた？」",
+      "se": "",
+      "time": "8+12",
+      "scene_mark": "57",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "コマ0とコマ1(番号なし縦棒)を57に統合。dialogueは崩し字のため一部推測",
+      "_page": "page_022.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "58",
+      "action": "豪華な食事を見てピーちゃんを思う。T.B.で持ち、掛ける",
+      "dialogue": "「サな…」",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "58",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "手書き崩れ大。dialogue内容不確実",
+      "_page": "page_022.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "59",
+      "action": "窓、電気ついてる",
+      "dialogue": "「カァーン…」",
+      "se": "",
+      "time": "3",
+      "scene_mark": "59",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "dialogue欄SE的表現。話者丸囲み判読困難",
+      "_page": "page_022.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "60",
+      "action": "見立て料亭。中庭で鳴る鹿威し。阿久津に日本酒を注ぐ佐々木",
+      "dialogue": "「入れてますよ…」",
+      "se": "",
+      "time": "3+12",
+      "scene_mark": "60",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "佐々木"
+      ],
+      "confidence": "low",
+      "notes": "dialogue話者・内容とも判読困難。picture欄に日本酒(徳利)の資料写真貼付",
+      "_page": "page_022.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "61",
+      "action": "佐々木、注ぎながら阿久津に質問する（星崎煮物食べ、二人静はお漬物）。注ぎ終わると。阿久津、自分の分の徳利を持ち、佐々木に注ぐと。佐々木、あっと自分のお猪口を差し出し",
+      "dialogue": "佐々木「さっきから課長、」「先程から同じ銘柄を口にされてますが、日本酒にこだわりが？」阿久津「ん」佐々木「あっ」「すみません」",
+      "se": "",
+      "time": "8",
+      "scene_mark": "61",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "阿久津",
+        "星崎",
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "61は最初のコマから4コマにまたがる続き（縦棒/空白）を統合。dialogue欄の話者名（丸囲み）は佐々木・阿久津。time欄丸数字⑧=8秒",
+      "_page": "page_023.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "62",
+      "action": "注ぎながら答える阿久津",
+      "dialogue": "阿久津「こだわりと言うほどではないが、強いて好みはあるじゃろうかもしれない…」佐々木(off)「そうですか」",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "62",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "time欄は 4+12（秒+コマ）と読む。dialogue最後の佐々木(off)は判読困難、要確認",
+      "_page": "page_023.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "63",
+      "action": "泣き終わり（out）",
+      "dialogue": "「‥‥‥‥」思えば阿久津さんのお仕事を何も知らない。せっかくの機会だしもっと色々聞いてみよう",
+      "se": "",
+      "time": "10",
+      "scene_mark": "63",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "コマ0〜3は丸番号63のカットの続き（縦棒/空白）として統合。ダイアログはM(モノローグ)含む。SE「カタ‥‥」あり。actionは『おちょこ(?)を傾けつつ考える佐々木／もって話らる阿久津／見上げる佐々木』等、手書き崩れのため一部不確実",
+      "_page": "page_024.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "64",
+      "action": "阿久津に対し驚く一同",
+      "dialogue": "「では話がまとまり次第、次の店に行こう」「えっ?」「‥!‥」「なんじゃと?」",
+      "se": "",
+      "time": "4",
+      "scene_mark": "64",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "佐々木",
+        "星崎"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue欄に丸囲み話者名(阿久津/佐々木/星崎等)。手書き崩れで一部不確実。会議室・長机の俯瞰構図",
+      "_page": "page_024.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "65",
+      "action": "一部佐々木の。渡辺と話す阿久津。PAN UP",
+      "dialogue": "「二次会の席を用意してある。本日は星崎君も一緒なのでスイーツやクラフクが楽しめる場所だ。",
+      "se": "",
+      "time": "8",
+      "scene_mark": "65",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "佐々木",
+        "星崎"
+      ],
+      "confidence": "medium",
+      "notes": "action欄・dialogue欄とも崩し字多く一部推定。話者は丸囲み『阿久津』。渡辺は要確認",
+      "_page": "page_025.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "66",
+      "action": "暗いの2人。",
+      "dialogue": "タクシーで少々走るが、トイレは大丈夫だろうか？」「いい」",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "66",
+      "numbered": true,
+      "characters": [
+        "二人静",
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "dialog列に丸囲み話者『二人静』『佐々木』。time欄は4+12と読む(コマ4=8秒相当の丸数字も別途)。話者記号は崩れており要確認",
+      "_page": "page_025.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "67",
+      "action": "佐々木。目パチ。え…?と",
+      "dialogue": "佐々木M「こ… この人",
+      "se": "",
+      "time": "3+12",
+      "scene_mark": "67",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "dialog欄に丸囲み『佐々木』＋M(モノローグ)。picture・action欄に赤の書き込みあり。time欄下部に3+12(丸囲み)",
+      "_page": "page_025.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "68",
+      "action": "阿久津。いつものクールな表情で。PAN UP",
+      "dialogue": "本当にあの阿久津さんだろうか…",
+      "se": "",
+      "time": "?→、④",
+      "scene_mark": "68",
+      "numbered": true,
+      "characters": [
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "time欄に『?』と丸囲み④。PAN UPは2コマ目にかかる継続コマ(縦棒相当)を統合",
+      "_page": "page_026.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "69",
+      "action": "ここで星崎、申し訳ない気に、少しモジモジして",
+      "dialogue": "星崎「あ、あの、課長…」",
+      "se": "",
+      "time": "2+13",
+      "scene_mark": "69",
+      "numbered": true,
+      "characters": [
+        "星崎"
+      ],
+      "confidence": "medium",
+      "notes": "",
+      "_page": "page_026.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "70",
+      "action": "やったと星崎。 / 前で顔を見合わせる2人。",
+      "dialogue": "阿久津「この次会もぜひ寄りたい」／星崎「ぜひ!!」",
+      "se": "",
+      "time": "6",
+      "scene_mark": "70",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "星崎"
+      ],
+      "confidence": "medium",
+      "notes": "70は2コマにまたがる(後半に星崎の喜ぶ絵と『ぜひ!!』)。統合して1エントリ ｜ ページ最初のコマは丸番号なし＝前ページカット70の続き。台詞欄は話者名らしき丸囲みが2つあるが判読困難",
+      "_page": "page_026.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": 71,
+      "action": "団子の断面。カコンと鳴る日本。",
+      "dialogue": "",
+      "se": "「カコーン」",
+      "time": "4+12",
+      "scene_mark": "71",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "2コマにまたがる同一カット(団子/水面のコマと竹の樋のコマ)を統合。action崩し字で不確実、要確認。SE表記あり",
+      "_page": "page_027.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": 72,
+      "action": "喫茶店の外…",
+      "dialogue": "",
+      "se": "",
+      "time": "3",
+      "scene_mark": "72",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "dialog欄に丸囲み『兼用』らしき記号あり(セリフではないため除外)。action判読困難、要確認",
+      "_page": "page_027.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": 73,
+      "action": "その路地裏に、ある1軒の店？ 腕をくみ通りすぎる社会人カップル。",
+      "dialogue": "「ちょっとへ…あなたっ」「いやだってさー…」",
+      "se": "",
+      "time": "",
+      "scene_mark": "73",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "dialog欄に話者を示す丸囲み(女性/男性か)あり。崩し字のため台詞・話者とも不確実、要確認",
+      "_page": "page_027.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "74",
+      "action": "白カウンター、スライドして、並べられたお酒の Q.PAN",
+      "dialogue": "",
+      "se": "",
+      "time": "3",
+      "scene_mark": "74",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "上部の番号無しコマ(棚の絵)は74の続きとして統合。Sec欄丸③×2は74尺関連。action手書き崩れあり",
+      "_page": "page_028.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "75",
+      "action": "ホスク席?カウンター前に目を輝かせる星崎 PAN T.B.",
+      "dialogue": "「はわわわ!!!」",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "75",
+      "numbered": true,
+      "characters": [
+        "星崎"
+      ],
+      "confidence": "low",
+      "notes": "複数コマにまたがる75を統合。dialogue欄の丸囲みは話者名『星崎』。action崩れ大で要確認",
+      "_page": "page_028.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "76",
+      "action": "PAN → ボックス席に座っている一同。星崎のみビール、他3人はウイスキーをかたむけている。カウンターテーブル",
+      "dialogue": "星崎「美味しい…!!!」二人静「(微笑)」",
+      "se": "",
+      "time": "3+12",
+      "scene_mark": "76",
+      "numbered": true,
+      "characters": [
+        "星崎",
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "time欄は3+12と読む。コマ2の続き(空白コマ)を統合",
+      "_page": "page_029.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "77",
+      "action": "ウイスキーでちん。阿久津君に二人静グラスを持ち上げてフフフ、ニヤリ",
+      "dialogue": "二人静「普段からこういう店に女を連れこんでるちがう？」",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "77",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue欄は一部切れ、推定を含む",
+      "_page": "page_029.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "78",
+      "action": "星崎ハラスを食べながら / 星崎を今日る佐々木。星崎、コーヒーを食べ流ける",
+      "dialogue": "星崎「課長は男性が好きらしいわよ？」 / 「えっ、そうなの…？」\n（佐々木）「…！」\n（二人静）(off)「なんじゃ、そうなんかや？」\n「はぁ…」",
+      "se": "",
+      "time": "9",
+      "scene_mark": "78",
+      "numbered": true,
+      "characters": [
+        "星崎",
+        "佐々木",
+        "二人静"
+      ],
+      "confidence": "low",
+      "notes": "action欄『ハラス』は要確認 ｜ ページ最初のコマは丸番号なし＝前ページ(78)の続き。2コマ目も番号なしで統合。手書き崩し多く台詞の一部は要確認",
+      "_page": "page_029.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "79",
+      "action": "阿久津、グラスを揺らしながら二人静に微笑む。PAN",
+      "dialogue": "（阿久津）「興味を持ってくれるのは嬉しいが、二人静君の好意には答えられないな」",
+      "se": "",
+      "time": "",
+      "scene_mark": "79",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "79は2コマにまたがる(顔アップ＋グラスの手元)。本文を結合",
+      "_page": "page_030.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "80",
+      "action": "ぐっと二人静、ウイスキーをのむ阿久津。 / ニヤッと佐々木の方を見て",
+      "dialogue": "（二人静）「うわあ、むかつく。」 / そうなると…もう1人の無人の可能性はあるものう？",
+      "se": "",
+      "time": "3+12",
+      "scene_mark": "80",
+      "numbered": true,
+      "characters": [
+        "二人静",
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "time欄は空。ページ下端の（ ＋ ）はページ計欄でカット尺ではない ｜ ページ最初のコマは丸番号なし＝前ページカット80の続き。dialogueは冒頭『そうなると…』と、次コマにまたがる『もう1人の…可能性はあるものう？』を統合。話者は文脈から二人静と推定(要確認)",
+      "_page": "page_030.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "81",
+      "action": "ウイスキーのんでる佐々木",
+      "dialogue": "",
+      "se": "",
+      "time": "",
+      "scene_mark": "81",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "high",
+      "notes": "",
+      "_page": "page_031.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "82",
+      "action": "自分？と / 阿久津、少し良くグラスを揺らしながら",
+      "dialogue": "「悪いが佐々木のことをそういう目では見られない」",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "82",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "『自分？と』を含むコマは番号なしで82の続きとして統合。dialogueの阿久津セリフは82欄に記載",
+      "_page": "page_031.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "83",
+      "action": "その引き ／ 群衆の佐々木とニヤニヤしてる二人静。T.B.126",
+      "dialogue": "「一斉に死ぬのはこれで2回目、もう好きにして下さい…」",
+      "se": "",
+      "time": "6",
+      "scene_mark": "83",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "佐々木M(モノローグ)。action末尾のカメラ指示はT.B.(トラックバック)と読む。人数値は要確認",
+      "_page": "page_031.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "84",
+      "action": "大モブフクと10コを食べ続けている星崎",
+      "dialogue": "「星崎君。」",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "84",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "星崎"
+      ],
+      "confidence": "medium",
+      "notes": "84は絵1コマ目+2コマ目(縦棒/番号なし継続)を統合。2コマ目action『首を傾けて見る』、dialogue星崎『ん…?』",
+      "_page": "page_032.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "85",
+      "action": "いつの間にか机においてあるアンケフクを指し",
+      "dialogue": "「カラオケけけ…でうけね?ここは高得点を出すと、有名スイーツ店の商品券が貰えるそうだ」M(モノローグ)「もしや、阿久津課長が瞭したのでは…」",
+      "se": "",
+      "time": "5",
+      "scene_mark": "85",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "佐々木"
+      ],
+      "confidence": "low",
+      "notes": "dialogue欄が崩れて判読困難。話者は阿久津→佐々木(M)。action・dialogueの一部推測",
+      "_page": "page_032.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "86",
+      "action": "阿久津を見て佐々木、そりって…て 隣で星崎",
+      "dialogue": "(off)「カモ…」",
+      "se": "",
+      "time": "6+13",
+      "scene_mark": "86",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "星崎",
+        "阿久津"
+      ],
+      "confidence": "low",
+      "notes": "86は絵4コマ目+5コマ目(番号なし継続)を統合。dialogue星崎(off)「カモ…」。文字崩れ多く要確認",
+      "_page": "page_032.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "87",
+      "action": "恥ずかしそうに / そっと静か デスクをバァン! と掴み / 手で画面をタッチし手放を入れる (両手で)",
+      "dialogue": "カラオケって いわこと すごくて…／「ひれ、ならば 俺が」／「失敗をきかってやろう」「操作者」",
+      "se": "",
+      "time": "9",
+      "scene_mark": "87",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "87は3コマにまたがる(丸番号は最初のコマのみ、以降縦棒/空白で継続)。action・dialogueとも手書き崩し字で判読困難、推測を含む。dialogueの話者名は丸囲みだが読み取り不確実、要確認",
+      "_page": "page_033.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "88",
+      "action": "「FLY」の曲 (曲中) スクリーンにうつる 曲8 ここから百内晴い ステージにスポットライト ジューサル処理 / ステージ上 二人静 T.UPひこ / 喉に大きく引いて 歌う リフレクション",
+      "dialogue": "（前奏）／ I believe in our band / 繋がってる 確かなパス",
+      "se": "",
+      "time": "2+12 / 4+12",
+      "scene_mark": "88",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "low",
+      "notes": "88は2コマにまたがる(丸番号は最初のコマ、次コマは空白で継続)。曲名『FLY』はPicture内に描かれる。dialogue『I believe in our band』は英語ライブ歌詞。オレンジの縦線は編集指示線。手書き判読困難で推測多数、要確認 ｜ ページ最上段コマ。scene欄に丸番号なし＝前ページ最後のカット88の続きとして統合",
+      "_page": "page_033.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "89",
+      "action": "PAN",
+      "dialogue": "Your Power still flows into me",
+      "se": "",
+      "time": "3",
+      "scene_mark": "89",
+      "numbered": true,
+      "characters": [],
+      "confidence": "high",
+      "notes": "",
+      "_page": "page_034.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "90",
+      "action": "感じてる 大切なものを この肩に PAN",
+      "dialogue": "",
+      "se": "",
+      "time": "3+18",
+      "scene_mark": "90",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "dialogue欄は日本語ト書き風の書き込みだがセリフとして明確でないため空。会議室的3人の絵",
+      "_page": "page_034.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "91",
+      "action": "リフレクション 歌う PAN UP",
+      "dialogue": "きみとなら Fly I decided to become a sage",
+      "se": "",
+      "time": "3+12",
+      "scene_mark": "91",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "ページ最下段。time欄丸囲みは3+12と読む",
+      "_page": "page_034.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "92",
+      "action": "仰おろし\n歌う",
+      "dialogue": "of the Stars, oh like you.",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "2",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "コマ0とコマ1は連続する同一カット(コマ1は縦棒/番号なし)として統合。dialogue『of the Stars, oh like you』は歌詞と思われる",
+      "_page": "page_035.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "93",
+      "action": "カウンターでグラス拭いてるマスター\nリズムにのって\nPAN",
+      "dialogue": "Oh oh (Push forward!! Pu- Push forward!!) Oh oh (Flyin' high!! Fl- Flyin' high!!)",
+      "se": "",
+      "time": "5+18",
+      "scene_mark": "93",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "コマ2〜4は同一カット(コマ3・4は番号なしの続き)として統合。dialogueは歌詞(コーラス)。actionのマスターのセリフ書き取りは崩れ字のため一部不確実",
+      "_page": "page_035.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "94",
+      "action": "歌う つ人静 リフレイン PAN UP",
+      "dialogue": "止まることない ロックタイムライン 変えてく さあ2人で Right now!!",
+      "se": "",
+      "time": "",
+      "scene_mark": "94",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "action欄『つ人静(二人静)』の動き。dialogueは楽曲歌詞と思われる",
+      "_page": "page_036.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "95",
+      "action": "存在SU 歌う つ人静のDア リフレイン",
+      "dialogue": "What can I do for you?",
+      "se": "",
+      "time": "",
+      "scene_mark": "95",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue先頭の『??』は歌詞の一部か記号。action『Dア(Dア?)』は判読困難",
+      "_page": "page_036.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "96",
+      "action": "Dア リフレイン",
+      "dialogue": "What can I do for you?",
+      "se": "",
+      "time": "",
+      "scene_mark": "96",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "time欄丸囲み『4+12』の可能性あり(判読困難)",
+      "_page": "page_036.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "97",
+      "action": "T.B. 引き",
+      "dialogue": "Go on! Go on!!",
+      "se": "",
+      "time": "1",
+      "scene_mark": "97",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "ステージ上のキャラ。ダイアログ『Go on!』はセリフ扱い",
+      "_page": "page_037.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "98",
+      "action": "リップフラップ",
+      "dialogue": "",
+      "se": "",
+      "time": "",
+      "scene_mark": "98",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "98はこのコマとPAN UPのコマ（縦棒/番号なし）にまたがる。dialogue欄の『飲み込めもきみと』『FLY』等は歌詞と思われるが判読困難で要確認。PAN UPのコマは98の続き",
+      "_page": "page_037.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "99",
+      "action": "PAN UP / T.B.",
+      "dialogue": "",
+      "se": "",
+      "time": "3",
+      "scene_mark": "99",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "背景は対策局会議室風。dialogue欄は歌詞の続きと思われるが判読困難。action欄に『曲こわれ』(オレンジ)のメモあり。time欄は丸囲み③が2つ見えるが99の尺として3秒と判断",
+      "_page": "page_037.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "100",
+      "action": "ステージ上、こちらの車内点灯。商品券の入った封筒を差し出しているマスター。（次コマ続き）マスターを受けとり）",
+      "dialogue": "",
+      "se": "",
+      "time": "2",
+      "scene_mark": "100",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "コマ0は丸囲み『100』で新カット。コマ1は縦棒(継続)のため統合。time欄の丸②はこのカット範囲の尺",
+      "_page": "page_038.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "101",
+      "action": "モニターに97点台の二人静を映す。その前にいるマスターと二人静。店内の広々スペースに商品券を見せつける。",
+      "dialogue": "「おお！ 本当に貰えたのじゃ！",
+      "se": "",
+      "time": "3",
+      "scene_mark": "101",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "コマ2が丸囲み『101』。コマ3は番号欄空白のため継続として統合。dialogue欄の『おお！』『本当に貰えたのじゃ！』はセリフ。time欄の丸③はこのカット範囲の尺",
+      "_page": "page_038.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "102",
+      "action": "店内スタッフと二人静、拍手して。（左後方）はしゃいでいる星崎 / スッと女子日、飲杯?ん",
+      "dialogue": "（佐々木）「わあ！ すごいですね！ / ？",
+      "se": "",
+      "time": "5",
+      "scene_mark": "102",
+      "numbered": true,
+      "characters": [
+        "星崎",
+        "佐々木"
+      ],
+      "confidence": "low",
+      "notes": "丸囲み『102』。dialogue欄の話者名は丸囲みだが読み取り不確実、action欄の『星崎』は確認。セリフ話者は要確認 ｜ ページ最初のコマは scene欄に丸囲み番号なし＝前ページ最後のカット102の続き。action・dialogueとも手書き崩れ強く要確認。dialog話者は丸囲み『佐々木』らしき記載",
+      "_page": "page_038.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "103",
+      "action": "PAN↓ / マイクシンにうつる曲? / 効カ ステーラトに オーバーライト＋ジェイ処理",
+      "dialogue": "暖昧カール / life is",
+      "se": "",
+      "time": "6+12",
+      "scene_mark": "103",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "picture欄はタイトルロゴ風の『暖昧カ…』。dialog欄の『life is』は歌詞と思われる。action欄の演出用語は判読困難で要確認",
+      "_page": "page_039.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "104",
+      "action": "ステージ上、照れつつも頑張って歌う星崎 / PAN UP",
+      "dialogue": "wonder",
+      "se": "",
+      "time": "4",
+      "scene_mark": "104",
+      "numbered": true,
+      "characters": [
+        "星崎"
+      ],
+      "confidence": "medium",
+      "notes": "104は下2コマにまたがる1カット。上コマがステージ上のバストショット、下コマがPAN UPで全身。dialog欄は歌詞『wonder』の続き。action欄の人名は『星崎』と判読(要確認)",
+      "_page": "page_039.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "105",
+      "action": "姉、手拍子してる3人。二人静立ちよって ノリノリ",
+      "dialogue": "（AとD前の前春）一同「いえ～い!!」",
+      "se": "",
+      "time": "2+13",
+      "scene_mark": "105",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "action・dialogue欄とも手書きの崩れが強く一部推定。『AとD前の前春』は要確認",
+      "_page": "page_040.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "106",
+      "action": "星崎 顔上げて",
+      "dialogue": "あ(せせ) 暖味な？",
+      "se": "",
+      "time": "1+6",
+      "scene_mark": "106",
+      "numbered": true,
+      "characters": [
+        "星崎"
+      ],
+      "confidence": "low",
+      "notes": "106は2コマにまたがる(星崎アップ→顔上げるアップ)。dialogueの読みは不確実、要確認",
+      "_page": "page_040.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "107",
+      "action": "PANに合せて 前のライト大きく 動かして下… PAN T.B.",
+      "dialogue": "距離感で どうしよう、どうしたい？って misty days",
+      "se": "",
+      "time": "3+12",
+      "scene_mark": "107",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "picture内に『misty days』の書き込みあり。台詞と重なり要確認",
+      "_page": "page_040.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "108",
+      "action": "魂)（PAN UP）",
+      "dialogue": "ときめいて強がって",
+      "se": "",
+      "time": "3+12",
+      "scene_mark": "108",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "コマ0〜2が108（丸囲み108）。action欄冒頭の崩し字は『魂』か要確認。コマ1にPAN UP指示。timeはコマ2のsec欄『3+12』",
+      "_page": "page_041.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "109",
+      "action": "佐々木 手拍子してる 佐々木",
+      "dialogue": "ハッとしてパニックン",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "109",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "low",
+      "notes": "action欄『佐々木 手拍子してる 佐々木』と読めるが崩れており要確認。dialogueは『ハッとして／パニッ／ク。』の流れ。timeはコマ3のsec欄『4+12』",
+      "_page": "page_041.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "110",
+      "action": "見えている物の 佐々木を PAN⑦",
+      "dialogue": "ドキドキがハレちゃう、キニに",
+      "se": "",
+      "time": "",
+      "scene_mark": "110",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "low",
+      "notes": "コマ4〜7が110。action欄『見しているもの 佐々木を PAN⑦』（PANのあと丸数字7か）。dialogueは前カットからの続きの台詞『ドキドキがハレちゃう、キニに』。最下段のバツ印(OL?)確認要",
+      "_page": "page_041.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "111",
+      "action": "ファースト\n目所",
+      "dialogue": "曖昧じゃ",
+      "se": "",
+      "time": "",
+      "scene_mark": "111",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "action欄の崩し字は判読困難、要確認",
+      "_page": "page_042.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "112",
+      "action": "歌う\n\nPAN UP",
+      "dialogue": "大胆にいけない あたりまえに one-way-love 恋の途中は いつも",
+      "se": "",
+      "time": "7",
+      "scene_mark": "112",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "112のコマとPAN UP付きのコマは番号欄が続き(縦棒/空白)のため直前カットに統合。dialog冒頭の『2』は歌詞番号のためセリフから除外",
+      "_page": "page_042.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "113",
+      "action": "スクリーンの歌詞",
+      "dialogue": "ココロと",
+      "se": "",
+      "time": "46",
+      "scene_mark": "113",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "picture内の『ココロと』はスクリーン上の歌詞。dialog『JJDと』は崩し字で要確認",
+      "_page": "page_042.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "114",
+      "action": "見開.",
+      "dialogue": "カラダが",
+      "se": "",
+      "time": "",
+      "scene_mark": "114",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "dialog冒頭の『2』は歌詞番号のためセリフから除外",
+      "_page": "page_042.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "115",
+      "action": "ノリノリの二静。台りのチ入れる",
+      "dialogue": "（今日白）",
+      "se": "",
+      "time": "",
+      "scene_mark": "115",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "low",
+      "notes": "action・dialogue共に手書き崩れで判読困難。dialogueは『(今日白)』と読めるが要確認",
+      "_page": "page_043.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "116",
+      "action": "ステージに 尋所 T.B. PAN",
+      "dialogue": "反比例 かた",
+      "se": "",
+      "time": "",
+      "scene_mark": "116",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "action崩れ大。カメラ指示 T.B./PANは確認できる。dialogueも判読困難、要確認",
+      "_page": "page_043.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "117",
+      "action": "何か。",
+      "dialogue": "し 暖昧",
+      "se": "",
+      "time": "",
+      "scene_mark": "117",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "116からのPAN T.B.が跨る。dialogue『暖昧』は前カットからの続き書き込みの可能性。全体に判読困難で要確認",
+      "time_extra": "",
+      "_page": "page_043.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "118",
+      "action": "T.B.",
+      "dialogue": "ガール こわこ",
+      "se": "",
+      "time": "",
+      "scene_mark": "118",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "time欄にサイン(丸囲みサイン)あり。dialogue判読困難で要確認。scene欄拡大にも118を確認",
+      "_page": "page_043.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "119",
+      "action": "店内の看板",
+      "dialogue": "",
+      "se": "",
+      "time": "4",
+      "scene_mark": "119",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "看板に『カラオケ シンフォル』風の文字。picture欄の看板文字は判読困難",
+      "_page": "page_044.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "120",
+      "action": "動戻って。マイクを差し出す二人静。兄の事務所は高○○万を手にしている。PAN UP",
+      "dialogue": "「アナル、僕らは、ち 歌わせるんで。お主も一曲」",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "120",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "low",
+      "notes": "複数コマにまたがる(コマ2〜4を統合)。dialogue冒頭の崩し字が判読困難、要確認",
+      "_page": "page_044.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "121",
+      "action": "乾杯するカルテット。次で、○ス甲クスオーを飲んでたり。PAN○",
+      "dialogue": "「いる間○は…」「この流れで歌えるのは、ラじきワレピートリーグ…」",
+      "se": "",
+      "time": "6",
+      "scene_mark": "121",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "星崎"
+      ],
+      "confidence": "low",
+      "notes": "dialogue話者に丸囲み『佐々木』『星崎M』。action文字の判読が不確実で要確認",
+      "_page": "page_044.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "122",
+      "action": "そのグラスを机に置き",
+      "dialogue": "「フッ」「リーサ 君は歌え…」",
+      "se": "SE",
+      "time": "2+12",
+      "scene_mark": "122",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "low",
+      "notes": "dialogue話者に丸囲み『二人静(off)』。SE表記あり。セリフ内容の判読が不確実、要確認",
+      "_page": "page_044.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "123",
+      "action": "気になってるみの裏で 阿久津静かに言う / えっ…?と3人。 / スッと立ち上がる阿久津",
+      "dialogue": "ほんとかてはもいが歌が… / 「えっ?」",
+      "se": "SE「スッ―」",
+      "time": "4+12",
+      "scene_mark": "123",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "佐々木",
+        "二人静",
+        "星崎"
+      ],
+      "confidence": "low",
+      "notes": "手書き崩れ大。dialogue欄の話者丸囲み『阿久津』確認。action・dialogueとも判読困難で要確認 ｜ scene欄縦棒＝123の続きに統合。dialogue欄の丸囲み話者名が複数（佐々木/静/星?）。要確認 ｜ scene欄縦棒＝123の続きに統合。time欄丸囲み『4+12』",
+      "_page": "page_045.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "124",
+      "action": "PAN 初夏、すいな眠差し",
+      "dialogue": "",
+      "se": "",
+      "time": "4",
+      "scene_mark": "124",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "目のアップ2コマにまたがる。上コマはpicture中心で本文なし ｜ scene欄縦棒＝124の続きに統合。PAN指示あり。time欄丸囲み『4』。『すいな』は要確認",
+      "_page": "page_045.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "125",
+      "action": "スポットライト 数珠つなぎでパッパッと フレ. PAN→",
+      "dialogue": "",
+      "se": "",
+      "time": "",
+      "scene_mark": "125",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "コマ0とコマ1がカット125。dialogue欄は演出メモ・矢印のみでセリフなし。action欄の一部は崩し字のため推測",
+      "_page": "page_046.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "126",
+      "action": "照明反射補間 同じく点灯する",
+      "dialogue": "",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "126",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "action崩し字のため推測。time欄はコマ2の丸囲み『2+12』",
+      "_page": "page_046.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "127",
+      "action": "スポットライトの阿久津解除(要確認) ステージの上、ミラーボールのライトが動して T.B.（薄暗い）",
+      "dialogue": "",
+      "se": "",
+      "time": "2",
+      "scene_mark": "127",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "コマ4・5がカット127。action欄は崩し字が激しく大半が推測、要確認。『暗め』のト書きあり。time欄は丸囲み『2』",
+      "_page": "page_046.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "128",
+      "action": "顔のみへ／ヘッドセットが見える。PAN",
+      "dialogue": "",
+      "se": "",
+      "time": "2",
+      "scene_mark": "128",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "複数コマにまたがる。actionはコマ0とコマ1の内容を結合。人物特定は不確実、要確認",
+      "_page": "page_047.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "129",
+      "action": "ギターと手／スッと／マイクを上げる",
+      "dialogue": "",
+      "se": "",
+      "time": "2",
+      "scene_mark": "129",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "コマ2とコマ3を統合。手・マイク描写",
+      "_page": "page_047.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "130",
+      "action": "ここから ステージ 明るく。ライブ会場",
+      "dialogue": "Stand up now—.",
+      "se": "",
+      "time": "2",
+      "scene_mark": "130",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "dialogue欄に英字歌詞 Stand up now。写真貼込みあり",
+      "_page": "page_047.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "131",
+      "action": "PAN 歌う限津(観客)",
+      "dialogue": "大事に抱えたものに限って",
+      "se": "",
+      "time": "",
+      "scene_mark": "131",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "action欄の下部文字は崩れており『歌う限津』は要確認。dialogueは『大事に抱えたものに限って』と読む",
+      "_page": "page_048.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "132",
+      "action": "ステージ暗く(遠い距離で) PAN／シャっ!と左手上げ(赤字)",
+      "dialogue": "違う様(態)んと 崩れていくんだよ～",
+      "se": "",
+      "time": "3",
+      "scene_mark": "132",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "action欄は手書き崩し字で読み取り困難、『ステージ暗く(遠い距離で)』は推測。sec欄の丸囲み③は前カット132の尺の可能性。dialogueは『違う様んと崩れていくんだよ～』と推測、要確認",
+      "_page": "page_048.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "133",
+      "action": "",
+      "dialogue": "それでも",
+      "se": "",
+      "time": "",
+      "scene_mark": "133",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "dialogueは『それでも』と推測、末尾に『2』のような書き込みあり要確認。time欄に丸囲みの尺記号あり読み取り困難",
+      "_page": "page_048.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "134",
+      "action": "T.U. グラスを持つ手が震える 一気飲む",
+      "dialogue": "carry on 暗闇の先",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "134",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "コマ0(顔アップ)とコマ1(グラスを持つ手)を統合。コマ0のsec欄は判読困難のため2+12はコマ1の値。dialogueは崩し字のため一部推測",
+      "_page": "page_049.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "135",
+      "action": "マグ…?と フフPAN 狭い",
+      "dialogue": "明けようとて掴もうとが",
+      "se": "",
+      "time": "2+13",
+      "scene_mark": "135",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "コマ2(顔アップ)とコマ3(縦線背景・PAN)を統合。両コマとも丸番号なし=135の続き。dialogue・actionとも崩し字で推測多め、要確認",
+      "_page": "page_049.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "136",
+      "action": "PAN T.B. 星崎(?)",
+      "dialogue": "I won't let this break me down break me down break me down break me down",
+      "se": "",
+      "time": "2+18",
+      "scene_mark": "136",
+      "numbered": true,
+      "characters": [
+        "星崎"
+      ],
+      "confidence": "medium",
+      "notes": "コマ4。action欄下部の人名は『星崎』らしいが崩れており要確認。dialogueは英語歌詞と思われる",
+      "_page": "page_049.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "137",
+      "action": "アップ 手 カッコイイ (左手カッコつけ) 半 QPAN",
+      "dialogue": "陽が沈んでも進んでいく",
+      "se": "",
+      "time": "3",
+      "scene_mark": "137",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "picture: 顔アップに赤で手が描き込まれている。2コマにまたがるが同一カット。台詞は歌詞またはコーラス的セリフ。actionの『半』は判読不確実",
+      "_page": "page_050.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "138",
+      "action": "TB 阿久津の背 コーラス(指示)",
+      "dialogue": "ウォッオオオ ウォッオオオ",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "138",
+      "numbered": true,
+      "characters": [
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue列の『コーラス』は赤丸囲みの演出メモ→actionへ移した。ウォッオオオはコーラス音",
+      "_page": "page_050.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "139",
+      "action": "グラス拭いてるマスター 拭き終わり かけてる キラリと光るグラス",
+      "dialogue": "ウォッオオオ ？ ウォッキオオ",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "139",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "2コマにまたがる同一カット。台詞はコーラス継続。マスターがグラスを拭く描写",
+      "_page": "page_050.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "140",
+      "action": "PON ウデトロシ",
+      "dialogue": "ウォッオオオー ウォッオオオー",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "140",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "ステージ上で歌う人物。コマ0とコマ1(PON)を統合",
+      "_page": "page_051.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "141",
+      "action": "PAN R",
+      "dialogue": "Hold my ground, 何度だって Fly",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "141",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "英語詞と日本語詞混在。複数コマ(コマ2〜6)を統合",
+      "_page": "page_051.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "142",
+      "action": "入り FIX",
+      "dialogue": "たとえ闘の中でも",
+      "se": "",
+      "time": "1+12",
+      "scene_mark": "142",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "ステージ全景。dialogue『たとえ闘の中でも』は判読困難、要確認",
+      "_page": "page_051.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "143",
+      "action": "",
+      "dialogue": "Still moving on!!",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "143",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "dialogue欄に英字手書き『Still moving on!!』。time欄は丸囲み『4+12』と読む",
+      "_page": "page_052.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "144",
+      "action": "バッと暗転。",
+      "dialogue": "ダン!!",
+      "se": "ダン!!",
+      "time": "",
+      "scene_mark": "144",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "次のコマ(番号なし・グレー暗転)を本カットに統合。オレンジで『曲ここまで』の演出メモあり(dialogue外)。time欄に丸囲み『4』らしき記号",
+      "_page": "page_052.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "145",
+      "action": "廊(?)の看板 開か。",
+      "dialogue": "",
+      "se": "",
+      "time": "4",
+      "scene_mark": "145",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "看板に『おしながき/カクテル』風の文字。action欄の1文字目・末尾は判読困難で要確認。time欄に丸囲み『4』",
+      "_page": "page_052.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "146",
+      "action": "席に戻ってきた阿久津／座り。／と、不本(意?)の着信音が鳴り）／阿久津 ポケットに手を入れ、／出る",
+      "dialogue": "「課長、お上手ですね」／「なに、付き合いで覚えた程度だよ」／「失礼。」／「もしもし。」",
+      "se": "着信音",
+      "time": "",
+      "scene_mark": "146",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "1カットが5コマに跨る(コマ0のみ丸囲み146、以降は縦棒継続)。ため統合。dialogue話者丸囲み:佐々木/阿久津/着信音/阿久津。コマ4のセリフはローマ字風『Futい?』風の走り書きで『もしもし』と推定、要確認。action『と、不本の着信音が鳴り』一部不確実",
+      "_page": "page_053.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "147",
+      "action": "その場で議論に出る阿久津を見る佐々木",
+      "dialogue": "阿久津「ああ。」「そうか。」",
+      "se": "",
+      "time": "5",
+      "scene_mark": "147",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue欄の話者は丸囲み『阿久津』。破線は間を示す",
+      "_page": "page_054.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "148",
+      "action": "二人静。かたわらに帯刀を静かに聞いている",
+      "dialogue": "「ああ。」「わかった。」",
+      "se": "",
+      "time": "5",
+      "scene_mark": "148",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "low",
+      "notes": "action欄の文字判読困難。要確認",
+      "_page": "page_054.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "149",
+      "action": "スマホで見る／佐々木、阿久津に問う",
+      "dialogue": "佐々木「……」「あのっ……」",
+      "se": "SE「パタッ……」",
+      "time": "4",
+      "scene_mark": "149",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "コマ2(149)とコマ3(番号なし・縦棒/空白の続き)を統合。コマ3は丸番号なしのため149に統合。dialogue欄に丸囲み『佐々木』話者あり",
+      "_page": "page_054.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "150",
+      "action": "つづく",
+      "dialogue": "阿久津(続)「どうやら二人静が願っていたとおり、現場では事が進んだようだ」",
+      "se": "",
+      "time": "5+12",
+      "scene_mark": "150",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "二人静"
+      ],
+      "confidence": "low",
+      "notes": "dialogue欄に丸囲み『阿久津(続)』。長机会議室の俯瞰カット。time『5+12』は秒+コマ表記の推定",
+      "_page": "page_054.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "151",
+      "action": "二人静 怪しんで",
+      "dialogue": "「……何の話じゃ？」",
+      "se": "",
+      "time": "4",
+      "scene_mark": "151",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "",
+      "_page": "page_055.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "152",
+      "action": "モニター画面と",
+      "dialogue": "「つい先住、群れのグループに対し個になる各攻撃で作られた」",
+      "se": "",
+      "time": "8",
+      "scene_mark": "152",
+      "numbered": true,
+      "characters": [
+        "阿久津"
+      ],
+      "confidence": "low",
+      "notes": "action・dialogue共に手書き崩れ大きく要確認",
+      "_page": "page_055.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "153",
+      "action": "佐々木と星崎",
+      "dialogue": "「え…!?」",
+      "se": "",
+      "time": "2",
+      "scene_mark": "153",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "星崎"
+      ],
+      "confidence": "medium",
+      "notes": "",
+      "_page": "page_055.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "154",
+      "action": "二人静 なるべく…と",
+      "dialogue": "「……」",
+      "se": "",
+      "time": "2",
+      "scene_mark": "154",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "",
+      "_page": "page_055.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "155",
+      "action": "阿久津 強く伏せる／PAN UP",
+      "dialogue": "「対象の挙動が当初の想定を超える作為、決断に至ったのが",
+      "se": "",
+      "time": "6+12",
+      "scene_mark": "155",
+      "numbered": true,
+      "characters": [
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "1カットが2コマに跨る（PAN UP含む）。dialogue列は崩し字で一部不確実",
+      "_page": "page_056.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "156",
+      "action": "星崎 緊迫 あてるあてる",
+      "dialogue": "「それで、結果はどうだったんですか…?",
+      "se": "",
+      "time": "3+12",
+      "scene_mark": "156",
+      "numbered": true,
+      "characters": [
+        "星崎"
+      ],
+      "confidence": "medium",
+      "notes": "action欄の『あてるあてる』は崩し字で不確実",
+      "_page": "page_056.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "157",
+      "action": "",
+      "dialogue": "「効果はなかった。マジカルビームと同様。",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "157",
+      "numbered": true,
+      "characters": [
+        "阿久津"
+      ],
+      "confidence": "low",
+      "notes": "dialogue崩し字で不確実。『マジカルビーム』要確認",
+      "_page": "page_056.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "158",
+      "action": "PAN／爆炎の中 ギロリとにらむ クラーケンの目",
+      "dialogue": "直撃の瞬間に障壁のようなもので無効化されたらしい。",
+      "se": "",
+      "time": "6",
+      "scene_mark": "158",
+      "numbered": true,
+      "characters": [
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "dialogueはコマ157からの続きセリフ。話者は阿久津。時間欄は丸囲み6",
+      "_page": "page_056.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "159",
+      "action": "第2現実。呼び出しが来る。佐々木、阿久津に",
+      "dialogue": "星崎「…!!」　佐々木「な、誰…。そんな話こんで…」",
+      "se": "",
+      "time": "",
+      "scene_mark": "159",
+      "numbered": true,
+      "characters": [
+        "星崎",
+        "佐々木",
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "action・dialog欄とも崩し字。dialogueは判読困難な部分あり要確認",
+      "_page": "page_057.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "160",
+      "action": "にらみつけ。ふっと戻し。ウカツーのを見る。",
+      "dialogue": "して(いいんですか?)　ハッ…",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "160",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "low",
+      "notes": "160は上から3・4・5コマ目にまたがる続き(縦棒/空白)を統合。dialogue・action崩し字多く判読困難、要確認。timeは4コマ目dialog欄脇の丸囲みより推定",
+      "_page": "page_057.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "161",
+      "action": "バーカウンターにT.U.\nマスターの姿はなし",
+      "dialogue": "",
+      "se": "",
+      "time": "2+13",
+      "scene_mark": "161",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "action欄の一部は次コマにまたがる可能性あり",
+      "_page": "page_058.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "162",
+      "action": "店内には佐々木たちのみ",
+      "dialogue": "シーン…",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "162",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue欄に丸囲み話者名＋M(モノローグ)記載あり。「あ〜…」等の心の声らしき断片。話者名は判読困難",
+      "_page": "page_058.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "163",
+      "action": "T.B.\n店前",
+      "dialogue": "そういうことだったのか…",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "163",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "picture内に「本日休みかも」「いらっしゃいませ」等の貼り紙文字。dialogueは判読不確実、要確認",
+      "_page": "page_058.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "164",
+      "action": "その周り\nドアノブにかかっているCLOSEDの札",
+      "dialogue": "",
+      "se": "",
+      "time": "3",
+      "scene_mark": "164",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "",
+      "_page": "page_058.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "165",
+      "action": "戻る二人。佐々木うろたえ / 佐々木、やられた…と 阿久津 抜ける PAN",
+      "dialogue": "… / 残念な話ではあるが。 人間は持ち得るあれこの手立てを失った。",
+      "se": "",
+      "time": "4",
+      "scene_mark": "165",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "阿久津"
+      ],
+      "confidence": "low",
+      "notes": "dialogue欄に丸囲み『佐々木』の話者名。セリフ本文は破線で判読不可。action欄下部に別筆記あり。ページ下部に『田中』らしきサインあり ｜ ページ最初のコマは丸番号なし＝前ページ165の続き。dialogue欄冒頭に丸囲み『阿久津』の話者名あり",
+      "_page": "page_058.png",
+      "_idx": 4
+    },
+    {
+      "cut_label": "166",
+      "action": "阿久津の 鋭い目にPAN",
+      "dialogue": "",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "166",
+      "numbered": true,
+      "characters": [
+        "阿久津"
+      ],
+      "confidence": "high",
+      "notes": "",
+      "_page": "page_059.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "167",
+      "action": "沈黙の一同",
+      "dialogue": "",
+      "se": "",
+      "time": "4",
+      "scene_mark": "167",
+      "numbered": true,
+      "characters": [],
+      "confidence": "high",
+      "notes": "",
+      "_page": "page_059.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "168",
+      "action": "阿久津。PAN UP",
+      "dialogue": "課長は全てを断った上で飲み会をセッティングしたのだろう。全てはこの瞬間まで",
+      "se": "",
+      "time": "6",
+      "scene_mark": "168",
+      "numbered": true,
+      "characters": [
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue欄冒頭に丸囲み『佐々木M』の話者表記あり(モノローグ)。2コマ目は縦棒/番号なしで168の続きとして統合(PAN UP)",
+      "_page": "page_060.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "169",
+      "action": "佐々木。グィーッと呷るのむ",
+      "dialogue": "我々を拘束するために…",
+      "se": "",
+      "time": "3+12",
+      "scene_mark": "169",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "",
+      "_page": "page_060.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "170",
+      "action": "二人静 スタートここから。飲み切ったグラスを机にかき(サッサのイキ サッ)",
+      "dialogue": "「さて。",
+      "se": "",
+      "time": "2",
+      "scene_mark": "170",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "170は2コマにまたがる(番号なしコマを統合)。dialogue欄に丸囲み『二人静』の話者表記あり",
+      "_page": "page_060.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "171",
+      "action": "立ち上る。PAN T.B.",
+      "dialogue": "そろそろ帰るとするかのう",
+      "se": "",
+      "time": "3+13",
+      "scene_mark": "171",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "picture・action・dialogueが複数コマにまたがる続き(縦棒/空白)を統合。台詞の話者は方言口調から二人静と推定",
+      "_page": "page_061.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "172",
+      "action": "間髪入れずに喋る阿久津",
+      "dialogue": "最新の予想だと、クラーケンのキエフ上陸の可能性は極めて高い",
+      "se": "",
+      "time": "6",
+      "scene_mark": "172",
+      "numbered": true,
+      "characters": [
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue後半は欄外にはみ出しあり、読みに一部不確実",
+      "_page": "page_061.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "173",
+      "action": "耳を塞いで首を振る二人静。月ぷ。",
+      "dialogue": "あーあー。そんな事言われても知らん、聞こえん！！",
+      "se": "",
+      "time": "5",
+      "scene_mark": "173",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "話者丸囲みは『二人静』。action末尾『月ぷ』は判読困難",
+      "_page": "page_061.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "174",
+      "action": "次弾、むしろ怠ける / 佐々木にたずねる",
+      "dialogue": "最悪の事態に備え、上層部に自衛隊との対応の協議を進めている / 「佐々木君、あれをピオンサ出来ないだろうか？」二人静(ぼそっと)「いやいや——何も聞こえーーん、ラカーー」",
+      "se": "",
+      "time": "1+12",
+      "scene_mark": "174",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "佐々木",
+        "二人静"
+      ],
+      "confidence": "low",
+      "notes": "action冒頭の語は判読困難。dialogueは欄外はみ出しあり一部推定 ｜ ページ最初のコマは丸番号なし=前ページ174の続き。dialogue一部崩れ判読困難、要確認。ADの記述あり",
+      "_page": "page_061.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "175",
+      "action": "いきなり佐々木さん!!とする佐々木",
+      "dialogue": "佐々木「フ…!」",
+      "se": "",
+      "time": "2",
+      "scene_mark": "175",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "",
+      "_page": "page_062.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "176",
+      "action": "ちょっと!と星崎",
+      "dialogue": "星崎「課長!いいなんてもそれは無茶じゃ…」",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "176",
+      "numbered": true,
+      "characters": [
+        "星崎"
+      ],
+      "confidence": "low",
+      "notes": "dialogue一部判読困難、要確認",
+      "_page": "page_062.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "177",
+      "action": "同上",
+      "dialogue": "阿久津(off?)「なにも佐々木君の異能力でどうこう…」 / して欲しいという訳ではない。良い案があれば提案してもらいたいだけだ。無論、これは君たちに",
+      "se": "",
+      "time": "10",
+      "scene_mark": "177",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "佐々木"
+      ],
+      "confidence": "low",
+      "notes": "dialogue冒頭の丸囲み話者名は阿久津と推定。末尾判読困難、要確認 ｜ ページ最上部の空白scene欄のコマ。前ページ177の続きセリフと判断。話者は文脈から阿久津と推定",
+      "_page": "page_062.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "178",
+      "action": "同ポ 星崎",
+      "dialogue": "",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "178",
+      "numbered": true,
+      "characters": [
+        "星崎"
+      ],
+      "confidence": "medium",
+      "notes": "",
+      "_page": "page_063.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "179",
+      "action": "二人静.",
+      "dialogue": "知しても問題",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "179",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "low",
+      "notes": "dialogue欄崩れ字で不確実、要確認",
+      "_page": "page_063.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "180",
+      "action": "阿久津",
+      "dialogue": "かがね",
+      "se": "",
+      "time": "3",
+      "scene_mark": "180",
+      "numbered": true,
+      "characters": [
+        "阿久津"
+      ],
+      "confidence": "low",
+      "notes": "dialogue欄末尾崩れ字、要確認",
+      "_page": "page_063.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "181",
+      "action": "星崎、ブッと視線を下げる 口を結んで在々不.",
+      "dialogue": "星崎「ッ…!!」　取り繕っているけれど、間違い",
+      "se": "",
+      "time": "2",
+      "scene_mark": "181",
+      "numbered": true,
+      "characters": [
+        "星崎"
+      ],
+      "confidence": "low",
+      "notes": "dialogue欄に丸囲み『M』(モノローグ指示)あり。action・dialogue共に崩れ字多く不確実、要確認",
+      "_page": "page_063.png",
+      "_idx": 4
+    },
+    {
+      "cut_label": "182",
+      "action": "思案する佐々木 PAN↓ / 顔UP",
+      "dialogue": "今にして思うと、先日我々を頷かせたのもこの奇縁を見越して…",
+      "se": "",
+      "time": "6+12",
+      "scene_mark": "182",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "action欄はコマ0・コマ1に跨る。dialogueは崩し字のため一部推定",
+      "_page": "page_064.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "183",
+      "action": "阿久津 PAN UP",
+      "dialogue": "「上手く行けば君たちにもそれなりの見返りがあることは保証する」 佐々木(off)「所長」",
+      "se": "",
+      "time": "",
+      "scene_mark": "183",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "183はコマ2〜4に跨るため統合。dialogueは阿久津の台詞と佐々木(off)の台詞。時間欄は下段に別の書き込み(サイン)あり、尺の判読困難",
+      "_page": "page_064.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "184",
+      "action": "",
+      "dialogue": "「ご期待に添えるかわからんが持ち帰り検討してみます」",
+      "se": "",
+      "time": "5",
+      "scene_mark": "184",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue欄冒頭に丸囲みの話者名あり(判読困難)。セリフ末に矢印→次カットへ続く",
+      "_page": "page_065.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "185",
+      "action": "阿久津",
+      "dialogue": "「……」 明日朝イチで",
+      "se": "",
+      "time": "3+12",
+      "scene_mark": "185",
+      "numbered": true,
+      "characters": [
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue欄に(2+0)のメモ書きあり。185は2コマに跨る(番号なし継続コマを統合)。continuationコマにaction『佐々木』",
+      "_page": "page_065.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "186",
+      "action": "星崎 / 阿久津",
+      "dialogue": "新たを願いたいのだが",
+      "se": "",
+      "time": "2",
+      "scene_mark": "186",
+      "numbered": true,
+      "characters": [
+        "星崎",
+        "阿久津"
+      ],
+      "confidence": "low",
+      "notes": "action欄『星崎』および下部『阿久津』。dialogueの『新た』は要確認",
+      "_page": "page_065.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "187",
+      "action": "二人静 / 阿久津 / やれやれと嘆息（ため息）",
+      "dialogue": "構わないだろうサ？ / ハァ…",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "187",
+      "numbered": true,
+      "characters": [
+        "二人静",
+        "阿久津"
+      ],
+      "confidence": "medium",
+      "notes": "action欄に『二人静』、下部『阿久津』。セリフ末に矢印→続く ｜ ページ最初のコマは丸番号なし＝前ページ187の続き",
+      "_page": "page_065.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "188",
+      "action": "佐々木",
+      "dialogue": "お待たせしました",
+      "se": "",
+      "time": "3",
+      "scene_mark": "188",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue話者=佐々木（丸囲み）",
+      "_page": "page_066.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "189",
+      "action": "机の上のグラス。氷が溶けて音がする",
+      "dialogue": "カラン…",
+      "se": "SE",
+      "time": "3",
+      "scene_mark": "189",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "dialog欄はSE「カラン…」",
+      "_page": "page_066.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "190",
+      "action": "店の前に停まっている迎車タクシー。反対側から佐々木と星崎がフレームアウトして乗る。発進",
+      "dialogue": "タン…",
+      "se": "SE",
+      "time": "3",
+      "scene_mark": "190",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "星崎"
+      ],
+      "confidence": "low",
+      "notes": "最下段は190の続きコマ（丸番号なし）で発進を統合。dialog欄はSE系（長引く/タン/フロロロ等）で確信低。人名は要確認",
+      "_page": "page_066.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "191",
+      "action": "車内\n二人静",
+      "dialogue": "二人静「おっと。",
+      "se": "",
+      "time": "1+12",
+      "scene_mark": "191",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "",
+      "_page": "page_067.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "192",
+      "action": "二人は窓の外を見ながら疲れた様子。BG T.B.",
+      "dialogue": "面倒なことになったの\n佐々木「ええ、そうですね…\n二人静「で、どうするのじゃ?",
+      "se": "",
+      "time": "6+12",
+      "scene_mark": "192",
+      "numbered": true,
+      "characters": [
+        "二人静",
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "",
+      "_page": "page_067.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "193",
+      "action": "佐々木。→Follow",
+      "dialogue": "佐々木「とりあえずピーちゃんと合流してから考えましょう。",
+      "se": "",
+      "time": "5+12",
+      "scene_mark": "193",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "『3パートに書き次第』はト書き寄りメモの可能性",
+      "_page": "page_067.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "194",
+      "action": "食堂\nFIX(3+12)\nPAN DOWN(4to)\n佐々木のアパート チャイムの音がする。",
+      "dialogue": "迎えに来てもらいます。",
+      "se": "「ピンポーン」",
+      "time": "6+12",
+      "scene_mark": "194",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "5コマ目(アパート外観)は番号なしで194の続き。最下部欄外に手書きメモ『玄関前に立っている佐々木みえる』あり",
+      "_page": "page_067.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "195",
+      "action": "お隣さんの部屋。目をつぶっていたお隣さん、ねむい音で起きる。",
+      "dialogue": "",
+      "se": "ピンポーン",
+      "time": "2",
+      "scene_mark": "195",
+      "numbered": true,
+      "characters": [
+        "お隣さん"
+      ],
+      "confidence": "medium",
+      "notes": "time欄丸囲み②=2秒。dialogueのビ(ピ)ポーンはSE扱い",
+      "_page": "page_068.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "196",
+      "action": "雛の隅で毛布に(くるまり)鏡棚にいる寝間着のお隣さん。その前を母がせわしなく通り過ぎる。 / OUT。足元(脚)。",
+      "dialogue": "あー、はいはい",
+      "se": "ピンポーン",
+      "time": "3",
+      "scene_mark": "196",
+      "numbered": true,
+      "characters": [
+        "お隣さん",
+        "母"
+      ],
+      "confidence": "low",
+      "notes": "action崩し字多く一部推測。dialogueは丸囲み『母(かたす)』の話者付き。time欄③=3秒はコマ2にまたがる ｜ scene欄に丸番号なし＝196の続きコマ(3コマ目)",
+      "_page": "page_068.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "197",
+      "action": "にろて(ハロー等の書き込みか) / 不機嫌に開ける母。 / と、来訪者を見て顔をほころばせる。",
+      "dialogue": "誰よ / こんな時間に… / 「あらっ…",
+      "se": "",
+      "time": "4",
+      "scene_mark": "197",
+      "numbered": true,
+      "characters": [
+        "母",
+        "お隣さん"
+      ],
+      "confidence": "low",
+      "notes": "action欄の手書き崩れ、要確認 ｜ scene欄丸番号なし＝197の続きコマ。dialogue丸囲み『母』の話者付き、後半崩れ要確認 ｜ ページ最初のコマは丸番号なし（空白）＝前ページ最後のカット197の続き。dialogue話者は丸囲み『母』。人名は候補外のため『お隣さん』は仮、要確認",
+      "_page": "page_068.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "198",
+      "action": "大きめの箱を持っている彼氏。PAN UP",
+      "dialogue": "「やだあ、どうしたの急に？」／彼「わり…近くで有んでたら終電逃がしちゃって」",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "198",
+      "numbered": true,
+      "characters": [
+        "彼氏"
+      ],
+      "confidence": "medium",
+      "notes": "198と続きコマ（PAN UPの縦棒コマ）を統合。dialogue話者は『母』と『彼氏』の丸囲み。字が崩れ一部推測",
+      "_page": "page_069.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "199",
+      "action": "早口。会話が漏れ聞こえてるが、ベッドでニコニコと下諏さんに話す。",
+      "dialogue": "母「やだー、アカウントの〜。連絡くれたら良かったのに〜」ベッドン(アウフフ)",
+      "se": "",
+      "time": "4",
+      "scene_mark": "199",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "人名『下諏さん』相当は崩れて判読困難、要確認。dialogue話者丸囲みは『母』",
+      "_page": "page_069.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "200",
+      "action": "布団にくるまってる加藤さん。 / ムッとして目を閉じる。",
+      "dialogue": "「わやわや。今晩は男泊めた？」",
+      "se": "",
+      "time": "3",
+      "scene_mark": "200",
+      "numbered": true,
+      "characters": [
+        "加藤"
+      ],
+      "confidence": "low",
+      "notes": "『加藤さん』は字形からの推測、候補外のため要確認。time欄は判読困難 ｜ ページ最上段コマは丸番号なし＝前ページのカット200の続き。Sec欄丸囲み3。",
+      "_page": "page_069.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "201",
+      "action": "目開き、母、大きな箱を見て",
+      "dialogue": "「ねえ。その箱どーしたの？",
+      "se": "",
+      "time": "",
+      "scene_mark": "201",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue冒頭の話者は丸囲みで書かれているが判読困難。次コマ(縦棒/空白)を統合。time欄に丸囲み『チ+12』らしき記号あり=秒+コマの可能性、判読不確実。二コマ目action『嬉しそうに』dialogue『もしかしてチョコ？』を統合。",
+      "_page": "page_070.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "202",
+      "action": "彼氏、ニヤけて答える／PAN DOWN",
+      "dialogue": "「ああこれ。さっきここで君の旦那から頂いたんだ」",
+      "se": "",
+      "time": "5+12",
+      "scene_mark": "202",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "下の丸番号なしコマ(PAN DOWN, プレゼント箱)を統合。dialogue話者は丸囲み『彼』らしき記号。Sec欄下段に丸囲み『5+12』(秒+コマ)。",
+      "_page": "page_070.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "203",
+      "action": "顔UP\nそれを聞いてハッとするお隣さん",
+      "dialogue": "「ぅ…」",
+      "se": "",
+      "time": "2",
+      "scene_mark": "203",
+      "numbered": true,
+      "characters": [
+        "お隣さん"
+      ],
+      "confidence": "medium",
+      "notes": "time欄は丸囲み②=2秒",
+      "_page": "page_071.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "204",
+      "action": "リビングから廊下へPAN\n釣り母と彼氏",
+      "dialogue": "「はぁ!?」\nちょっと待ってよ。どういうこと?\nここに通るのを見られたみたい。\n君の娘、誕生日が近いんだろ?\n会社来ないから、代わりにプレゼント預かってくれって",
+      "se": "",
+      "time": "11+12",
+      "scene_mark": "204",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "dialogue手書き崩れ大、複数行推読。話者名(丸囲み)は判読困難で要確認",
+      "_page": "page_071.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "205",
+      "action": "引きドン。\nお隣さんをみて、おや?と",
+      "dialogue": "（パクって）\n「ヘぇー\nおや、どうしたの",
+      "se": "",
+      "time": "3+12",
+      "scene_mark": "205",
+      "numbered": true,
+      "characters": [
+        "お隣さん"
+      ],
+      "confidence": "low",
+      "notes": "205は複数コマ(コマ6・7)に跨るため統合。time欄は下段の丸囲み3+12。dialogue推読多く要確認",
+      "_page": "page_071.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "206",
+      "action": "ネットニュースから加藤さんへ(ピント送り)",
+      "dialogue": "「かい?」 加藤さん「…」",
+      "se": "",
+      "time": "2",
+      "scene_mark": "206",
+      "numbered": true,
+      "characters": [
+        "加藤さん"
+      ],
+      "confidence": "medium",
+      "notes": "人名『加藤さん』は手書きが崩れており要確認(用語集の候補に無い)。dialogue『かい?』は判読困難",
+      "_page": "page_072.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "207",
+      "action": "違和感を覚える",
+      "dialogue": "加藤さんM「おかしい。それはあり得ない。」",
+      "se": "",
+      "time": "3",
+      "scene_mark": "207",
+      "numbered": true,
+      "characters": [
+        "加藤さん"
+      ],
+      "confidence": "medium",
+      "notes": "人名要確認",
+      "_page": "page_072.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "208",
+      "action": "玄関先 母 怪訝そうに ？と",
+      "dialogue": "母(が)「休み 父は無い(?)、それ? 聞いてて。もう何年も絶縁状態だ。 もうすぐあの子の誕生日、こんな時期だったかしら?」",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "208",
+      "numbered": true,
+      "characters": [
+        "母"
+      ],
+      "confidence": "low",
+      "notes": "208は2コマにまたがる(母の顔アップ＋横顔)。番号は208のみで下コマは番号なし継続のため統合。dialogueの判読は不確実",
+      "_page": "page_072.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "209",
+      "action": "母 プレゼントを受け取って 両手を差し出す / PAN。",
+      "dialogue": "加藤さんM「それに…けにおり——」",
+      "se": "",
+      "time": "2",
+      "scene_mark": "209",
+      "numbered": true,
+      "characters": [
+        "母",
+        "加藤さん"
+      ],
+      "confidence": "low",
+      "notes": "人名・セリフともに判読困難で要確認。time欄は明確な丸数字が読めない ｜ ページ最初のコマは丸番号なし(空白)＝前ページ最後のカット209の続き。time欄に丸2",
+      "_page": "page_072.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "210",
+      "action": "イメージカット。彼女、睡眠レス。",
+      "dialogue": "",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "210",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "action文字は崩れており推測含む",
+      "_page": "page_073.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "211",
+      "action": "プレゼントに近づく手。",
+      "dialogue": "",
+      "se": "",
+      "time": "2",
+      "scene_mark": "211",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "",
+      "_page": "page_073.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "212",
+      "action": "再び お隣さん。ハッ！",
+      "dialogue": "「ハッ！！」",
+      "se": "",
+      "time": "1",
+      "scene_mark": "212",
+      "numbered": true,
+      "characters": [
+        "お隣さん"
+      ],
+      "confidence": "low",
+      "notes": "話者名は丸囲みで『お隣さん』と推測。字形崩れのため要確認",
+      "_page": "page_073.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "213",
+      "action": "パッと起きあがり、ベッドに何かを引っかけている。 / ?な 3パドン",
+      "dialogue": "「ヲハヨー！ 外に引っかけます！！」 / 3パドン日ス？日",
+      "se": "",
+      "time": "3",
+      "scene_mark": "213",
+      "numbered": true,
+      "characters": [
+        "お隣さん"
+      ],
+      "confidence": "low",
+      "notes": "action・dialogueとも崩し字で判読困難。要確認。time欄は判読不能 ｜ ページ最初のコマは丸番号なし＝前ページ213の続き。手書き崩れが激しく本文は要確認",
+      "_page": "page_073.png",
+      "_idx": 4
+    },
+    {
+      "cut_label": "214",
+      "action": "隔離空間 万野さん / ベランダのカベを 駆け出す",
+      "dialogue": "「見ん！！",
+      "se": "",
+      "time": "2",
+      "scene_mark": "214",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "scene欄に丸囲み『214』。action・dialogue手書き崩れ大で読み取り不確実、要確認 ｜ 丸番号なし＝214の続きとして統合",
+      "_page": "page_074.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "215",
+      "action": "カーテン / えりに 息を取れる",
+      "dialogue": "ドシャッ！！ サラサッ！！",
+      "se": "ドシャッ！！／サラサッ！！",
+      "time": "2",
+      "scene_mark": "215",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "scene欄に丸囲み『215』。手書き崩れ大、要確認 ｜ 丸番号なし＝215の続きとして統合。ベランダ等のト書き。dialogueは擬音的でSE扱いの可能性、要確認",
+      "_page": "page_074.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "216",
+      "action": "ハウスに\nマワアタリニ\n出て",
+      "dialogue": "「アッ!!」",
+      "se": "",
+      "time": "",
+      "scene_mark": "216",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "action・dialog手書き崩れ大。読み不確実。コマ0とコマ1(脚のカット、ハイスピード指示)は同一カット216に統合。time欄に丸囲みハイスピ8?の記号あり",
+      "_page": "page_075.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "217",
+      "action": "ヘンダ\nチカリ\nハイスピ\nバサッ...",
+      "dialogue": "「ガクッ!!」",
+      "se": "",
+      "time": "",
+      "scene_mark": "217",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "コマ2(手すり?)とコマ3(横たわる体?)、コマ4(ほぼ空白)を同一カット217に統合。手書き崩れ大で読み不確実。time欄にハイスピ8?記号あり",
+      "_page": "page_075.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "218",
+      "action": "セキ 手すりに肩を付けて 転びこえそうになる 佐々木。 PAN UP",
+      "dialogue": "ちょっとキミィ！",
+      "se": "",
+      "time": "2+13",
+      "scene_mark": "218",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "action欄は手書き崩れのため一部推測。dialogueは赤字『ちょっとキミィ！』。time欄は『2+13』(秒+コマ)",
+      "_page": "page_076.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "219",
+      "action": "ネオン近く。停車しているタクシーおりて降りる 佐々木たち。",
+      "dialogue": "バタン……",
+      "se": "",
+      "time": "3",
+      "scene_mark": "219",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "picture内に『田丸交通』の看板文字。dialogueの丸囲み『男』は話者指定。ドア音『バタン』。time欄は丸囲み『3』",
+      "_page": "page_076.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "220",
+      "action": "ショットに強く倒れた樹木から PAN 「FLOOD」",
+      "dialogue": "",
+      "se": "",
+      "time": "4",
+      "scene_mark": "220",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "action欄手書き崩し字。『ショットに強く倒れた樹木から PAN』およびdialog欄『里(タテ:羅)』『「FLOOD』は判読困難で推測を含む。要確認",
+      "_page": "page_077.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "221",
+      "action": "佐々木 一清 出し",
+      "dialogue": "",
+      "se": "",
+      "time": "3",
+      "scene_mark": "221",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "low",
+      "notes": "picture内に『follow』の書き込みあり。action欄崩し字判読困難、要確認",
+      "_page": "page_077.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "222",
+      "action": "ただし お隣さんの 髪 か、上頭で揺れ 尻スロー",
+      "dialogue": "",
+      "se": "",
+      "time": "0+(5)",
+      "scene_mark": "222",
+      "numbered": true,
+      "characters": [
+        "お隣さん"
+      ],
+      "confidence": "low",
+      "notes": "action欄崩し字で判読困難、推測を含む。time欄は『Off(5』の形だが尺(秒+コマ)として不確実、要確認",
+      "_page": "page_077.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "223",
+      "action": "スロー\nハンディブレ\nベランダから\n飛ぶ、お隣さん\nPAN A",
+      "dialogue": "",
+      "se": "",
+      "time": "4",
+      "scene_mark": "223",
+      "numbered": true,
+      "characters": [
+        "お隣さん"
+      ],
+      "confidence": "medium",
+      "notes": "コマ0とコマ1(PAN A、縦棒継続)を統合。time欄コマ0は縦線、コマ1に丸囲み4",
+      "_page": "page_078.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "224",
+      "action": "画面から外れる\nFollow",
+      "dialogue": "「ぐ…！！」\n「ビター…」",
+      "se": "",
+      "time": "3",
+      "scene_mark": "224",
+      "numbered": true,
+      "characters": [
+        "お隣さん"
+      ],
+      "confidence": "low",
+      "notes": "dialogue欄の手書き崩し、話者『お隣さん』が丸囲み。セリフ判読困難で要確認",
+      "_page": "page_078.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "225",
+      "action": "間もなくす\n爆発が走せる",
+      "dialogue": "「ドカッ！」",
+      "se": "ドカッ",
+      "time": "3",
+      "scene_mark": "225",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "コマ3(佐々木のアパート俯瞰)とコマ4(爆発、縦棒継続)を統合。dialogue欄に丸囲みSE。picture注記『佐々木のアパート』",
+      "_page": "page_078.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "226",
+      "action": "立ちビキリ 佐々木ニ将!?",
+      "dialogue": "ハッ!?",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "226",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "action欄『佐々木ニ将!?』は判読難、要確認。dialog話者丸囲みに『佐々木』『二将?』風の記載あり",
+      "_page": "page_079.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "227",
+      "action": "3ショット入口側。火の手が上がり倒壊しつつある3ショット。□ T.V.映像",
+      "dialogue": "ゴゴゴゴゴ…",
+      "se": "",
+      "time": "6",
+      "scene_mark": "227",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "コマ2(CM)は番号なしの続きコマ。CM挿入指示のみで本文セリフなし、227に統合",
+      "_page": "page_079.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "228",
+      "action": "3ショットも。お隣さんの入や、窓ガラスは爆発の衝撃で粉々に。室内は炎に包まれており、よく見えない。窓ガラスのはへん。スタートFIX(200) / PAN DOWN していき、ゆっくりと体を、カメラの晴れの後ろ姿が見える",
+      "dialogue": "ゴゴゴゴゴゴ…",
+      "se": "",
+      "time": "8",
+      "scene_mark": "228",
+      "numbered": true,
+      "characters": [
+        "お隣さん"
+      ],
+      "confidence": "low",
+      "notes": "action判読困難箇所多数、要確認。dialog冒頭に『SE』風の丸囲みあり、擬音の続き。コマ4(道路/車)は番号なしの続きコマで228に統合 ｜ ページ最初のコマは丸番号なし＝前ページ最後のカット228の続き。コマ0(PAN DOWN)・コマ1(後ろ姿が見える)・コマ2・コマ3を統合。Sec欄の丸囲み数字は8。action末尾の手書き難読部あり",
+      "_page": "page_079.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "229",
+      "action": "静かに見つめている二人静。あと、ライトバックする(引き) / お隣さんの前にスッと落下してくる田中サン。激しく詰め寄るお隣さん。倒れPAN",
+      "dialogue": "「いい」 「思ってれば よく気付けたね」 / 「けん嘩の作動かも大したものな」お隣さん「あの男がサカなことを口走っていましたのっ」",
+      "se": "",
+      "time": "2",
+      "scene_mark": "229",
+      "numbered": true,
+      "characters": [
+        "二人静",
+        "お隣さん"
+      ],
+      "confidence": "low",
+      "notes": "scene欄に丸囲み『229』を確認(拡大画像で229と読める)。コマ4・コマ5を統合。dialogue欄の話者名は丸囲みだが判読困難で要確認(二人静と推定)。action・dialogueとも崩し字で確信低い。Sec欄の丸文字は2と推定だが不確実 ｜ ページ最初のコマは丸番号なし＝前ページ最後のカット229の続き。人名『田中サン』要確認。台詞は崩し字で不確実",
+      "_page": "page_080.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "230",
+      "action": "佐々木の雅を見つめて、心の中で告白するお隣さん",
+      "dialogue": "お隣さんM「壁越しにずっと感じていたから分かる。おじさんが帰ってきなくて本当によかった」",
+      "se": "",
+      "time": "12+12",
+      "scene_mark": "230",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "お隣さん"
+      ],
+      "confidence": "low",
+      "notes": "コマ3(白背景に顔)は230の続きとして統合。Dialog『3人しずか』『B ふふん？』は同カット内。人名・台詞崩し字で不確実、要確認",
+      "_page": "page_081.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "231",
+      "action": "鱗粉が舞う。",
+      "dialogue": "「君の母親を巻きこまれてしまった」 / かわいで～",
+      "se": "",
+      "time": "8 / 4",
+      "scene_mark": "231",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "台詞・話者名は崩し字で不確実、要確認 ｜ ページ最初のコマは丸番号なし＝前ページ最後のカット231の続き。dialogueは崩し字のため一部不確実",
+      "_page": "page_081.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": 232,
+      "action": "母のことなど眼中になし。佐々木の避難所を見つめているお隣さん。PAN UP",
+      "dialogue": "お隣さん「シェロートが壊れにしまった時にでかしさんと私が隣同士の部屋に収容ることは、きっともうないと思います。",
+      "se": "",
+      "time": "9",
+      "scene_mark": "232",
+      "numbered": true,
+      "characters": [
+        "お隣さん",
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue崩し字多く一部推定。『シェロート』等の固有名は要確認。232と233のコマにまたがるdialogueを統合",
+      "_page": "page_082.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": 233,
+      "action": "燃え盛る佐々木の部屋にTV",
+      "dialogue": "だとすれば施設行きも仕方があせん。生活環境としては今よりずいぶんマシになると思います。」",
+      "se": "",
+      "time": "8+12",
+      "scene_mark": "233",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "dialogue崩し字のため推定多め。要確認",
+      "_page": "page_082.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": 234,
+      "action": "3ショット お隣さんを見つめ / 微笑み。ネロトを見つめ",
+      "dialogue": "「―――― / フッ……\n君のそういうところ",
+      "se": "",
+      "time": "5+12",
+      "scene_mark": "234",
+      "numbered": true,
+      "characters": [
+        "お隣さん"
+      ],
+      "confidence": "low",
+      "notes": "dialogue欄に丸囲みメモ『3ショット』はト書き相当のため除外。セリフは未完の鉤括弧のみ ｜ ページ最初のコマ2つは丸番号なし＝前ページカット234の続き。1コマ目・2コマ目を統合。人名は崩し字で確信持てず空",
+      "_page": "page_082.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "235",
+      "action": "燃え盛るネロトを前にするなんの背。",
+      "dialogue": "僕ら悪夷より\nお、少ないね\nどうしてしょうか？",
+      "se": "",
+      "time": "6+12",
+      "scene_mark": "235",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "action・dialogueとも崩し字で不確実。赤字『まほど』・丸囲み『市院現(要確認)』は演出/話者メモの可能性。要確認",
+      "_page": "page_083.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "236",
+      "action": "お隣さん。付近で人の気配を感じ。けっと振らを向く",
+      "dialogue": "「サカサカ…」\n「っ！」",
+      "se": "SE「サカサカ…」",
+      "time": "3+12",
+      "scene_mark": "236",
+      "numbered": true,
+      "characters": [
+        "お隣さん"
+      ],
+      "confidence": "low",
+      "notes": "236の丸番号あり。次コマ(丸番号なし)を統合。dialogueの丸囲み『SE』は効果音として扱い、話者丸囲み『お隣さん(要確認)』。字形崩れ大きく要確認",
+      "_page": "page_083.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "237",
+      "action": "電柱に隠れてこちらを覗き見た怪しい男(黒帽子に黒ジャンパー)。お隣さんの視界に気付き、走って逃げる。(顔かくして)",
+      "dialogue": "",
+      "se": "",
+      "time": "2",
+      "scene_mark": "237",
+      "numbered": true,
+      "characters": [
+        "お隣さん"
+      ],
+      "confidence": "medium",
+      "notes": "237は電柱に隠れる男のコマ、続く縦棒コマ(男が走って逃げる)を統合。time欄の丸囲み②は2秒。SE「ス、ス、ス、ス」らしき記述あり",
+      "_page": "page_084.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "238",
+      "action": "お隣さん もらいビックリして 男を見て。PAN UP",
+      "dialogue": "「シバドンに 追いかけす。」",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "238",
+      "numbered": true,
+      "characters": [
+        "お隣さん"
+      ],
+      "confidence": "low",
+      "notes": "238は上下2コマにまたがる(バストと足元PAN UP)。話者=お隣さん。セリフ判読困難で要確認。time欄=2+12(秒+コマ)",
+      "_page": "page_084.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "239",
+      "action": "シバドン、不敵にほほえ笑ん",
+      "dialogue": "「いいね。やっぱ、その話は 僕も好きじゃないん」",
+      "se": "",
+      "time": "3",
+      "scene_mark": "239",
+      "numbered": true,
+      "characters": [
+        "シバドン"
+      ],
+      "confidence": "low",
+      "notes": "人物名『シバドン』は用語集候補外。手書き崩し字で要確認。time欄の丸囲み③=3秒",
+      "_page": "page_084.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "240",
+      "action": "道の向こうに加瀬さんの家。倒壊しかけている2Fショット。",
+      "dialogue": "（結）",
+      "se": "",
+      "time": "3",
+      "scene_mark": "240",
+      "numbered": true,
+      "characters": [
+        "加瀬"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue欄は括弧付きで『結』風の字。確信度中",
+      "_page": "page_085.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "241",
+      "action": "ショット面倒。佐々木、あいづち始まる",
+      "dialogue": "ガヤ",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "241",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "野次馬"
+      ],
+      "confidence": "medium",
+      "notes": "dialog話者は丸囲み『野次馬』、ガヤ表記",
+      "_page": "page_085.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "242",
+      "action": "燃え盛るショットを見上げる佐々木。一人。周りに野次馬",
+      "dialogue": "見たところ3階の…例の隣人の部屋の…するじゃが…",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "242",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "二人静",
+        "野次馬"
+      ],
+      "confidence": "low",
+      "notes": "dialog話者は丸囲み『二人静』＋背。台詞崩れ大、要確認",
+      "_page": "page_085.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "243",
+      "action": "佐々木、最悪な事態を想定し汗が流れる。↑PAN UP",
+      "dialogue": "グッ…お隣さん…！！ / すぐに海域を確認しましょう!!",
+      "se": "",
+      "time": "6",
+      "scene_mark": "243",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "お隣さん"
+      ],
+      "confidence": "low",
+      "notes": "dialog話者は丸囲み『佐々木』。最終コマ(番号なし)はPAN UPの続きで243に統合 ｜ ページ最上段のコマは丸番号なし＝前ページ243の続き。セリフは要確認",
+      "_page": "page_085.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "244",
+      "action": "アパート近くの狭めの道 Follow / Follow Smoke",
+      "dialogue": "（走る作業）",
+      "se": "",
+      "time": "2",
+      "scene_mark": "244",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "dialogue欄の内容は不確実（ト書き的表現の可能性）",
+      "_page": "page_086.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "245",
+      "action": "駆けてる男(女)の男(夜) a.路地つばた感じです",
+      "dialogue": "",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "245",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "action崩し字多く要確認。time=2+12（秒+コマ）",
+      "_page": "page_086.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "246",
+      "action": "追いかける3人ドンと 加藤さん 3人ドンとニヤけて / 加藤さん怒って / 3人ドン スーッと 飛んでいく。",
+      "dialogue": "（3人ドン）B急が方をつかず追げられるか？ / （加藤さん）「先に行って備えて欲しい」 / （3人ドン）B「はい、行ってきまーい」",
+      "se": "",
+      "time": "2 2 / 6+12",
+      "scene_mark": "246",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "246は最後の2コマ（丸番号なし継続コマ）を統合。人名『加藤』は候補外のため要確認、話者記号も崩れており低信頼 ｜ ページ最初のコマ。scene欄に丸番号なし＝前ページ最後のカット(246)の続き。picture欄に『out』のカメラ/演出メモらしき手書きあり",
+      "_page": "page_086.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "247",
+      "action": "男に シルバニの鱗粉B ちらっと 呼づき / 手を … いっ … 伸ばすが 触れる直前で 男の姿が 一瞬で消え",
+      "dialogue": "シルバニ / 欠礼",
+      "se": "「バッ！」",
+      "time": "2+12",
+      "scene_mark": "247",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "丸囲み『247』を確認。action・dialogueとも崩し字で不確実。『シルバニ』等は要確認。この後、番号なしの継続コマ(手のアップ)を含む ｜ 番号なし継続コマ2つ分。上記247に統合すべき内容だが番号欄空白のため直前カット247の続き。SE「バッ！」らしき記述あり。文字要確認",
+      "_page": "page_087.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "248",
+      "action": "シルバニ！！",
+      "dialogue": "シルバニ 「！！」",
+      "se": "",
+      "time": "1+18",
+      "scene_mark": "248",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "丸囲み『248』を確認。少女の目のアップ。action欄下部に囲み文字(色指定/演出メモらしき『同色』?)あり=セリフ扱いせず。dialogue『シルバニ』は話者名の可能性、要確認。time『1+18』読み不確実",
+      "_page": "page_087.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "249",
+      "action": "その瞬間、隔離空間が発生する。Q.PAN UP",
+      "dialogue": "",
+      "se": "「ブォン!!」",
+      "time": "",
+      "scene_mark": "249",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "249は2コマにまたがる(上コマ=ビル群、下コマ=人物。Q.PAN UPで繋ぐ)。actionの隔離空間発生は書かれた通り",
+      "_page": "page_088.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "250",
+      "action": "Q.PAN。3ヶ所越すりのハヤカワについた二人。(隔離までを届間か)同じく隔離空間の発生に気付き。分割で(下段)",
+      "dialogue": "「ザッ!!」「在庁ト!?」「隔離空間!?」これは……",
+      "se": "「ザッ!!」",
+      "time": "3+12",
+      "scene_mark": "250",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "複数コマにまたがるカット。actionは手書きが崩れ判読困難、要確認。dialogue欄に丸囲み話者名らしき記号あり判読不能。『隔離空間!?』には赤の取り消し線あり。time欄は3+12と読めるが不確実、赤線あり",
+      "_page": "page_088.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "251",
+      "action": "ライトが振り返り、あちらへと(視線を向ける)",
+      "dialogue": "B借しい！もうちょっとだったのに 「仲間の天使と使徒だろうか？",
+      "se": "",
+      "time": "",
+      "scene_mark": "251",
+      "numbered": true,
+      "characters": [
+        "お隣さん"
+      ],
+      "confidence": "medium",
+      "notes": "action・dialogueとも手書き崩れ大。dialogue欄の話者名は丸囲みで『ライト』『お隣さん』と読めるが確信度中。『B借しい』は要確認",
+      "_page": "page_089.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "252",
+      "action": "歩いてくるお隣さん。ライトに、鋭ぎ味な視線で睨んで浮かぶ、走力が流れて話すお隣さん。PAN UP。真剣な瞳でひろと(を)見据える",
+      "dialogue": "Bで3考えるから安全だね。ここで隔離空間が消えるのを待って? 「テスケームの主体が使徒であるなら使徒でない彼は使い走りである可能性が高いです。全ての情報を得るためにも、天使とその使徒を推しにしましょう",
+      "se": "",
+      "time": "11+12",
+      "scene_mark": "252",
+      "numbered": true,
+      "characters": [
+        "お隣さん"
+      ],
+      "confidence": "low",
+      "notes": "コマ1〜5(全5コマ)がカット252の続き。scene欄はコマ2に丸囲み252、以降は縦棒/空白のため統合。手書き崩れが激しく本文は推測を多く含む。『テスケーム』『推しにしましょう』等は要確認。time欄は丸囲み11+12と読めるが確信度中",
+      "_page": "page_089.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "253",
+      "action": "それを受けて 満足に 口角を上げて",
+      "dialogue": "",
+      "se": "",
+      "time": "",
+      "scene_mark": "253",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "笑顔の少女の顔アップ。dialog欄に丸囲みキャラ名らしき記入あり(判読困難)、Bのセリフ記号らしきもの",
+      "_page": "page_090.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "254",
+      "action": "満面の笑み。探しにゆく2人。PAN UP",
+      "dialogue": "うん！僕もそれに賛成だい！ それじゃあ 探した インコを！！",
+      "se": "",
+      "time": "5+12",
+      "scene_mark": "254",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "2コマにまたがる(笑顔アップ＋通りを歩く2人)を統合。セリフ判読不確実、要確認",
+      "_page": "page_090.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "255",
+      "action": "道路へ出てくる 佐々木と二人静。隔離空間なりの私を見上げ。",
+      "dialogue": "トンの空間が 発生したというのは 近くに天使と悪魔が…",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "255",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "二人静"
+      ],
+      "confidence": "low",
+      "notes": "dialog欄に丸囲み佐々女(佐々木?)(off)の話者表記。セリフ・ト書きとも崩し字で判読不確実、要確認。timeは4+12",
+      "_page": "page_090.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "256",
+      "action": "佐々木、驚いて入って（振り向く）",
+      "dialogue": "「お隣さんがいるかもしれません」「こっちに分かれて探すか？」「危険であっても上から探せ？」",
+      "se": "",
+      "time": "8",
+      "scene_mark": "256",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "お隣さん"
+      ],
+      "confidence": "low",
+      "notes": "action・dialogueとも手書き崩れ大。dialogue内『こっちに分かれて探すか？』『上から探せ？』は推測を含む。time欄は丸囲み『8』と読む。次コマ(番号なし空白行)を本カットに統合",
+      "_page": "page_091.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "257",
+      "action": "二人静。ぽかんと。",
+      "dialogue": "「うえ？」",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "257",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "dialog欄に丸囲み話者『二人静』。time欄は『2+12』(秒+コマ)と読む",
+      "_page": "page_091.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "258",
+      "action": "BGに東京タワーが見える。夜景。キレイ。",
+      "dialogue": "",
+      "se": "",
+      "time": "3",
+      "scene_mark": "258",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "Picture列に東京タワー夜景写真の貼り込み。time欄丸囲み『3』",
+      "_page": "page_091.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "259",
+      "action": "（続き）二人静の口元",
+      "dialogue": "「フッフッフ…！」",
+      "se": "",
+      "time": "2",
+      "scene_mark": "259",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "low",
+      "notes": "dialog欄に丸囲み話者『二人静』。黒字セリフ『フッフッフ』に赤で取り消し線、赤字追記『おっぱおおおおー！』(修正指示)。action冒頭の崩し字判読困難。time欄丸囲み『2』",
+      "_page": "page_091.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "260",
+      "action": "二人静とお隣を抱っこして飛行がまえで飛んでいる佐々木。T.B.",
+      "dialogue": "「ええ眺めじゃのう」！",
+      "se": "",
+      "time": "3",
+      "scene_mark": "260",
+      "numbered": true,
+      "characters": [
+        "二人静",
+        "佐々木",
+        "お隣さん"
+      ],
+      "confidence": "medium",
+      "notes": "BG兼用らしき指定あり。picture欄に『BG兼』のメモ。人名は佐々木/二人静/お隣さんを想定",
+      "_page": "page_092.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "261",
+      "action": "クイクイと指でつつくお隣さん。二人静・佐々木やれやれと。→Follow / PAN",
+      "dialogue": "「男に抱かれるなんて何年ぶりじゃろ。こげなことされたら惚れてしまうか…」／佐々木「変な気を起こさないで、ちゃんと抱いて下さい」／二人静「わかっとる、と。」「っていうか！」",
+      "se": "",
+      "time": "2",
+      "scene_mark": "261",
+      "numbered": true,
+      "characters": [
+        "二人静",
+        "佐々木",
+        "お隣さん"
+      ],
+      "confidence": "low",
+      "notes": "コマ1〜6が261の続き(scene欄に縦棒/空白)。dialogue欄の崩し字は推測混じり、要確認。time欄下部に『2+12』の丸囲み表記あり(尺+コマ)",
+      "_page": "page_092.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "262",
+      "action": "依頼者たちから鱗粉が流れてくる。人形にゆっくりとピント寄り。え!?と振り向く",
+      "dialogue": "あ、ちゃらん人が流れてくるんじゃけど「え!?」",
+      "se": "",
+      "time": "3+12",
+      "scene_mark": "262",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "low",
+      "notes": "action・dialogueとも手書き崩し字で判読困難。dialog欄に丸囲み話者名(二人静と思われる)あり。要確認",
+      "_page": "page_093.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "263",
+      "action": "お隣さんとフレンドリング姿が。お隣さん、驚いて。PAN UP。PAN T.B.",
+      "dialogue": "「おじさん!?」",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "263",
+      "numbered": true,
+      "characters": [
+        "お隣さん"
+      ],
+      "confidence": "medium",
+      "notes": "dialog欄に丸囲み話者名『お隣さん』。二人目の丸囲み話者名『二人静』あり。「よかった!無事だったんだ」も別話者(二人静?)のセリフ",
+      "_page": "page_093.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "264",
+      "action": "ずっと近づく。フレンドリングとお隣さん",
+      "dialogue": "「フレンドは正さ…君だろだったひみね」",
+      "se": "",
+      "time": "3",
+      "scene_mark": "264",
+      "numbered": true,
+      "characters": [
+        "フレンド",
+        "お隣さん"
+      ],
+      "confidence": "low",
+      "notes": "dialog欄に丸囲み話者名『フレンド』らしき表記。セリフ判読困難で要確認。time欄丸囲み③",
+      "_page": "page_093.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "265",
+      "action": "お隣さん、視線を反らす",
+      "dialogue": "お隣さん「すみません…もともと狙った爆発物のせいで、おじさんにも迷惑が…」",
+      "se": "",
+      "time": "6+12",
+      "scene_mark": "265",
+      "numbered": true,
+      "characters": [
+        "お隣さん"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue話者は丸囲み『お隣さん』",
+      "_page": "page_094.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "266",
+      "action": "驚く佐々木。やはり、と二人静",
+      "dialogue": "佐々木「爆発物!?」 二人静「やっぱりそういう事しゃったサ」",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "266",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "2コマ目(scene空白=続き)を統合。dialogue『佐々木「ふっと君のご様子…」』を含む",
+      "dialogue_extra": "佐々木「ふっと君のご様子…」",
+      "_page": "page_094.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "267",
+      "action": "お隣さん、佐々木のセリフに被せて話す",
+      "dialogue": "お隣さん(off)「ところでおじさん!そちらの女性は…前の職場の同僚だとお伺いしました」",
+      "se": "",
+      "time": "6",
+      "scene_mark": "267",
+      "numbered": true,
+      "characters": [
+        "お隣さん"
+      ],
+      "confidence": "medium",
+      "notes": "time丸囲み⑥",
+      "_page": "page_094.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "268",
+      "action": "二人をじっとガン見するお隣さん。PAN",
+      "dialogue": "佐々木(off)「え?うん、そうだけど…」",
+      "se": "",
+      "time": "3+12",
+      "scene_mark": "268",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "お隣さん"
+      ],
+      "confidence": "medium",
+      "notes": "",
+      "_page": "page_094.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "269",
+      "action": "お隣さん視点、PAN(L to S)。PAN T.B. お姫様抱っこして観客そっちにみえる2人 / 二人静、あれっと",
+      "dialogue": "お隣さん「…………」 / 二人静「僕、なんかやっちゃいました?」",
+      "se": "",
+      "time": "8",
+      "scene_mark": "269",
+      "numbered": true,
+      "characters": [
+        "お隣さん",
+        "佐々木",
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "actionのPANの詳細は崩れ字。dialogueは丸囲み『お隣さん』の話者、内容は判読困難 ｜ 縦棒/番号なしのため269の続きとして統合。尺は丸囲み8秒",
+      "_page": "page_095.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "270",
+      "action": "三人、揺々とした距離感で。お隣さん、駁?と",
+      "dialogue": "お隣さん「いえ、別にどうという訳ではないのですが」/三人「距離感が近くて思い悩んでるんだよね」/お隣さん「三人とも新しいこと動かないで」/三人「だんだん僕を交換」",
+      "se": "",
+      "time": "12+12",
+      "scene_mark": "270",
+      "numbered": true,
+      "characters": [
+        "お隣さん"
+      ],
+      "confidence": "low",
+      "notes": "action・dialogue共に崩れ字が激しく判読困難。複数話者(丸囲み『お隣さん』『三人』)を推定。内容は要確認。ページ下部に集計『12+12』の丸記号あり",
+      "_page": "page_095.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "271",
+      "action": "阿久津さん",
+      "dialogue": "「これは命令です」",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "271",
+      "numbered": true,
+      "characters": [
+        "阿久津"
+      ],
+      "confidence": "high",
+      "notes": "",
+      "_page": "page_096.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "272",
+      "action": "星崎。それを受けて",
+      "dialogue": "「は……」\n「そう言われると弱いんですけど」",
+      "se": "",
+      "time": "5+12",
+      "scene_mark": "272",
+      "numbered": true,
+      "characters": [
+        "星崎"
+      ],
+      "confidence": "medium",
+      "notes": "コマ2(番号なし=272の続き)を統合。ニコッと笑うのト書きは272の続き",
+      "_page": "page_096.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "273",
+      "action": "二人静。話を進める",
+      "dialogue": "「しかしこうなるとお主らの伍ヶ枝を急がんといかんのう」\n「Bでどんな具合なんだい？」",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "273",
+      "numbered": true,
+      "characters": [
+        "二人静",
+        "星崎"
+      ],
+      "confidence": "low",
+      "notes": "dialogue欄の崩し字が判読困難。話者丸囲みは二人静・星崎(off)。文言は要確認",
+      "_page": "page_096.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "274",
+      "action": "佐々木 / ふと眼下を見ると",
+      "dialogue": "「建物は見つけたが家具の類いが……」 / Bマ？ということなら、僕の相棒は年中あいけどこにも",
+      "se": "",
+      "time": "3",
+      "scene_mark": "274",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "二人静"
+      ],
+      "confidence": "low",
+      "notes": "話者丸囲みは二人静(off)。dialogue後半崩し字で要確認。画中文字『二人静の頃』 ｜ ページ最初のコマは丸番号なし=前ページ274の続き。dialogueは崩し字多く要確認",
+      "_page": "page_096.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "275",
+      "action": "佐々木たちは通りを歩く 2人の後ツ",
+      "dialogue": "",
+      "se": "",
+      "time": "3",
+      "scene_mark": "275",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "俯瞰の実景写真コマ。dialogueは275のセリフ欄が空、コマ間で吹き出し線がまたがる",
+      "_page": "page_097.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "276",
+      "action": "佐々木、あり、と 目す / 同じくあっちを見る一同",
+      "dialogue": "（佐々木）「あの、すみません（二人静）「あっちに人影が…」",
+      "se": "",
+      "time": "3 / 5",
+      "scene_mark": "276",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "二人静"
+      ],
+      "confidence": "low",
+      "notes": "話者名の丸囲みは『佐々木』と読めるが要確認。dialogue崩し字多い ｜ scene欄丸番号なし=276の続き。dialogueは丸囲み複数で判読困難、『？』のメモあり。要確認",
+      "_page": "page_097.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "278",
+      "action": "T.U.",
+      "dialogue": "",
+      "se": "",
+      "time": "3",
+      "scene_mark": "277",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "scene欄拡大で277と読めるが継続情報連番では278相当。丸番号=277をcut_labelに採用。ページ全体で丸囲み277が確認できるため277とすべきか要確認",
+      "_page": "page_097.png",
+      "_idx": 4
+    },
+    {
+      "cut_label": "278",
+      "action": "その先に阿久津。伏売神とエリエル。",
+      "dialogue": "あっ！あれは…！",
+      "se": "",
+      "time": "3",
+      "scene_mark": "278",
+      "numbered": true,
+      "characters": [
+        "阿久津"
+      ],
+      "confidence": "low",
+      "notes": "action欄の人名『伏売神』『エリエル』は手書き崩れが強く要確認。dialogue話者は丸囲み『3バトン』(要確認)",
+      "_page": "page_098.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "279",
+      "action": "加瀬さんキリッと。3バトンにコンタクト佐々木に釣",
+      "dialogue": "「3バトン、捕まえてれう！」りょーかい！ まけれ？",
+      "se": "",
+      "time": "3+12",
+      "scene_mark": "279",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "コマ1〜コマ2を統合(コマ2は継続で番号なし=空白)。action・dialogueとも手書き崩れが強く要確認。話者名『3バトン』要確認",
+      "_page": "page_098.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "280",
+      "action": "佐々木少し考えてから微笑む。",
+      "dialogue": "君たちも手伝ってくれないかな？直接的な戦いはこっちでやるからさ。 佐々木「ト……。わかりました。」",
+      "se": "",
+      "time": "9",
+      "scene_mark": "280",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "low",
+      "notes": "コマ3〜コマ4を統合(コマ4は継続で番号なし=空白)。dialogue話者は丸囲み『佐々木』。手書き崩れが強く要確認",
+      "_page": "page_098.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "281",
+      "action": "佐々木 恐縮しつつ",
+      "dialogue": "殺し合いには関わりたくないですが、このオオカ投げといつも申し訳ない…",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "281",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue先頭に丸囲みで話者名(佐々木)M＝モノローグ表記。セリフ本文は崩れており一部不確実",
+      "_page": "page_099.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "282",
+      "action": "ヨレドン、ニコッと 夜空に微笑",
+      "dialogue": "よろし。てんしゃす",
+      "se": "",
+      "time": "3",
+      "scene_mark": "282",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "low",
+      "notes": "話者名丸囲み『二人に』様の記載＝二人静か要確認。セリフ判読困難",
+      "_page": "page_099.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "283",
+      "action": "細い路地 外灯にむらがる蛾(2匹) PAN UP",
+      "dialogue": "",
+      "se": "SE「(明音/羽音)」",
+      "time": "3",
+      "scene_mark": "283",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "dialogue欄はSE表記のみ(羽音)。2コマにまたがりPAN UP含め統合。dialogueにはセリフ無し",
+      "_page": "page_099.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "284",
+      "action": "人気のない通り。ブツブツぼやきながら歩く 二人静",
+      "dialogue": "アイツらやっぱり失敗したじゃないか 見つかったらどうしてくれるんだ…",
+      "se": "",
+      "time": "5+12",
+      "scene_mark": "284",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "話者名丸囲み『二人静』と読める。赤字セリフあり(現行台詞として採用)。time欄下部の丸囲み数字を5+12と推定、要確認",
+      "_page": "page_099.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "285",
+      "action": "スーッとその後ろを飛んでついている エリエル",
+      "dialogue": "かも弱い 運も悪い……",
+      "se": "",
+      "time": "3+12",
+      "scene_mark": "285",
+      "numbered": true,
+      "characters": [
+        "エリエル"
+      ],
+      "confidence": "medium",
+      "notes": "人名エリエルは要確認(1期知識)",
+      "_page": "page_100.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "286",
+      "action": "二人静。",
+      "dialogue": "「フッタ…」",
+      "se": "",
+      "time": "",
+      "scene_mark": "286",
+      "numbered": true,
+      "characters": [
+        "二人静"
+      ],
+      "confidence": "low",
+      "notes": "dialogue先頭に丸囲みSE(効果音記号)あり。セリフ判別困難、要確認。picture2コマ目(実写背景+顔)はこのカットの続き",
+      "_page": "page_100.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "287",
+      "action": "背後のエリエル。無表情で謝る",
+      "dialogue": "二人静「エリエルって本当に使えないねぇ」 エリエル「申し訳ありません」 二人静「まぁ、」",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "287",
+      "numbered": true,
+      "characters": [
+        "二人静",
+        "エリエル"
+      ],
+      "confidence": "medium",
+      "notes": "人名エリエル要確認。2コマ目に丸5(尺?)あり",
+      "_page": "page_100.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "288",
+      "action": "フカン。二人静とエリエル、カメラへ迫る。",
+      "dialogue": "「俺の意見を採用しても、大差ない結果に」",
+      "se": "",
+      "time": "3+12",
+      "scene_mark": "288",
+      "numbered": true,
+      "characters": [
+        "二人静",
+        "エリエル"
+      ],
+      "confidence": "medium",
+      "notes": "picture下部に実写背景貼り込み。人名要確認",
+      "_page": "page_100.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "289",
+      "action": "頭上より2灯 斜め接近。 からみ倒す TU。 ハッ！とする 佐元神。",
+      "dialogue": "だ、だめ 明けど",
+      "se": "",
+      "time": "3",
+      "scene_mark": "289",
+      "numbered": true,
+      "characters": [
+        "佐元神"
+      ],
+      "confidence": "low",
+      "notes": "人物名の手書き崩れ強く『佐元神』は要確認。頭上コマ・佐元神コマの2コマを289に統合(2コマ目は番号なし継続)。dialogue後半は記号・書き文字で判読困難",
+      "_page": "page_101.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "290",
+      "action": "一緒に抱えた 巨妖が その前に舞い降 降り立つ Q.PAN UP",
+      "dialogue": "「サッ」",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "290",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "290は舞い降りるコマとPAN UPコマの2コマを統合。dialogue欄に丸囲み話者名らしき記号ありだが判読不能(要確認)",
+      "_page": "page_101.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "291",
+      "action": "佐元神。 グッ…！と / 逃げの方に夕！ 逃げてる",
+      "dialogue": "「グッ…！」",
+      "se": "",
+      "time": "1+18",
+      "scene_mark": "291",
+      "numbered": true,
+      "characters": [
+        "佐元神"
+      ],
+      "confidence": "low",
+      "notes": "人物名『佐元神』要確認。dialogue丸囲み話者名判読不能 ｜ ページ最初のコマは丸番号なし＝前ページ291の続き。action文字は崩れており推測",
+      "_page": "page_101.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "292",
+      "action": "○○が サッ！と降りに 道を防げてる / 落ち / 尻もちをつく / イテテ…と",
+      "dialogue": "「サッ！！」 / 「ひわあっ！」 / 「う…」",
+      "se": "",
+      "time": "2+18",
+      "scene_mark": "292",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "scene欄に丸囲み『292』を確認。台詞・ト書きとも崩れ字で推測 ｜ scene欄に丸番号なし。番号は連番で補完。ただし新カット扱いを示す番号は読めず要確認 ｜ scene欄丸番号なし＝続きの可能性。dialogue欄は崩れ字で判読困難、話者名らしき丸囲みあり要確認 ｜ scene欄丸番号なし。番号は連番補完。全体に崩れ字で低信頼",
+      "_page": "page_102.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "293",
+      "action": "お隣さんを抱えたレイドン。微笑んで。PAN UP。",
+      "dialogue": "はい、そこまで。所詮お前らはゲームオーバーだ。",
+      "se": "",
+      "time": "5",
+      "scene_mark": "293",
+      "numbered": true,
+      "characters": [
+        "お隣さん"
+      ],
+      "confidence": "medium",
+      "notes": "話者名『レイドン(?)』は丸囲みだが判読困難、要確認。1コマ目と2コマ目(PAN UP)を統合",
+      "_page": "page_103.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "294",
+      "action": "佐々木 やばい！と",
+      "dialogue": "うああっ、自分捕まっちゃった、エリエル",
+      "se": "",
+      "time": "3+12",
+      "scene_mark": "294",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "エリエル"
+      ],
+      "confidence": "low",
+      "notes": "『エリエル』は赤字で追記。話者名要確認",
+      "_page": "page_103.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "295",
+      "action": "エリエル、前方の佐々木らを警戒しつつも振り返り。",
+      "dialogue": "マスター！ もっとこちらへ！",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "295",
+      "numbered": true,
+      "characters": [
+        "エリエル"
+      ],
+      "confidence": "low",
+      "notes": "人名『エリエル』要確認(用語集未収載)",
+      "_page": "page_103.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "296",
+      "action": "佐々木問う。佐々木、エリエル、佐々木の方を見て。",
+      "dialogue": "君たち、前にも会ったことあるよね？",
+      "se": "",
+      "time": "3",
+      "scene_mark": "296",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "エリエル"
+      ],
+      "confidence": "low",
+      "notes": "話者名『佐々木(?)』要確認。action・dialogue内の人名判読困難",
+      "_page": "page_103.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "297",
+      "action": "佐々木を下から見る位体（アングル）。PAN UP",
+      "dialogue": "「なんか知り合いかえ？」",
+      "se": "",
+      "time": "3",
+      "scene_mark": "297",
+      "numbered": true,
+      "characters": [
+        "佐々木",
+        "二人静"
+      ],
+      "confidence": "medium",
+      "notes": "1カットが2コマにまたがる（上コマ・下コマ）。dialog話者名は判読困難だが二人静の口調",
+      "_page": "page_104.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "298",
+      "action": "佐々木 あっと思い出し",
+      "dialogue": "「あっ…」",
+      "se": "",
+      "time": "4+18",
+      "scene_mark": "298",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "time欄『4+18』と読む",
+      "_page": "page_104.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "299",
+      "action": "",
+      "dialogue": "「いえ、知り合いという訳では…」",
+      "se": "",
+      "time": "3",
+      "scene_mark": "299",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "話者名は丸囲みだが判読困難、佐々木の応答",
+      "_page": "page_104.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "300",
+      "action": "鱗粉",
+      "dialogue": "Bもしくは君に鱗粉を吹き込んだのは彼等ですか？",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "300",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "dialog話者名『二人静』らしき丸囲み。セリフは判読困難、要確認。time欄『4+12』",
+      "_page": "page_104.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "301",
+      "action": "星崎 キリッて座る",
+      "dialogue": "「ッ…！」",
+      "se": "",
+      "time": "4+18",
+      "scene_mark": "301",
+      "numbered": true,
+      "characters": [
+        "星崎"
+      ],
+      "confidence": "medium",
+      "notes": "action冒頭の人名は『星崎』と判読",
+      "_page": "page_105.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "302",
+      "action": "佐々木",
+      "dialogue": "「まぁ、それはそうしてます」",
+      "se": "",
+      "time": "2",
+      "scene_mark": "302",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "dialogueの話者は丸囲み『佐々木』",
+      "_page": "page_105.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "303",
+      "action": "佐々木らの会話の間。ずっと黙ってた 阿久津 裸足の足 もぞもぞ 踏み替え(いらだち) 星崎に近づいて阿久津",
+      "dialogue": "「あぁ、やはりゆ…」 「タッ…」 「タッ…」",
+      "se": "",
+      "time": "3+12",
+      "scene_mark": "303",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "星崎"
+      ],
+      "confidence": "low",
+      "notes": "303〜304に跨る複数コマを統合。dialogueの丸囲みは『阿久津(off)』および『B』の話者記号。SE的な『タッ』を含むが判読不確実。崩し字多く要確認",
+      "_page": "page_105.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "304",
+      "action": "星崎に近づいて阿久津 / お隣さん、顔を上げる",
+      "dialogue": "「タッ…」",
+      "se": "",
+      "time": "3",
+      "scene_mark": "304",
+      "numbered": true,
+      "characters": [
+        "阿久津",
+        "星崎",
+        "お隣さん"
+      ],
+      "confidence": "low",
+      "notes": "303と連続する芝居。action・dialogueとも崩れが激しく要確認 ｜ ページ最初のコマは丸番号なし＝前ページ最後のカット304の続き。dialogue欄は判読困難なため空",
+      "_page": "page_105.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "305",
+      "action": "静かに問う PAN UP",
+      "dialogue": "「シートを爆破したのは、貴方たちの仲間ですよね?」",
+      "se": "",
+      "time": "6+12",
+      "scene_mark": "305",
+      "numbered": true,
+      "characters": [
+        "お隣さん"
+      ],
+      "confidence": "medium",
+      "notes": "2コマにまたがる(305＋番号なし続きコマのPAN UP)。話者は丸囲み『お隣さん』",
+      "_page": "page_106.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "306",
+      "action": "お隣さん、寂しい笑いを浮かべ",
+      "dialogue": "「素直に答えたら、助かるとか見逃してくれる?」",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "306",
+      "numbered": true,
+      "characters": [
+        "お隣さん"
+      ],
+      "confidence": "medium",
+      "notes": "",
+      "_page": "page_106.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "307",
+      "action": "お隣さん、静かに歩ける",
+      "dialogue": "「無理に答えなくても構いません。」",
+      "se": "",
+      "time": "3+12",
+      "scene_mark": "307",
+      "numbered": true,
+      "characters": [
+        "お隣さん"
+      ],
+      "confidence": "low",
+      "notes": "action・dialogue共に崩し字で判読困難。話者は丸囲み『お隣さん』",
+      "_page": "page_106.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "308",
+      "action": "お隣さんから出るヤバイ感を感じて。ジワっと寄る 3ペドン。",
+      "dialogue": "ただ…",
+      "se": "",
+      "time": "3",
+      "scene_mark": "308",
+      "numbered": true,
+      "characters": [
+        "お隣さん"
+      ],
+      "confidence": "medium",
+      "notes": "action欄は崩し字多く一部推測。time欄はコマ1の丸囲み3。308と309の2コマ(picture0/1)を統合。",
+      "_page": "page_107.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "309",
+      "action": "緊張感が走る 比売神",
+      "dialogue": "比売神「…！」",
+      "se": "",
+      "time": "2",
+      "scene_mark": "309",
+      "numbered": true,
+      "characters": [
+        "比売神"
+      ],
+      "confidence": "low",
+      "notes": "人名『比売神』は用語集候補になく手書き推測。要確認。dialogue欄の丸囲みは話者名『比売神』か。",
+      "_page": "page_107.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "310",
+      "action": "挙動して見せる目。お隣さん視点で佐々木にのみフォーカス。",
+      "dialogue": "",
+      "se": "",
+      "time": "2",
+      "scene_mark": "310",
+      "numbered": true,
+      "characters": [
+        "お隣さん",
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "action崩し字多く推測。『佐々木』は用語集の主人公名に一致。",
+      "_page": "page_107.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "311",
+      "action": "× 心配そうに見ている佐々木",
+      "dialogue": "",
+      "se": "",
+      "time": "2",
+      "scene_mark": "311",
+      "numbered": true,
+      "characters": [
+        "佐々木"
+      ],
+      "confidence": "medium",
+      "notes": "action冒頭に×印状の記述あり。崩し字推測。",
+      "_page": "page_107.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "312",
+      "action": "外灯の下\nかたきた\nコピーの群れ",
+      "dialogue": "",
+      "se": "",
+      "time": "2",
+      "scene_mark": "312",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "3行目『コピーの群れ』は判読やや不確実",
+      "_page": "page_108.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "313",
+      "action": "魚眼レンズ\nお隣さん\nつぶ ゆがめ\n猫背みたいな\n笑みで（赤で消し）\nPAN T.B.",
+      "dialogue": "お隣さん\n（微笑み）\nフ〜〜〜\n「苦しんで\nいただきますが」",
+      "se": "",
+      "time": "2",
+      "scene_mark": "313",
+      "numbered": true,
+      "characters": [
+        "お隣さん"
+      ],
+      "confidence": "low",
+      "notes": "コマ1〜4は同一カット313として統合。全体に赤バツが入っており削除指示の可能性あり（コマ1・2の絵に赤の大バツ）。action欄『笑みで』は赤で抹消。dialogue『フ〜〜〜』『？』等は判読困難。コマ4はEND表記。人名『お隣さん』は要確認",
+      "_page": "page_108.png",
+      "_idx": 1
+    }
+  ]
+}

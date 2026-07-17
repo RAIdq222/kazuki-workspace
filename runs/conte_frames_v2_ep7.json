@@ -1,1135 +1,1153 @@
 {
   "frames": [
     {
-      "cut_label": 1,
-      "action": "F.I.(1+12)に\n夜空に月\n流れる雲。",
+      "cut_label": "1",
+      "action": "△F.I.(1+12)に 夜空に月 流れる雲。",
       "dialogue": "",
       "se": "",
-      "time": "1+12",
+      "time": "4+12",
+      "scene_mark": "1",
       "numbered": true,
       "characters": [],
       "confidence": "high",
-      "notes": "コマ0は番号なしリードコマ(吹き出しに『F.I.ここから』の指示)。コマ1の丸囲み『1』をカット1とし、action欄の『F.I.(1+12)に 夜空に月 流れる雲。』を統合",
+      "notes": "コマ0(リード/タイトル吹き出し『デバここから』)は番号も本文も無いつなぎのため統合せず。コマ2(蝶がフレームインしてくる/A.C.)はscene欄が縦棒のため本カットの続きとして統合。time欄の4+12は秒+コマ表記",
       "_page": "page_003.png",
       "_idx": 0
     },
     {
-      "cut_label": 2,
-      "action": "フレームIN してくる\n一匹の蝶。\nA.C.",
+      "cut_label": "2",
+      "action": "フレームインしてくる一匹の蝶。BANK あり。鱗粉が舞う。",
       "dialogue": "",
       "se": "",
-      "time": "4+12",
+      "time": "4",
+      "scene_mark": "2",
       "numbered": true,
       "characters": [],
       "confidence": "medium",
-      "notes": "action欄に『フレームIN してくる 一匹(の蝶)』『AC』と読める。time欄『4+12』",
+      "notes": "コマ4(scene欄縦棒)は本カットの続きとして統合。下部に『次ページ #6のBANK』の指示あり。action欄の崩し字は一部不確実、要確認",
       "_page": "page_003.png",
       "_idx": 1
     },
     {
-      "cut_label": 3,
-      "action": "フレームIN する蝶。",
-      "dialogue": "",
-      "se": "",
-      "time": "",
-      "numbered": true,
-      "characters": [],
-      "confidence": "low",
-      "notes": "scene欄丸囲み『2』だが連番上カット3に相当する位置。action欄の文字は崩れており『フレームIN』の繰り返しと推測、要確認",
-      "_page": "page_003.png",
-      "_idx": 2
-    },
-    {
-      "cut_label": 4,
-      "action": "鱗粉が舞う。",
-      "dialogue": "",
-      "se": "",
-      "time": "4",
-      "numbered": true,
-      "characters": [],
-      "confidence": "medium",
-      "notes": "scene欄丸囲み『3』。picture内に『OK』『A.P.』(承認メモ)あり→dialogueには入れない。time欄『4』らしき手書き、コマ数のみか要確認",
-      "_page": "page_003.png",
-      "_idx": 3
-    },
-    {
-      "cut_label": 3,
+      "cut_label": "3",
       "action": "印をいくつか組んで",
       "dialogue": "",
       "se": "バッ バッ バッ…",
       "time": "2+12",
+      "scene_mark": "3",
       "numbered": true,
-      "characters": [
-        "尚善"
-      ],
-      "confidence": "medium",
-      "notes": "time欄『2f/2』は2+12と解釈",
+      "characters": [],
+      "confidence": "high",
+      "notes": "",
       "_page": "page_004.png",
       "_idx": 0
     },
     {
-      "cut_label": 4,
+      "cut_label": "4",
       "action": "↑じわPAN UP うすく目を開く。",
       "dialogue": "……",
       "se": "",
       "time": "2",
+      "scene_mark": "4",
       "numbered": true,
       "characters": [
         "沈公子"
       ],
-      "confidence": "medium",
-      "notes": "dialogue欄の丸囲みは話者名(沈公子)＋無言の点",
+      "confidence": "high",
+      "notes": "dialogue欄に(沈公子)の話者名と『…』",
       "_page": "page_004.png",
       "_idx": 1
     },
     {
-      "cut_label": 5,
-      "action": "室内にただよう ケムリ。BG",
+      "cut_label": "5",
+      "action": "室内にただようケムリ。BOOK B①",
       "dialogue": "",
       "se": "",
       "time": "4",
+      "scene_mark": "5",
       "numbered": true,
       "characters": [],
       "confidence": "medium",
-      "notes": "time欄の手書きは4と読む",
+      "notes": "",
       "_page": "page_004.png",
       "_idx": 2
     },
     {
-      "cut_label": 6,
-      "action": "・同/離れ.外. 扉に錠をかける 花家爺 の手もと。",
+      "cut_label": "6",
+      "action": "同/離れ.外. 扉に錠をかける花家爺の手もと。",
       "dialogue": "",
-      "se": "ガチャり…",
+      "se": "ガチャリ…",
       "time": "1",
+      "scene_mark": "6",
       "numbered": true,
       "characters": [
         "花家爺"
       ],
-      "confidence": "medium",
-      "notes": "dialogue欄の丸囲みはSE表記。シナリオ上『花家爺が扉の鍵を閉める』",
+      "confidence": "high",
+      "notes": "action欄の◯囲みは花家爺",
       "_page": "page_004.png",
       "_idx": 3
     },
     {
-      "cut_label": 7,
-      "action": "←PAN! 全尺・普通で。 / 土下座をする 花家妻と爺 連れて家来たちも。（一列作成にコピペ） / 沈公子 そばによって、片膝をつく。",
-      "dialogue": "儀式が終わるまでは。誰もこの中に入らぬよう。いいですね? / 花家妻(皆)「沈公子さま、本当にありがとうございます。この恩は一生忘れません！」",
-      "se": "",
+      "cut_label": "7",
+      "action": "←PAN! 全尺・普通で. / 土下座をする 花家爺と布。連れて来た家人たちも。(一列作成にコピペ) / 沈公子そばによって、片膝をつく。",
+      "dialogue": "儀式が終わるまでは。誰もこの中に入らぬように。いいですね? / 沈公子さま、本当にありがとうございます。この恩は一生忘れません！",
+      "se": "(足音――)",
       "time": "1+3",
+      "scene_mark": "7",
       "numbered": true,
       "characters": [
         "沈公子",
-        "花家妻",
-        "花家爺",
-        "家来"
+        "花家爺"
       ],
       "confidence": "medium",
-      "notes": "action欄崩し字『叙・築地で』→『全尺・普通で』。dialogue冒頭の丸囲みは話者名(沈公子) ｜ ページ最初のコマは丸番号なし＝前ページのカット7の続きとして統合。dialogue冒頭の話者表記は『花家妻(皆)』と推定 ｜ scene欄に縦棒のみ＝カット7の続きとして統合。time『/3』は1+3か要確認",
+      "notes": "action『叙・築地で』は『全尺・普通で』の崩し字と判断。time欄空白。下段に沈公子/花家爺/家人たち等のキャラ指定メモあり ｜ ページ最初のコマはscene欄が空白＝前ページのカット7の続き。dialogue冒頭の話者表記『花家爺ら(皆)』はト書き的指示だが本文セリフを採用。新番号は振らず7に統合 ｜ scene欄は縦棒＝直前カット7の続き。dialogue欄は効果音『足音』のみでセリフなし→seに記載",
       "_page": "page_004.png",
       "_idx": 4
     },
     {
-      "cut_label": 8,
-      "action": "手を取る沈公子 頭を下げる花家妻",
-      "dialogue": "沈公子「奥様もお身体には気をつけて。」 花家妻「重ね重ねありがとうございます…」",
+      "cut_label": "8",
+      "action": "手を取る 沈公子。頭を上げる 花家爺。",
+      "dialogue": "奥様もお身体には気をつけて。重ね重ねありがとうございます…",
       "se": "",
       "time": "6",
+      "scene_mark": "8",
       "numbered": true,
       "characters": [
         "沈公子",
-        "花家妻"
+        "花家爺"
       ],
-      "confidence": "low",
-      "notes": "action欄に丸囲み『沈公子』『花家妻』。scene欄に赤☆と数字8 ｜ 二人の顔のアップ。scene欄縦棒のみ＝カット8の続きとして統合。time=6コマ",
+      "confidence": "medium",
+      "notes": "丸囲み数字8＝新カット。dialogueは沈公子と花家爺の二者のセリフ ｜ scene欄は縦棒＝カット8の続き。横顔の作画コマ。dialogue欄はセリフなし(引出し線のみ)",
       "_page": "page_005.png",
       "_idx": 2
     },
     {
-      "cut_label": 9,
-      "action": "同 儀式の間 ① PAN UP → ↓ ドリ送り（上→下）花家主人へ / (T.U.)かけて 異変を感じている。",
-      "dialogue": "沈公子(OFF)「それでは失礼いたします。何かあれば私の宿（へ）…」 / 来ていただければ。\n……",
+      "cut_label": "9",
+      "action": "同/儀式の間。PAN UP↓ TB:送り(上→下) 花家主人へ。 / (T.U.)かけて。\n苗、異変を感じている。",
+      "dialogue": "それでは失礼いたします。何かあれば私の宿で… / 来ていただければ。\n…",
       "se": "",
-      "time": "2+? / 7",
+      "time": "2 / 7",
+      "scene_mark": "9",
       "numbered": true,
       "characters": [
         "沈公子",
         "花家主人",
         "苗"
       ],
-      "confidence": "low",
-      "notes": "scene欄に赤☆と数字9。action欄崩れが強く『PAN UP』『ドリ送り 上→下』『花家主人へ』と推定。dialogue末尾切れ。time欄崩し字で要確認 ｜ ページ最初のコマは丸番号なし=前ページの最後のカット9の続きとして統合。dialogue冒頭に(沈公子)、後半に(苗)の話者記号あり",
+      "confidence": "medium",
+      "notes": "丸囲み数字9＝新カット。dialogue話者は沈公子(OFF)。action欄のカメラ指示はPAN UP・TB送り(上→下)と読む ｜ ページ最初のコマは丸番号なし(空白)＝前ページ最後のカット9の続き。actionの(キャラ指示)は読み取り困難。dialogue先頭の話者は沈公子(AP)、後段は苗",
       "_page": "page_005.png",
       "_idx": 4
     },
     {
-      "cut_label": 10,
+      "cut_label": "10",
       "action": "",
       "dialogue": "分かりました。\n爺。",
       "se": "",
       "time": "2",
+      "scene_mark": "10",
       "numbered": true,
       "characters": [
         "花家妻"
       ],
       "confidence": "medium",
-      "notes": "dialogue話者(花家妻)(off)。絵は目を閉じた顔のアップ",
+      "notes": "dialogue話者は花家妻(off)",
       "_page": "page_006.png",
       "_idx": 1
     },
     {
-      "cut_label": 11,
-      "action": "眉・目。同上にブレ。",
+      "cut_label": "11",
+      "action": "眉・目。\n同上ブレ。",
       "dialogue": "ここに見張りを。\n私は",
       "se": "",
       "time": "2",
+      "scene_mark": "11",
       "numbered": true,
       "characters": [],
       "confidence": "medium",
-      "notes": "dialogue(off)。話者記号不明瞭",
+      "notes": "dialogue話者(off)。話者名は明記なし",
       "_page": "page_006.png",
       "_idx": 2
     },
     {
-      "cut_label": 12,
-      "action": "遠のく足音。静まり返る室内。",
-      "dialogue": "道士様をお見送りします\n花家爺(off)\nはい。",
-      "se": "足音",
+      "cut_label": "12",
+      "action": "遠のく足音。\n静まり返る室内。",
+      "dialogue": "道士様をお見送りします\nはい。",
+      "se": "足音──",
       "time": "",
+      "scene_mark": "12",
       "numbered": true,
       "characters": [
         "花家爺"
       ],
       "confidence": "medium",
-      "notes": "dialogue(off)。(作)足音=効果音指示",
+      "notes": "dialogue先頭(off)、後段は花家爺(AP)。timeは読み取れず空",
       "_page": "page_006.png",
       "_idx": 3
     },
     {
-      "cut_label": 13,
-      "action": "ただよう モヤ。",
+      "cut_label": "13",
+      "action": "ただよう鱗粉。",
       "dialogue": "",
-      "se": "",
-      "time": "9",
+      "se": "(静寂──)",
+      "time": "9+4",
+      "scene_mark": "13",
       "numbered": true,
       "characters": [],
-      "confidence": "low",
-      "notes": "dialogue欄に(静寂——)(SYO ほど)等の演出メモ・尺メモあり=セリフではないため除外。time欄に9と4が見えるが本コマは9",
+      "confidence": "medium",
+      "notes": "dialogue欄は効果音/ト書き(静寂──、SEほど)のみでセリフ無し→dialogue空。time欄に9と4の2マス分(下段4はコマ尻)。(SEほど)指定あり",
       "_page": "page_006.png",
       "_idx": 4
     },
     {
-      "cut_label": 14,
-      "action": "眉・目\n同上につづく",
-      "dialogue": "…道士様は、ただ眠っていればいいと言っていたけど…",
-      "se": "",
-      "time": "",
-      "numbered": true,
-      "characters": [
-        "苗"
-      ],
-      "confidence": "medium",
-      "notes": "dialogue欄は(苗)(M)モノローグ。time欄は読み取れず空",
-      "_page": "page_007.png",
-      "_idx": 0
-    },
-    {
-      "cut_label": 15,
-      "action": "たまらず\nうす目を開け。\n何かを見つける。",
-      "dialogue": "それは…？",
-      "se": "",
-      "time": "8",
-      "numbered": true,
-      "characters": [
-        "苗"
-      ],
-      "confidence": "medium",
-      "notes": "time欄手書き8。コマ2は縦棒のみで丸番号無く続きだが、その下に丸囲み15が現れる。action/dialogueはコマ1分。コマ2(丸15)のaction「出入口横にある窓から一匹の猫が入りこく(?)で」を統合",
-      "_page": "page_007.png",
-      "_idx": 1
-    },
-    {
-      "cut_label": 16,
-      "action": "#6%兼用\n苗のまだうすくの\nまわりをぐるぐると飛ぶ。",
-      "dialogue": "",
-      "se": "",
-      "time": "4+12",
-      "numbered": true,
-      "characters": [
-        "苗"
-      ],
-      "confidence": "low",
-      "notes": "コマ3(丸番号無し、縦棒)は前カット15の続きとして統合済み。コマ4で丸囲み16。action冒頭『+6%兼用』は流用指示。time欄『4+12』(分数読みでなく秒+コマ)",
-      "_page": "page_007.png",
-      "_idx": 2
-    },
-    {
-      "cut_label": 17,
-      "action": "#6 1/2兼用 FIX 絵を見つける（苗） / 肩を細める。 画面手前 鮮物を散らしながら飛んでいる（蝶）BOOK",
-      "dialogue": "…… / (M)汚くて汚らしい くだろう…",
+      "cut_label": "17",
+      "action": "#6 +6%兼用 / FIX / 鱗(粉)を見つける苗 / 眉を細める。 / 画面手前 / 鱗粉を散らしながら飛んでいる蝶(BOOK)",
+      "dialogue": "苗「……。」 / (M)なんて汚らしいんだろう…",
       "se": "",
       "time": "5+12",
+      "scene_mark": "17",
       "numbered": true,
       "characters": [
         "苗"
       ],
       "confidence": "medium",
-      "notes": "action欄に「#6 L/0兼用」「Fix」「絵を見つけ(苗)」と読める。L/0は1/2の可能性 ｜ コマ1はscene欄に縦棒のみ＝続きコマ。だが内容は次カット相当。time欄に5+12と読める。dialogueはモノローグ(M)。蝶=丸囲み、BOOK指定あり",
+      "notes": "action欄の『鱗を見つける苗』の主語は丸囲み『苗』。次コマ(縦棒/番号なし)はこのカットの続きとして統合 ｜ scene欄は縦棒のみ＝カット17の続き。実際にはまとめて1エントリにすべきだが本文量のため分けて記載。time 5+12",
       "_page": "page_008.png",
       "_idx": 0
     },
     {
-      "cut_label": 19,
-      "action": "（兼用）←じわPAN / FIXになり 目を閉じる（蝶）",
-      "dialogue": "(M)最後にそばに来てくれた 生き物が蝶だなんて / (M)でも、ある意味 私らしいのかもね…",
+      "cut_label": "18",
+      "action": "○兼 / ←じわPAN / FIXになり / 目を閉じる苗",
+      "dialogue": "(M)最後にそばに来てくれた生き物が蝶だなんて / (M)でも、ある意味私らしいのかもね…",
       "se": "",
       "time": "9",
+      "scene_mark": "18",
       "numbered": true,
       "characters": [
         "苗"
       ],
       "confidence": "medium",
-      "notes": "action欄に「じわPAN」、丸囲みに「兼」 ｜ コマ3はscene欄縦棒のみ＝続きコマ。time欄に9と読める。FIX指定",
+      "notes": "scene欄縦棒＝カット18の続き。time 9",
       "_page": "page_008.png",
       "_idx": 2
     },
     {
-      "cut_label": 21,
-      "action": "#6 BANK -2. 軌は床",
-      "dialogue": "……",
-      "se": "",
+      "cut_label": "19",
+      "action": "#6 BANK / ヒビ、軋む床",
+      "dialogue": "",
+      "se": "ギシ…",
       "time": "",
+      "scene_mark": "19",
       "numbered": true,
       "characters": [],
-      "confidence": "low",
-      "notes": "丸囲み番号19の続き＝丸囲みあり(★印)。action欄に「#6 BANK」流用カット指定。「-2.軌は床」は判読困難で要確認。time欄に★マーク",
+      "confidence": "medium",
+      "notes": "dialogue欄は効果音『ギシ…』のためseに記載しdialogueは空。time欄に終了マーク(★)あり",
       "_page": "page_008.png",
       "_idx": 4
     },
     {
-      "cut_label": 20,
-      "action": "○兼じわ（カット内の芝居） / 気配を感じ／視線を下へ。",
-      "dialogue": "…っ… / ？…",
+      "cut_label": "20",
+      "action": "△兼\n目を伏せる 苗 / 気配を感じ\n視線を下へ。",
+      "dialogue": "！っ… / ？…",
       "se": "",
       "time": "3+12",
+      "scene_mark": "20",
       "numbered": true,
       "characters": [
         "苗"
       ],
       "confidence": "medium",
-      "notes": "action欄は崩し字。冒頭コマに丸囲み番号20。dialogue欄は短い感嘆／吐息のような書き込みで確信低い ｜ scene欄に縦棒のみ＝直前カット20の続きとして統合。time 3+12",
+      "notes": "action欄に丸囲み『兼』(兼用)、『苗』。dialogueは『！っ…』。timeは20と21コマ跨ぎで合算値が21コマ側に記載 ｜ scene欄は縦棒のみ＝カット20の続き。本文を統合",
       "_page": "page_009.png",
       "_idx": 0
     },
     {
-      "cut_label": 21,
-      "action": "↑PAN UP 全尺・普通で／（苗）と（花家主人）の寝具台の中央あたり / （白い兎）が乗っている　あたまがゆっくり動き／（兎）より",
-      "dialogue": "（SE）",
+      "cut_label": "21",
+      "action": "↑PAN UP 全尺・普通で\n苗と花家妻の寝具台の中央あたり / 白い兎が乗っている\nまま枕が動く\n苗より",
+      "dialogue": "",
       "se": "",
       "time": "4+12",
+      "scene_mark": "21",
       "numbered": true,
       "characters": [
         "苗",
-        "花家主人"
+        "花家妻"
       ],
       "confidence": "low",
-      "notes": "丸囲み21。PAN UPのカメラ指示。人名は花家主人と推定（憑かれた白装束） ｜ scene欄に縦棒のみ＝カット21の続きとして統合。dialogue欄に(SE)記号と擬音的書き込み。time 4+12",
+      "notes": "action欄に丸囲み『苗』『花家妻』。カメラ指示PAN UP・全尺・普通 ｜ scene欄は縦棒＝カット21の続き。『白い兎』は判読困難で要確認。dialogue欄はSE記号と『1/3』等の尺メモ的記号のみでセリフ無し",
       "_page": "page_009.png",
       "_idx": 2
     },
     {
-      "cut_label": 22,
-      "action": "↑じわPAN UP！／こちらに振り向きどう。（白い兎）で。",
+      "cut_label": "22",
+      "action": "↑じわPAN UP！\nこちらにふり向き始める\n白い兎で。",
       "dialogue": "",
       "se": "",
-      "time": "f",
+      "time": "",
+      "scene_mark": "22",
       "numbered": true,
       "characters": [],
       "confidence": "low",
-      "notes": "丸囲み22。じわPAN UP指示。dialogue欄は擬音的書き込みのみで確信低い。time欄は判読困難",
+      "notes": "action欄に丸囲み『白い兎』。dialogue欄は『1/3…』等の記号のみでセリフ無し。time欄は『x』(チェック様の記号)。『白い兎』は要確認",
       "_page": "page_009.png",
       "_idx": 4
     },
     {
-      "cut_label": 23,
-      "action": "花家屋敷／離れ 祭壇。FB＋フェアリング(FIXすく)",
+      "cut_label": "23",
+      "action": "○花家屋敷/離れ 祭壇 BG＋フェアリング(FIXする)",
       "dialogue": "",
       "se": "",
       "time": "3",
+      "scene_mark": "23",
       "numbered": true,
-      "characters": [],
+      "characters": [
+        "花家主人"
+      ],
       "confidence": "medium",
-      "notes": "action欄手書きが崩れており「FB＋フェアリング」「FIX」周辺は要確認",
+      "notes": "action欄『花家屋敷/離れ 祭壇』『BG＋フェアリング(Fixする)』と読む。後ろ姿の人物は花家主人と推定だが明示なし",
       "_page": "page_010.png",
       "_idx": 0
     },
     {
-      "cut_label": 24,
+      "cut_label": "24",
       "action": "瞳ブレ",
-      "dialogue": "…何あれ？",
+      "dialogue": "…何あれ?",
       "se": "",
       "time": "3",
+      "scene_mark": "24",
       "numbered": true,
       "characters": [
         "苗"
       ],
-      "confidence": "medium",
-      "notes": "dialogue冒頭の丸囲みは話者記号「苗(M)」と判断。台詞は「…何あれ？」",
+      "confidence": "high",
+      "notes": "dialogue欄に丸囲み『苗』(M)＝モノローグ指定",
       "_page": "page_010.png",
       "_idx": 1
     },
     {
-      "cut_label": 25,
+      "cut_label": "25",
       "action": "もう一体の白い鬼が現れ。",
       "dialogue": "",
-      "se": "ズズズ…",
+      "se": "ずずず…",
       "time": "3",
+      "scene_mark": "25",
       "numbered": true,
       "characters": [],
-      "confidence": "medium",
-      "notes": "dialogue欄は効果音「ズズズ」のため台詞なし→seに記載",
+      "confidence": "high",
+      "notes": "dialogue欄はSE『ずずず…』のみ→seに記載。dialogueは空",
       "_page": "page_010.png",
       "_idx": 2
     },
     {
-      "cut_label": 26,
-      "action": "花家主人の方を向く。兼用",
-      "dialogue": "ギ…／ギ…",
-      "se": "",
+      "cut_label": "26",
+      "action": "花家主人の方を向く。 ○兼(兼用)",
+      "dialogue": "",
+      "se": "ドシ… ドシ…",
       "time": "3",
+      "scene_mark": "26",
       "numbered": true,
       "characters": [
         "花家主人"
       ],
       "confidence": "medium",
-      "notes": "dialogue欄の丸囲みは話者記号。発声「ギ…ギ…」と判断、要確認",
+      "notes": "action欄に丸囲み『花家主人』。『兼』＝兼用指示。dialogue欄はSE『ドシ…ドシ…』→seに記載。ページ下部に欄外メモあり",
       "_page": "page_010.png",
       "_idx": 3
     },
     {
-      "cut_label": 27,
-      "action": "兼用。花家主人の胸もとに手を置く白い鬼",
-      "dialogue": "……身体が動かない。怖い……怖い……！",
+      "cut_label": "27",
+      "action": "兼\n花家主人の胸もとに手を置く（白い鬼） / ーと、突如咳込む\n花家主人",
+      "dialogue": "（苗）(M)\n…身体が動かない。\n怖い…怖い…！ / 花家主人\n（仮）—\nぐはっ…\n苗\n!?…",
       "se": "",
-      "time": "",
-      "numbered": true,
-      "characters": [
-        "花家主人"
-      ],
-      "confidence": "medium",
-      "notes": "dialogueは(M)=モノローグ。action欄に『白い鬼』『花家主人』の記載",
-      "_page": "page_011.png",
-      "_idx": 0
-    },
-    {
-      "cut_label": 28,
-      "action": "一と、突如咳込む花家主人。身体を起こす",
-      "dialogue": "花家主人「ぐはっ……！？……",
-      "se": "ゴホッ…ゴホッ…うっ…",
-      "time": "2+12",
+      "time": "5+12",
+      "scene_mark": "27",
       "numbered": true,
       "characters": [
         "花家主人",
         "苗"
       ],
       "confidence": "medium",
-      "notes": "timeは『2+12』と判読。コマ1のtime『5+12』はこのカットの一部か別判定だがコマ2に統合",
+      "notes": "action欄の『白い鬼』は水鬼の可能性。time欄はコマ1にまとめて記載（27は2コマ続き） ｜ scene欄に縦棒のみ＝カット27の続き。本来27に統合すべきだが内容を分けて記載。time 5+12 はこの行に記入",
       "_page": "page_011.png",
-      "_idx": 1
+      "_idx": 0
     },
     {
-      "cut_label": 29,
-      "action": "白い鬼／花家主人を見る / PANして花家主人へ。合わせてピン送り あり、下→上へ",
-      "dialogue": "苗(M)「ご主人様が蘇った…… / 花家主人「…ふぅ（女声:沈公子）",
-      "se": "",
-      "time": "6",
+      "cut_label": "28",
+      "action": "身体を起こす",
+      "dialogue": "ゴホッ…\nゴホッ…\nうっ…",
+      "se": "ゴホッ…ゴホッ…",
+      "time": "2+12",
+      "scene_mark": "28",
       "numbered": true,
       "characters": [
-        "苗",
+        "花家主人"
+      ],
+      "confidence": "medium",
+      "notes": "dialogueの咳き込みは効果音的だがセリフ欄記載のためseにも併記",
+      "_page": "page_011.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "29",
+      "action": "（白い鬼）\n（花家主人）あり\nPANして（花家主人）へ\n合わせて\nピン送り あり\n（下）→（上）へ",
+      "dialogue": "（苗）(M)\nご主人様が蘇った…\n花家主人\n…ふぅ\n（女声：沈公子）",
+      "se": "",
+      "time": "6",
+      "scene_mark": "29",
+      "numbered": true,
+      "characters": [
+        "白い鬼",
         "花家主人",
+        "苗",
         "沈公子"
       ],
       "confidence": "medium",
-      "notes": "scene欄に丸番号なし→直前カットの続きの可能性もあるが新規絵のため連番29+1=30で補完。numbered=false",
+      "notes": "29は2コマ続き（縦棒コマ）を統合。action欄はコマ3・コマ4を結合。time 6 はコマ4に記入。『女声：沈公子』はセリフ指示として記載",
       "_page": "page_011.png",
-      "_idx": 2
+      "_idx": 3
     },
     {
-      "cut_label": 30,
+      "cut_label": "30",
       "action": "",
       "dialogue": "お前たち、今すぐその娘を食べてもいいぞ。",
       "se": "",
       "time": "4",
+      "scene_mark": "30",
       "numbered": true,
       "characters": [
         "花家主人"
       ],
-      "confidence": "medium",
-      "notes": "dialogue末尾に(声:沈公子)の指定あり。声の主は沈公子",
+      "confidence": "high",
+      "notes": "声指定: 沈公子",
       "_page": "page_012.png",
       "_idx": 0
     },
     {
-      "cut_label": 31,
-      "action": "#6 PAN →／瞳ブレあり",
+      "cut_label": "31",
+      "action": "6PAH→（PAN）瞳ブレ",
       "dialogue": "!?…この声は…",
       "se": "",
       "time": "2",
+      "scene_mark": "31",
       "numbered": true,
       "characters": [
         "苗"
       ],
       "confidence": "medium",
-      "notes": "dialogueに(M)モノローグ指定。話者は苗(丸囲み「苗」)",
+      "notes": "action欄のカメラ指示(PAN)崩し字で要確認。dialogueは苗(M)モノローグ",
       "_page": "page_012.png",
       "_idx": 1
     },
     {
-      "cut_label": 32,
+      "cut_label": "32",
       "action": "",
       "dialogue": "…人？",
       "se": "",
       "time": "1+12",
+      "scene_mark": "32",
       "numbered": true,
       "characters": [
         "花家主人"
       ],
-      "confidence": "medium",
-      "notes": "dialogueに(声:沈公子)指定。声は沈公子",
+      "confidence": "high",
+      "notes": "声指定: 沈公子",
       "_page": "page_012.png",
       "_idx": 2
     },
     {
-      "cut_label": 33,
-      "action": "#6%兼用 …と、いちくちっては苗／まわりを見わたす 白い鬼①と②",
-      "dialogue": "どこ行った…探せ！白い鬼①②？……？…",
+      "cut_label": "33",
+      "action": "#6%兼用 ーと、いちくちっては苗 まわりを見わたす 白い鬼①と②",
+      "dialogue": "どこ行った…探せ！ ?…?…",
       "se": "",
       "time": "4",
+      "scene_mark": "33",
       "numbered": true,
       "characters": [
         "苗",
-        "沈公子"
+        "白い鬼"
       ],
-      "confidence": "low",
-      "notes": "action欄手書き崩れ大、判読に不確実あり。「白い鬼」は妖怪指示",
+      "confidence": "medium",
+      "notes": "action欄に流用指定。「白い鬼①と②」のセリフ。一部崩し字で要確認",
       "_page": "page_012.png",
       "_idx": 3
     },
     {
-      "cut_label": 34,
-      "action": "口もとに何かをあてる。",
-      "dialogue": "し—？…",
+      "cut_label": "34",
+      "action": "尚善 口もとに指をあてる。",
+      "dialogue": "しー…",
       "se": "",
       "time": "2",
+      "scene_mark": "34",
       "numbered": true,
       "characters": [
-        "苗"
+        "尚善"
       ],
-      "confidence": "low",
-      "notes": "action/dialogue共に崩し字。dialogue欄に丸囲み「苗」表記あり",
+      "confidence": "high",
+      "notes": "",
       "_page": "page_012.png",
       "_idx": 4
     },
     {
-      "cut_label": 35,
-      "action": "梁の上に立っている尚善。↑PAN-UP(3+1)。気づく苗 / うつむき肩を抱く尚善。←T.U.全尺・普通で。苗、悔いで涙を流す",
-      "dialogue": "!!っ… / (苗)(M)\nみんな騙された…！\nさっきのご主人様の声は\n沈公子の声だ…！",
+      "cut_label": "35",
+      "action": "梁の上に立っているのは尚善。気づく苗 ↑PAN-UP (3+0)",
+      "dialogue": "苗「!!っ…」 道「シュルルッ」",
       "se": "",
-      "time": "3+1",
+      "time": "4+0",
+      "scene_mark": "35",
       "numbered": true,
       "characters": [
         "尚善",
         "苗",
-        "沈公子"
+        "道然"
       ],
       "confidence": "medium",
-      "notes": "action欄に丸囲み『尚善』『苗』。dialogue欄に丸囲み『苗』と『尚』の表記。time欄は空 ｜ コマ1(絵)は丸番号なし＝続き(numbered=false)。コマ2に丸囲み36あり。両コマを統合。time欄のサイン状の手書きを3+1と解釈、確信低め",
+      "notes": "2コマ目(縦棒)を統合。time欄は1コマ目空白・2コマ目に記載。1コマ目action欄に脱出に使用した術にお帯を消す(尚善)等のト書きを含む。dialogue 2コマ目「く…っ…!!」も合わせて読む",
       "_page": "page_013.png",
       "_idx": 0
     },
     {
-      "cut_label": 37,
-      "action": "キュッと下の方を睨んで。沈公子の眷属の妖怪／骸骨↑",
-      "dialogue": "(尚善)(M)\n…これは復活の儀\nなんかじゃない(小声)\n(尚)\n借屍環魂だ。\n屍の身体を借りて\n魂を融合させる術なんだ\n(小声)",
+      "cut_label": "36",
+      "action": "←T.U.全尺、普通で。苗、悔しさで涙を流す。ぎゅっと下の方を睨んで。",
+      "dialogue": "苗(M)「みんな騙された…! さっきのご主人様の声は沈公子の声だ…!」／苗(M)「…これは復活の儀なんかじゃない(小声)」",
       "se": "",
-      "time": "9 / 6+12",
+      "time": "9",
+      "scene_mark": "36",
       "numbered": true,
       "characters": [
-        "尚善",
-        "苗"
+        "苗",
+        "沈公子"
       ],
-      "confidence": "low",
-      "notes": "コマ3(丸囲み無し縦棒)は直前カット37の続きとして統合。time欄に『9』と『6+12』の手書き。action欄末尾の『沈』判読困難で要確認",
+      "confidence": "medium",
+      "notes": "2コマ目(縦棒)を統合。time欄は2コマ目に9と記載",
+      "_page": "page_013.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "37",
+      "action": "[じわ回り込み]↑ 苗なめ→ズシ。尚善なめ",
+      "dialogue": "沈「借屍環魂だ。屍の身体を借りて魂を融合させる術なんだ(小声)」",
+      "se": "",
+      "time": "6+12",
+      "scene_mark": "37",
+      "numbered": true,
+      "characters": [
+        "苗",
+        "沈公子",
+        "尚善"
+      ],
+      "confidence": "medium",
+      "notes": "",
       "_page": "page_013.png",
       "_idx": 2
     },
     {
       "cut_label": 38,
-      "action": "苗。ひとから話し。聞きつけては涙が出てきてしまって",
-      "dialogue": "そんな…!!(小声)",
+      "action": "苗 口もとから手を離し、睨みつけては、涙がだまってつたって",
+      "dialogue": "そんな……!!（小声）",
       "se": "",
       "time": "2",
+      "scene_mark": "38",
       "numbered": true,
       "characters": [
         "苗"
       ],
-      "confidence": "medium",
-      "notes": "action欄手書き判読困難。一部推測",
+      "confidence": "high",
+      "notes": "",
       "_page": "page_014.png",
       "_idx": 0
     },
     {
       "cut_label": 39,
-      "action": "AC 落ちる(滴)",
+      "action": "A.C. 落下する。",
       "dialogue": "",
       "se": "",
-      "time": "2+1/2",
+      "time": "2+12",
+      "scene_mark": "39",
       "numbered": true,
       "characters": [],
-      "confidence": "medium",
-      "notes": "time欄は2秒+1コマと解釈。action欄判読困難",
+      "confidence": "high",
+      "notes": "",
       "_page": "page_014.png",
       "_idx": 1
     },
     {
       "cut_label": 40,
-      "action": "白い鬼(?)の足もとに落ちる涙",
-      "dialogue": "…",
-      "se": "ポタッ",
-      "time": "1+1/2",
+      "action": "白い鬼の足もとに落ちる涙。",
+      "dialogue": "……ポタッ。",
+      "se": "",
+      "time": "1+12",
+      "scene_mark": "40",
       "numbered": true,
-      "characters": [],
+      "characters": [
+        "水鬼"
+      ],
       "confidence": "medium",
-      "notes": "action欄の人物名判読困難。dialogue欄はSE指示(ポタッ)が記載されておりseに移動",
+      "notes": "action欄『白い鬼』円囲み。水鬼の可能性。dialogue『…ポタッ』はSE的だが手書きセリフ欄記載のため掲載",
       "_page": "page_014.png",
       "_idx": 2
     },
     {
       "cut_label": 41,
       "action": "",
-      "dialogue": "あ…!(M)",
+      "dialogue": "あっ……!",
       "se": "",
-      "time": "1+1/2",
+      "time": "1+12",
+      "scene_mark": "41",
       "numbered": true,
       "characters": [
         "苗"
       ],
-      "confidence": "medium",
-      "notes": "dialogue欄に苗丸印と(M)の表記あり",
+      "confidence": "high",
+      "notes": "dialogue欄に苗(M)＝モノローグ",
       "_page": "page_014.png",
       "_idx": 3
     },
     {
       "cut_label": 42,
-      "action": "ぐるん…！と首を回す　白い鬼(B)　あおりで T.U.あり",
+      "action": "ぐるん！と首を回す（白い鬼④）／合わせてT.U.あり",
       "dialogue": "",
-      "se": "",
+      "se": "ぐりゃっ…",
       "time": "3",
+      "scene_mark": "42",
       "numbered": true,
       "characters": [
         "水鬼"
       ],
-      "confidence": "low",
-      "notes": "action/dialogue/time欄ほぼ空白 ｜ ページ最初のコマは縦棒で丸番号なし=前ページ42の続きとして統合。action欄の『白い鬼(B)』は水鬼を指すと解釈",
+      "confidence": "medium",
+      "notes": "action/dialogue/time欄空白 ｜ ページ最初のコマは丸番号なし＝前ページ最後のカット42の続き。action欄『白い鬼④』は水鬼を指す表記と思われる",
       "_page": "page_014.png",
       "_idx": 4
     },
     {
-      "cut_label": 43,
-      "action": "見つかってしまう　苗と尚善　B271B(ブック)＋カブリング",
+      "cut_label": "43",
+      "action": "見つかってしまう（苗と尚善）／レイアウト+カプリング",
       "dialogue": "",
       "se": "",
       "time": "2+12",
+      "scene_mark": "43",
       "numbered": true,
       "characters": [
         "苗",
         "尚善"
       ],
       "confidence": "medium",
-      "notes": "action内のBOOK指定の数字は判読不確実",
+      "notes": "action欄の四角囲み略号は『L.O.(レイアウト)』の可能性。要確認",
       "_page": "page_015.png",
       "_idx": 1
     },
     {
-      "cut_label": 44,
-      "action": "",
-      "dialogue": "花家主人　こやつらを殺せっ!!",
-      "se": "",
-      "time": "",
-      "numbered": true,
-      "characters": [
-        "花家主人"
-      ],
-      "confidence": "medium",
-      "notes": "dialogue欄の丸囲み話者は『花家主人』と判読",
-      "_page": "page_015.png",
-      "_idx": 2
-    },
-    {
-      "cut_label": 45,
-      "action": "花家主人の卵.　白い鬼(B)が飛びかかる.　↑(アクション方向)",
-      "dialogue": "白い鬼(B)　(喰り―　　徒(シャンプ)―",
+      "cut_label": "44",
+      "action": "花家主人の奥／白い鬼④が飛びかかる。",
+      "dialogue": "こやつらを殺せっ！！",
       "se": "",
       "time": "3+12",
+      "scene_mark": "44",
       "numbered": true,
       "characters": [
         "花家主人",
         "水鬼"
       ],
-      "confidence": "low",
-      "notes": "カット番号は左欄に③/2等の数字あり、連番から45と補完。dialogue欄の文字は崩れ判読困難、要確認",
+      "confidence": "medium",
+      "notes": "dialogue欄に話者『花家主人』丸囲み ｜ scene欄縦棒＝カット44の続き。dialogue欄は『白い鬼④（喰り—／SE ジャンプ—）』で効果音・指示でセリフではないためdialogue空。本来カット44に統合すべきだが番号なしコマとして別エントリ。time 3+12はこのコマのもの",
       "_page": "page_015.png",
-      "_idx": 3
+      "_idx": 2
     },
     {
-      "cut_label": 46,
-      "action": "のけ反りつつ　とっさに枠を　かする　尚善　→降PAN あり",
-      "dialogue": "尚善　…!!っ",
+      "cut_label": "45",
+      "action": "のけ反りつつ とっさに料(?)をかわす尚善／降りPANあり",
+      "dialogue": "！！っ",
       "se": "",
-      "time": "",
+      "time": "1",
+      "scene_mark": "45",
       "numbered": true,
       "characters": [
         "尚善"
       ],
-      "confidence": "low",
-      "notes": "左欄に④5(45?)の丸番号あり、連番から46と補完。番号判読不確実、要確認",
+      "confidence": "medium",
+      "notes": "action欄『柱』記号あり。dialogue欄に話者『尚善』丸囲み。action中の『料』は手書き判読困難で要確認",
       "_page": "page_015.png",
       "_idx": 4
     },
     {
-      "cut_label": 46,
-      "action": "follow／流背。迫る白い鬼①② / 光につれ、ドアの正面に立つ。#6%兼用、同／外録",
-      "dialogue": "白い鬼①②\nガォ─ッ!! / …!?…",
-      "se": "",
+      "cut_label": "46",
+      "action": "Follow / 流首 / 迫る 白い鬼①→② / 突如、光につつまれ。",
+      "dialogue": "カァッ!! / !?…",
+      "se": "魂呼ー!!",
       "time": "1+12",
+      "scene_mark": "46",
       "numbered": true,
       "characters": [
         "水鬼"
       ],
       "confidence": "medium",
-      "notes": "絵は鬼の顔のアップ二体。dialogueの記号は咆哮として読んだ ｜ scene欄に丸番号なし(縦棒)＝カット46の続きの可能性もあるが、絵柄が転換し直後コマに丸47が現れるため一連の流れとして暫定。次コマに丸47あり",
+      "notes": "action欄の『白い鬼』はキャラ指定。dialogueはカ(ァ)等の声。se『魂呼』は要確認 ｜ 縦棒=46の続き。time『1+12』",
       "_page": "page_016.png",
       "_idx": 0
     },
     {
-      "cut_label": 47,
-      "action": "#6%兼用。同／外録（建物外観・夜） / 正面出入口を吹き飛ばし爆発が起き、けむりの中から（ひょうたん）が飛んでいく / BG爆煙(けむり)。R←爆煙(PAN) より",
-      "dialogue": "ドカーン─ッ!! / ドゥ─ドドド…",
-      "se": "爆発音 / 爆発・噴煙音",
+      "cut_label": "47",
+      "action": "#16% 兼用 / 同/外観。 / 正面出入口を吹き飛ばす爆発が起き、けむりの中から ひょうたん が飛んでいく。 R 陰PAN より",
+      "dialogue": "",
+      "se": "火爆ー!! / ドゥォォォッ",
       "time": "3",
+      "scene_mark": "47",
       "numbered": true,
       "characters": [],
-      "confidence": "low",
-      "notes": "丸囲み47。建物(花家・夜)の外観カット。兼用指定あり ｜ scene欄に丸番号確認できず縦棒のみ。直前47の続きの可能性が高いが、爆発という新展開のため暫定で48と補完。瓢箪(フゥールー)が飛ぶ ｜ scene欄に丸番号なし。直前カットの続き(爆煙の続き)として扱うべきか新カットか不確実。番号は連番補完。要確認",
+      "confidence": "medium",
+      "notes": "兼用=流用カット。道観/花家の外観 ｜ 縦棒2コマ＝47の続きとして統合。se『火爆』『ドゥォォォッ』。『ひょうたん』=瓢箪(フゥールー)。time『3』(=3秒)",
       "_page": "page_016.png",
       "_idx": 2
     },
     {
-      "cut_label": 48,
-      "action": "follow。BG引き",
-      "dialogue": "師匠からもらった護符はもう散った！",
+      "cut_label": "48",
+      "action": "Follow",
+      "dialogue": "師匠からもらった護符はもう無い！",
       "se": "",
       "time": "3",
+      "scene_mark": "48",
       "numbered": true,
       "characters": [
-        "苗"
+        "尚善"
       ],
-      "confidence": "medium",
-      "notes": "dialogue欄に丸囲み『尚善』の話者記号あり。BG引き(BG3/3)と読める",
+      "confidence": "high",
+      "notes": "dialogue冒頭の話者表示は『尚善』",
       "_page": "page_017.png",
       "_idx": 0
     },
     {
-      "cut_label": 49,
-      "action": "屋敷上空を旋回に帰っていく。AC",
-      "dialogue": "とりあえず帰らねえと！",
-      "se": "",
+      "cut_label": "49",
+      "action": "屋敷上空を旋回に帰っていく　A.C.",
+      "dialogue": "とりあえず帰らないと！",
+      "se": "ヒュゥゥ!!",
       "time": "3",
+      "scene_mark": "49",
       "numbered": true,
       "characters": [
-        "呂仁"
+        "尚善"
       ],
       "confidence": "medium",
-      "notes": "鶴の飛翔カット。dialogue欄に話者記号(丸囲み)あり、判読困難で要確認",
+      "notes": "dialogue末尾『ヒュゥゥ』はSEと判断しseに移した。SE話者記号は不明瞭",
       "_page": "page_017.png",
       "_idx": 1
     },
     {
-      "cut_label": 50,
-      "action": "画面手前。逆遠近。尚善と苗。その下方、離れ。INからOUTへ移動",
-      "dialogue": "中の様子はどうだ？／どうなってる？など",
+      "cut_label": "50",
+      "action": "画面手前、遠近力　尚善と苗　その下方、離れ。OUT/IN。家来が数名、扉と中の様子を見ている。走ってやってくる花家妻・花家爺",
+      "dialogue": "家来たち：中の様子はどうだ？／どうなってる？　など。　花家妻(背)：さっきの音、何があったの？",
       "se": "",
-      "time": "",
+      "time": "5",
+      "scene_mark": "50",
       "numbered": true,
       "characters": [
         "尚善",
         "苗",
-        "家来"
+        "家来",
+        "花家妻",
+        "花家爺"
       ],
       "confidence": "medium",
-      "notes": "dialogue欄に『家来たち』の話者記号。time欄判読困難",
+      "notes": "50と次の縦棒コマ(継続)を統合。scene欄2コマ目は縦棒のため同一カット。actionは2コマ分結合",
       "_page": "page_017.png",
       "_idx": 2
     },
     {
-      "cut_label": 51,
-      "action": "家来が数名、扉、中の様子を見ている。やってくる花家妻・花家爺。立ち止まり、家来の報告を聞く。AC",
-      "dialogue": "花家妻(背)『さっきの音、何があったの？』／家来01(背)『奥方様、ご主人様、ふたりとも部屋におりません！』",
+      "cut_label": "51",
+      "action": "A.C.　立ち止まり、家来の報告を聞く",
+      "dialogue": "家来01(背)：奥方様。ご主人様と苗、ふたりとも部屋におりません！",
       "se": "",
-      "time": "5",
+      "time": "4",
+      "scene_mark": "51",
       "numbered": true,
       "characters": [
-        "花家妻",
-        "花家爺",
-        "家来"
+        "家来",
+        "苗"
       ],
-      "confidence": "medium",
-      "notes": "コマ3は左scene欄に縦棒のみ＝カット51の続き。time欄『5』。コマ4のtime『4』も付記、要確認",
+      "confidence": "high",
+      "notes": "time欄に『苗』の文字が混入して見えるが本文の人名指示。尺は4",
       "_page": "page_017.png",
       "_idx": 3
     },
     {
-      "cut_label": 52,
-      "action": "見南(花家妻)唖然とし / 不安がつのる。じわっとあり",
-      "dialogue": "主人ですって!!\n家人を集めろ!ふたりを探すんだ! / は…!",
+      "cut_label": "52",
+      "action": "見南＜花家妻＞ 唖然とし／不安がつのる。[じわTU]あり",
+      "dialogue": "主人ですって!!／家人を集めろ!ふたりを探すんだ!／は…!",
       "se": "",
-      "time": "4+12",
+      "time": "5+12",
+      "scene_mark": "52",
       "numbered": true,
       "characters": [
         "花家妻",
         "花家爺",
-        "花家主人"
+        "家来"
       ],
       "confidence": "medium",
-      "notes": "action欄に丸囲みで花家妻、唖然とした表情。dialogueは花家妻と花家爺(off)のセリフ ｜ scene欄に縦棒のみ＝52の続き。dialogueに家来0(off)あり。time欄4+12",
+      "notes": "2コマにまたがる同一カット(2コマ目はscene欄に縦棒)。dialogue末尾『は…!』は家来(off)。timeは2コマ目に記載の5+12。",
       "_page": "page_018.png",
       "_idx": 0
     },
     {
-      "cut_label": 53,
-      "action": "森上空(夜)。花家主人の身体の沈め(以降 沈) / 上空を飛んでいく",
-      "dialogue": "",
-      "se": "ズァァ…",
+      "cut_label": "53",
+      "action": "森 上空 (夜)／花家主人の身体の沈み込み(以降 沈)／上空を飛んでいく",
+      "dialogue": "ズオ…",
+      "se": "",
       "time": "3+12",
+      "scene_mark": "53",
       "numbered": true,
       "characters": [
         "花家主人"
       ],
       "confidence": "medium",
-      "notes": "丸囲み53。背景のみ ｜ scene欄に縦棒のみ＝53の続き。dialogue欄はSEのみ。time欄3+12",
+      "notes": "2コマにまたがる同一カット(2コマ目はscene欄に縦棒)。dialogue『ズオ…』は(沈)＝沈公子。timeは2コマ目記載の3+12。",
       "_page": "page_018.png",
-      "_idx": 2
+      "_idx": 1
     },
     {
-      "cut_label": 54,
-      "action": "Follow→O。妖怪たちの雲に包まれて飛行し、苗を追っている / Follow（奥へ） / 指示を出し（沈）、妖怪4体ほど下方の森の方へと向かう。",
-      "dialogue": "…くそッ!あと1歩で花家の財産と女を手に入れられたのに…! / 夜明けまでに何とかあの小娘を殺さなければ…!! / 行け!（妖怪たち）（嗤い）—",
+      "cut_label": "54",
+      "action": "Follow→○／妖怪たちの雲に包まれて飛行し、嬌(嬌嬌)を追っていく。←3コマ(寄り)",
+      "dialogue": "…くそっ!あと1歩で花家の財宝と女を手に入れられたのに…!",
       "se": "",
-      "time": "6 / 6+12",
+      "time": "1",
+      "scene_mark": "54",
       "numbered": true,
       "characters": [
         "沈公子",
-        "苗"
+        "嬌嬌"
       ],
       "confidence": "medium",
-      "notes": "丸囲み54。dialogueは沈公子(沈)のセリフ。time欄6 ｜ ページ最初のコマは丸番号なしの続きコマ。dialogue欄に(沈)(背)とあり背後の声=沈公子のセリフ。前ページカット54の続きとして統合 ｜ scene欄に明確な丸数字が読み取れず縦棒のみの可能性。連番から55と推定。要確認",
+      "notes": "dialogueは(沈)＝沈公子のセリフ。time欄は『6』にも見えるが手書きで不確実、要確認。action中の○印・追う対象の丸囲み文字は『嬌』(嬌嬌)と推定。下部に『このCTが髪結いver』の注記あり。",
       "_page": "page_018.png",
-      "_idx": 4
+      "_idx": 2
     },
     {
-      "cut_label": 56,
-      "action": "○森の中。—を探索する（沈）。その足もと",
-      "dialogue": "（静寂—",
-      "se": "足音—",
+      "cut_label": "55",
+      "action": "Follow(奥へ)",
+      "dialogue": "夜明けまでに何としかあの小娘を殺さなければ…！！",
+      "se": "",
+      "time": "6+12",
+      "scene_mark": "55",
+      "numbered": true,
+      "characters": [
+        "水鬼"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue冒頭に丸囲み『沈』(背)＝沈公子の背向き指定の話者記号。time欄はコマ1(続き)末尾に記載。コマ0とコマ1(縦棒｜=続き)を統合",
+      "_page": "page_019.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "56",
+      "action": "森の中。一を探索する(況) その足もと",
+      "dialogue": "",
+      "se": "(静寂— / (足音—",
       "time": "3+12",
+      "scene_mark": "56",
       "numbered": true,
       "characters": [],
-      "confidence": "low",
-      "notes": "丸囲み56。dialogue欄にSE指定(足音)あり→seへ ｜ scene欄に丸番号なし・縦棒のみの続きコマ。直前カット56(足もとアップ)に統合",
+      "confidence": "medium",
+      "notes": "action欄の『指示を出す(況)妖怪4体ほど 下方の森の方へと向かう。』はコマ1(scene55の続き)の内容。コマ2(56)とコマ3(縦棒｜=続き)を統合。time欄はコマ3末尾。dialogue欄は効果音指定(静寂/SE足音)のみでセリフ無し",
+      "_page": "page_019.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "57",
+      "action": "→Follow しばし歩くと / さきほど放った4体が後方から戻ってくる。",
+      "dialogue": "（妖怪たち）嘘り—　！？…うしろから戻ってきた…？",
+      "se": "",
+      "time": "8",
+      "scene_mark": "57",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "竹林を歩く人物。dialogue欄は縦線のみでセリフ無し ｜ ページ先頭コマ。scene欄は空白＝前ページのカット57の続き。dialogue冒頭『嘘り—』は要確認",
       "_page": "page_019.png",
       "_idx": 2
     },
     {
-      "cut_label": 57,
-      "action": "→Follow しばし歩くと / さきほど散った4体が後方から戻ってくる。",
-      "dialogue": "うしろから戻ってきた…",
+      "cut_label": "58",
+      "action": "Follow。",
+      "dialogue": "そうか、まやかしの術だ。まっすぐ進んだつもりでも元の場所に戻ってしまう…",
       "se": "",
-      "time": "",
-      "numbered": true,
-      "characters": [
-        "苗",
-        "沈公子"
-      ],
-      "confidence": "medium",
-      "notes": "丸囲み57。竹林を歩く長髪の人物。場所=森(夜)、ep7中心の苗の可能性が高いが断定せず ｜ ページ最初のコマは丸番号なしの続きコマ。前ページの最後のカット57に統合。dialogue欄に『妖怪たち(嘲り)』『沈』等の指示が丸囲みであるがセリフ部分のみ採用",
-      "_page": "page_019.png",
-      "_idx": 4
-    },
-    {
-      "cut_label": 58,
-      "action": "Follow→",
-      "dialogue": "そうか。まやかしの術だな。まっすぐ進んだつもりでも元の場所に戻ってしまう…",
-      "se": "",
-      "time": "1+12",
+      "time": "7",
+      "scene_mark": "58",
       "numbered": true,
       "characters": [],
-      "confidence": "medium",
-      "notes": "time欄に『1』、その下の記号。発話者は尚善と思われるが本文に明記なし",
+      "confidence": "high",
+      "notes": "",
       "_page": "page_020.png",
       "_idx": 1
     },
     {
-      "cut_label": 59,
-      "action": "↑じわPAN UP　木の上にいる沈公子　口もとがニヤリ",
-      "dialogue": "(off)いったいどこの道士だ。裏でこんな下品な術を使う奴は…(ニヤリ…)",
+      "cut_label": "59",
+      "action": "↑じわPAN UP　木の上には（黄爺）口もとが ニヤリ",
+      "dialogue": "（off）いったいどこの道士だ。裏でこんな下品な術を使う奴は…（黄爺）（ニヤリ…）",
       "se": "",
       "time": "6",
+      "scene_mark": "59",
       "numbered": true,
       "characters": [
-        "沈公子"
+        "黄爺"
       ],
-      "confidence": "medium",
-      "notes": "action欄に丸囲み『沈公子』。dialogue欄丸囲みも沈公子",
+      "confidence": "high",
+      "notes": "",
       "_page": "page_020.png",
       "_idx": 2
     },
     {
-      "cut_label": 60,
-      "action": "F.I.　F.I.(6+12)",
+      "cut_label": "60",
+      "action": "△　F.I.（0+12）",
       "dialogue": "ふん！下品な道士で悪かったな。",
       "se": "",
       "time": "3+12",
+      "scene_mark": "60",
       "numbered": true,
       "characters": [],
-      "confidence": "medium",
-      "notes": "発話者は尚善と推測されるが本文に明記なし",
+      "confidence": "high",
+      "notes": "",
       "_page": "page_020.png",
       "_idx": 3
     },
     {
-      "cut_label": 61,
-      "action": "沈公子　不敵に笑う。",
-      "dialogue": "(off)だが、お前も同じおちモンじゃ。(沈)フゥ…",
+      "cut_label": "61",
+      "action": "立ち止まり（沈）　不敵な笑み。",
+      "dialogue": "（off）だが、お前も同じおちモンじゃ。（沈）フゥ…",
       "se": "",
       "time": "5",
+      "scene_mark": "61",
       "numbered": true,
       "characters": [
         "沈公子"
       ],
-      "confidence": "medium",
-      "notes": "action欄に丸囲み『沈』、dialogue欄にも丸囲み『沈』",
+      "confidence": "high",
+      "notes": "",
       "_page": "page_020.png",
       "_idx": 4
     },
     {
-      "cut_label": 62,
-      "action": "一気に襲いかかる妖怪たち",
-      "dialogue": "子供を虐めるだけの道士なぞ。わし以下かもしれんぞ。 / ガイイッ!!",
-      "se": "ガイイッ!!",
-      "time": "5+12",
-      "numbered": true,
-      "characters": [
-        "黄爺",
-        "妖怪"
-      ],
-      "confidence": "medium",
-      "notes": "絵は森の中で蛇のような妖怪が人物に絡む。dialogue冒頭に丸囲み(黄爺)話者表記 ｜ scene欄に丸囲み番号なし＝62の続きコマ。actionに丸囲み『妖怪たち』、dialogueにSE記号付き効果音。time欄『5+12』",
-      "_page": "page_021.png",
-      "_idx": 0
-    },
-    {
-      "cut_label": 63,
-      "action": "回り込む黄爺 / ともにぶつかり合う妖怪たち",
-      "dialogue": "ぬん…! / シュバッ!!　ドガガッ!!",
-      "se": "シュバッ!!　ドガガッ!!",
-      "time": "3",
-      "numbered": true,
-      "characters": [
-        "黄爺",
-        "妖怪"
-      ],
-      "confidence": "medium",
-      "notes": "丸囲み63。老人の顔アップ。dialogue冒頭に丸囲み(黄爺)話者表記 ｜ scene欄に丸囲み番号なし＝63の続きコマ。dialogueはSE記号付き効果音。time欄『3』",
-      "_page": "page_021.png",
-      "_idx": 2
-    },
-    {
-      "cut_label": 64,
-      "action": "獣のような構えを見せる黄爺。作画 7B",
-      "dialogue": "そおりゃっ…!!",
-      "se": "",
-      "time": "1",
+      "cut_label": "62",
+      "action": "一気に襲いかかる(妖怪たち)",
+      "dialogue": "子供を虐めるだけの道士など。わし以下かもしれんぞ。",
+      "se": "グォォッ!!",
+      "time": "4+12",
+      "scene_mark": "62",
       "numbered": true,
       "characters": [
         "黄爺"
       ],
       "confidence": "medium",
-      "notes": "丸囲み64。actionに丸囲み(黄爺)と『作画 7B』。dialogue冒頭に丸囲み(黄爺)話者表記。time欄『1』",
+      "notes": "次コマ(縦棒)を統合 ｜ 62の続き(縦棒)。time欄『5+12』にも見えるが要確認",
+      "_page": "page_021.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "63",
+      "action": "回避する黄爺 / ともにぶつかり合う(妖怪たち)",
+      "dialogue": "ふんっ!",
+      "se": "シュパッ!! / ドガガッ!!",
+      "time": "3",
+      "scene_mark": "63",
+      "numbered": true,
+      "characters": [
+        "黄爺"
+      ],
+      "confidence": "medium",
+      "notes": "次コマ(縦棒)を統合 ｜ 63の続き(縦棒)",
+      "_page": "page_021.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "64",
+      "action": "獣のような構えを見せる黄爺 (作画:7B)",
+      "dialogue": "スキあり!!",
+      "se": "",
+      "time": "1",
+      "scene_mark": "64",
+      "numbered": true,
+      "characters": [
+        "黄爺"
+      ],
+      "confidence": "medium",
+      "notes": "",
       "_page": "page_021.png",
       "_idx": 4
     },
     {
-      "cut_label": 65,
-      "action": "作画B 応戦する(沈)",
-      "dialogue": "させぬ。!",
+      "cut_label": "65",
+      "action": "［画1B］応戦する沈",
+      "dialogue": "させぬ！",
       "se": "",
       "time": "1",
+      "scene_mark": "65",
       "numbered": true,
       "characters": [
         "沈公子"
       ],
       "confidence": "medium",
-      "notes": "action欄の人物指定マルは沈と読む",
+      "notes": "action欄の冒頭は枠囲み指示。dialogueの『沈』はキャラ指定マル囲み",
       "_page": "page_022.png",
       "_idx": 0
     },
     {
-      "cut_label": 66,
+      "cut_label": "66",
       "action": "",
-      "dialogue": "がっ…!",
-      "se": "ガッ!",
-      "time": "1+2",
+      "dialogue": "",
+      "se": "ガシッ！",
+      "time": "1/2k",
+      "scene_mark": "66",
       "numbered": true,
       "characters": [],
       "confidence": "medium",
-      "notes": "dialogue欄にSE丸囲み。time欄「12k」は1+2か要確認",
+      "notes": "time欄は丸囲み『1/2k』と読めるが不確実、要確認。SEはdialogue欄にSEマル囲みで記載",
       "_page": "page_022.png",
       "_idx": 1
     },
     {
-      "cut_label": 67,
-      "action": "兼用 BANK＋フォロー (重ねこ)の首根っこを右手で掴むが。 / (重ね)が変化。ぐんりが広がる。",
-      "dialogue": "ガシッ! / ふぎゃれん…!!",
-      "se": "ガシッ!",
+      "cut_label": "67",
+      "action": "兼用 ［BANK］+フォロー 黄爺の首根っこを右手で掴むが。黄爺が変化、けむりが上がる。",
+      "dialogue": "",
+      "se": "ガシッ！ / ぶわん！！",
       "time": "2",
+      "scene_mark": "67",
       "numbered": true,
-      "characters": [],
-      "confidence": "low",
-      "notes": "action欄崩し字多く判読困難。「BANK＋フォロー」推定 ｜ このコマはscene欄に丸番号なし(縦棒のみ)＝直前カット67の続きの可能性。ただし絵が変化を示すため判断保留。numbered=false",
+      "characters": [
+        "黄爺"
+      ],
+      "confidence": "medium",
+      "notes": "2コマ目(継続・scene欄縦棒)を統合。action欄『けむりが上がる』は継続コマのト書き。SEは各dialogue欄のSEマル囲みより",
       "_page": "page_022.png",
       "_idx": 2
     },
     {
-      "cut_label": 68,
-      "action": "視界が悪いのか。何かに足蹴にされる。",
-      "dialogue": "何っ!? ーぐぁっ…!",
+      "cut_label": "68",
+      "action": "視界が悪いちか。何かに足蹴にされる。",
+      "dialogue": "何っ！？ ─ くそっ…！",
       "se": "",
       "time": "2",
+      "scene_mark": "68",
       "numbered": true,
       "characters": [],
       "confidence": "medium",
-      "notes": "丸囲み68のコマ。叫ぶ顔のカット",
+      "notes": "dialogueの『況』マル囲みは状況/キャラ指定。action冒頭『視界が悪いちか』は読み不確実、要確認",
       "_page": "page_022.png",
-      "_idx": 4
+      "_idx": 3
     },
     {
-      "cut_label": 69,
-      "action": "くんりが上げて(顔アップ、目をカッと見開く) / 627Bにて 吠える黄爺 画ブレ―より",
-      "dialogue": "(吼え)― / (吠え―\"",
+      "cut_label": "69",
+      "action": "鱗粉が舞って。Q7Bにて咆哮する黄爺。画ブレーあり",
+      "dialogue": "咆哮ー!!",
       "se": "",
       "time": "4+12",
+      "scene_mark": "69",
       "numbered": true,
       "characters": [
         "黄爺"
       ],
       "confidence": "medium",
-      "notes": "dialogue欄に「(14黄爺」のメモが丸囲みであるが、これは演出メモ(キャラ指定)でセリフではない。「(吠え)―」をセリフ扱い。action欄の崩し字は要確認 ｜ scene欄に縦棒のみ＝カット69の続き。627Bは流用カット指示と思われる、要確認",
+      "notes": "コマ0(番号69)とコマ1(縦棒継続)を統合。コマ0=鱗粉が舞って/咆哮ー。コマ1=Q7Bにて咆哮する黄爺・画ブレあり",
       "_page": "page_023.png",
       "_idx": 0
     },
     {
-      "cut_label": 70,
-      "action": "水使う(短く吼える) / 強烈な吠えにより流しとぶ。画ブレ―より",
-      "dialogue": "(短く吼える)!?… / (断末魔―…",
+      "cut_label": "70",
+      "action": "水流す怪物たち。強烈な咆哮により流しとぶ。画ブレーあり",
+      "dialogue": "怪物たち!?…\n断末魔ー…",
       "se": "",
       "time": "2+12",
+      "scene_mark": "70",
       "numbered": true,
       "characters": [],
-      "confidence": "low",
-      "notes": "action欄・dialogue欄とも崩し字で判読困難、要確認 ｜ scene欄に縦棒のみ＝カット70の続き",
+      "confidence": "medium",
+      "notes": "コマ2(番号70)とコマ3(縦棒継続)を統合。人物名は明示なし",
       "_page": "page_023.png",
-      "_idx": 2
+      "_idx": 1
     },
     {
-      "cut_label": 71,
-      "action": "何とか もがく沈とか 氏じ\"オPAN / 切れる(済)",
-      "dialogue": "(沈)ぐっ!… うう…!! ゔあううう…!! / あう…",
-      "se": "",
-      "time": "",
+      "cut_label": "71",
+      "action": "何とかもがく沈公子。じわPAN / ムリだと悟り手切れる(沈) / 広がりつつ変化を解く",
+      "dialogue": "ぐっ!…\nうう…!!\nぬううう…!! / あぅ… / ぼわぁん",
+      "se": "SE",
+      "time": "6",
+      "scene_mark": "71",
       "numbered": true,
       "characters": [
         "沈公子"
       ],
       "confidence": "medium",
-      "notes": "dialogue欄丸囲み「沈」はキャラ指定。セリフは呻き声 ｜ ページ最初のコマは丸番号なし=前ページ最後のカット71の続きとして統合。action欄『○○だと悟り 切れる(済)』",
+      "notes": "action欄に丸囲み『沈』とじわPAN指示。dialogueの丸囲み『沈』は話者表示 ｜ ページ最初のコマは番号なし(空白)＝前ページのカット71の続き。沈公子の手が離れる芝居 ｜ 縦棒＝カット71の続きに統合。dialogue欄の(SE)はSE指定。鱗粉/モヤが広がる描写",
       "_page": "page_023.png",
-      "_idx": 4
+      "_idx": 2
     },
     {
-      "cut_label": 72,
-      "action": "広がり 変化を解く。ゆっくりと 揺れていくモヤり",
-      "dialogue": "くっ…魂だが 逃げやがった…",
-      "se": "SE 何か外れる音",
+      "cut_label": "72",
+      "action": "ゆっくりと揺れていくモヤ",
+      "dialogue": "くそっ…魂だけ逃がしやがった…",
+      "se": "",
       "time": "3+12",
+      "scene_mark": "2",
       "numbered": true,
       "characters": [
-        "苗"
+        "黄爺"
       ],
       "confidence": "medium",
-      "notes": "コマ1(丸番号なし続き)とコマ2(丸72)を統合。dialogue欄の丸囲み記号は話者名(苗/尚善か)。time欄『3+12』",
+      "notes": "dialogue先頭の丸囲みは(黄爺)(前)＝黄爺さんの台詞(前)",
       "_page": "page_024.png",
-      "_idx": 1
+      "_idx": 2
     },
     {
-      "cut_label": 73,
-      "action": "森の上空。道観へと向かっている 尚善と苗 [Follow]手前 ←「じわPAN」より。月明かり/変更り",
+      "cut_label": "73",
+      "action": "○森の上空。道観へと向かっている(尚善)と(苗) Follow手前 ←『JAPAN』より",
       "dialogue": "",
       "se": "",
       "time": "2+12",
+      "scene_mark": "3",
       "numbered": true,
       "characters": [
         "尚善",
         "苗"
       ],
       "confidence": "medium",
-      "notes": "丸73。action欄に『尚善と苗』『月明かり』等",
-      "_page": "page_024.png",
-      "_idx": 2
-    },
-    {
-      "cut_label": 74,
-      "action": "[Follow]手前。←じわっとより / 視線だけ\n苗の方へ。",
-      "dialogue": "(尚善)どうしてこんなことにすったの…(苗)ご主人様を生き返らせようと思って… / 自分が死んでしまうのに？\n（苗）え？だってご主人様は\n有望で",
-      "se": "",
-      "time": "10+12",
-      "numbered": true,
-      "characters": [
-        "尚善",
-        "苗"
-      ],
-      "confidence": "medium",
-      "notes": "丸74。dialogue欄に話者記号(尚善/苗)付きの掛け合い ｜ 先頭コマは丸番号なし＝前ページのカット74の続きとして統合。action欄の丸囲みは『尚善』『苗』の人物指示",
+      "notes": "action欄に月明かり/変__等のメモあり。Follow手前指定",
       "_page": "page_024.png",
       "_idx": 3
     },
     {
-      "cut_label": 75,
-      "action": "Follow\n→じわPAN",
-      "dialogue": "将来きっと何らかの功績を上げられる方です。それに大勢の方からも慕われていて…",
+      "cut_label": "74",
+      "action": "Follow手前。←すぴた あり / 尚善 視線だけ苗の方へ。",
+      "dialogue": "どうしてこんなことになったの… ご主人様を生き返らせおうと思って… / 自分が死んでしまうのに？ え？だってご主人様は有望で。",
+      "se": "",
+      "time": "10+12",
+      "scene_mark": "4",
+      "numbered": true,
+      "characters": [
+        "尚善",
+        "苗"
+      ],
+      "confidence": "medium",
+      "notes": "dialogueは(尚善)『どうしてこんなことになったの…』と(苗)『ご主人様を生き返らせようと思って…』 ｜ ページ最初のコマは縦棒(継続)＝前ページ最後のカット74の続き。dialogue欄に尚善・苗のセリフあり",
+      "_page": "page_024.png",
+      "_idx": 4
+    },
+    {
+      "cut_label": "75",
+      "action": "Follow OS→ →じわPAN",
+      "dialogue": "将来きっと何らかの功績を上げられるはずそれに大勢の方からも慕われていて…",
       "se": "",
       "time": "7",
+      "scene_mark": "75",
       "numbered": true,
       "characters": [],
       "confidence": "medium",
-      "notes": "",
+      "notes": "dialogue冒頭(中)はモノローグ/中の意。「7」=7コマ表記の可能性",
       "_page": "page_025.png",
       "_idx": 1
     },
     {
-      "cut_label": 76,
-      "action": "←じわPAN\n平然と訴（苗）",
-      "dialogue": "でも、私は居なくなって誰も困らないでしょん…これも私の役で。",
+      "cut_label": "76",
+      "action": "←じわPAN 平然と言う苗",
+      "dialogue": "でも、私は居なくなって誰も困らないでん…これも私の命で。",
       "se": "",
       "time": "5+12",
+      "scene_mark": "76",
       "numbered": true,
       "characters": [
         "苗"
@@ -1140,787 +1158,830 @@
       "_idx": 2
     },
     {
-      "cut_label": 78,
+      "cut_label": "78",
       "action": "Follow 奥へ。",
-      "dialogue": "（皆）ご主人様を蘇らせることが出来るなら。十分割に合うのではないですか？",
+      "dialogue": "ご主人様を蘇らせることが出来るなら。十分割に合うのではないですか？ / 苗ちゃんのご主人様も苗ちゃんも、命はひとつしかないよ。",
       "se": "",
-      "time": "",
-      "numbered": true,
-      "characters": [],
-      "confidence": "medium",
-      "notes": "カット77は本ページに無い（飛び番）。コマ3にFが丸囲みで描かれている",
-      "_page": "page_025.png",
-      "_idx": 3
-    },
-    {
-      "cut_label": 79,
-      "action": "",
-      "dialogue": "（尚善）（皆）苗ちゃんのご主人様も苗ちゃんも、命はひとつしかないよ。",
-      "se": "",
-      "time": "1+1",
+      "time": "11",
+      "scene_mark": "78",
       "numbered": true,
       "characters": [
         "尚善",
         "苗"
       ],
-      "confidence": "low",
-      "notes": "絵欄は丸番号なしの白紙コマだがdialogueに尚善の丸囲み指示あり。カット番号は連番補完(78→79)。time欄は縦棒2本=1+1の可能性、要確認",
+      "confidence": "medium",
+      "notes": "カット番号は77を飛ばして78と読める。picture内に『ローリング』『月』の描き込みあり(action扱い)。dialogue冒頭(皆)注記あり ｜ 最終行は縦棒(継続)＝直前カット78に統合。dialogue冒頭(尚善)(皆)注記あり",
       "_page": "page_025.png",
-      "_idx": 4
+      "_idx": 3
     },
     {
-      "cut_label": 79,
-      "action": "Follow→ 眉毛細め",
-      "dialogue": "割に合うことなど絶対ない…",
+      "cut_label": "79",
+      "action": "Follow→ 眉を細め",
+      "dialogue": "割りに合うことなど絶対ない…",
       "se": "",
       "time": "3",
+      "scene_mark": "79",
       "numbered": true,
       "characters": [
         "尚善"
       ],
-      "confidence": "medium",
+      "confidence": "high",
       "notes": "",
       "_page": "page_026.png",
       "_idx": 0
     },
     {
-      "cut_label": 80,
-      "action": "森の川辺。ホタル(?)がふわりと舞う。",
-      "dialogue": "彼女さまはまだお若いから分からないのかもしれませんが…",
+      "cut_label": "80",
+      "action": "森の川辺。ホタル(?)がふわりと舞う",
+      "dialogue": "侯女さまはまだお若いから分からないのかもしれませんが…",
       "se": "",
       "time": "5",
+      "scene_mark": "80",
       "numbered": true,
       "characters": [
         "苗"
       ],
       "confidence": "medium",
-      "notes": "dialogue冒頭(off)。話者は苗(丸囲み)",
+      "notes": "dialogue欄頭は『苗』(OFF)。話者表記の苗丸囲み",
       "_page": "page_026.png",
       "_idx": 1
     },
     {
-      "cut_label": 81,
-      "action": "川辺の上をゆっくりと通過してく（ひょうたん）",
-      "dialogue": "命の価値はそれぞれ違うんです…",
+      "cut_label": "81",
+      "action": "川辺の上をゆっくりと通過してく ひょうたん",
+      "dialogue": "命の価値はそれぞれ違うんですよ…",
       "se": "",
       "time": "4",
+      "scene_mark": "81",
       "numbered": true,
-      "characters": [
-        "苗"
-      ],
+      "characters": [],
       "confidence": "medium",
-      "notes": "(off)。瓢箪=フゥールー",
+      "notes": "(OFF)。瓢箪(フゥールー)。話者表記なし",
       "_page": "page_026.png",
       "_idx": 2
     },
     {
-      "cut_label": 82,
-      "action": "○兼 Follow 手前",
-      "dialogue": "それはまだ苗ちゃんが生きてるからそう言えるんでも苗ちゃんが死んでら… / …？ 尚善！ 尚善！",
+      "cut_label": "82",
+      "action": "兼用 Follow 手前",
+      "dialogue": "それはまだ苗ちゃんが生きてるからそう言えるんだ。でも苗ちゃんが死んだら…   …？   尚善！   尚善！",
       "se": "",
       "time": "9",
+      "scene_mark": "82",
       "numbered": true,
       "characters": [
         "尚善",
         "苗",
-        "黄爺さん"
+        "黄爺"
       ],
-      "confidence": "low",
-      "notes": "time欄判読困難 ｜ scene欄に縦棒のみ＝続きコマだが、絵が別構図のため新カットとして82+1で補完。dialogueに(苗)…?、(黄爺さん off)尚善!、(尚善)尚善! 話者表記が混在",
+      "confidence": "medium",
+      "notes": "82は2コマに跨る(2コマ目はscene欄縦棒｜=継続)。本文・time(9)を統合。2コマ目dialogue:苗『…？』、黄爺(OFF)『尚善！』、尚善『！』",
       "_page": "page_026.png",
       "_idx": 3
     },
     {
-      "cut_label": 83,
-      "action": "PAN 全尺・普通で。木の上でこちらを見あげる(黄爺)。カゲかみあり",
-      "dialogue": "黄爺ちゃん…？",
+      "cut_label": "83",
+      "action": "PAN 全尺・普通で 木の上で こちらを見あげる(黄爺) カゲ多め",
+      "dialogue": "黄爺ちゃん…?",
       "se": "",
-      "time": "2+12",
+      "time": "4+12",
+      "scene_mark": "83",
       "numbered": true,
       "characters": [
         "尚善",
         "黄爺"
       ],
-      "confidence": "medium",
-      "notes": "action欄ヘッダ図に『PAN』指示あり。dialogue話者は尚善",
+      "confidence": "high",
+      "notes": "time欄は『4+12』と読む(2+12の可能性もあるが画像は4+12寄り、要確認)",
       "_page": "page_027.png",
       "_idx": 0
     },
     {
-      "cut_label": 84,
-      "action": "T.U.。降りてくる(いっぱいに) 同じ高さで浮遊する",
-      "dialogue": "ブワァ…\nこんな時間までどこへ行ってた!?",
-      "se": "ブワァ",
+      "cut_label": "84",
+      "action": "降りてくる(イタチ) 同じ高さで浮遊する",
+      "dialogue": "ブワァ…/ こんな時間まで どこへ行ってた!?",
+      "se": "",
       "time": "4",
+      "scene_mark": "84",
       "numbered": true,
       "characters": [
-        "尚善",
+        "苗",
         "黄爺"
       ],
       "confidence": "medium",
-      "notes": "dialogue上段『ブワァ』は効果音的だが画面内発声としてseにも記載",
+      "notes": "dialogue前半『ブワァ…』は苗(正?)、後半は黄爺。話者記号曖昧で要確認",
       "_page": "page_027.png",
       "_idx": 1
     },
     {
-      "cut_label": 85,
-      "action": "カゲかみあり。いつもと違う険しい表情",
-      "dialogue": "早くこっちに来い…\n心配したんだぞ",
+      "cut_label": "85",
+      "action": "カゲ多め いつもと違う 優しい笑顔",
+      "dialogue": "早くこっちに来い… 心配したんだぞ",
       "se": "",
       "time": "3",
+      "scene_mark": "85",
       "numbered": true,
       "characters": [
         "黄爺"
       ],
-      "confidence": "medium",
-      "notes": "話者は黄爺と推定",
+      "confidence": "high",
+      "notes": "",
       "_page": "page_027.png",
       "_idx": 2
     },
     {
-      "cut_label": 86,
-      "action": "…と、険しい表情に。(尚善) / (イメージ的カット)顔のラフ・矢印",
-      "dialogue": "…私。 / …！\n（尚善）ぐ、ぬおおっ!!\n（黄）ヌッ…!!",
+      "cut_label": "86",
+      "action": "ーと、険しい表情に的(尚善) (続きコマ)顔のアップ 上昇する芝居",
+      "dialogue": "…私. / !!っ… / うわぁっ!! / っ…!!",
       "se": "",
       "time": "3+12",
+      "scene_mark": "86",
       "numbered": true,
       "characters": [
         "尚善",
+        "苗",
         "黄爺"
       ],
-      "confidence": "low",
-      "notes": "scene欄に丸囲み番号が読めず、直前86の続き(縦棒)とも取れるが画が変わるため連番88相当の可能性あり。要確認。dialogueは崩し字で推測、低信頼",
+      "confidence": "medium",
+      "notes": "86の下に縦棒(継続)コマあり=直前カット86に統合。dialogue後半の話者記号(正・黄)は崩れており要確認",
       "_page": "page_027.png",
       "_idx": 3
     },
     {
-      "cut_label": 87,
-      "action": "○兼\n芦花の姿が変化に\n気の塊へ。",
-      "dialogue": "芦花\n…",
-      "se": "",
+      "cut_label": "87",
+      "action": "○兼 黄爺の姿が変化に 気の塊へ。",
+      "dialogue": "…",
+      "se": "ブワァ…!!",
       "time": "2",
+      "scene_mark": "87",
       "numbered": true,
       "characters": [
-        "芦花婆さん"
+        "黄爺"
       ],
-      "confidence": "medium",
-      "notes": "action欄の人名は『芦花』。dialogueは芦花のセリフ(沈黙の間)。time欄は『2』",
+      "confidence": "high",
+      "notes": "dialogue欄の『黄爺』はセリフ主、『正(SE)ブワァ…!!』は効果音",
       "_page": "page_028.png",
       "_idx": 0
     },
     {
-      "cut_label": 88,
-      "action": "Follow→\n(上昇、この()まで)\nBG.空",
-      "dialogue": "苗\nもしかして逃げするんですか!?\nお知り合いじゃないんですか!?",
+      "cut_label": "88",
+      "action": "Follow!(上昇.このくらいで) BG.空 / PANして",
+      "dialogue": "すぐ逃げする人ですか!? お知り合いじゃちりん ですか!? / ニセモノだ。 !?…っ…",
       "se": "",
-      "time": "",
+      "time": "5+1/2",
+      "scene_mark": "88",
       "numbered": true,
       "characters": [
-        "苗"
+        "苗",
+        "尚善"
       ],
       "confidence": "medium",
-      "notes": "BS指示あり。time欄空白",
+      "notes": "dialogueの一部が崩れており要確認 ｜ scene欄縦棒=88の続き。time欄『5+1/2』は分数読みの可能性、秒+コマで読めない箇所、要確認",
       "_page": "page_028.png",
       "_idx": 1
     },
     {
-      "cut_label": 89,
-      "action": "PANして\n気の塊が\n(沈公子)を形成。",
-      "dialogue": "沈公子\nこのニセモノだ。\n…!?",
-      "se": "ズワワ…",
-      "time": "5+12",
+      "cut_label": "89",
+      "action": "気の塊が 沈公子を形成。",
+      "dialogue": "ズワッ…",
+      "se": "ズワッ…",
+      "time": "3+1/2",
+      "scene_mark": "89",
       "numbered": true,
       "characters": [
         "沈公子"
       ],
       "confidence": "medium",
-      "notes": "コマ2(89に続く同一画)とコマ3を統合。time欄は5+12。SE『ズワワ』はdialogue欄に記載されていたが効果音表現のためseへ",
-      "_page": "page_028.png",
-      "_idx": 2
-    },
-    {
-      "cut_label": 90,
-      "action": "造作を小さく。\n完停止する(ひったし)\n(水平方向でOK)",
-      "dialogue": "沈公子\n…お前に一言忠告しよう。",
-      "se": "",
-      "time": "5",
-      "numbered": true,
-      "characters": [
-        "沈公子"
-      ],
-      "confidence": "medium",
-      "notes": "time欄は『5』",
+      "notes": "dialogue欄の『正(SE)ズワッ』は効果音。time『3+1/2』要確認",
       "_page": "page_028.png",
       "_idx": 3
     },
     {
-      "cut_label": 91,
+      "cut_label": "90",
+      "action": "造作をふさぐ。完停止する(ひっぱたく)(水平方向でOK)",
+      "dialogue": "…お前に一言忠告しよう。",
+      "se": "",
+      "time": "5",
+      "scene_mark": "90",
+      "numbered": true,
+      "characters": [
+        "沈公子"
+      ],
+      "confidence": "high",
+      "notes": "",
+      "_page": "page_028.png",
+      "_idx": 4
+    },
+    {
+      "cut_label": "91",
       "action": "PAN→ 全尺・普通で",
-      "dialogue": "これ以上、この件に首を突っ込むな。一応、同じ道のもの。お前を傷つけたくはない",
+      "dialogue": "これ以上、この件に首を突っ込むな。一応、同じ道のもの。お前を傷つけたくはない。",
       "se": "",
       "time": "6+12",
+      "scene_mark": "91",
       "numbered": true,
       "characters": [
         "沈公子"
       ],
       "confidence": "medium",
-      "notes": "dialogue冒頭の話者名は丸囲みで（沈公子）と読む。話者表記はdialogueに含めず",
+      "notes": "action欄の赤字『外伝望』風の書き込みは×印付きで判読困難・参考外",
       "_page": "page_029.png",
       "_idx": 0
     },
     {
-      "cut_label": 92,
-      "action": "（沈公子）あり じわPAN",
-      "dialogue": "お前こそ、これ以上人々を騙し、傷つけるなら容赦しない！ ほう…",
+      "cut_label": "92",
+      "action": "沈公子より じわPAN",
+      "dialogue": "お前こそ、これ以上人々を騙し、傷つけるなら容赦しない！　ほう…",
       "se": "",
-      "time": "",
+      "time": "4+12",
+      "scene_mark": "92",
       "numbered": true,
       "characters": [
         "尚善",
         "沈公子"
       ],
       "confidence": "medium",
-      "notes": "dialogue内の丸囲み話者(尚善)(沈公子)はセリフから除外",
+      "notes": "沈公子(前)の追いセリフ『ほう…』を含む",
       "_page": "page_029.png",
       "_idx": 1
     },
     {
-      "cut_label": 93,
-      "action": "セリフ後に / PAN DOWNして 懐に手を入れる（尚善）",
+      "cut_label": "93",
+      "action": "（セリフ後に）PAN DOWNよこ 懐に手を入れては（尚善）",
       "dialogue": "(OFF)たいした腕もないくせに、減らず口を叩くとは。生意気なガキめ！",
       "se": "ゴソゴソ",
-      "time": "",
+      "time": "4",
+      "scene_mark": "93",
       "numbered": true,
       "characters": [
         "沈公子",
         "尚善"
       ],
       "confidence": "medium",
-      "notes": "コマ3は縦棒/番号なしの続き。コマ4は空コマで出力に含めない。直前カット93に統合",
+      "notes": "93は2コマに跨る(コマ2＝顔、コマ3＝手もと)。action/dialogue/seを統合。SE『ゴソゴソ』はコマ3",
       "_page": "page_029.png",
       "_idx": 2
     },
     {
-      "cut_label": 94,
+      "cut_label": "94",
       "action": "鈴がついた帯を取り出す",
-      "dialogue": "(鈴)…… …私と相手をする気か。面白い… / おい娘。奥方様との約束を破る気か…？",
-      "se": "",
-      "time": "",
+      "dialogue": "(SE)鈴——　…私と相手する気か。面白い… / おい娘。奥方様との約束を破る気か…？\n！？…",
+      "se": "鈴——",
+      "time": "8",
+      "scene_mark": "94",
       "numbered": true,
       "characters": [
-        "沈公子"
+        "沈公子",
+        "苗"
       ],
       "confidence": "medium",
-      "notes": "dialogue内の丸囲み話者表記(鈴)(沈公子)はセリフから除外。「鈴：—」は効果音的だがdialogue欄に記載のため残す ｜ ページ最初のコマは丸番号なしの続き。dialogue冒頭の囲み文字は話者表示(沈公子)。前ページカット94の続きとして統合",
+      "notes": "dialogue欄の『鈴——』はSE記号付きの効果音。沈公子のセリフは『…私と相手する気か。面白い…』 ｜ ページ最初のコマは番号なし＝前ページのカット94の続き",
       "_page": "page_029.png",
-      "_idx": 4
+      "_idx": 3
     },
     {
       "cut_label": 95,
-      "action": "R→「じわPAN」 「胸づら」の苗 ※モブいるよ",
-      "dialogue": "それにそのカギがお前を守れると思うか？それともお前の道連れにして。",
+      "action": "R じわPAN！\n時づめの苗\nもう少し引いて",
+      "dialogue": "それにそのカギがお前を守れると思うか？それともお前の道連れとして。",
       "se": "",
-      "time": "",
+      "time": "8",
+      "scene_mark": "95",
       "numbered": true,
       "characters": [
-        "苗",
         "沈公子"
       ],
       "confidence": "medium",
-      "notes": "action欄は赤字メモ含む。dialogue話者は沈公子(OFF)",
+      "notes": "",
       "_page": "page_030.png",
       "_idx": 1
     },
     {
       "cut_label": 96,
       "action": "動揺が激しくなる苗",
-      "dialogue": "そのカギを選んでもいいのか？",
+      "dialogue": "そのカギを選んでもいいのか？\n！？…",
       "se": "",
       "time": "2",
+      "scene_mark": "96",
       "numbered": true,
       "characters": [
-        "苗",
-        "沈公子"
+        "沈公子",
+        "苗"
       ],
       "confidence": "medium",
-      "notes": "dialogue話者(OFF)は沈公子",
+      "notes": "",
       "_page": "page_030.png",
       "_idx": 2
     },
     {
       "cut_label": 97,
-      "action": "(action欄はサイン/メモのみ、ト書き判読不能)",
+      "action": "",
       "dialogue": "ふたり、一緒に死にたいというのか？",
       "se": "",
-      "time": "",
+      "time": "2+12",
+      "scene_mark": "97",
       "numbered": true,
       "characters": [
         "沈公子"
       ],
       "confidence": "medium",
-      "notes": "action欄は署名様の手書きでト書き内容不明",
+      "notes": "",
       "_page": "page_030.png",
       "_idx": 3
     },
     {
       "cut_label": 98,
-      "action": "兼用 T.B.／沈公子、尚善に",
-      "dialogue": "そこの小娘。お前の本心はどうなのだ？…",
+      "action": "○兼 正し\n沈公子、尚善に",
+      "dialogue": "そこの小娘、お前の本心はどうなのだ\n？…",
       "se": "",
-      "time": "3+",
+      "time": "3+12",
+      "scene_mark": "98",
       "numbered": true,
       "characters": [
         "沈公子",
         "尚善"
       ],
       "confidence": "medium",
-      "notes": "action欄に『兼用』『沈公子・尚善に』。dialogue話者は尚善(囲み)",
+      "notes": "",
       "_page": "page_030.png",
       "_idx": 4
     },
     {
-      "cut_label": 99,
+      "cut_label": "99",
       "action": "PAN↘ 全尺・普通で",
       "dialogue": "そいつはお前とは一切関係のない娘。そいつに「助けてほしい」と過大な要求をされただけなのだ…。お前は子供。そいつの身勝手な想いだけで。",
       "se": "",
       "time": "7",
+      "scene_mark": "99",
       "numbered": true,
-      "characters": [],
+      "characters": [
+        "沈公子"
+      ],
       "confidence": "medium",
-      "notes": "月明かり指定。dialogue欄は(況キャ)＝状況/モノローグ的セリフ。コマ0とコマ1（縦棒続き）を統合",
+      "notes": "コマ0とコマ1(縦棒/空白継続)を統合。話者は沈公子(セリフ頭の囲み記号より)",
       "_page": "page_031.png",
       "_idx": 0
     },
     {
-      "cut_label": 100,
+      "cut_label": "100",
       "action": "",
-      "dialogue": "お前が犠牲になることなどあり得ない。でたらめを言うっ!!",
+      "dialogue": "お前が犠牲になることなどあり得ない。でたらめを言うな!!",
       "se": "",
       "time": "4",
-      "numbered": true,
-      "characters": [],
-      "confidence": "medium",
-      "notes": "dialogue欄に(尚善)らしき話者表記",
-      "_page": "page_031.png",
-      "_idx": 1
-    },
-    {
-      "cut_label": 101,
-      "action": "○兼用／○図 眉を細め。身をよじって…",
-      "dialogue": "でたらめだと…。そうだ!でたらめだっ!",
-      "se": "",
-      "time": "2+12",
+      "scene_mark": "100",
       "numbered": true,
       "characters": [
         "沈公子",
         "尚善"
       ],
       "confidence": "medium",
-      "notes": "dialogue欄に(沈公子)と(尚善 OFF)。action欄は崩れ字が多く一部推測",
+      "notes": "前半=沈公子(M)、後半『でたらめを言うな!!』=尚善",
+      "_page": "page_031.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "101",
+      "action": "○兼(兼用)。眉を細め。(下部メモ判読不可)",
+      "dialogue": "でたらめだと…。そうだ! でたらめだっ!",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "101",
+      "numbered": true,
+      "characters": [
+        "沈公子",
+        "尚善"
+      ],
+      "confidence": "medium",
+      "notes": "前半=沈公子、後半『そうだ!でたらめだっ!』=尚善(off)。action下部の手書きメモは判読困難",
       "_page": "page_031.png",
       "_idx": 2
     },
     {
-      "cut_label": 102,
-      "action": "○兼用",
+      "cut_label": "102",
+      "action": "○兼(兼用)",
       "dialogue": "困っている人を助けてなぜ悪い。見て見ぬふりをしろとお前に言われる必要もないっ!",
       "se": "",
       "time": "4+12",
+      "scene_mark": "102",
       "numbered": true,
       "characters": [
         "尚善"
       ],
       "confidence": "medium",
-      "notes": "dialogue欄に(尚善)話者表記。time欄『4+P?』読み取り困難、4+12と推定",
+      "notes": "話者囲み記号は尚善と推定",
       "_page": "page_031.png",
       "_idx": 3
     },
     {
-      "cut_label": 103,
-      "action": "尚善 苗に",
+      "cut_label": "103",
+      "action": "尚善、苗に",
       "dialogue": "私は自分で決めたんだ！私が山を降りたのは。",
       "se": "",
-      "time": "3+n",
+      "time": "3+12",
+      "scene_mark": "103",
+      "numbered": true,
+      "characters": [
+        "尚善",
+        "苗"
+      ],
+      "confidence": "high",
+      "notes": "",
+      "_page": "page_032.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "104",
+      "action": "兼（兼用）。ポロポロと涙を流す苗",
+      "dialogue": "お前たちを助けたかったからだ！",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "104",
       "numbered": true,
       "characters": [
         "尚善",
         "苗"
       ],
       "confidence": "medium",
-      "notes": "time欄手書き不鮮明、3+?と推定",
-      "_page": "page_032.png",
-      "_idx": 0
-    },
-    {
-      "cut_label": 104,
-      "action": "兼用 / ポロポロと涙を流す 苗",
-      "dialogue": "あなたを助けたかったからだ！苗…！！…",
-      "se": "",
-      "time": "",
-      "numbered": true,
-      "characters": [
-        "苗"
-      ],
-      "confidence": "medium",
-      "notes": "scene欄に丸番号なし＝直前カット104の続きとして統合",
+      "notes": "このカットは2コマに跨る（104行と次の縦棒継続行を統合）。dialogue末尾に苗の『…』反応あり",
       "_page": "page_032.png",
       "_idx": 1
     },
     {
-      "cut_label": 105,
-      "action": "(O.L.)",
-      "dialogue": "おや？娘。なぜ泣く？分からない…一度は死ぬと決めたのに。なぜ今さら",
+      "cut_label": "105",
+      "action": "",
+      "dialogue": "おや？娘、なぜ泣く？分からない…一度は死ぬと決めたのに、なぜ今さら",
       "se": "",
       "time": "3",
+      "scene_mark": "105",
       "numbered": true,
       "characters": [
         "沈公子"
       ],
       "confidence": "medium",
-      "notes": "dialogue冒頭に沈公子のマーク。沢公子は誤読のため沈公子に正す",
+      "notes": "dialogue冒頭に話者名『沈公子』(原稿は『沢公子』と読めるが誤読のため沈公子に正す)。action欄に(兼)指示の線あり",
+      "_page": "page_032.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "106",
+      "action": "←じわPAN。目を閉じ泣きつづける苗",
+      "dialogue": "生に執着する。",
+      "se": "",
+      "time": "4",
+      "scene_mark": "106",
+      "numbered": true,
+      "characters": [
+        "苗"
+      ],
+      "confidence": "high",
+      "notes": "",
       "_page": "page_032.png",
       "_idx": 3
     },
     {
-      "cut_label": 106,
-      "action": "←じわPAN 自を恥じ 泣きつづける 苗",
-      "dialogue": "生に執着す子。",
+      "cut_label": "107",
+      "action": "じわ回り込み（PAN）。両腕を組みつつ話しつづける沈公子",
+      "dialogue": "壮大な志を抱いている者は、想いをとげずに早くにこの世を去る…　一生だらだらと暮らしてきた凡人が100歳まで長生きするなんて…　ほんとうにくだらないと思わないか？",
       "se": "",
       "time": "",
-      "numbered": true,
-      "characters": [
-        "苗"
-      ],
-      "confidence": "low",
-      "notes": "dialogue末尾やや不鮮明",
-      "_page": "page_032.png",
-      "_idx": 4
-    },
-    {
-      "cut_label": 107,
-      "action": "沈公子（背）",
-      "dialogue": "壮大な志を抱いている者は、想いをとげた早くにこの世を去る…",
-      "se": "",
-      "time": "",
+      "scene_mark": "107",
       "numbered": true,
       "characters": [
         "沈公子"
       ],
       "confidence": "medium",
-      "notes": "action欄の枠囲み手書きは『沈公子（背）』と判読",
+      "notes": "コマ0(背=BG)とコマ1(縦棒=継続)を統合。dialogueはモノローグ扱いで結合",
       "_page": "page_033.png",
       "_idx": 0
     },
     {
-      "cut_label": 108,
-      "action": "両腕を組みつつ話しつづける沈公子。けむりのようにゆらめく気。",
-      "dialogue": "一生だらだらと暮らしてきた凡人が100歳まで長生きすることして…ほんとうにくだらないと思わないか？",
+      "cut_label": "108",
+      "action": "けむりのようにゆらめく気",
+      "dialogue": "だれっ！　よく考えてみろ。娘が大人しく生贄に",
       "se": "",
-      "time": "",
+      "time": "9",
+      "scene_mark": "108",
       "numbered": true,
       "characters": [
+        "尚善",
         "沈公子"
       ],
       "confidence": "medium",
-      "notes": "",
+      "notes": "尚善『だれっ！』、沈公子(M)のセリフが続く。time=9コマ",
       "_page": "page_033.png",
       "_idx": 1
     },
     {
-      "cut_label": 109,
-      "action": "PAN UP→1/2ブリッジ（FIXもち）",
-      "dialogue": "だまれっ！／よく考えてみろ。娘が大人しく生贄になってくれたなら、娘の主人も難するんだ／花家の人々も豊かな暮らしが続けられる。これ以上、その娘が抵抗するだけ、お前にも迷惑がかかる。そして、花家にとっても大きな損失が出る",
+      "cut_label": "109",
+      "action": "↑PAN UP → ½ブリッジ（FIXもち）",
+      "dialogue": "なってくれたら、娘の主人も難をのがれ、花家の人々も豊かな暮らしが続けられる。これ以上、その娘が抵抗するだけ、お前にも迷惑がかかる。そして、花家にとっても大きな損失が出る",
       "se": "",
-      "time": "9 / 5+12 / 9",
+      "time": "5+12",
+      "scene_mark": "109",
       "numbered": true,
       "characters": [
-        "尚善",
-        "沈公子",
-        "花家"
+        "沈公子"
       ],
-      "confidence": "low",
-      "notes": "109は複数コマに跨り本文を統合。time欄は各コマの読み取り値を併記（9, 5+12, 9）。dialogue最初の『だまれっ！』は尚善、続きは沈公子のセリフと推定。芦花/花家主人の表記は本文どおり『花家』",
+      "confidence": "medium",
+      "notes": "コマ3(番号109)とコマ4(縦棒=継続)を統合。time欄は5+12（コマ3）と9（コマ4）が記入されているが代表してcut全体に記載",
       "_page": "page_033.png",
       "_idx": 2
     },
     {
-      "cut_label": 110,
-      "action": "苗(顔アップ)",
-      "dialogue": "でっ…でも…！復活したのはご主人様じゃない…芦花だ…！",
+      "cut_label": "110",
+      "action": "顔を上げ",
+      "dialogue": "でっ…でも…！復活したのはご主人様じゃない…あなただ…！",
       "se": "",
       "time": "3+12",
+      "scene_mark": "110",
       "numbered": true,
       "characters": [
-        "苗",
-        "花家主人",
-        "芦花"
+        "苗"
       ],
-      "confidence": "medium",
-      "notes": "action欄は「苗」＋崩し字。dialogue末尾の人名は芦花と解釈",
+      "confidence": "high",
+      "notes": "",
       "_page": "page_034.png",
       "_idx": 0
     },
     {
-      "cut_label": 111,
+      "cut_label": "111",
       "action": "",
       "dialogue": "バカな娘だな。そんなことを気にするのはお前だけだ。",
       "se": "",
-      "time": "",
+      "time": "4",
+      "scene_mark": "111",
+      "numbered": true,
+      "characters": [
+        "沈公子"
+      ],
+      "confidence": "high",
+      "notes": "dialogue冒頭の話者表記『沈公子』は誤読防止の語彙より採用",
+      "_page": "page_034.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "112",
+      "action": "兼。回り込み(←)。両腕、組んです",
+      "dialogue": "皆が心配してはのは花家と安定した自分の暮らしだ。花家の主人がどんな人なのかなど、誰も気にしてはいない",
+      "se": "",
+      "time": "5+12",
+      "scene_mark": "112",
       "numbered": true,
       "characters": [
         "沈公子"
       ],
       "confidence": "medium",
-      "notes": "dialogue欄の丸囲み名は沈公子と判読",
-      "_page": "page_034.png",
-      "_idx": 1
-    },
-    {
-      "cut_label": 112,
-      "action": "両腕、組んです(振り向く)",
-      "dialogue": "皆が心配してほしいのは花家と安定した自分の暮らしだ。花家の主人がどんな人なのかなど、誰も気にしてほしくない",
-      "se": "",
-      "time": "5+12",
-      "numbered": true,
-      "characters": [
-        "沈公子",
-        "花家主人"
-      ],
-      "confidence": "low",
-      "notes": "action欄崩し字「振り向く/両腕組んです」要確認",
+      "notes": "action欄の『両腕組んです』は崩し字で要確認",
       "_page": "page_034.png",
       "_idx": 2
     },
     {
-      "cut_label": 113,
-      "action": "回りこみ",
+      "cut_label": "113",
+      "action": "回り込み(↖)",
       "dialogue": "君が死ぬだけで全て花家が元の形に戻すんだ。だから皆のために君が犠牲になってもらえるか？",
       "se": "",
-      "time": "",
+      "time": "6+12",
+      "scene_mark": "113",
       "numbered": true,
-      "characters": [],
+      "characters": [
+        "沈公子"
+      ],
       "confidence": "medium",
       "notes": "",
       "_page": "page_034.png",
       "_idx": 3
     },
     {
-      "cut_label": 114,
-      "action": "兼用 フレーム位置調整",
-      "dialogue": "うるさいっ！そんなに自分が偉いというなら…！",
+      "cut_label": "114",
+      "action": "兼。フレーム位置調整",
+      "dialogue": "うるさいっ！そんなに自分が偉いというのなら…！",
       "se": "",
-      "time": "2+18",
+      "time": "3+18",
+      "scene_mark": "114",
       "numbered": true,
       "characters": [
-        "苗"
+        "尚善"
       ],
       "confidence": "medium",
-      "notes": "dialogue欄の丸囲み名は苗。time欄崩し字、要確認",
+      "notes": "dialogue話者欄『尚善』と読み取り。ページ末に集計メモ『合計+α』らしき手書きあり",
       "_page": "page_034.png",
       "_idx": 4
     },
     {
-      "cut_label": 115,
-      "action": "鈴のついた帯を胸の前に。発光する鈴。 / 帯を広げる(尚善)。広がる波紋。",
-      "dialogue": "お前がこの世のために… / ぐっ!! 死ね!!",
-      "se": "パァァ / 鈴ーー!!",
+      "cut_label": "115",
+      "action": "鈴のついた帯を胸の前に。発光する鈴。帯を広げる(尚善)。広がる波紋。",
+      "dialogue": "お前がこの世のために… 死ね！",
+      "se": "パァァ!! / 鈴ー!!",
       "time": "3",
+      "scene_mark": "115",
       "numbered": true,
       "characters": [
         "尚善"
       ],
       "confidence": "medium",
-      "notes": "dialogue内に丸囲み『尚善』のキャラ指定とSE『パァ』あり ｜ scene欄は縦棒のみで丸番号なし→直前カットの続きとして扱うべきだが、絵に新規構図ありかつ連番補完で116とした。SE『鈴ーー』、丸囲み『尚善』のセリフ指定あり",
+      "notes": "115と次の縦棒コマを統合。dialogue『お前がこの世のために…』と『死ね！』は尚善のセリフ。time欄『3』",
       "_page": "page_035.png",
       "_idx": 0
     },
     {
-      "cut_label": 117,
-      "action": "合わせて引きでPAN→。水中へと空間が変わる。○兼(兼用)。",
-      "dialogue": "沈公子!!… (沈公子のセリフ断片)",
-      "se": "",
-      "time": "4+12",
+      "cut_label": "116",
+      "action": "合わせてQ PAN→。水中へと空間が変わる。○兼(兼用)。",
+      "dialogue": "",
+      "se": "沈公子!!… / どぷん…",
+      "time": "1+12",
+      "scene_mark": "116",
       "numbered": true,
       "characters": [
         "沈公子"
       ],
       "confidence": "medium",
-      "notes": "dialogue欄に丸囲み『沈公子』のキャラ指定。time欄『4 1/2』ではなく4+12と解釈",
+      "notes": "dialogue欄はSE中心(『沈公子』『どぷん』)でセリフなし。time『1+12』(1秒12コマ)",
       "_page": "page_035.png",
-      "_idx": 2
+      "_idx": 1
     },
     {
-      "cut_label": 118,
-      "action": "気泡がのぼる。3つの鈴が(沈公子)をとり囲み、ほのかに発光。 / (沈公子)じわりと魚を召喚させる。鈴に向かっていき。",
-      "dialogue": "調子にのる… / 召喚ーー",
-      "se": "",
+      "cut_label": "117",
+      "action": "気泡がのぼる。3つの鈴が沈公子をとり囲み、ほのかに発光。沈公子、にゅるりと魚を召喚させる。鈴に向かていき。",
+      "dialogue": "調子にのち…",
+      "se": "召喚ー",
       "time": "4",
+      "scene_mark": "117",
       "numbered": true,
       "characters": [
         "沈公子"
       ],
-      "confidence": "low",
-      "notes": "action欄丸囲み『沈公子』、丸囲み『兼用(囲み)』記号あり ｜ scene欄に丸番号なし(縦棒のみ)→本来は直前118の続きの可能性。ただし絵が別構図のため連番119で出力。dialogue欄に丸囲み『沈公子』召喚の指定。要確認",
+      "confidence": "medium",
+      "notes": "117と次の縦棒コマを統合。action欄の『沈公子』は固有名(誤読『沢公子』を正す)。dialogue『調子にのち…』はセリフ。time『4』。ページ下部に『古代魚のおを見た目で。AC』『(P+12)』のメモあり",
       "_page": "page_035.png",
-      "_idx": 3
+      "_idx": 2
     },
     {
-      "cut_label": 118,
-      "action": "鈴を噛み砕く。合せて FBあり / PAN？（縦棒継続コマ、ＦＸ／FBあり）",
-      "dialogue": "くわっ?",
+      "cut_label": "118",
+      "action": "鈴を噛み砕く。合わせてT.B.あり。ラストT.U.あり",
+      "dialogue": "ぐわっ\nリィン…！",
       "se": "",
       "time": "2+12",
+      "scene_mark": "118",
       "numbered": true,
-      "characters": [],
-      "confidence": "low",
-      "notes": "action欄『合せて』の四角囲みは『FB』と推読。dialogueは崩し字で要確認 ｜ scene欄に丸番号なし＝直前カット118の続きとして統合。action欄に四角囲み文字あり要確認",
+      "characters": [
+        "沈公子"
+      ],
+      "confidence": "medium",
+      "notes": "action欄の囲み記号はT.B./T.U.と推定",
       "_page": "page_036.png",
       "_idx": 0
     },
     {
-      "cut_label": 119,
-      "action": "水流が巻き起こり収束。尚善の術が / 解ける。ふわりと残り帯",
-      "dialogue": "(水流——!! / …逃げたか。",
+      "cut_label": "119",
+      "action": "水流が巻き起こり収束。尚善の術が解ける。ふわりと残る帯",
+      "dialogue": "水流ーー！！\n…逃げたか。",
       "se": "",
-      "time": "9",
+      "time": "4",
+      "scene_mark": "119",
       "numbered": true,
       "characters": [
-        "尚善"
-      ],
-      "confidence": "medium",
-      "notes": "action欄に『尚善』丸囲みあり ｜ scene欄に丸番号なし＝119の続きとして統合。dialogue冒頭に丸囲み人物名あるが判読不能、要確認",
-      "_page": "page_036.png",
-      "_idx": 2
-    },
-    {
-      "cut_label": 120,
-      "action": "それをキャッチ。沈公子 / 帯を燃やす",
-      "dialogue": "若くして円環の術を(しゅかん)使いこなすとは…(ぎゃ…) / ボッ ボッ ボッ…",
-      "se": "ボッ ボッ ボッ",
-      "time": "6+12",
-      "numbered": true,
-      "characters": [
+        "尚善",
         "沈公子"
       ],
       "confidence": "medium",
-      "notes": "action欄に『沈公子』丸囲みあり。dialogueの『円環』『しゅかん』ルビは崩し字で要確認 ｜ ページ最初のコマはscene欄に縦棒のみで丸番号なし→前ページの最後のカット120の続きとして統合。dialogue欄は丸囲み『SE』表記あり",
+      "notes": "dialogue『逃げたか』は沈公子の話者表記",
       "_page": "page_036.png",
-      "_idx": 4
+      "_idx": 1
     },
     {
-      "cut_label": 121,
-      "action": "水速りつつ\n妖怪を召喚。\n解き放つ。 / 画面に迫る妖怪たち\n(寄り)",
-      "dialogue": "沈公子「ストックを探せ。次で最後だ…」 / 妖怪たち(口々)",
-      "se": "",
-      "time": "3+12",
+      "cut_label": "120",
+      "action": "それをキャッチする(沈公子) / 帯を燃やす",
+      "dialogue": "若くして円潭(しゅたん)の術を使いこなすとは…\n(ぎゃ…)",
+      "se": "ボ ボ ボ…",
+      "time": "4+12",
+      "scene_mark": "120",
       "numbered": true,
       "characters": [
         "沈公子"
       ],
       "confidence": "low",
-      "notes": "action欄『水速りつつ』は崩し字で不確実。dialogue冒頭の丸囲みは話者名(沈公子)と判断 ｜ scene欄に縦棒のみ・丸番号なし→直前カット121の続きとして統合。time『3+12』",
+      "notes": "『円潭』は手書き判読不確実、要確認 ｜ ページ最初のコマは番号なし(縦棒)＝前ページの120の続き",
+      "_page": "page_036.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "121",
+      "action": "ふり速くツツ 妖怪を召喚。 解き放つ。 画面に迫る妖怪たち",
+      "dialogue": "スたりを探せ。 次で最後だ… (沈黙)妖怪たち(唸り)",
+      "se": "",
+      "time": "3+12",
+      "scene_mark": "121",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "丸囲み121。3コマ目(継続・縦棒/空白)を統合",
       "_page": "page_037.png",
       "_idx": 1
     },
     {
-      "cut_label": 122,
-      "action": "森の中。\nBG+フェアリング(ブッキング?)\n茂みの中で隠れてけ\n尚善\n見上げている。",
+      "cut_label": "122",
+      "action": "森の中。 BG＋フェアリング 茂みの中で 隠れてる 尚善 見あげている。",
       "dialogue": "",
       "se": "",
       "time": "4+12",
+      "scene_mark": "122",
       "numbered": true,
       "characters": [
         "尚善"
       ],
       "confidence": "medium",
-      "notes": "コマ3(scene丸囲み122)とコマ4(scene縦棒の続き)を統合。コマ3のpictureは森の俯瞰、コマ4のactionに『森の中』『茂みの中で隠れている尚善見上げている』。time『4+12』。『フェアリング』部分は崩し字で不確実",
+      "notes": "丸囲み122。継続コマ(縦棒/空白)を統合。action内の人名は『尚善』と読む",
       "_page": "page_037.png",
-      "_idx": 3
+      "_idx": 2
     },
     {
       "cut_label": "123A",
       "action": "",
-      "dialogue": "その術にかかっても。なぜ傷ひとつ向かないんだろう…",
+      "dialogue": "あの術にかかっても、なぜ傷ひとつ向かないんだろう…",
       "se": "",
       "time": "5",
+      "scene_mark": "123A",
       "numbered": true,
       "characters": [
         "尚善"
       ],
-      "confidence": "medium",
-      "notes": "123Aは実在枝番。time欄は手書きで5と読む",
+      "confidence": "high",
+      "notes": "",
       "_page": "page_038.png",
       "_idx": 0
     },
     {
       "cut_label": "123B",
-      "action": "PANして引きへ。いつのまにか背後にいる黄爺。膝を抱が大囲(判読困難)",
-      "dialogue": "修行の差じゃち。 ひっ！",
+      "action": "△ 「攻」B して「引」B へ。いつのまにか背後にいる黄爺。腰を抜かす苗",
+      "dialogue": "修行の差じゃ。\nひっ！\n！！",
       "se": "",
       "time": "2",
+      "scene_mark": "123B",
       "numbered": true,
       "characters": [
         "黄爺",
         "苗",
         "尚善"
       ],
-      "confidence": "low",
-      "notes": "123Bは実在枝番。action欄崩し字多く一部判読困難。dialogue話者は黄爺・苗・尚善",
+      "confidence": "high",
+      "notes": "action欄の攻/引はカメラの寄り引き指示と思われるが崩れ字のため要確認",
       "_page": "page_038.png",
       "_idx": 1
     },
     {
       "cut_label": "124",
-      "action": "黄爺の顔アップ。矢印で振り向く動き",
-      "dialogue": "なにをビビっておる。そんなんじゃ死ぬぞ。バカ共。 まっ、わしはお前たち",
+      "action": "→",
+      "dialogue": "なにをビビっておる。そんなんじゃ死ぬぞ、バカ共。ま、わしはお前たち",
       "se": "",
-      "time": "5+1/2",
+      "time": "4+12",
+      "scene_mark": "124",
       "numbered": true,
       "characters": [
         "黄爺"
       ],
-      "confidence": "medium",
-      "notes": "time欄は5+1/2のように見えるが秒+コマ表記不明瞭、要確認",
+      "confidence": "high",
+      "notes": "time欄は5と1/2に見えるが秒+コマ記法で4+12と解釈",
       "_page": "page_038.png",
       "_idx": 2
     },
     {
       "cut_label": "125",
-      "action": "二人の驚いた顔",
-      "dialogue": "など興味がない。たまたまここで薬草を摘んでただけじゃ。 ホ、ホンモノ？",
+      "action": "",
+      "dialogue": "など興味がない。たまたまここで薬草を摘んでただけじゃ。\nホ、ホンモノ？",
       "se": "",
       "time": "",
+      "scene_mark": "125",
       "numbered": true,
       "characters": [
         "黄爺",
         "苗"
       ],
-      "confidence": "medium",
-      "notes": "dialogue末尾「ホ、ホンモノ？」は苗の丸囲み",
+      "confidence": "high",
+      "notes": "",
       "_page": "page_038.png",
       "_idx": 3
     },
     {
       "cut_label": "126",
       "action": "結界の符",
-      "dialogue": "大丈夫。ホンモノ。 (off)爺ちゃん、ありがとう。",
+      "dialogue": "大丈夫、ホンモノ。\n爺ちゃん、ありがとう。",
       "se": "",
-      "time": "3",
+      "time": "8",
+      "scene_mark": "126",
       "numbered": true,
       "characters": [
         "尚善"
       ],
-      "confidence": "medium",
-      "notes": "絵中に「結界の符」の文字。time欄上段に符号状の記号、下段に3",
+      "confidence": "high",
+      "notes": "後半セリフは尚善(off)。time欄に8と3が見える",
       "_page": "page_038.png",
       "_idx": 4
     },
     {
-      "cut_label": 127,
-      "action": "複数 貼ってある。 / 3人の頭上には妖怪が浮遊している（旋回）。",
-      "dialogue": "(尚善) でもこれからどうしよう。 (黄爺)(背) 容疑人じゃ。だが少し確認したいことがある。 / 娘よ、全て話せ。 (苗) ……はい。",
+      "cut_label": "127",
+      "action": "複数 貼ってある。3人の頭上には妖怪が徘徊している",
+      "dialogue": "でもこれからどうしよう。容疑人じゃ。だが少し確認したいことがある。娘よ、全てを話せ。…はい。",
       "se": "",
-      "time": "9+11",
+      "time": "9+12",
+      "scene_mark": "127",
       "numbered": true,
       "characters": [
         "尚善",
@@ -1928,2023 +1989,2088 @@
         "苗"
       ],
       "confidence": "medium",
-      "notes": "action欄の人物像はイタチ姿の黄爺か。dialogue欄に尚善・黄爺のセリフ ｜ scene欄に丸番号なし=127の続きコマだが、actionに『3人の頭上には妖怪が…』新指示。time欄『9+11』は読み不確実。番号なしのため直前カットの続きとして扱うべきだが、内容上独立コマとして暫定保持。要確認",
+      "notes": "127と続きの縦棒コマを統合。黄爺は(背)指定",
       "_page": "page_039.png",
       "_idx": 0
     },
     {
-      "cut_label": 128,
-      "action": "黄爺のアップ。ヒゲを触れつつ。",
-      "dialogue": "(黄爺) …ふーん。やはりだ。奴が花家の若様を殺したんじゃ。",
+      "cut_label": "128",
+      "action": "横のイメージ。ヒゲに触れつつ",
+      "dialogue": "…ふーん。やはりだ。奴が花家の若様を殺したんじゃ。",
       "se": "",
       "time": "5",
+      "scene_mark": "128",
       "numbered": true,
       "characters": [
         "黄爺"
       ],
       "confidence": "medium",
-      "notes": "丸囲み128。前の番号なしコマと統合扱いの可能性あり",
+      "notes": "",
+      "_page": "page_039.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "129",
+      "action": "",
+      "dialogue": "え…？　！…",
+      "se": "",
+      "time": "1",
+      "scene_mark": "129",
+      "numbered": true,
+      "characters": [
+        "苗",
+        "尚善",
+        "黄爺"
+      ],
+      "confidence": "medium",
+      "notes": "action欄に黄爺の記載あり",
       "_page": "page_039.png",
       "_idx": 2
     },
     {
-      "cut_label": 129,
-      "action": "(苗)",
-      "dialogue": "(苗) え…? (尚善) !……",
-      "se": "",
-      "time": "1",
-      "numbered": true,
-      "characters": [
-        "苗",
-        "尚善"
-      ],
-      "confidence": "high",
-      "notes": "",
-      "_page": "page_039.png",
-      "_idx": 3
-    },
-    {
-      "cut_label": 130,
-      "action": "F.I. △(HB)で イメージ回想 → 銀。BG 屋敷の装飾イメージ。",
-      "dialogue": "(黄爺)(off) 20年前、奴は沈家の若様を殺して身体を奪った…",
+      "cut_label": "130",
+      "action": "F.I. △(HD)で イメージ回想。T.B. 全尺・普通。BG 屋敷の装飾イメージ。影絵イメージ",
+      "dialogue": "20年前、奴は沈家の若様を殺して身体を奪った…",
       "se": "",
       "time": "6",
+      "scene_mark": "130",
       "numbered": true,
       "characters": [
         "黄爺",
         "沈公子"
       ],
       "confidence": "medium",
-      "notes": "action欄の『銀』『箋速』等は崩し字で不確実。回想イメージ指示",
+      "notes": "黄爺は(off)指定。沈家＝沈公子の家",
       "_page": "page_039.png",
-      "_idx": 4
+      "_idx": 3
     },
     {
-      "cut_label": 131,
-      "action": "上にPAN寄り / とどかって(誤読の可能性)",
-      "dialogue": "若くして健康な身体と膨大な財産を手に入れたと思ったが… / ピシッ…\n沈家の若様は生まれつき病弱だった",
-      "se": "ピシッ",
-      "time": "1+0",
+      "cut_label": "131",
+      "action": "上に寄り(T.U.)。トビがわって",
+      "dialogue": "若くして健康な身体と膨大な財産を手に入れたと思ったが…　沈家の若様は生まれつき病弱だった…",
+      "se": "ピシッ…",
+      "time": "10",
+      "scene_mark": "131",
       "numbered": true,
       "characters": [
         "黄爺"
       ],
-      "confidence": "low",
-      "notes": "絵は後頭部のアップ。dialogue冒頭に(黄爺)(OFF)の指定あり ｜ scene欄に丸番号なし→131の続きとして統合。dialogueに(SE)ピシッ及び(黄爺)(OFF)の指定。action欄の手書き判読困難で要確認",
+      "confidence": "medium",
+      "notes": "131と次の縦棒コマ(続き)を統合。dialogue欄『黄爺(M)』のセリフを結合",
       "_page": "page_040.png",
       "_idx": 0
     },
     {
-      "cut_label": 132,
-      "action": "←PAN\n全尺・普通で",
+      "cut_label": "132",
+      "action": "←PAN　全尺・普通で",
       "dialogue": "このままでは身体を失うと思った奴はより豊かな財産を持つ花家に目を付けた。",
       "se": "",
       "time": "6",
+      "scene_mark": "132",
       "numbered": true,
       "characters": [
-        "花家"
+        "黄爺"
       ],
       "confidence": "medium",
       "notes": "",
       "_page": "page_040.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "133",
+      "action": "#6・ラスト　復活の儀シーン　ダイジェストで　#6 BANK　VF.01(2+0)",
+      "dialogue": "同じ術を使い、飼っていた鬼を操って花家若様の身体を奪ったんじゃ…",
+      "se": "",
+      "time": "8+12",
+      "scene_mark": "133",
+      "numbered": true,
+      "characters": [
+        "黄爺"
+      ],
+      "confidence": "medium",
+      "notes": "picture欄に『#6 BANK』。time欄『8+12』(分数読みは誤り)",
+      "_page": "page_040.png",
       "_idx": 2
     },
     {
-      "cut_label": 133,
-      "action": "#6 ラスト\n復活の儀シーン\nダイジェストで\n▽F.O.(2+0)",
-      "dialogue": "同じ枕を使い、飼っていた鬼を操って花家若様の身体を奪ったんじゃ…",
+      "cut_label": "134",
+      "action": "戻って　◯兼(兼用)",
+      "dialogue": "…それでも苗ちゃんを狙っているのは秘密がバレると困るから？ / そんだけではない。秘密を守りたいなら、わざわざ娘を生贄にさせる必要はない。",
       "se": "",
-      "time": "8+12",
+      "time": "1+12",
+      "scene_mark": "134",
       "numbered": true,
       "characters": [
-        "花家若様"
+        "尚善",
+        "黄爺"
       ],
       "confidence": "medium",
-      "notes": "picture欄に#6 BANK表記。BANK(流用カット)指定",
+      "notes": "dialogue欄話者『尚善』 ｜ ページ冒頭の番号なしコマ＝前ページ最後のカット134の続きとして統合",
       "_page": "page_040.png",
       "_idx": 3
     },
     {
-      "cut_label": 134,
-      "action": "戻って\n○兼(兼用)",
-      "dialogue": "…それでも苗ちゃんを狙っているのは秘密がバレると困るから？ / そんなんでもない。秘密を守りたいのなら、わざわざ娘を生贄にさせる必要はない。",
+      "cut_label": "135",
+      "action": "兼(○で囲み)",
+      "dialogue": "おそらく彼女こそが儀式を成功させる鍵なんじゃ。…？…",
       "se": "",
-      "time": "11+12",
+      "time": "5+12",
+      "scene_mark": "135",
       "numbered": true,
       "characters": [
         "尚善",
-        "苗",
-        "黄爺"
+        "苗"
       ],
       "confidence": "medium",
-      "notes": "dialogueに(尚善)の話者指定 ｜ ページ最初のコマは丸番号なし＝前ページ最後のカット134の続きとして統合。dialogue冒頭の崩し字は推測含む",
-      "_page": "page_040.png",
-      "_idx": 4
-    },
-    {
-      "cut_label": 135,
-      "action": "兼用",
-      "dialogue": "おそらく彼女こそが儀式を成功させる鍵なんじゃ。…？",
-      "se": "",
-      "time": "5+12",
-      "numbered": true,
-      "characters": [
-        "尚善"
-      ],
-      "confidence": "medium",
-      "notes": "dialogue冒頭の(尚)は話者表示。最後に丸囲み「苗」？の記述あり、苗を指す疑問",
+      "notes": "",
       "_page": "page_041.png",
       "_idx": 1
     },
     {
-      "cut_label": 136,
-      "action": "「じわ」PAN△ / ←PAU(ワイップに) / 寄った分引いて",
-      "dialogue": "夜明け前までに、奴が操る鬼たちに娘を食わせ合い、儀式は失敗し、奴の魂を / 新たな身体と融合できなくする。そうか！だったら 苗ちゃんを朝まで",
+      "cut_label": "136",
+      "action": "じわT.U.ｱﾘ／PAN（ﾌｨｯｸｽに）寄った分引いて",
+      "dialogue": "夜明け前までに、奴が操る鬼たちに娘を食わせないと儀式は失敗し、奴の魂を新たな身体と融合できなくする。そうか！だったら苗ちゃんを朝まで",
       "se": "",
       "time": "",
-      "numbered": true,
-      "characters": [
-        "黄爺",
-        "尚善"
-      ],
-      "confidence": "low",
-      "notes": "action欄に「じわPAN」指示。dialogue末尾は次カットへ続く ｜ scene欄に丸番号なし＝136の続きとして統合すべきだが番号読み取り不能。直前カット136に統合扱い。actionの「PAU」はPAN/PAUSEの誤読疑い、要確認",
-      "_page": "page_041.png",
-      "_idx": 2
-    },
-    {
-      "cut_label": 137,
-      "action": "ニヤリと笑う 黄爺",
-      "dialogue": "守ればいいんだ！ そうじゃ。ここに隠れていれば全ては解決する。",
-      "se": "",
-      "time": "14 / 4",
+      "scene_mark": "136",
       "numbered": true,
       "characters": [
         "黄爺",
         "尚善"
       ],
       "confidence": "medium",
-      "notes": "dialogue前半「守ればいいんだ！」は尚善、後半「そうじゃ…」は黄爺。time欄は上段「14」下段「4」で読み取り不確実",
+      "notes": "136は2コマにまたがるため統合。2コマ目(番号なし縦棒)を統合",
       "_page": "page_041.png",
-      "_idx": 4
+      "_idx": 2
     },
     {
-      "cut_label": 138,
-      "action": "夜空に月。隕石(妖怪)が通過して。IN→OUT(画面を横切る軌跡)",
+      "cut_label": "137",
+      "action": "ニヤリとする黄爺",
+      "dialogue": "守ればいいんだ！そうじゃ。ここに隠れていれば全ては解決する。",
+      "se": "",
+      "time": "14／4",
+      "scene_mark": "137",
+      "numbered": true,
+      "characters": [
+        "尚善",
+        "黄爺"
+      ],
+      "confidence": "medium",
+      "notes": "timeは上段14、下段4",
+      "_page": "page_041.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "138",
+      "action": "夜空には月。妖怪が通過して。",
       "dialogue": "太陽が昇れば奴は仕舞いじゃ。朝まで…",
       "se": "",
       "time": "",
+      "scene_mark": "138",
       "numbered": true,
       "characters": [
-        "黄爺"
+        "黄爺",
+        "苗"
       ],
-      "confidence": "medium",
-      "notes": "dialogue欄に黄爺(off)と苗(off)の話者表記あり。actionの『妖怪』は丸囲み文字判読しにくく要確認",
+      "confidence": "high",
+      "notes": "dialogue先頭は黄爺(OFF)、後半は苗(OFF)",
       "_page": "page_042.png",
       "_idx": 0
     },
     {
-      "cut_label": 139,
-      "action": "森の木立(暗い)。じわ回りこみ。手前のBOOK",
-      "dialogue": "心配でする(=心配ご無用?)。ここ一帯に結界を張った。簡単には見つからないはずじゃ。",
+      "cut_label": "139",
+      "action": "じわ回り込み。手前のBOOK。",
+      "dialogue": "心配ない。ここ一帯に結界を張った。簡単には見つからないはずじゃ",
       "se": "",
-      "time": "6+? / 4+12",
+      "time": "6+0 / 4+12",
+      "scene_mark": "139",
       "numbered": true,
       "characters": [
         "黄爺"
       ],
-      "confidence": "low",
-      "notes": "time上段は『6』のみ判読、下段『4+12』。action『じわ回りこみ』推測。dialogue1コマ目崩れ字要確認",
+      "confidence": "medium",
+      "notes": "time欄に上段「6」、下段「4 1/2」。コマ跨ぎを統合。time表記は要確認",
       "_page": "page_042.png",
       "_idx": 1
     },
     {
-      "cut_label": 140,
-      "action": "(BOOK) 沈公子の横顔。兼用",
-      "dialogue": "…本当にありがとうございます。",
+      "cut_label": "140",
+      "action": "兼用。黄をパッと見る尚善。",
+      "dialogue": "…本当にありがとうございます。でも、もし見つかってしまったら、お嬢様は侍女さまを連れて逃げて下さい…尚善！",
       "se": "",
-      "time": "",
-      "numbered": true,
-      "characters": [
-        "苗"
-      ],
-      "confidence": "medium",
-      "notes": "話者表記=苗(丸囲み)。action『兼』=兼用",
-      "_page": "page_042.png",
-      "_idx": 2
-    },
-    {
-      "cut_label": 141,
-      "action": "苗を…",
-      "dialogue": "でも、もし見つかってしまったら、お爺様は侠女さまを連れて逃げて下さい…",
-      "se": "",
-      "time": "9+12",
-      "numbered": true,
-      "characters": [
-        "苗",
-        "尚善"
-      ],
-      "confidence": "low",
-      "notes": "このコマのscene左に丸番号無し、絵は二人の頭。action欄に『苗をパッと見る尚善』。dialogue末に尚善の丸囲み。番号は連番補完(140の次)。time『9+12』読み",
-      "_page": "page_042.png",
-      "_idx": 3
-    },
-    {
-      "cut_label": 142,
-      "action": "兼用 FIX。何か言おうとねが(=何か言おうとするが)",
-      "dialogue": "沈公子さまの目的は私だけなのです。おふたりには何も関係ありません。 / わしが何も知らんでも それでも良いが。今ここに以上 見過ごすことはできぬ。それと…",
-      "se": "",
-      "time": "5",
-      "numbered": true,
-      "characters": [
-        "苗",
-        "黄爺"
-      ],
-      "confidence": "medium",
-      "notes": "話者=苗(off)。action『兼/FIX』 ｜ ページ最初のコマは丸番号なしの続き(numbered=false)だが、scene欄左に丸囲み142が描かれたコマもあり142として統合。コマ0(顔アップ)のaction『―と、遮るように 黄爺のセリフ』、dialogue『黄爺(M) バカバカしい。尚善！…』は本来142の頭。time欄『5』。",
-      "_page": "page_042.png",
-      "_idx": 4
-    },
-    {
-      "cut_label": 143,
-      "action": "○兼 →じわPAN",
-      "dialogue": "爺を訴えて… (フッ…",
-      "se": "",
-      "time": "3+12",
-      "numbered": true,
-      "characters": [
-        "黄爺"
-      ],
-      "confidence": "medium",
-      "notes": "action欄『○兼』(兼用)＋『→じわPAN』。dialogueは崩し字、要確認。time『3+12』。",
-      "_page": "page_043.png",
-      "_idx": 1
-    },
-    {
-      "cut_label": 144,
-      "action": "○兼 FIX△(BK)にて カット尻→C",
-      "dialogue": "苗(M) …わ。",
-      "se": "",
-      "time": "3+12",
-      "numbered": true,
-      "characters": [
-        "苗"
-      ],
-      "confidence": "low",
-      "notes": "action欄崩し字。『FIX△(BK)にて』『カット尻』と読む試み、要確認。dialogue冒頭丸囲み『苗(M)』、本文『…わ。』。time『3+12』。",
-      "_page": "page_043.png",
-      "_idx": 2
-    },
-    {
-      "cut_label": 145,
-      "action": "黄爺が尻尾で眠っている尚善を 苗の膝から運ぶ。 / 足をのばし、さする(苗)",
-      "dialogue": "…ホゥー…",
-      "se": "",
-      "time": "4",
+      "time": "7+12",
+      "scene_mark": "140",
       "numbered": true,
       "characters": [
         "黄爺",
-        "尚善",
-        "苗"
+        "尚善"
       ],
       "confidence": "medium",
-      "notes": "森(夜)のシーン。黄爺がイタチの姿。time欄空白。 ｜ ページ最初の続きコマ(丸番号なし)。前ページの最後のカット145に統合",
-      "_page": "page_043.png",
-      "_idx": 3
-    },
-    {
-      "cut_label": 146,
-      "action": "FIX。―と(苗)の扇に人形の術が映ってくる。",
-      "dialogue": "…え？ これって。",
-      "se": "カサカサ…",
-      "time": "4+12",
-      "numbered": true,
-      "characters": [
-        "苗"
-      ],
-      "confidence": "medium",
-      "notes": "dialogueの『カサカサ』はSEの可能性。冒頭の丸囲みは効果音か。confidence低めで保留",
-      "_page": "page_044.png",
-      "_idx": 1
-    },
-    {
-      "cut_label": 147,
-      "action": "FIX＋ブツブツ。突如(苗)を取り囲む黒いモヤ。",
-      "dialogue": "ズルッ！ さッ！",
-      "se": "",
-      "time": "2",
-      "numbered": true,
-      "characters": [
-        "苗"
-      ],
-      "confidence": "low",
-      "notes": "dialogue欄の文字は擬音/掛け声で判読困難。沈公子の眷属の表記の可能性あり要確認",
-      "_page": "page_044.png",
+      "notes": "丸囲み数字140。2コマ(番号140＋続き)を統合。time欄『7 1/2』表記は要確認",
+      "_page": "page_042.png",
       "_idx": 2
     },
     {
-      "cut_label": 148,
-      "action": "(沈公子の眷属)持っていた鎌で斬りかかる。このcutから持ってOK。",
-      "dialogue": "ブォッ！",
+      "cut_label": "141",
+      "action": "兼。FIX。何か言おうとする。 / ーと、遮るように 黄爺のセリフ。",
+      "dialogue": "沈公子さまの目的は私だけなのです。おふたりには何も関係ありません。 / バカバカしい。 ！…",
       "se": "",
-      "time": "1",
+      "time": "8",
+      "scene_mark": "141",
+      "numbered": true,
+      "characters": [
+        "苗",
+        "黄爺",
+        "尚善"
+      ],
+      "confidence": "medium",
+      "notes": "dialogueは苗(OFF) ｜ ページ最初のコマはscene欄に丸番号なし→前ページのカット141の続きとして統合。dialogue冒頭は黄爺『バカバカしい。』、尚善『！…』",
+      "_page": "page_042.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "142",
+      "action": "それと…",
+      "dialogue": "わしが何も知らんもら それでも良いが。今ここには以上見過ごすことはできぬ。それと…",
+      "se": "",
+      "time": "7",
+      "scene_mark": "142",
+      "numbered": true,
+      "characters": [
+        "黄爺"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue一部判読困難。『わしが何も知らん〜』要確認",
+      "_page": "page_043.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "143",
+      "action": "◯兼 →じわPAN",
+      "dialogue": "爺を訪ねる… (つ…",
+      "se": "",
+      "time": "3+1/2",
+      "scene_mark": "143",
       "numbered": true,
       "characters": [],
       "confidence": "low",
-      "notes": "dialogue欄は擬音『ブォッ』。話者の丸囲み判読困難で要確認",
+      "notes": "time欄『3+1/2』は『3+12』の可能性あり、要確認。dialogue判読困難",
+      "_page": "page_043.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "144",
+      "action": "◯兼 F.I.△(bk)して カット尻 →",
+      "dialogue": "…わ。",
+      "se": "",
+      "time": "3+1/2",
+      "scene_mark": "144",
+      "numbered": true,
+      "characters": [
+        "苗"
+      ],
+      "confidence": "low",
+      "notes": "dialogue話者は苗(M)。time欄『3+1/2』は『3+12』の可能性あり、要確認",
+      "_page": "page_043.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "145",
+      "action": "黄爺が尻尾で眠っては尚善を苗の膝から運ぶ。 / 足をのばし さわる 苗",
+      "dialogue": "…ふぅー…",
+      "se": "",
+      "time": "4",
+      "scene_mark": "145",
+      "numbered": true,
+      "characters": [
+        "黄爺",
+        "尚善",
+        "苗"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue欄は空白 ｜ ページ最初のコマはscene欄が縦棒/空白＝前ページ最後のカット145の続き",
+      "_page": "page_043.png",
+      "_idx": 4
+    },
+    {
+      "cut_label": "146",
+      "action": "A.C. ―と苗の肩に人形の精が登ってくる。",
+      "dialogue": "カサカサ… …え？これって。",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "146",
+      "numbered": true,
+      "characters": [
+        "苗"
+      ],
+      "confidence": "medium",
+      "notes": "dialogueの『え？これって』は苗のセリフ。『カサカサ』はSE的だがdialogue欄に記載",
+      "_page": "page_044.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "147",
+      "action": "B① +フィルタリング 突如、苗を取り囲む黒いモヤ",
+      "dialogue": "だれっ!! 苗さん!",
+      "se": "",
+      "time": "2",
+      "scene_mark": "147",
+      "numbered": true,
+      "characters": [
+        "苗"
+      ],
+      "confidence": "low",
+      "notes": "dialogue欄の文字一部判読困難。最後の丸囲み話者名は要確認",
+      "_page": "page_044.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "148",
+      "action": "鱗粉？ 持っていた鎌で 斬りかかる。(このカットから持ってOK)",
+      "dialogue": "",
+      "se": "グォッ!",
+      "time": "1",
+      "scene_mark": "148",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "dialogue欄の『グォッ』はSE扱いとしseに記載。話者名要確認",
       "_page": "page_044.png",
       "_idx": 3
     },
     {
-      "cut_label": 149,
-      "action": "反しベタに、万尺走って、FIX。真っ二つに切られた。 / ひらりと落ちて ピン送り 上→①へ 降下してくる沈公子へ",
-      "dialogue": "斬ッ！！ / …するお前か しつこい！",
-      "se": "",
-      "time": "5",
+      "cut_label": "149",
+      "action": "反しベタに刀光走って F.I.△ 真っこつに切られた人形の精。 / ひらりと潜けて ピン送り 上→下へ 降下してくる沈公子へ",
+      "dialogue": "…またお前か。しつこい!",
+      "se": "斬ッ!!",
+      "time": "8",
+      "scene_mark": "149",
       "numbered": true,
       "characters": [
         "沈公子"
       ],
-      "confidence": "low",
-      "notes": "dialogueは擬音/効果音的。time欄空。action内のカメラ用語は判読困難で要確認 ｜ ページ最初のコマは丸番号なし＝前ページ149の続きとして統合。dialogue冒頭に丸囲み『沈公子』の話者表記あり",
+      "confidence": "medium",
+      "notes": "dialogue欄『斬ッ!!』はSE。time欄は空白に見える ｜ ページ最初のコマはscene欄が空白＝前ページ149の続き。dialogue話者は沈公子",
       "_page": "page_044.png",
       "_idx": 4
     },
     {
-      "cut_label": 150,
-      "action": "セリフありつつ 尻尾をしまう（黄爺）立ちあがる尚善",
-      "dialogue": "お前にはその病弱な身体が一番似おっておる！",
+      "cut_label": "150",
+      "action": "セリフありつつ 尻尾をしまう黄爺 立ちあがる尚善 / 沈公子 静かに着地。",
+      "dialogue": "お前にはその病弱な身体が一番似おっておる! / その羽消えてしまえ!",
       "se": "",
-      "time": "",
+      "time": "7",
+      "scene_mark": "150",
       "numbered": true,
       "characters": [
         "黄爺",
-        "尚善"
+        "尚善",
+        "沈公子"
       ],
       "confidence": "medium",
-      "notes": "dialogue話者は丸囲み『黄爺』",
+      "notes": "action欄に黄爺・尚善の指示。dialogue話者は黄爺 ｜ scene欄縦棒＝150の続きとして統合",
       "_page": "page_045.png",
       "_idx": 1
     },
     {
-      "cut_label": 151,
-      "action": "静かに着地（沈公子）",
-      "dialogue": "その羽消えてしまえ！",
-      "se": "",
-      "time": "2",
-      "numbered": true,
-      "characters": [
-        "沈公子"
-      ],
-      "confidence": "medium",
-      "notes": "action話者表記に丸囲み『沈公子』",
-      "_page": "page_045.png",
-      "_idx": 2
-    },
-    {
-      "cut_label": 151,
+      "cut_label": "151",
       "action": "",
-      "dialogue": "それは嫌だな。俺は女…",
+      "dialogue": "それは嫌だな。俺はまだ…",
       "se": "",
       "time": "3",
+      "scene_mark": "151",
       "numbered": true,
       "characters": [
         "沈公子"
       ],
       "confidence": "medium",
-      "notes": "絵151のカットに同番号。横顔のアップ。dialogue話者は丸囲み『沈公子』",
+      "notes": "dialogue話者は沈公子(丸囲み)",
       "_page": "page_045.png",
       "_idx": 3
     },
     {
-      "cut_label": 152,
-      "action": "（顔アップ） / 妖怪たちが襲ってくる",
-      "dialogue": "もっと生きていたいんだっ！ / （妖怪たち）（唸り）—",
+      "cut_label": "152",
+      "action": "襲ってくる妖怪たち",
+      "dialogue": "もっと生きていたいんだっ!",
       "se": "",
       "time": "4",
+      "scene_mark": "152",
       "numbered": true,
       "characters": [
-        "尚善",
         "沈公子の眷属の妖怪"
       ],
       "confidence": "medium",
-      "notes": "ページ最初のコマは丸番号なし＝前ページのカット152の続きとして統合。time欄は『4』と読める",
+      "notes": "action欄は口元アップの作画指示のみ。dialogue話者は前カットからの続きで沈公子と推測だが明記なし ｜ ページ最初のコマは丸番号なし＝前ページ最後のカット152の続き",
       "_page": "page_045.png",
       "_idx": 4
     },
     {
-      "cut_label": 153,
-      "action": "セリフメリフ。妖怪たちを斬っていく黄爺 / 妖怪を斬る描写。カメラから斬りて Tクショ2（よろかせ） / 了とダッシュ力と同時に斬り伏せす →(略PAN)",
-      "dialogue": "（黄爺）尚善さまは早くお前に会いたいとす！ / わしが送り届けてやるわ！（沈）斬ッ！斬ッ！ / 斬ッ！！（沈）ダッ！",
-      "se": "斬ッ！斬ッ！ / 斬ッ！ダッ！",
-      "time": "",
+      "cut_label": "153",
+      "action": "セリフまわつ。妖怪たちを斬っていく(黄爺) / カメラから引いてTショット。(おまかせ) / アゴをダッシュ力と同時に斬り伏せる R→ 修正?",
+      "dialogue": "黄爺『苗ちゃんは早くお前に会いたいとさ!』 / 『わしが送り届けてやるわ!』『斬っ! 斬っ!』 / 『斬っ!!』",
+      "se": "ダッ!",
+      "time": "4+12",
+      "scene_mark": "153",
       "numbered": true,
       "characters": [
         "黄爺",
-        "尚善",
-        "沈公子"
+        "苗"
       ],
-      "confidence": "low",
-      "notes": "action欄『斬っていく(黄爺)』。dialogue冒頭の丸囲みは話者表示(黄爺)。セリフは要確認箇所あり ｜ scene欄に丸番号なし＝153の続きとして統合。action欄の手書き判読困難、要確認 ｜ scene欄に丸番号なし＝153の続きとして統合。判読困難、要確認",
+      "confidence": "medium",
+      "notes": "dialogue冒頭の丸囲みは話者(黄爺) ｜ 縦棒＝153の続き。dialogue内の丸囲み『正』は演出メモ ｜ 縦棒＝153の続き。action末尾の囲み記号は判読困難で要確認",
       "_page": "page_046.png",
       "_idx": 1
     },
     {
-      "cut_label": 154,
-      "action": "フラッシュIN→QTBに、背後から取り押さえている黄爺。沈公子と剣を構えて応戦",
-      "dialogue": "（沈）ガキィン！！（黄爺）今じゃ、早く行け！",
-      "se": "ガキィン！！",
+      "cut_label": "154",
+      "action": "フラッシュIN→B①に背後から取り押さえている黄爺。沈公子と剣を構えて応戦",
+      "dialogue": "『ガキィン…!!』黄爺『今じゃ、早く行け!』",
+      "se": "ガキィン",
       "time": "2+0",
+      "scene_mark": "154",
       "numbered": true,
       "characters": [
         "黄爺",
         "沈公子"
       ],
       "confidence": "medium",
-      "notes": "action欄『フラッシュIN→QTBに』『背後から取り押さえている黄爺』『沈公子と剣を構えて応戦』。time欄『2+0』と読む",
+      "notes": "dialogue冒頭の丸囲み『SE』はガキィンに掛かる効果音指定。time欄末尾『210』は2+0(2秒0コマ)と解釈",
       "_page": "page_046.png",
       "_idx": 4
     },
     {
-      "cut_label": 155,
-      "action": "尚善 黄爺をめがけ、瓢箪に苗を引っぱり込む。瓢箪が巨大化した",
+      "cut_label": "155",
+      "action": "沈公子・黄爺さわぎ。ひょうたんに苗を引っぱり込む尚善。ひょうたんが巨大化した",
       "dialogue": "爺ちゃん、ごめん！任せる！",
       "se": "",
       "time": "2",
+      "scene_mark": "155",
       "numbered": true,
       "characters": [
-        "尚善",
+        "沈公子",
         "黄爺",
-        "苗"
-      ],
-      "confidence": "medium",
-      "notes": "action欄崩し字多く一部推測",
-      "_page": "page_047.png",
-      "_idx": 0
-    },
-    {
-      "cut_label": 156,
-      "action": "上に出るあおり。鎌",
-      "dialogue": "そうはさせぬ！",
-      "se": "",
-      "time": "1",
-      "numbered": true,
-      "characters": [
-        "沈公子"
-      ],
-      "confidence": "medium",
-      "notes": "dialogue話者は丸囲み『沈公子』",
-      "_page": "page_047.png",
-      "_idx": 1
-    },
-    {
-      "cut_label": 157,
-      "action": "再び妖怪を召喚する沈公子",
-      "dialogue": "妖怪たち（唸り）ー",
-      "se": "ドバ",
-      "time": "",
-      "numbered": true,
-      "characters": [
-        "沈公子"
-      ],
-      "confidence": "medium",
-      "notes": "dialogue欄に効果音的記述あり。se欄は別途空、ドバはdialogue欄下部の音表記の可能性",
-      "_page": "page_047.png",
-      "_idx": 2
-    },
-    {
-      "cut_label": 158,
-      "action": "瓢箪に体当たりする。木を飛ぶ尚善と苗。瓢箪 元のサイズへ",
-      "dialogue": "いいっ！ばわくっ！ぎゃん！うっ！",
-      "se": "着地ー／ドサ／パシッ",
-      "time": "2+12",
-      "numbered": true,
-      "characters": [
-        "苗",
-        "尚善"
-      ],
-      "confidence": "low",
-      "notes": "コマ3とコマ4を統合。time欄コマ3は『2+0』読み取れるがコマ4の『2+12』を採用。dialogue・se崩し字多く一部推測。158はコマ4に丸番号あり、コマ3は丸番号なしの可能性あるがレイアウト上157の続きか158の一部か判別困難。コマ3を158へ統合した。要確認",
-      "_page": "page_047.png",
-      "_idx": 3
-    },
-    {
-      "cut_label": 159,
-      "action": "フラッシュIN「→1セット」。結界を張った尚善。立ち上がる苗。 / 再び襲ってくる妖怪たち。フレームIN。AC。",
-      "dialogue": "苗「南！！」 / 妖怪たち「（咆哮）——」",
-      "se": "",
-      "time": "2",
-      "numbered": true,
-      "characters": [
-        "尚善",
-        "苗",
-        "妖怪たち"
-      ],
-      "confidence": "medium",
-      "notes": "action欄の「1セット」は崩し字で要確認 ｜ scene欄に丸番号なし→直前159の続きの可能性あるが、絵が新規のため連番160と判断。要確認",
-      "_page": "page_048.png",
-      "_idx": 0
-    },
-    {
-      "cut_label": 161,
-      "action": "T.U.。結界の中央にくるくる回るひょうたん。体当たりしてくる妖怪たち。",
-      "dialogue": "",
-      "se": "チャン！ ドガガッ！！",
-      "time": "2",
-      "numbered": true,
-      "characters": [
-        "妖怪たち"
-      ],
-      "confidence": "medium",
-      "notes": "ひょうたん=瓢箪(フゥールー)",
-      "_page": "page_048.png",
-      "_idx": 2
-    },
-    {
-      "cut_label": 162,
-      "action": "顔ブレFIX。耐えている尚善。",
-      "dialogue": "尚善「苗ちゃん、私から動かないの！」",
-      "se": "",
-      "time": "",
-      "numbered": true,
-      "characters": [
-        "尚善",
-        "苗"
-      ],
-      "confidence": "medium",
-      "notes": "",
-      "_page": "page_048.png",
-      "_idx": 3
-    },
-    {
-      "cut_label": 163,
-      "action": "PAN↑。フゥールー。下手より上手。",
-      "dialogue": "懐から護符を出して、あいつらに投げつけて！",
-      "se": "",
-      "time": "4+12",
-      "numbered": true,
-      "characters": [],
-      "confidence": "low",
-      "notes": "action欄崩し字で要確認。time欄は『4+12』と解釈(分数読みではない)",
-      "_page": "page_048.png",
-      "_idx": 4
-    },
-    {
-      "cut_label": 163,
-      "action": "取り出す（苗）／苗がヘナってしまう 護符 / （苗）まわりを見て 何かを見つける",
-      "dialogue": "は、はは…！ / えっと…っ／あっ！",
-      "se": "",
-      "time": "6",
-      "numbered": true,
-      "characters": [
-        "苗"
-      ],
-      "confidence": "low",
-      "notes": "dialogue欄は崩し字で『は、はは…』と推定 ｜ scene欄に丸番号なし＝163の続きコマとして統合。dialogue崩し字で推定",
-      "_page": "page_049.png",
-      "_idx": 0
-    },
-    {
-      "cut_label": 164,
-      "action": "PANして その辺に落ちては 小石",
-      "dialogue": "これすぐ…！",
-      "se": "カランカラン",
-      "time": "1",
-      "numbered": true,
-      "characters": [
-        "苗"
-      ],
-      "confidence": "medium",
-      "notes": "dialogue末尾に演出メモらしき記述あり→セリフのみ抽出。SE(OFF)記載あり",
-      "_page": "page_049.png",
-      "_idx": 2
-    },
-    {
-      "cut_label": 165,
-      "action": "流臂 ↓",
-      "dialogue": "",
-      "se": "ヒュッ ヒュッ…！！",
-      "time": "1+1/2",
-      "numbered": true,
-      "characters": [],
-      "confidence": "low",
-      "notes": "action欄『流臂』は崩し字で要確認。dialogue欄はSEのみ→seへ。time『1+ 1/2』は1秒+コマ表記の可能性、要確認",
-      "_page": "page_049.png",
-      "_idx": 3
-    },
-    {
-      "cut_label": 166,
-      "action": "直撃し、消滅する（妖怪たち）",
-      "dialogue": "",
-      "se": "ドカッ…！／（断末魔）—！！",
-      "time": "2+1/2",
-      "numbered": true,
-      "characters": [
-        "沈公子"
-      ],
-      "confidence": "medium",
-      "notes": "dialogue欄はSE『ドカッ』と『妖怪たち（断末魔）』記載→seへ。妖怪＝沈公子の眷属の可能性。time要確認",
-      "_page": "page_049.png",
-      "_idx": 4
-    },
-    {
-      "cut_label": 167,
-      "action": "兼用",
-      "dialogue": "(苗)やった!効いてるっ!(尚善)すぐに彩!備えてて!",
-      "se": "",
-      "time": "5",
-      "numbered": true,
-      "characters": [
-        "苗",
-        "尚善"
-      ],
-      "confidence": "medium",
-      "notes": "尚善のセリフ「すぐに彩!」要確認",
-      "_page": "page_050.png",
-      "_idx": 0
-    },
-    {
-      "cut_label": 168,
-      "action": "兼用",
-      "dialogue": "(苗)(M)はいっ!(尚善)(M)あと少しで朝がくる…!",
-      "se": "",
-      "time": "3",
-      "numbered": true,
-      "characters": [
         "苗",
         "尚善"
       ],
       "confidence": "high",
       "notes": "",
+      "_page": "page_047.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "156",
+      "action": "とっさに出るタイミング。鎌",
+      "dialogue": "そうはさせぬ！",
+      "se": "",
+      "time": "1",
+      "scene_mark": "156",
+      "numbered": true,
+      "characters": [
+        "沈公子"
+      ],
+      "confidence": "medium",
+      "notes": "action冒頭は前カット155からの続き書き込みの可能性",
+      "_page": "page_047.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "157",
+      "action": "再び妖怪を召喚する沈公子。ひょうたんに体当たりする。不を飛ぶ尚善と苗。ひょうたん元のサイズへ",
+      "dialogue": "（喘り―／バキ／イィン！／ぱわく！／ぎゃん！／うっ！",
+      "se": "バキ／イィン／ぱわく／ぎゃん／うっ",
+      "time": "2+0",
+      "scene_mark": "157",
+      "numbered": true,
+      "characters": [
+        "妖怪たち",
+        "沈公子",
+        "尚善",
+        "苗"
+      ],
+      "confidence": "medium",
+      "notes": "157は4コマ目（縦棒コマ）を統合。dialogueの妖怪たち・効果音はSE的要素を含むが書かれたまま記載",
+      "_page": "page_047.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "158",
+      "action": "ひらりと着地する尚善。ひょうたんをキャッチし、印を結ぶ",
+      "dialogue": "（着地―／ドサ…／パシッ",
+      "se": "着地／ドサ／パシッ",
+      "time": "2+12",
+      "scene_mark": "158",
+      "numbered": true,
+      "characters": [
+        "尚善"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue欄は効果音的記述が中心。下部欄外に『苗 倒れ込む』等の書き込みあり",
+      "_page": "page_047.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "159",
+      "action": "フラッシュIN →[Q.TB] 結界を張る(尚善) 立ち上がる(苗) / 再び襲ってくる(妖怪たち) フレームイン AC →T.オリ 結界の中央にくるくる回る(瓢箪) 体当たりしてくる(妖怪たち)",
+      "dialogue": "開!! / (呪り)―",
+      "se": "ギャン! ドガガ!!",
+      "time": "2",
+      "scene_mark": "159",
+      "numbered": true,
+      "characters": [
+        "尚善",
+        "苗",
+        "妖怪たち"
+      ],
+      "confidence": "medium",
+      "notes": "160のコマ(丸番号)に統合。time欄は妖怪コマに2、次の160コマにも2と記載があり結界中央の芝居を含む",
+      "_page": "page_048.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "161",
+      "action": "画ブレ→り 耐えている(尚善) / PANして つるぎ 下手 (懐の動き)",
+      "dialogue": "苗ちゃん、私たち動けないの! / 懐から護符を出して、あいつらに投げつけて!",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "161",
+      "numbered": true,
+      "characters": [
+        "尚善",
+        "苗"
+      ],
+      "confidence": "medium",
+      "notes": "丸番号なし(縦棒)の続きコマ。直前カット161に統合",
+      "_page": "page_048.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "163",
+      "action": "取り出す苗／―が、ヘナってしまう護符。苗、すおりを見て向かを見つける",
+      "dialogue": "は、はいっ…！　えーと…　あっ！",
+      "se": "",
+      "time": "4",
+      "scene_mark": "163",
+      "numbered": true,
+      "characters": [
+        "苗"
+      ],
+      "confidence": "medium",
+      "notes": "action欄の崩し字に不確実箇所あり。2コマ目は縦棒継続のため163に統合",
+      "_page": "page_049.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "164",
+      "action": "放り出してその辺に落ちては小石",
+      "dialogue": "(OFF) これすぐっ！",
+      "se": "",
+      "time": "1",
+      "scene_mark": "164",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "dialogue欄の『取りに行こう』様メモは演出指示の可能性があり保留",
+      "_page": "page_049.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "165",
+      "action": "流背",
+      "dialogue": "",
+      "se": "ビュッ、ビュゥーッ！！",
+      "time": "1+12",
+      "scene_mark": "165",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "time欄は1+12と解釈(分数読み回避)",
+      "_page": "page_049.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "166",
+      "action": "直撃し、消滅する妖怪たち",
+      "dialogue": "断末… ―！！",
+      "se": "ドカカッ！",
+      "time": "2+12",
+      "scene_mark": "166",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "dialogue欄の『妖怪たち』は話者指定。断末魔の声と思われるが崩し字のため一部不確実",
+      "_page": "page_049.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "167",
+      "action": "兼",
+      "dialogue": "やった！効いてるっ！すぐに彩！備えてっ！",
+      "se": "",
+      "time": "4",
+      "scene_mark": "167",
+      "numbered": true,
+      "characters": [
+        "苗",
+        "尚善"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue内 苗『やった！効いてるっ！』、尚善『すぐに彩！備えてっ！』。『彩』は要確認",
+      "_page": "page_050.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "168",
+      "action": "兼",
+      "dialogue": "はじっ！もう少しで朝がくる…！",
+      "se": "",
+      "time": "3",
+      "scene_mark": "168",
+      "numbered": true,
+      "characters": [
+        "苗",
+        "尚善"
+      ],
+      "confidence": "medium",
+      "notes": "苗(中)『はじっ！』、尚善(M)『もう少しで朝がくる…！』",
       "_page": "page_050.png",
       "_idx": 1
     },
     {
-      "cut_label": 169,
-      "action": "兼用 / (沈公子)の剣がうねりだし / 一気に蛇へと変化し、(黄爺)にからみつく",
-      "dialogue": "(沈公子)(背)尚善…! / (沈公子)こんな時でもまだ他人を心配するとは…俺を見くびったな…! / (苗)そ…わわっ!!(黄爺)!?…っ…",
+      "cut_label": "169",
+      "action": "兼／沈公子の剣がうねりだす／一気に蛇へと変化し、黄爺にからみつく",
+      "dialogue": "尚善…！／こんな時でもまだ他人を心配するとは…俺を見くびったなっ！／そわわっ！！／！？……",
       "se": "",
       "time": "7",
+      "scene_mark": "169",
+      "numbered": true,
+      "characters": [
+        "黄爺",
+        "沈公子"
+      ],
+      "confidence": "medium",
+      "notes": "169と続く2コマ(縦棒)を統合。コマ2 dialogue 黄爺(背)『尚善…！』、コマ3 dialogue 沈公子『こんな時でもまだ他人を心配するとは…俺を見くびったなっ！』、コマ4 action『一気に蛇へと変化し、黄爺にからみつく』、dialogue 黄爺『そわわっ！！』『！？……』。『そわわっ』は擬音的でセリフ扱いだが要確認",
+      "_page": "page_050.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "170",
+      "action": "↑じわPAN→ライブル（カンライブル）。鎌の刃が蛇の胴体にハシる。",
+      "dialogue": "ぐっ！…切れねぇ…！尚善っ…！！",
+      "se": "",
+      "time": "3",
+      "scene_mark": "170",
+      "numbered": true,
+      "characters": [
+        "黄爺"
+      ],
+      "confidence": "medium",
+      "notes": "action上部のカメラ指示は崩し字で不確実。time欄は3。dialogue話者は黄爺(丸囲み)",
+      "_page": "page_051.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "171",
+      "action": "沈公子 結界にかけて 符を投げる",
+      "dialogue": "フゥ…",
+      "se": "",
+      "time": "1",
+      "scene_mark": "171",
+      "numbered": true,
+      "characters": [
+        "沈公子"
+      ],
+      "confidence": "medium",
+      "notes": "action欄頭の丸囲みは沈公子。dialogueは沈公子の息「フゥ…」",
+      "_page": "page_051.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "172",
+      "action": "兼用。「ブノーマル色」：ショック的に入れて。",
+      "dialogue": "",
+      "se": "ピタッ／ズズ…",
+      "time": "1",
+      "scene_mark": "172",
+      "numbered": true,
+      "characters": [],
+      "confidence": "low",
+      "notes": "dialogue欄は擬音「ピタッ」「ズ」等のみでセリフなし→dialogue空。「ブノーマル色」要確認",
+      "_page": "page_051.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "173",
+      "action": "↓全尺PAN Down。吐血する(尚善)。BANK 3フレーム下さい。",
+      "dialogue": "ごほっ…！！ おやおや お嬢ちゃん ますます気に入ったよ。",
+      "se": "",
+      "time": "4+12",
+      "scene_mark": "173",
+      "numbered": true,
+      "characters": [
+        "尚善",
+        "沈公子"
+      ],
+      "confidence": "medium",
+      "notes": "173は2コマに跨る(丸番号173の行と直下の縦棒継続行)ため統合。継続コマのdialogueは沈公子(off)「おやおや お嬢ちゃん ますます気に入ったよ」。time欄末尾4+12",
+      "_page": "page_051.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "174",
+      "action": "○兼用図 尚善の方へ動づいていく(沈公子)",
+      "dialogue": "もし君が男の子だったら花家主人の身体すべて不要になったのに。",
+      "se": "",
+      "time": "",
+      "scene_mark": "174",
       "numbered": true,
       "characters": [
         "沈公子",
         "尚善",
-        "苗",
-        "黄爺"
+        "花家主人"
       ],
       "confidence": "medium",
-      "notes": "scene欄に丸番号無く縦棒のみ。直前169の続きとして統合せず連番補完。番号は170と推定 ｜ scene欄に丸番号無く縦棒のみ。連番で171と補完",
-      "_page": "page_050.png",
-      "_idx": 2
-    },
-    {
-      "cut_label": 170,
-      "action": "頬から PAN → ハンディブレ。鎌の刃が蛇の胴体に入る。",
-      "dialogue": "ぐっ！…切れねぇ…尚善っ…！",
-      "se": "",
-      "time": "1+3",
-      "numbered": true,
-      "characters": [
-        "黄爺"
-      ],
-      "confidence": "medium",
-      "notes": "dialogue冒頭の丸囲みは話者「黄爺(さん)」。前ページ最終が171との継続情報あるが、本ページ最初の丸数字は170。連番上は前後関係に注意",
-      "_page": "page_051.png",
-      "_idx": 0
-    },
-    {
-      "cut_label": 171,
-      "action": "（沈公子）結界にかけて鈴を投げる。",
-      "dialogue": "フッ…",
-      "se": "",
-      "time": "1",
-      "numbered": true,
-      "characters": [
-        "沈公子"
-      ],
-      "confidence": "medium",
-      "notes": "action/dialogue冒頭の丸囲み話者は「沈公子」と読む(誤読の沢公子ではない)",
-      "_page": "page_051.png",
-      "_idx": 1
-    },
-    {
-      "cut_label": 172,
-      "action": "兼用。「ノーマル色」：ショック的に入れて。",
-      "dialogue": "ビタッ",
-      "se": "ビタッ",
-      "time": "2",
-      "numbered": true,
-      "characters": [],
-      "confidence": "low",
-      "notes": "dialogue欄は擬音的書き込み。SE扱いか不確実。action「ノーマル色」は色指定",
-      "_page": "page_051.png",
-      "_idx": 2
-    },
-    {
-      "cut_label": 173,
-      "action": "↓ PAN Down。吐血力 尚善。3コマ ヌキ。 / 動脈血を拭うこと多く、前方を見据える。",
-      "dialogue": "ごほっ…！！ 侯女する！ / おやおや お嬢ちゃん ますます気に入った。",
-      "se": "",
-      "time": "8+12",
-      "numbered": true,
-      "characters": [
-        "尚善",
-        "沈公子"
-      ],
-      "confidence": "low",
-      "notes": "dialogue下段に丸囲み話者あり、人物名要確認。セリフ末「侯女する」は判読困難で要確認 ｜ コマ4の scene欄に丸番号が確認できず縦棒/番号なしの可能性だが、絵が別人物のためカット連番で174と補完。dialogue冒頭丸囲みは話者(off)「沈公子」と読む。要確認",
-      "_page": "page_051.png",
-      "_idx": 3
-    },
-    {
-      "cut_label": 174,
-      "action": "○兼用図　尚善の方を　動づいていく　沈公子",
-      "dialogue": "もし君が男の子だったら　花家主人の身体　すべて不要になったのに。",
-      "se": "",
-      "time": "5",
-      "numbered": true,
-      "characters": [
-        "尚善",
-        "沈公子"
-      ],
-      "confidence": "medium",
-      "notes": "dialogue冒頭に『沈公子(OFF)』の話者表示あり",
+      "notes": "dialogueに(off)指定あり。actionの『尚善』は崩し字、要確認",
       "_page": "page_052.png",
       "_idx": 0
     },
     {
-      "cut_label": 175,
-      "action": "立ち止まり再び杖を構える",
-      "dialogue": "さて、あと何回　耐えられますかな？",
-      "se": "先行あり",
+      "cut_label": "175",
+      "action": "立ち止まり再び符を構える",
+      "dialogue": "さあ、あと何回耐えられるかな？",
+      "se": "(SE)先行あり",
       "time": "",
+      "scene_mark": "175",
       "numbered": true,
       "characters": [
         "沈公子"
       ],
       "confidence": "medium",
-      "notes": "action2コマ目に表情カットあり。dialogueに『？』マーク併記",
+      "notes": "action欄に『？』の顔のスケッチあり。dialogue欄の『？』はメモ的記号",
       "_page": "page_052.png",
       "_idx": 1
     },
     {
-      "cut_label": 176,
-      "action": "ーと・迫る鎌　回転して。",
-      "dialogue": "だっ・だっ　だっ　だっ‼",
-      "se": "SE",
-      "time": "1",
+      "cut_label": "176",
+      "action": "ーと・迫る鎌 回転して。",
+      "dialogue": "",
+      "se": "FE トゥン トゥン トゥン トゥン!!",
+      "time": "",
+      "scene_mark": "176",
       "numbered": true,
       "characters": [],
-      "confidence": "low",
-      "notes": "dialogueは効果的掛け声/息の表現。冒頭に丸囲み記号",
+      "confidence": "medium",
+      "notes": "SE記号は『FE』または『FX』の可能性、要確認",
       "_page": "page_052.png",
       "_idx": 2
     },
     {
-      "cut_label": 177,
-      "action": "ふり向きざまに鎌が胸部を斬りつける。「スロー」（後にB1パートで地面に刺さっている）",
-      "dialogue": "が‼　ぐはっ‼",
-      "se": "",
-      "time": "2+1?",
+      "cut_label": "177",
+      "action": "ふり向きざまた鎌が胸部を斬りつける。スロー（後にB①パートで地面に刺さっている）",
+      "dialogue": "",
+      "se": "ザシュッ!! ぐはっ",
+      "time": "2+12",
+      "scene_mark": "177",
       "numbered": true,
       "characters": [
         "沈公子"
       ],
-      "confidence": "low",
-      "notes": "dialogue冒頭に『沈公子』話者表示。セリフ崩れ字のため低信頼。time欄は『2+1』程度の手書きで要確認",
+      "confidence": "medium",
+      "notes": "dialogue欄は呻き声/効果音的表記。timeは『2＋12』と推定、要確認",
       "_page": "page_052.png",
       "_idx": 3
     },
     {
-      "cut_label": 178,
-      "action": "「じわPAN」「ハンドフレ」　蛇に噛みついては斬る　「スロー」 / 「フルスピード」に乗って蛇がさらにしめつける",
-      "dialogue": "ぐおっ!?\nギュルルッ",
+      "cut_label": "178",
+      "action": "↑(じわPAN)(ハンディブレ) 蛇に噛みついている 黄爺 スロー / 「ノーマルスピード」になって 蛇がさらに しめつける",
+      "dialogue": "ぐおっ!?",
       "se": "ギュルルッ",
       "time": "3",
+      "scene_mark": "178",
       "numbered": true,
       "characters": [
         "黄爺"
       ],
       "confidence": "medium",
-      "notes": "dialogue欄は空白 ｜ ページ最初のコマは丸番号なし＝前ページのカット178の続きとして統合。dialogue欄に丸囲み『黄爺』のキャラ指示あり",
+      "notes": "action欄の○囲みは『黄爺』と推定。カメラ指示『じわPAN』『ハンディブレ』 ｜ ページ最初のコマは縦棒/番号なし＝前ページのカット178の続き。dialogue欄の『黄爺』はキャラ指定。time『3』",
       "_page": "page_052.png",
       "_idx": 4
     },
     {
       "cut_label": 179,
-      "action": "↑じわPAN UP\n×1Rしい気をすう・沈公子\n振って",
-      "dialogue": "クソったれ!\nイタチごときが俺を傷つけるだと!",
+      "action": "↑じわPAN UP 沈公子 くやしい気をまとう 沈公子 顔ブレ",
+      "dialogue": "クソったれ! イタチごときが俺を 傷つけるだと!",
       "se": "",
       "time": "3+12",
+      "scene_mark": "179",
       "numbered": true,
       "characters": [
         "沈公子"
       ],
-      "confidence": "medium",
-      "notes": "action欄に演出メモらしき走り書きあり。読み取り不確実",
+      "confidence": "high",
+      "notes": "action欄に『沈公子』のキャラ表記。dialogue欄冒頭の丸囲みも沈公子",
       "_page": "page_053.png",
       "_idx": 1
     },
     {
       "cut_label": 180,
-      "action": "妖怪たちが次々と体当たりをして / 遠くの森へ吹っ飛んでいく。",
-      "dialogue": "妖怪たち\n(吼え)ー",
-      "se": "",
+      "action": "妖怪たちが 次々と体当たりを して / 遠くの森へ 切り飛んでいく 全尺・普通で",
+      "dialogue": "うぉりゃー",
+      "se": "バッ ゴリッ / ズドッ ベキッ",
       "time": "4+12",
+      "scene_mark": "180",
       "numbered": true,
-      "characters": [],
-      "confidence": "low",
-      "notes": "action欄ほぼ空白。dialogue欄に丸囲み『妖怪たち』の指示と吼え声 ｜ scene欄に丸囲み数字が確認できず、連番で181と補完。action欄に丸囲み『妖怪たち』。dialogue欄は擬音/走り書きのみで明確なセリフなし ｜ scene欄が縦棒/赤枠コマで丸番号確認できず、連番で182と補完。dialogue欄は擬音の走り書きのみ",
+      "characters": [
+        "妖怪たち"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue欄に『妖怪たち』の発声。掛け声は要確認 ｜ 縦棒/番号なし＝直前カット180とは別だが丸番号無し。連番181で補完。dialogue欄の『沈』指定と効果音バッ/ゴリッ。SEはdialogueでなくseに ｜ 赤枠コマ。縦棒/番号なし＝連番182で補完。action末尾は崩し字だが用語集より『全尺・普通で』と判断。SEズドッ/ベキッ。ページ下部『(11+12)』は合計尺",
       "_page": "page_053.png",
       "_idx": 2
     },
     {
-      "cut_label": 181,
-      "action": "苗 ち上(振り向く)。→次カットへ continue",
-      "dialogue": "なえ…！\n苗ちゃん…",
+      "cut_label": "181",
+      "action": "芦花 ちらり\n（下向き顔アップ）",
+      "dialogue": "苗「ええ…！」\n芦花「苗ちゃん…」",
       "se": "",
       "time": "3",
+      "scene_mark": "181",
+      "numbered": true,
+      "characters": [
+        "芦花",
+        "苗"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue欄の話者記号は丸囲みで苗・芦花と判読",
+      "_page": "page_054.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "182",
+      "action": "↑PAN UP 全尺・普通\n涙を浮かべる 芦花",
+      "dialogue": "「ごめんね…\n私たちもう…\nダメかも…」",
+      "se": "",
+      "time": "5",
+      "scene_mark": "182",
+      "numbered": true,
+      "characters": [
+        "芦花"
+      ],
+      "confidence": "medium",
+      "notes": "2〜3コマ目は縦棒・空白で182の続き、統合",
+      "_page": "page_054.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "183",
+      "action": "→（カメラ移動指示）\nPAN→全尺・普通で\nやがて W.O.▽\n白22(40)ほど\n（Aパート ここまで）",
+      "dialogue": "苗「!!…」",
+      "se": "",
+      "time": "6",
+      "scene_mark": "183",
       "numbered": true,
       "characters": [
         "苗"
       ],
       "confidence": "medium",
-      "notes": "action欄の崩し字は『苗 ち上』と推測、要確認",
+      "notes": "最終コマは番号なしで183の続き、統合。最終コマpictureに『Aパート ここまで』の演出メモ",
       "_page": "page_054.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "184",
+      "action": "T.U. 人(イメージ)に 苗の幼少期・回想",
+      "dialogue": "こんな気持ち悪い毛虫。死ねばいいんだ！",
+      "se": "",
+      "time": "5",
+      "scene_mark": "184",
+      "numbered": true,
+      "characters": [
+        "近所の男の子",
+        "苗"
+      ],
+      "confidence": "medium",
+      "notes": "action冒頭の略号はT.U.(寄り)と推定。dialogueは男の子(幼)のセリフ",
+      "_page": "page_055.png",
       "_idx": 0
     },
     {
-      "cut_label": 182,
-      "action": "↑PAN UP 全尺・普通。涙を浮かべて(尚善) / (続き)",
-      "dialogue": "ごめんね…\n私たちもう…\nダメかも…",
+      "cut_label": "185",
+      "action": "イメージ・いっぱいから",
+      "dialogue": "なんで？今はそうかもしれないけど。きっとキレイな蝶になるよ！ もしも醜い大人になったら、どうすんの それは…",
       "se": "",
-      "time": "5",
-      "numbered": true,
-      "characters": [
-        "尚善"
-      ],
-      "confidence": "low",
-      "notes": "action欄の人名丸囲みは尚善と推測 ｜ scene欄に丸番号なし＝182の続きコマとして統合",
-      "_page": "page_054.png",
-      "_idx": 1
-    },
-    {
-      "cut_label": 183,
-      "action": "目のアップ。涙 / PAN→全尺・普通で。やがて N.O.(ナメ落ち)▽ B.O.(F.O.)(40)ほど / Bパート ここから",
-      "dialogue": "！…",
-      "se": "",
-      "time": "6",
-      "numbered": true,
-      "characters": [
-        "苗"
-      ],
-      "confidence": "low",
-      "notes": "dialogue欄の丸囲みは苗と推測 ｜ scene欄に丸番号なし＝183の続きコマとして統合。action崩し字、カメラ/編集指示と推測。要確認 ｜ 冒頭コマは丸番号なしの続き扱い。『Bパートここから』のメモと矢印。前ページ最後のカット183に統合",
-      "_page": "page_054.png",
-      "_idx": 3
-    },
-    {
-      "cut_label": 184,
-      "action": "TW.2 人(けむ)に （苗）の幼少期・回想",
-      "dialogue": "こんな気持ち分かるん死む。死ねばいいくです！",
-      "se": "",
-      "time": "5",
-      "numbered": true,
-      "characters": [
-        "苗"
-      ],
-      "confidence": "low",
-      "notes": "action欄の冒頭記号・dialogue末尾の手書き崩れ強く要確認。話者は『男の子』(近所の男の子)と推定",
-      "_page": "page_055.png",
-      "_idx": 1
-    },
-    {
-      "cut_label": 185,
-      "action": "イメージっぽい BG",
-      "dialogue": "なんで？今はそうかもしれないけど。きっとキレイな蝶にするよ！",
-      "se": "",
-      "time": "",
+      "time": "10",
+      "scene_mark": "185",
       "numbered": true,
       "characters": [
         "苗",
         "近所の男の子"
       ],
       "confidence": "medium",
-      "notes": "dialogue冒頭は苗(幼)、末尾の○男の子は話者ラベル。action欄崩れ要確認",
+      "notes": "185は2コマに跨る(縦棒の続きコマを統合)。3コマ目action『飛ぶ虫を見る苗(幼)』を含む。dialogueは苗(幼)と男の子のやりとり",
+      "_page": "page_055.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "186",
+      "action": "戻って じわっと 地面に刺さった鎌。刃に苗が映り込んで。",
+      "dialogue": "…殺しちゃうしかないよ。",
+      "se": "",
+      "time": "5",
+      "scene_mark": "186",
+      "numbered": true,
+      "characters": [
+        "苗"
+      ],
+      "confidence": "medium",
+      "notes": "ページ下部に『そばに苗達いるが苗の死で』のメモあり。dialogueは映り込みの苗のセリフと推定",
       "_page": "page_055.png",
       "_idx": 2
     },
     {
-      "cut_label": 186,
-      "action": "那ぃ虫を自(苗)（幼）※判読困難",
-      "dialogue": "もしも醜い虫みたいだったら、どうすんの？　それは…",
-      "se": "",
-      "time": "10",
-      "numbered": true,
-      "characters": [
-        "苗"
-      ],
-      "confidence": "low",
-      "notes": "コマ3はscene欄に丸番号無く小さな絵のみ。action欄判読困難。dialogue冒頭が男の子、後半『それは…』が苗(幼)。番号は連番補完",
-      "_page": "page_055.png",
-      "_idx": 3
-    },
-    {
-      "cut_label": 187,
-      "action": "戻って じわ（PAN）/ 地面に刺さった鎌。刃に（苗）が映り込んで。",
-      "dialogue": "…殺しちゃうしかないよ。",
-      "se": "",
-      "time": "5",
-      "numbered": true,
-      "characters": [
-        "苗"
-      ],
-      "confidence": "medium",
-      "notes": "scene欄に丸番号186と読めるが直前で186を使用済みのため連番で187と判断。要確認",
-      "_page": "page_055.png",
-      "_idx": 4
-    },
-    {
-      "cut_label": 187,
-      "action": "ポン寄り。暗い表情の苗(映り込み)。うつむき気味",
+      "cut_label": "187",
+      "action": "ポン寄り。暗い表情の苗(映り込む)。うつろな瞳",
       "dialogue": "…繭を破って出てきたのは…",
       "se": "",
       "time": "4",
+      "scene_mark": "187",
       "numbered": true,
       "characters": [
         "苗"
       ],
-      "confidence": "medium",
-      "notes": "action欄『暗い表情(苗)(映り込み)うつむき気味』。time欄は手書きで判読難、4と推定",
+      "confidence": "high",
+      "notes": "",
       "_page": "page_056.png",
       "_idx": 0
     },
     {
-      "cut_label": 188,
-      "action": "苗の目の壺の中の虫を見ている",
+      "cut_label": "188",
+      "action": "あの日の壺の中の苗を見ている",
       "dialogue": "虫だ…",
       "se": "",
       "time": "2",
+      "scene_mark": "188",
       "numbered": true,
       "characters": [
         "苗"
       ],
       "confidence": "medium",
-      "notes": "action欄『苗の目の壺の中の虫を見ている』",
+      "notes": "dialogue「虫だ…」は判読やや不確実",
       "_page": "page_056.png",
       "_idx": 1
     },
     {
-      "cut_label": 189,
-      "action": "こちらへ向かう足元(寄り)。←方向",
-      "dialogue": "苗(off)爺ちゃん…!",
+      "cut_label": "189",
+      "action": "(足元のカット)",
+      "dialogue": "苗ちゃん…!",
       "se": "足音",
       "time": "3",
+      "scene_mark": "189",
       "numbered": true,
       "characters": [
-        "苗"
+        "尚善"
       ],
-      "confidence": "medium",
-      "notes": "dialogue欄に『(足音)』(SE)と『苗(off) 爺ちゃん…!』。足音はseへ",
+      "confidence": "high",
+      "notes": "尚善(off)のセリフ",
       "_page": "page_056.png",
       "_idx": 2
     },
     {
-      "cut_label": 190,
-      "action": "ゆっくりとこちらを向く(沈公子)",
-      "dialogue": "苗(off)沈公子… / 沈公子 ……",
+      "cut_label": "190",
+      "action": "(後ろ姿) / ゆっくりとこちらを向く沈公子",
+      "dialogue": "沈公子さ… / ……",
       "se": "",
       "time": "5+12",
+      "scene_mark": "190",
       "numbered": true,
       "characters": [
         "苗",
         "沈公子"
       ],
-      "confidence": "low",
-      "notes": "action欄は白紙(かすれのみ)。dialogue欄『苗(off) 沈公子…』と推定。time欄空 ｜ scene欄に丸番号確認できず、縦棒/番号なしの可能性あるが新規絵のため連番190+1=191で補完。dialogue欄の丸囲みは『沈公子』と推定。time欄『5+12』(秒+コマ)",
+      "confidence": "medium",
+      "notes": "苗(off)のセリフ。continueの矢印あり ｜ scene欄は縦棒=190の続き。dialogue欄に丸囲み『沈公子』とト書き的記載、セリフは『……』",
       "_page": "page_056.png",
       "_idx": 3
     },
     {
-      "cut_label": 191,
+      "cut_label": "191",
       "action": "",
-      "dialogue": "生贄としての私が…貴方が飼ってる鬼に食われる前に死んだら…",
+      "dialogue": "生贄としての私が、貴方が飼っている鬼に食われる前に死んだら…",
       "se": "",
       "time": "6+12",
+      "scene_mark": "191",
       "numbered": true,
       "characters": [
         "苗"
       ],
-      "confidence": "medium",
-      "notes": "dialogue欄に苗の丸囲み話者記号あり",
+      "confidence": "high",
+      "notes": "",
       "_page": "page_057.png",
       "_idx": 0
     },
     {
-      "cut_label": 192,
-      "action": "↑PAN UP→するツリング 自身の首もとに鎌の刃を向ける(苗)",
-      "dialogue": "儀式は失敗 すんでしょう…",
+      "cut_label": "192",
+      "action": "↑PAN UP →T.U.(ズーミング) 自身の首もとに鎌の刃を向ける苗",
+      "dialogue": "儀式は失敗するんでしょう…",
       "se": "",
       "time": "4",
+      "scene_mark": "192",
       "numbered": true,
       "characters": [
         "苗"
       ],
-      "confidence": "medium",
-      "notes": "scene欄に縦棒のみ＝192の続きコマ。統合",
+      "confidence": "high",
+      "notes": "2コマ目は縦棒継続のため192に統合",
       "_page": "page_057.png",
       "_idx": 1
     },
     {
-      "cut_label": 193,
-      "action": "ワカン 苗の方に身体ごと向ける(沈公子) じわPAN→",
-      "dialogue": "…ムダだ。君が先に死のうと儀式は失敗することはない。 / そうですか？ そうじゃないですね… だとしたら、そもそもこれはあなたと私、ふたりだけの問題…",
+      "cut_label": "193",
+      "action": "フカン 苗の方に身体ごと向ける沈公子 ↑じわPAN",
+      "dialogue": "…ムダだ。君が先に死のうと儀式は失敗することはない。 そうですか？ そうじゃないですね… だとしたら、それでもこれは あなたと私、ふたりだけの問題…",
       "se": "",
-      "time": "10+12",
+      "time": "18+12",
+      "scene_mark": "193",
       "numbered": true,
       "characters": [
         "沈公子",
         "苗"
       ],
-      "confidence": "medium",
-      "notes": "dialogue欄に沈公子(背)の話者記号 ｜ scene欄に絵・番号判読不可。連番から194と推定。dialogueに苗の話者記号あり",
+      "confidence": "high",
+      "notes": "4コマ目は縦棒継続のため193に統合。沈公子のセリフと苗のセリフを結合",
       "_page": "page_057.png",
-      "_idx": 3
+      "_idx": 2
     },
     {
-      "cut_label": 194,
+      "cut_label": "194",
       "action": "冷たい目つきの沈公子",
-      "dialogue": "……",
+      "dialogue": "……\n私は大人しく生贄になります。\nだから…",
       "se": "",
       "time": "5",
+      "scene_mark": "194",
       "numbered": true,
       "characters": [
-        "沈公子"
+        "沈公子",
+        "苗"
       ],
       "confidence": "high",
-      "notes": "沈公子のセリフは『……』のみ。dialogue欄に苗(off)の『私は大人しく生贄になります。だから…』も記載されているが、これは次のセリフへの繋ぎ。苗のoffセリフを含む",
+      "notes": "苗のセリフはoff",
       "_page": "page_058.png",
       "_idx": 0
     },
     {
-      "cut_label": 195,
-      "action": "○兼 ズーム位置調整。涙ながらに うったえる苗",
-      "dialogue": "彼女さまを見逃してください…（訴える声）",
+      "cut_label": "195",
+      "action": "兼用 [ズーム位置調整] 涙ながらにうったえる苗",
+      "dialogue": "侯女さまを見逃してください…\n(ふるえる声)",
       "se": "",
       "time": "3",
+      "scene_mark": "195",
       "numbered": true,
       "characters": [
         "苗"
       ],
       "confidence": "medium",
-      "notes": "action欄に『ズーム位置調整』『涙ながらにうったえる(苗)』",
+      "notes": "「侯女さま」表記は要確認",
       "_page": "page_058.png",
       "_idx": 1
     },
     {
-      "cut_label": 196,
-      "action": "→ 6-PAN。ぎょっとする(尚善)",
+      "cut_label": "196",
+      "action": "→ [Q.PAN] ぎょっとする尚善",
       "dialogue": "！っ……\n苗ちゃん…？",
       "se": "",
       "time": "2+12",
+      "scene_mark": "196",
+      "numbered": true,
+      "characters": [
+        "尚善"
+      ],
+      "confidence": "high",
+      "notes": "",
+      "_page": "page_058.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "197",
+      "action": "苗のもとへ[バラ]でかくす。",
+      "dialogue": "侯女さま、早く行って下さい。\nお爺さまも大ケガをしているはず…！",
+      "se": "",
+      "time": "5",
+      "scene_mark": "197",
+      "numbered": true,
+      "characters": [
+        "苗"
+      ],
+      "confidence": "medium",
+      "notes": "「侯女さま」表記は要確認",
+      "_page": "page_058.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "198",
+      "action": "[瞳ブレ] 196の引きBL",
+      "dialogue": "助けてあげて。\nでも…！\n苗ちゃんの命を守らないと…！",
+      "se": "",
+      "time": "5",
+      "scene_mark": "198",
+      "numbered": true,
+      "characters": [
+        "尚善"
+      ],
+      "confidence": "medium",
+      "notes": "最初のセリフはoff、尚善のセリフあり",
+      "_page": "page_058.png",
+      "_idx": 4
+    },
+    {
+      "cut_label": "199",
+      "action": "BG ノーマル！→T.U.→中O.L. ふわりと風になびく髪。T.U.して。(髪のすぐOK)",
+      "dialogue": "そう…命は大切なもの。",
+      "se": "",
+      "time": "4",
+      "scene_mark": "199",
+      "numbered": true,
+      "characters": [
+        "苗"
+      ],
+      "confidence": "medium",
+      "notes": "",
+      "_page": "page_059.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "200",
+      "action": "苗 T.U.ダー(BG 全)。(かびる) このCutまで。鱗粉が舞う",
+      "dialogue": "だから、お爺さまを守ってあげて。お願い…！",
+      "se": "",
+      "time": "5",
+      "scene_mark": "200",
+      "numbered": true,
+      "characters": [
+        "苗"
+      ],
+      "confidence": "medium",
+      "notes": "dialogue冒頭に『苗』の話者記号あり",
+      "_page": "page_059.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "201",
+      "action": "決意打(尚善)。尚善に向かって符を投げる。←修PAN→より",
+      "dialogue": "！？…  待ってて！すぐ戻るから！！",
+      "se": "シャパッ！！",
+      "time": "7",
+      "scene_mark": "201",
       "numbered": true,
       "characters": [
         "尚善",
         "苗"
       ],
       "confidence": "medium",
-      "notes": "dialogue欄の話者は尚善(丸囲み)。time欄は2+12と解釈(分数読みは誤り)",
-      "_page": "page_058.png",
-      "_idx": 2
-    },
-    {
-      "cut_label": 197,
-      "action": "苗のもとと「バラ」でかくす。",
-      "dialogue": "彼女さま、早く行ってなさい。お爺さまも大ケガをしてるはず…！",
-      "se": "",
-      "time": "5",
-      "numbered": true,
-      "characters": [
-        "苗",
-        "黄爺さん"
-      ],
-      "confidence": "medium",
-      "notes": "話者は苗(丸囲み)。『お爺さま』は黄爺さんを指すと推定",
-      "_page": "page_058.png",
-      "_idx": 3
-    },
-    {
-      "cut_label": 198,
-      "action": "瞳ブレ。196の兼用(尚善)",
-      "dialogue": "助けてあげて。\nでも…！苗ちゃんの命を守らないと…！",
-      "se": "",
-      "time": "5",
-      "numbered": true,
-      "characters": [
-        "苗",
-        "尚善"
-      ],
-      "confidence": "medium",
-      "notes": "dialogue欄に(苗)『助けてあげて。』と尚善の丸囲みセリフ『でも…！苗ちゃんの命を守らないと…！』。action欄の『196の兼用(尚善)』は兼用指示",
-      "_page": "page_058.png",
-      "_idx": 4
-    },
-    {
-      "cut_label": 199,
-      "action": "BG ノーマル！→じわ→中OL。ふわりと風になびく髪。じわOLして。（髪のじわOL）",
-      "dialogue": "そう…命は大切なもの。",
-      "se": "",
-      "time": "4",
-      "numbered": true,
-      "characters": [
-        "苗"
-      ],
-      "confidence": "medium",
-      "notes": "dialogue冒頭に丸囲み『苗』の話者指定あり",
-      "_page": "page_059.png",
-      "_idx": 0
-    },
-    {
-      "cut_label": 200,
-      "action": "T:ダウン。じわっと、このくらいまで。",
-      "dialogue": "だから、お爺さまを守ってあげて。お願い…！",
-      "se": "",
-      "time": "5",
-      "numbered": true,
-      "characters": [
-        "苗"
-      ],
-      "confidence": "medium",
-      "notes": "action欄に『苗』話者マークとPAN/Tダウン指示。BG下方向の指示と読める",
-      "_page": "page_059.png",
-      "_idx": 1
-    },
-    {
-      "cut_label": 201,
-      "action": "（苗） / 決意打（前番） / （苗）に向かって柳を投げる。←修PAN→より",
-      "dialogue": "！っ…… / 待ってて！すぐ戻るから！！",
-      "se": "=/2 //…",
-      "time": "7",
-      "numbered": true,
-      "characters": [
-        "苗"
-      ],
-      "confidence": "low",
-      "notes": "dialogue欄に丸囲み『苗』らしき話者マーク。セリフは小さく断片的 ｜ scene欄に縦棒のみで丸番号なし＝直前カットの続きの可能性もあるが、絵が新規・連番補完で202とした。要確認 ｜ scene欄縦棒のみ＝続きコマ。連番補完で203。dialogue欄はSE記号(=/2等)＝セリフでないがse欄に記載。time『7』",
+      "notes": "201は4コマに跨る(丸番号201＋縦棒/空白の続き3コマ)を統合。最終コマdialogueにSE記号あり→seへ",
       "_page": "page_059.png",
       "_idx": 2
     },
     {
-      "cut_label": 202,
-      "action": "(苗)の足もとに、囲むように符が貼られて。",
-      "dialogue": "ドクッ‥",
-      "se": "",
+      "cut_label": "202",
+      "action": "苗の足元に囲むように符が貼られて。",
+      "dialogue": "",
+      "se": "ピタッ！！",
       "time": "1",
+      "scene_mark": "202",
       "numbered": true,
       "characters": [
         "苗"
       ],
-      "confidence": "medium",
+      "confidence": "high",
       "notes": "",
       "_page": "page_060.png",
       "_idx": 0
     },
     {
-      "cut_label": 203,
-      "action": "兼用。結界を張る。全尺・普通の(あらわれ)を手に(尚善) / (白煙が)立ち上る/もくもく(雲・煙)。OUT↑",
-      "dialogue": "(尚善)結界——。 / はわん‥！ ドガッ‥！！",
+      "cut_label": "203",
+      "action": "兼。結界を張す。すでに元サイズの応魂鈴を手にして(尚善)",
+      "dialogue": "結界―。",
       "se": "",
       "time": "4",
+      "scene_mark": "203",
       "numbered": true,
       "characters": [
         "尚善"
       ],
-      "confidence": "low",
-      "notes": "action欄崩し字多く一部推測。「全尺・普通」のまとまりと推定 ｜ scene欄に丸番号無く縦棒のみ→203の続きとして扱うべきだが絵は煙描写。番号要確認",
+      "confidence": "medium",
+      "notes": "2コマ目(縦棒・継続)を統合。煙・爆発描写は203の続き。SEぼわん！／ビュォッ！！はSE扱い",
       "_page": "page_060.png",
       "_idx": 1
     },
     {
-      "cut_label": 204,
-      "action": "胸部の傷を押さえている。(顔アップ)",
-      "dialogue": "(沈公子)逃がすか…！ (苗)(M) 侠女さまに構うな。！",
+      "cut_label": "204",
+      "action": "胸部の右手を押さえている",
+      "dialogue": "逃がすか…！ 侠女さまに構うな！",
       "se": "",
       "time": "3",
+      "scene_mark": "204",
       "numbered": true,
       "characters": [
         "沈公子",
         "苗"
       ],
       "confidence": "medium",
-      "notes": "dialogue「沈公子」誤読防止で採用。「沢公子」は誤り",
+      "notes": "dialogue欄に(沈公子)『逃がすか…！』と(苗)(M)『侠女さまに構うな！』",
       "_page": "page_060.png",
-      "_idx": 3
+      "_idx": 2
     },
     {
-      "cut_label": 205,
-      "action": "叫ぶ(苗)。体全体の動き。",
+      "cut_label": "205",
+      "action": "叫ぶ苗。体・体の動工あり",
       "dialogue": "今すぐ死ぬよ！！",
       "se": "",
       "time": "2",
+      "scene_mark": "205",
       "numbered": true,
       "characters": [
         "苗"
       ],
       "confidence": "medium",
-      "notes": "",
+      "notes": "action末尾の字形不鮮明",
       "_page": "page_060.png",
-      "_idx": 4
+      "_idx": 3
     },
     {
-      "cut_label": 206,
-      "action": "首にわずかに刃がくい込み、出血。",
-      "dialogue": "(ピッ…)",
-      "se": "",
-      "time": "",
+      "cut_label": "206",
+      "action": "首にわずかに刀がくい込み、出血。",
+      "dialogue": "",
+      "se": "(ピッ…)",
+      "time": "1",
+      "scene_mark": "206",
       "numbered": true,
       "characters": [],
-      "confidence": "medium",
+      "confidence": "high",
       "notes": "",
       "_page": "page_061.png",
       "_idx": 0
     },
     {
-      "cut_label": 207,
-      "action": "冷たい表情になり（沈公子）",
-      "dialogue": "…君なら分かってくれると思ったのにねえ…",
+      "cut_label": "207",
+      "action": "冷めた表情に切り 沈公子",
+      "dialogue": "…君なら分かってくれると思ったのにさぁ…",
       "se": "",
       "time": "5",
+      "scene_mark": "207",
       "numbered": true,
       "characters": [
         "沈公子"
       ],
-      "confidence": "medium",
+      "confidence": "high",
       "notes": "",
       "_page": "page_061.png",
       "_idx": 1
     },
     {
-      "cut_label": 208,
-      "action": "回り込み→△",
-      "dialogue": "君も私も共に運命に見捨てられた者だ。この術を身に付けなければ。",
+      "cut_label": "208",
+      "action": "回り込み！",
+      "dialogue": "(沈)君も私も共に運命に見捨てられた者だ。この術を身に付けなければ。",
       "se": "",
       "time": "7",
+      "scene_mark": "208",
       "numbered": true,
       "characters": [
         "沈公子"
       ],
       "confidence": "medium",
-      "notes": "dialogue冒頭に(背)＝背中向きの指示。話者は沈公子",
+      "notes": "dialogueは(沈)＝沈公子の声。冒頭(背)は背後/OFF指定の可能性",
       "_page": "page_061.png",
       "_idx": 2
     },
     {
-      "cut_label": 209,
-      "action": "回り込み△ 苗ちゃめ",
+      "cut_label": "209",
+      "action": "回り込み 苗ちゃん",
       "dialogue": "400年も前に、私はひとりで痛ましく死んでいた。ひとりの凡才の道士など",
       "se": "",
       "time": "8",
+      "scene_mark": "209",
       "numbered": true,
       "characters": [
         "苗",
         "沈公子"
       ],
       "confidence": "medium",
-      "notes": "話者は沈公子。絵に苗が立つ",
+      "notes": "action欄に丸囲み『苗』ちゃん。セリフは沈公子の語り",
       "_page": "page_061.png",
       "_idx": 3
     },
     {
-      "cut_label": 210,
-      "action": "情念のように湧く。妖怪のケムリ",
-      "dialogue": "誰も同情しないし、気にもしない。だが今はもう誰も拒むこともない…",
+      "cut_label": "210",
+      "action": "情念のように湧く。妖怪のけむり",
+      "dialogue": "(off)誰も同情しないし、気にもしない。だが今はもう誰も探むこともない…",
       "se": "",
       "time": "8",
+      "scene_mark": "210",
       "numbered": true,
       "characters": [
         "沈公子"
       ],
       "confidence": "medium",
-      "notes": "",
+      "notes": "dialogueは(off)＝OFFのモノローグ。語り手は沈公子",
       "_page": "page_061.png",
       "_idx": 4
     },
     {
-      "cut_label": 211,
-      "action": "PAN ←（全尺・普通で）",
-      "dialogue": "どうあがらいても化け狐の寿命でもせいぜい200年くらい…しかし私は天地のように長生きできる…",
+      "cut_label": "211",
+      "action": "PAN←／全尺・普通で",
+      "dialogue": "ちぜちら化け狐の寿命でもせいぜい200年くらい…しかし私は天地のおに長生きできる…",
       "se": "",
       "time": "9",
+      "scene_mark": "2/1",
       "numbered": true,
       "characters": [
         "沈公子"
       ],
       "confidence": "medium",
-      "notes": "dialogue冒頭は「どうあがいても」の崩し。話者は沈公子",
+      "notes": "dialogue冒頭の話者表記=沈公子(丸囲み)。一部崩し字あり要確認",
       "_page": "page_062.png",
       "_idx": 0
     },
     {
-      "cut_label": 212,
-      "action": "PAN → / 作画17枚（クイックに）。苗の背後から襲いかかって（妖怪たち）→ラスト ZB-（ホ）",
-      "dialogue": "お前が耶友をしるければ…！…？ / （沈）うわぁ—！！（苗）！！！…？…",
+      "cut_label": "212",
+      "action": "PAN→ / 作画1コマ(クイックに)／苗の背後から襲いかかる妖怪たち／ラストにスロー1あり",
+      "dialogue": "お前が邪魔をしなければっ！\n…？ / うわぁ―！！\n！！！…っ…",
       "se": "",
       "time": "5",
+      "scene_mark": "2/2",
       "numbered": true,
       "characters": [
-        "苗",
-        "沈公子"
+        "沈公子",
+        "苗"
       ],
-      "confidence": "low",
-      "notes": "dialogue中盤の漢字判読困難、要確認。話者記号(苗)あり ｜ scene欄は縦棒のみで丸番号なし→直前カット212の続きだが、内容量と尺記載から独立コマと判断。番号は連番補完213。要確認",
+      "confidence": "medium",
+      "notes": "2行目話者=苗(丸囲み)。1行目話者表記(沈)崩れ要確認 ｜ scene欄縦棒=212の続き。dialogue話者=沈(うわぁ)・苗。番号なしコマのため直前カットに統合",
       "_page": "page_062.png",
       "_idx": 1
     },
     {
       "cut_label": "213A",
       "action": "苗に妖怪たちのカゲが落ちて",
-      "dialogue": "！…（自沈）",
+      "dialogue": "！…（自決）",
       "se": "",
       "time": "1+12",
+      "scene_mark": "213A",
       "numbered": true,
       "characters": [
         "苗"
       ],
       "confidence": "medium",
-      "notes": "scene欄に丸囲み213＋(A)、下に(B)あり「あいませんよ次のページ」メモ。枝番Aを採用",
+      "notes": "scene欄に213・丸囲みA。左に『あけません?2コマ』等の指示メモあり→B枝番への指示。dialogueはセリフ的記述(自決)",
       "_page": "page_062.png",
       "_idx": 3
     },
     {
-      "cut_label": 214,
-      "action": "兼用。アバンパートの蝶が舞うシーン。BG BLで蝶物FIX",
-      "dialogue": "（苗）私は…蝶には ちれちい…",
+      "cut_label": "214",
+      "action": "○兼用／アバンパートの蝶が舞うシーン／BG BL で蝶物FIX",
+      "dialogue": "私は…蝶には…もれちい…",
       "se": "",
       "time": "",
+      "scene_mark": "2/4",
       "numbered": true,
       "characters": [
         "苗"
       ],
       "confidence": "low",
-      "notes": "dialogue末尾判読困難、要確認",
+      "notes": "action『蝶』『FIX』崩れ要確認。dialogue話者=苗(丸囲み)、末尾セリフ判読困難",
       "_page": "page_062.png",
       "_idx": 4
     },
     {
-      "cut_label": "213",
-      "action": "首に入っていく鎌の刃。このCut、トロ──。舞う鮮血。 / と、闇をすり抜け光を放つ",
+      "cut_label": "213B",
+      "action": "首に入っていく鎌の刃。このCut.スロー！ 舞う鮮血。 / ーと、闇を払う符\n光を放つ",
       "dialogue": "",
-      "se": "",
+      "se": "カッ",
       "time": "1+12 / 5+0",
+      "scene_mark": "213B",
       "numbered": true,
       "characters": [],
       "confidence": "medium",
-      "notes": "scene欄に丸囲み『B』と『213』が描かれ、上部に消し跡あり。枝番リストの213Bに該当。コマ1〜4はscene欄に縦棒のみで丸番号なし→直前カット213の続きとして統合(白紙・つなぎコマで本文なし) ｜ ページ最初のコマはscene欄に縦棒のみで丸番号なし＝前ページ214の続きだが、左コマに番号記載が無く本文が独立しているため連番215として補完。要確認",
+      "notes": "scene欄に『213』と丸囲み『B』。枝番213Bは実在リストにあり採用。time欄は『1+12』と解釈（分数読みは誤り）。下の4コマは番号・本文ともに無い空コマのため出力に含めない ｜ ヘッダに『C214のつづき』とあり、最上段は番号なし＝前ページ214の続き",
       "_page": "page_063.png",
       "_idx": 0
     },
     {
-      "cut_label": 215,
-      "action": "妖怪たちをすり抜け現れたのは道然と尚善。道然、鎌の柄を掴んでいる",
-      "dialogue": "すげぇ！！ 妖怪たち（断截一",
-      "se": "",
+      "cut_label": "215",
+      "action": "[全尺]\n妖怪たちを払いつつ\n現れたのは道然と苗\n道然 鎌の柄を握っている",
+      "dialogue": "森のうえ！！\n（断末ー",
+      "se": "妖怪たち（断末魔）",
       "time": "2",
+      "scene_mark": "215",
       "numbered": true,
       "characters": [
         "道然",
-        "尚善"
+        "苗"
       ],
       "confidence": "medium",
-      "notes": "scene欄に丸囲み2/5の番号あり。前のコマと統合の可能性あるが番号付きのため別カットとして扱う",
+      "notes": "dialogue欄に『妖怪たち』『断末』とあるが効果音/ト書き寄り。発話は不明瞭",
       "_page": "page_064.png",
       "_idx": 1
     },
     {
-      "cut_label": 216,
-      "action": "B：ゾッとする尚善、逃げ出し",
-      "dialogue": "光弱る／うっ…！",
+      "cut_label": "216A",
+      "action": "ぎょっとする沈公子\n逃けだし。",
+      "dialogue": "沈公子\nくっ…！",
       "se": "",
-      "time": "2+12 1+0",
+      "time": "2+12",
+      "scene_mark": "216A",
       "numbered": true,
       "characters": [
-        "尚善"
+        "沈公子"
       ],
       "confidence": "medium",
-      "notes": "scene欄に216A/216Bの枝番表記あり。dialogue欄に216Aの表記。枝番AとBが同コマ範囲に混在しており要確認",
+      "notes": "dialogue欄に『216A 光弱まる』のメモあり=演出メモ。time欄に枠外の人物作画(216A?)あり",
       "_page": "page_064.png",
       "_idx": 2
     },
     {
-      "cut_label": 217,
-      "action": "森の中へと消えていく沈公子。鎌を捨てて道然、気を失い倒れる尚善 / かけよる尚善",
-      "dialogue": "4 1/2… / ドサ…／苗ちゃん…！",
-      "se": "ドサ",
+      "cut_label": "216B",
+      "action": "out する",
+      "dialogue": "",
+      "se": "",
+      "time": "1+0",
+      "scene_mark": "216B",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "scene欄拡大で216A/216Bが斜線で併記。コマ2に統合",
+      "_page": "page_064.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "217",
+      "action": "森の中へと消えていく沈公子\n鎌を捨てる道然\n気を失い倒れる苗 / かけよる尚善",
+      "dialogue": "ザッ… / ドサ…\n尚善 苗ちゃん…！",
+      "se": "ザッ / ドサ",
       "time": "3",
+      "scene_mark": "217",
       "numbered": true,
       "characters": [
         "沈公子",
         "道然",
-        "尚善",
-        "苗"
+        "苗",
+        "尚善"
       ],
-      "confidence": "low",
-      "notes": "dialogue欄は判読困難、尺らしき走り書きの可能性あり。要確認 ｜ scene欄に丸番号なく縦棒のみ＝直前カットの続きの可能性。本文が独立しているため連番218で補完。要確認",
+      "confidence": "medium",
+      "notes": "scene欄は縦棒＝直前217の続き。同一カット217に統合",
       "_page": "page_064.png",
-      "_idx": 3
+      "_idx": 4
     },
     {
-      "cut_label": 218,
-      "action": "少女(苗)の顔アップ。横顔。",
-      "dialogue": "丹薬を飲ませて\nここでしばらく待ってる。",
+      "cut_label": "218",
+      "action": "(顔のアップ・伏し目)",
+      "dialogue": "丹薬を飲ませてここでしばらく待ってる。",
       "se": "",
-      "time": "",
+      "time": "4+12",
+      "scene_mark": "218",
       "numbered": true,
       "characters": [
-        "苗",
         "道然"
       ],
       "confidence": "medium",
-      "notes": "dialogue欄に『道然』の話者表記あり",
+      "notes": "218は2コマに跨る(2コマ目はscene欄が縦棒=続き)。time欄の4+12は2コマ目に記載。1コマ目は苗、2コマ目で道然が折り鶴(蝶?)を手に。dialogue冒頭の(off)指定あり",
       "_page": "page_065.png",
       "_idx": 0
     },
     {
-      "cut_label": 219,
-      "action": "森。立つ人物(道然)と座る苗の引きの画。ひとり森の中へと向かう道然。",
+      "cut_label": "219",
+      "action": "ひとり森の中へと向かう道然",
       "dialogue": "師匠…？",
       "se": "",
       "time": "3",
+      "scene_mark": "219",
       "numbered": true,
       "characters": [
         "道然",
         "苗"
       ],
       "confidence": "medium",
-      "notes": "action欄の話者『苗』、dialogue欄に『苗(子供)』表記あり。time『3』",
+      "notes": "dialogue頭に(苗)指定。actionに兼用記号あり",
       "_page": "page_065.png",
       "_idx": 1
     },
     {
-      "cut_label": 220,
-      "action": "森の中、手前に苗(後ろ姿)、奥に立つ師伯。腕組み。",
-      "dialogue": "師匠はかなりお怒りのようです。\n君のそんな姿を見てしまったら。",
+      "cut_label": "220",
+      "action": "呂仁 腕組みをして(立つ)",
+      "dialogue": "師匠はかなりお怒りのようです。君のそんな姿を見てしまったら。",
       "se": "",
       "time": "5+12",
+      "scene_mark": "220",
       "numbered": true,
       "characters": [
-        "師伯"
+        "呂仁",
+        "苗"
       ],
       "confidence": "medium",
-      "notes": "dialogue/action欄に話者『師伯』。time『5+12』",
+      "notes": "dialogue頭に(呂仁)指定",
       "_page": "page_065.png",
       "_idx": 2
     },
     {
-      "cut_label": 221,
-      "action": "Follow 奥へ 森の中を歩く道然(後ろ姿)。",
-      "dialogue": "無理もちはね。",
+      "cut_label": "221",
+      "action": "Follow 奥へ 森の中を歩く 道然",
+      "dialogue": "無理もないよね。",
       "se": "",
       "time": "2+12",
+      "scene_mark": "221",
       "numbered": true,
       "characters": [
         "道然"
       ],
-      "confidence": "low",
-      "notes": "セリフ判読難。time『2+12』",
+      "confidence": "medium",
+      "notes": "scene欄は『24』のように見えるが連番から221と判断。dialogue頭に(off)指定",
       "_page": "page_065.png",
       "_idx": 3
     },
     {
-      "cut_label": 222,
-      "action": "森の池。全尺・普通でPAN。沈公子(の頭が水面から出ている)",
-      "dialogue": "はぁ…はぁ…ぐぅ…!!",
+      "cut_label": "222",
+      "action": "PAN(森・朝の景色)",
+      "dialogue": "はぁ… はぁ… ぐっ…!!",
       "se": "",
       "time": "3+12",
+      "scene_mark": "222",
       "numbered": true,
       "characters": [
         "沈公子"
       ],
       "confidence": "medium",
-      "notes": "action欄に[PAN]の記号。dialogue欄は荒い息・呻き声",
+      "notes": "dialogue冒頭に(沈公子)(背)の指定。森の朝の景観カット",
       "_page": "page_066.png",
       "_idx": 0
     },
     {
-      "cut_label": 223,
-      "action": "沈公子につけられた胸のキズ。出血が激しい。",
-      "dialogue": "くそっ!もう少しで成功したのに…!",
-      "se": "",
-      "time": "",
+      "cut_label": "223",
+      "action": "黄爺につけられた胸のキズ。出血が激しい。 / PANにて沈公子へ。ダメージが大きい様子。",
+      "dialogue": "くそっ！もう少しで成功したのに…！ / 早くこの魂を健康な身体に移さねば…",
+      "se": "がさっ…",
+      "time": "4+12",
+      "scene_mark": "223",
       "numbered": true,
       "characters": [
+        "黄爺",
         "沈公子"
+      ],
+      "confidence": "medium",
+      "notes": "丸番号なし=223の続き。SE指定あり。time欄は4+12と読む",
+      "_page": "page_066.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "224",
+      "action": "フレームイン 道然",
+      "dialogue": "沈公子「!?…」 (足音)",
+      "se": "足音",
+      "time": "3",
+      "scene_mark": "224",
+      "numbered": true,
+      "characters": [
+        "沈公子",
+        "道然"
+      ],
+      "confidence": "medium",
+      "notes": "action欄に人物がフレームインする指示。dialogueに沈公子のリアクションと(足音)指定",
+      "_page": "page_066.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "225",
+      "action": "A.C. 立ち上がり。肩を細かく(動かす)。",
+      "dialogue": "道然「……」",
+      "se": "",
+      "time": "3",
+      "scene_mark": "225",
+      "numbered": true,
+      "characters": [
+        "道然"
       ],
       "confidence": "medium",
       "notes": "",
       "_page": "page_066.png",
-      "_idx": 1
-    },
-    {
-      "cut_label": 224,
-      "action": "沈公子へT.U.(寄り)。ダメージが大きい様子。",
-      "dialogue": "早くこの魂を健康な身体に移さねば…",
-      "se": "が4ッ…",
-      "time": "4+12",
-      "numbered": true,
-      "characters": [
-        "沈公子"
-      ],
-      "confidence": "medium",
-      "notes": "dialogue内にSE指示の丸囲みあり→seへ分離",
-      "_page": "page_066.png",
-      "_idx": 2
-    },
-    {
-      "cut_label": 225,
-      "action": "沈公子→足音。少しより、顔を細かく。",
-      "dialogue": "沈公子「は?…」",
-      "se": "",
-      "time": "3",
-      "numbered": true,
-      "characters": [
-        "沈公子"
-      ],
-      "confidence": "low",
-      "notes": "action欄に[PC]記号。dialogue欄に『沈公子』の丸囲みと『は?…』らしき手書き",
-      "_page": "page_066.png",
-      "_idx": 3
-    },
-    {
-      "cut_label": 226,
-      "action": "上方の何かに気づく。少し上より、肩を細かく。",
-      "dialogue": "道然!",
-      "se": "",
-      "time": "3",
-      "numbered": true,
-      "characters": [
-        "道然"
-      ],
-      "confidence": "low",
-      "notes": "丸番号225と226の境界が不鮮明。dialogue欄に『道然』の丸囲み手書き。確信低めのため要確認",
-      "_page": "page_066.png",
       "_idx": 4
     },
     {
-      "cut_label": 226,
-      "action": "→じわPAN",
-      "dialogue": "…俺を殺しに来たのか？\n安心しろ、僕も誓った人だ",
+      "cut_label": "226",
+      "action": "○ 兼 →じわPAN",
+      "dialogue": "…俺を殺した気たのか？ 安心しろ、僕も誓ったが 軽々しく殺生はしないと。不…又ははは…それことを同じ道の者。道士さまだ…",
       "se": "",
-      "time": "",
+      "time": "4+12",
+      "scene_mark": "226",
       "numbered": true,
       "characters": [
         "沈公子",
         "道然"
       ],
       "confidence": "medium",
-      "notes": "dialogue欄の話者ラベルは沈公子(冒頭「沢公子」は誤読→沈公子)と道然(背)",
+      "notes": "226と続きの縦棒コマを統合。dialogue内の沈公子・道然の話者記号は省いてセリフのみ。一部崩し字で不確実",
       "_page": "page_067.png",
       "_idx": 0
     },
     {
-      "cut_label": 227,
-      "action": "道然の方に向く（沈公子）",
-      "dialogue": "軽々しく殺生はしないと。\n不っ…ハハハハ…\nそれこそ同じ道の者。\n道士さまだ…\nお前も分かっているだろう。\nどいつもこいつも口先では\n正義を語り。",
+      "cut_label": "227",
+      "action": "道然の方を向く（沈子）",
+      "dialogue": "お前も分かっているだろう どいつもこいつも口先では 正義を語り。",
       "se": "",
       "time": "",
+      "scene_mark": "227",
       "numbered": true,
       "characters": [
-        "道然",
-        "沈公子"
+        "沈公子",
+        "道然"
       ],
       "confidence": "medium",
-      "notes": "コマ1は縦棒のみの続きコマのため227に統合。dialogue欄の話者ラベル沈公子",
+      "notes": "time欄はチェック様マークのみ",
       "_page": "page_067.png",
       "_idx": 1
     },
     {
-      "cut_label": 228,
+      "cut_label": "228",
       "action": "→じわPAN",
-      "dialogue": "言葉だけの「善」「義」\n「道」をくり返す。\n臆病なくせに貪欲で\n自分の強さを言葉で\n鼓舞し、実行に移さ…",
+      "dialogue": "言葉での「善」「義」「道」をくり返す。臆病なくせに貪欲で 自分の強さを言葉で 鼓舞し、実行に移さない",
       "se": "",
-      "time": "",
+      "time": "4+12",
+      "scene_mark": "228",
       "numbered": true,
-      "characters": [],
+      "characters": [
+        "沈公子"
+      ],
       "confidence": "medium",
-      "notes": "背(モノローグ的セリフ)。コマ末で229Aへ続く",
+      "notes": "(背)＝背後からのセリフ指定。dialogue欄に書かれた本文をセリフとして採録",
       "_page": "page_067.png",
       "_idx": 2
     },
     {
       "cut_label": "229A",
-      "action": "",
-      "dialogue": "それで自分の本性を\n隠しされているところが\nまた愚かで滑稽\nそのもの。",
+      "action": "229A",
+      "dialogue": "",
       "se": "",
-      "time": "3+0",
+      "time": "",
+      "scene_mark": "229A",
       "numbered": true,
       "characters": [],
       "confidence": "medium",
-      "notes": "用紙に丸囲み229A/229Bが明示。コマ3末の丸囲み229A、コマ4の左番号229Bを反映。本文(add)を229Aに統合",
+      "notes": "229Aは差し込み小コマ(丸囲みに英字A)。実在枝番リストに229A有り。本文はaction欄に番号のみ",
       "_page": "page_067.png",
       "_idx": 3
     },
     {
       "cut_label": "229B",
-      "action": "F.I. 顔のアップ（俯瞰気味）。下向き矢印",
-      "dialogue": "ちかちか面白い奴だ。罪を重ねては自分を棚にあげて。優越感に浸るとは…",
+      "action": "F.I.になり",
+      "dialogue": "それで自分の本性を 隠しされているところが また惠かで清楚 そのもの。 / なかなか面白い奴だ。罪を重ねては自分を棚にあげて。優越感に浸るとは…",
       "se": "",
-      "time": "",
-      "numbered": true,
-      "characters": [
-        "道然"
-      ],
-      "confidence": "low",
-      "notes": "229Bは絵のみで本文は229A側に記載。dialogue/action空 ｜ ページ最初の続きコマ。前ページ最後のカット229の続きとして統合。dialogue冒頭に(道然)の話者表示あり",
-      "_page": "page_067.png",
-      "_idx": 4
-    },
-    {
-      "cut_label": 230,
-      "action": "",
-      "dialogue": "僕は今、すごく腹が立っては…",
-      "se": "",
-      "time": "",
-      "numbered": true,
-      "characters": [],
-      "confidence": "medium",
-      "notes": "action欄は実質白紙",
-      "_page": "page_068.png",
-      "_idx": 1
-    },
-    {
-      "cut_label": 231,
-      "action": "△兼用",
-      "dialogue": "！っ… 僕の刀がツガミしたから",
-      "se": "",
-      "time": "",
+      "time": "3+0 / 4+12",
+      "scene_mark": "229B",
       "numbered": true,
       "characters": [
         "沈公子",
         "道然"
       ],
+      "confidence": "medium",
+      "notes": "229B(scene欄に229とB)。実在枝番リストに229B有り。dialogue欄の(off)はオフセリフ指定 ｜ ページ最初のコマはscene欄に丸番号なし＝前ページ229カットの続き。time欄は『4+12』と読む",
+      "_page": "page_067.png",
+      "_idx": 4
+    },
+    {
+      "cut_label": "230",
+      "action": "",
+      "dialogue": "僕は今、だく暖が立っては…",
+      "se": "",
+      "time": "",
+      "scene_mark": "230",
+      "numbered": true,
+      "characters": [],
       "confidence": "low",
-      "notes": "dialogue欄に(沈公子)『！っ…』と(道然)(off)『僕の刀が…』の話者表示。文末『ツガミしたから』要確認",
+      "notes": "セリフは手書き崩れで一部判読困難。話者表記なし。time欄判読不可",
+      "_page": "page_068.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "231",
+      "action": "○兼",
+      "dialogue": "！っ…\n僕の剣がリカ…したから",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "231",
+      "numbered": true,
+      "characters": [
+        "沈公子",
+        "道然"
+      ],
+      "confidence": "medium",
+      "notes": "沈公子の『！っ…』に続き道然(off)のセリフ。下段セリフ末尾は判読困難。actionは『兼(兼用)』を丸で囲んだもの",
       "_page": "page_068.png",
       "_idx": 2
     },
     {
-      "cut_label": 232,
-      "action": "BLペタ。くるくる回転",
+      "cut_label": "232",
+      "action": "BLベタにくるくる回る剣",
       "dialogue": "お前の戯言を聞く気分じゃない…",
       "se": "",
-      "time": "",
-      "numbered": true,
-      "characters": [],
-      "confidence": "medium",
-      "notes": "dialogueに(off)表示。末尾に(尚善)らしき話者記号と縦線の波線",
-      "_page": "page_068.png",
-      "_idx": 3
-    },
-    {
-      "cut_label": 233,
-      "action": "アップ：3/2 / 分身のよう、3本に打剣 ピタッと止まる",
-      "dialogue": "フルルル… チチ…",
-      "se": "",
-      "time": "",
-      "numbered": true,
-      "characters": [],
-      "confidence": "low",
-      "notes": "dialogue欄は波線記号のみでセリフなし。action欄の数値表記要確認 ｜ ページ先頭の丸番号なし続きコマ。次コマの丸囲み「234」に統合。剣が3方向に分かれて止まる描写",
-      "_page": "page_068.png",
-      "_idx": 4
-    },
-    {
-      "cut_label": 235,
-      "action": "「中UL」して「ノーマル」へ うでを組んでいる（道然）",
-      "dialogue": "",
-      "se": "",
-      "time": "",
+      "time": "3+12",
+      "scene_mark": "232",
       "numbered": true,
       "characters": [
         "道然"
       ],
       "confidence": "medium",
-      "notes": "左番号「234」と丸囲みのコマ群。action欄に露出/ノーマル指示。dialogue欄の「道然」「では失礼」はセリフとして扱う",
+      "notes": "dialogueは(off)指定。下部の効果音記号『〃』はSE扱い",
+      "_page": "page_068.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "233",
+      "action": "ポン:3/2 / 分身のよう。7本に打針 ピタッと止める",
+      "dialogue": "",
+      "se": "〃〃〃〃 / ルルルル… チャチ…",
+      "time": "",
+      "scene_mark": "233",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "dialogue欄の記号は効果音的な反復記号。time欄空白 ｜ ページ最初の2コマは丸番号なし＝前ページのカット233の続き。コマ0(打針)とコマ1(O.L.→ノーマルへ、刀を組んでいる道然)を統合",
+      "_page": "page_068.png",
+      "_idx": 4
+    },
+    {
+      "cut_label": "234",
+      "action": "O.L.して ノーマルへ 刀を組んでいる(道然)",
+      "dialogue": "では失礼",
+      "se": "",
+      "time": "1+12",
+      "scene_mark": "234",
+      "numbered": true,
+      "characters": [
+        "道然"
+      ],
+      "confidence": "medium",
+      "notes": "action欄の波形記号と『中OL』は O.L.指示と解釈。dialogueの冒頭丸囲みは話者名『道然』",
       "_page": "page_069.png",
       "_idx": 1
     },
     {
-      "cut_label": 236,
-      "action": "兼用",
-      "dialogue": "では失礼。",
-      "se": "",
-      "time": "",
+      "cut_label": "235",
+      "action": "兼(用) スタート",
+      "dialogue": "",
+      "se": "ピュオォォォォォォ…",
+      "time": "1",
+      "scene_mark": "235",
       "numbered": true,
-      "characters": [
-        "道然"
-      ],
+      "characters": [],
       "confidence": "medium",
-      "notes": "左番号「235」の丸囲みコマ。action欄に「兼用」記号。dialogue欄に道然のセリフ",
+      "notes": "235は3コマ(顔アップ/目アップ等)に跨る。本文を統合。dialogue欄の冒頭丸囲みSEは効果音と判断しseへ",
       "_page": "page_069.png",
       "_idx": 2
     },
     {
-      "cut_label": 237,
-      "action": "スタート",
-      "dialogue": "ピュッ オオオォ…",
+      "cut_label": "236",
+      "action": "↑PAN UP +フェアリング ノーマル / FIXになりつつノーマルへT.U. / FIX くるりとまわって消える了本の剣・出血なし",
+      "dialogue": "…",
       "se": "",
-      "time": "",
-      "numbered": true,
-      "characters": [],
-      "confidence": "low",
-      "notes": "丸囲み数字判読困難。連番補完。手のアップから始動。dialogueは効果音的な掛け声",
-      "_page": "page_069.png",
-      "_idx": 3
-    },
-    {
-      "cut_label": 238,
-      "action": "",
-      "dialogue": "",
-      "se": "",
-      "time": "",
-      "numbered": true,
-      "characters": [],
-      "confidence": "low",
-      "notes": "丸囲み「3」のコマ。目のアップ。本文ほぼ空白。連番補完",
-      "_page": "page_069.png",
-      "_idx": 4
-    },
-    {
-      "cut_label": 236,
-      "action": "↑PAN UP + フェアリング\nノーマル / FIX にもどりつつ\nノーマルへ T.U. / FIX\nふわりと立って消える\n了本の剣・出血なし",
-      "dialogue": "沈公子\n〃 … / 沈公子\n…",
-      "se": "",
-      "time": "6+0",
+      "time": "4+12",
+      "scene_mark": "236",
       "numbered": true,
       "characters": [
         "沈公子"
       ],
       "confidence": "medium",
-      "notes": "action欄『フェアリング』は崩し字で要確認 ｜ scene欄に丸番号なし(縦棒)=236の続きとして統合 ｜ scene欄に丸番号なし(縦棒)=236の続きとして統合。『了本の剣』要確認",
+      "notes": "コマ0〜2を統合(scene欄は丸236の後、縦棒コマが続く)。action中の『フェアリング』『了本の剣』等は崩し字につき要確認。沈公子はdialogue欄の役名注記",
       "_page": "page_070.png",
       "_idx": 0
     },
     {
-      "cut_label": 237,
-      "action": "○兼 AC\n気を失い倒れた地\n沈公子",
-      "dialogue": "ド ザ ッ…",
-      "se": "ドザッ",
+      "cut_label": "237",
+      "action": "○兼 AC 気を失い倒れ込む 沈公子",
+      "dialogue": "ドサッ…",
+      "se": "",
       "time": "2",
+      "scene_mark": "237",
       "numbered": true,
       "characters": [
         "沈公子"
       ],
       "confidence": "medium",
-      "notes": "action冒頭の文字は『兼』『AC』と判読",
+      "notes": "dialogueの『ドサッ』は倒れる音だが手書きで台詞欄に記載。要確認",
       "_page": "page_070.png",
-      "_idx": 3
+      "_idx": 1
     },
     {
-      "cut_label": 238,
-      "action": "(背景・草むら描写) / セリフつづく",
-      "dialogue": "道然(OFF)\nお前を殺さない。\nただお前の術を\n無にしただけ…\n術が効かなければ / お前は余命幾ばくも ないだろう…",
+      "cut_label": "238",
+      "action": "PAN← 全尺・普通で",
+      "dialogue": "お前を殺さない。ただお前の術を無にしただけ…術が効かなければ",
       "se": "",
-      "time": "6+0",
+      "time": "4+12",
+      "scene_mark": "238",
+      "numbered": true,
+      "characters": [
+        "道然"
+      ],
+      "confidence": "high",
+      "notes": "dialogue欄頭の『道然(OFF)』は話者指定。コマ4のaction欄末に『PAN← 全尺・普通で』",
+      "_page": "page_070.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "239A",
+      "action": "セリフつづき／道然 アオリ",
+      "dialogue": "お前は余命幾ばくもないだろう…",
+      "se": "",
+      "time": "4",
+      "scene_mark": "239",
       "numbered": true,
       "characters": [
         "道然"
       ],
       "confidence": "medium",
-      "notes": "コマ0はscene欄に丸囲み数字が見えず『A』表記。前ページ238の続きの可能性もあるが、dialogue欄に(道然)話者あり。action欄に赤字メモ・サインあり。次コマが239なので本コマは238の続きとして扱うべきだが、numbered=falseで保留。要確認",
-      "_page": "page_070.png",
-      "_idx": 4
+      "notes": "scene欄に丸囲み『239 A』。actionの赤字『アオリ』、△フォーカスのメモあり",
+      "_page": "page_071.png",
+      "_idx": 0
     },
     {
-      "cut_label": 239,
-      "action": "夜明け前 明るくなっている空",
+      "cut_label": "239B",
+      "action": "夜明け前／明るくなっている空",
       "dialogue": "それでは失礼します…",
       "se": "",
-      "time": "1+12",
+      "time": "4+12",
+      "scene_mark": "239",
       "numbered": true,
       "characters": [
         "呂仁"
       ],
       "confidence": "medium",
-      "notes": "scene欄に丸囲み『239 B』。dialogue話者(呂仁)。time欄『4+1/2』に見えるが秒+コマ記法で1+12と解釈、要確認",
+      "notes": "dialogue欄の話者表記は『(呂仁)』らしき丸囲み。OFFセリフ",
       "_page": "page_071.png",
       "_idx": 1
     },
     {
-      "cut_label": 240,
-      "action": "道観 客室 早朝 明っている(BG)",
-      "dialogue": "(寝)寝ずり— 苗…",
+      "cut_label": "240",
+      "action": "道観、寝室。早朝／眠っている苗",
+      "dialogue": "…さえずり―",
       "se": "",
       "time": "2+12",
+      "scene_mark": "240",
       "numbered": true,
       "characters": [
         "苗"
       ],
-      "confidence": "low",
-      "notes": "dialogue欄の文字が崩れており判読困難。話者・セリフとも要確認",
+      "confidence": "medium",
+      "notes": "dialogueの『さえずり―』は鳥のさえずり(SE的描写)。苗のセリフは『…』のみ",
       "_page": "page_071.png",
       "_idx": 2
     },
     {
-      "cut_label": 241,
-      "action": "持っている手元 じわっとB",
-      "dialogue": "黄爺さんは、日仁と芦花婆さんにお願いしている…",
+      "cut_label": "241",
+      "action": "扉を開けた音／じわPB",
+      "dialogue": "黄爺さんは、呂仁と芦花婆さんにお願いしている…",
       "se": "",
-      "time": "",
+      "time": "4+12",
+      "scene_mark": "241",
       "numbered": true,
       "characters": [
         "道然",
-        "黄爺さん",
+        "黄爺",
+        "呂仁",
         "芦花婆さん"
       ],
       "confidence": "medium",
-      "notes": "dialogue話者(道然)。『日仁』は呂仁の誤読の可能性、要確認",
+      "notes": "道然のセリフ(中)。actionの『じわPB』はトラックバック系の移動指示か",
       "_page": "page_071.png",
       "_idx": 3
     },
     {
-      "cut_label": 242,
-      "action": "眠っている(苗)子の",
-      "dialogue": "…どうした？ 爺ちゃんに気を遣って言われたのに私はそれを聞かなかった…",
+      "cut_label": "242",
+      "action": "眠っている苗のもと(寄り)",
+      "dialogue": "…どうした？　爺ちゃんに危ないって言われたのに私はそれを聞かなかった…",
       "se": "",
       "time": "6+0",
+      "scene_mark": "242",
       "numbered": true,
       "characters": [
-        "尚善"
+        "尚善",
+        "苗"
       ],
       "confidence": "medium",
-      "notes": "dialogue欄に話者(尚善)。time欄判読困難で要確認",
+      "notes": "後半セリフの話者は丸囲み『尚善』。下部欄外に『外、白くとばし気味』のメモ",
       "_page": "page_071.png",
       "_idx": 4
     },
     {
-      "cut_label": 243,
-      "action": "苗の口もとに、まだ少し血で\nだれている\nタッ↑のので",
-      "dialogue": "尚善「ぐすっ…」\n道然(off)「後悔したか？それともあの子を救うべきではなかったか？」 / 尚善(首をココに入れる—)",
+      "cut_label": "243",
+      "action": "尚善の口もとまだ少し血でよごれている タップのず",
+      "dialogue": "ぐす…… 後悔したか？ それともあの子を救べきではなかったか？",
       "se": "",
       "time": "6+12",
+      "scene_mark": "243",
       "numbered": true,
       "characters": [
         "尚善",
-        "道然",
-        "苗"
+        "道然"
       ],
       "confidence": "medium",
-      "notes": "action欄崩し字あり一部不確実。カット番号243は丸囲み確認 ｜ scene欄に縦棒のみ＝243の続きコマとして統合。time=6+12と読む",
+      "notes": "道然のセリフは(off)。2コマ目(縦棒/空白)を統合。2コマ目dialogue『首をヨコに振る—』はト書き的だがdialogue欄記載のため参考。time 6+12は2コマ目欄に記載",
       "_page": "page_072.png",
       "_idx": 0
     },
     {
-      "cut_label": 244,
+      "cut_label": "244",
       "action": "",
-      "dialogue": "道然「ち、ちくで泣いているの？まだ君は成長の途中なんだ。ひとりで抱え込まないほうが良い。」",
+      "dialogue": "あら、ひとりで泣いているの？ まだ君は成長の途中なんだ。ひとりで抱え込まないほうが良い。",
       "se": "",
-      "time": "5+6",
+      "time": "5+0",
+      "scene_mark": "244",
       "numbered": true,
       "characters": [
         "道然"
       ],
       "confidence": "medium",
-      "notes": "dialogue冒頭の崩し字「ち、ちくで泣いて」は不確実、要確認",
+      "notes": "",
+      "_page": "page_072.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "245",
+      "action": "",
+      "dialogue": "芦花婆さんも黄爺ちゃんも仲間だと分かっただろう。それに… ？…",
+      "se": "",
+      "time": "5+0",
+      "scene_mark": "245",
+      "numbered": true,
+      "characters": [
+        "道然",
+        "尚善"
+      ],
+      "confidence": "medium",
+      "notes": "1コマ目dialogueは(off)。2コマ目(縦棒/空白)を統合。2コマ目セリフは尚善『？…』",
       "_page": "page_072.png",
       "_idx": 2
     },
     {
-      "cut_label": 245,
-      "action": "",
-      "dialogue": "(off)「芦花婆さんも黄爺さんも仲間だと分かったろう。それに…」 / 尚善「？…」",
+      "cut_label": "246",
+      "action": "口もとを拭ってやる(道然)",
+      "dialogue": "僕も仲間だ。困ったことがあったら遠慮なく頼ってくれ。\n…はい",
       "se": "",
-      "time": "5+0",
+      "time": "7",
+      "scene_mark": "246",
       "numbered": true,
       "characters": [
         "道然",
+        "尚善"
+      ],
+      "confidence": "high",
+      "notes": "2コマ目は縦棒継続のため246に統合。2コマ目dialogueは尚善の『…はい』、time欄『7』",
+      "_page": "page_073.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "247",
+      "action": "・道観への道(朝)\n↓PAN Down + フェアリング(フェアリング=要確認)\n歩いてくる(呂仁と芦花婆)",
+      "dialogue": "…まったく！歳を考えずに張り切るからだ！道然や呂仁が、いなかったらどうなってたか！\nへんっ。油断しただけじゃ！\nしばらく日陰れてむくでね(要確認)",
+      "se": "",
+      "time": "4(要確認)",
+      "scene_mark": "247",
+      "numbered": true,
+      "characters": [
         "芦花",
+        "黄爺",
+        "呂仁"
+      ],
+      "confidence": "medium",
+      "notes": "2コマ目は縦棒継続のため247に統合。action『フェアリング』『むくでね』は崩し字で要確認。dialogue3行目は芦花婆さんの台詞",
+      "_page": "page_073.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "248",
+      "action": "包丁をとぎ水でいる(黄爺(イタチ))\nボロロ手前\n(イタチ顔の小カット) / -と、つねられる (黄爺イン)",
+      "dialogue": "とんでもない姿を尚善に見られたくないだろ？\nそういうことは気が利くんです。 / ギャむっ！",
+      "se": "",
+      "time": "5",
+      "scene_mark": "248",
+      "numbered": true,
+      "characters": [
         "黄爺",
         "尚善"
       ],
-      "confidence": "low",
-      "notes": "話者明記なし、off指示。文脈から道然のセリフと推定 ｜ scene欄に丸番号なし(縦棒/番号なし)。前ページ継続情報と連番から246と補完。numbered=false",
-      "_page": "page_072.png",
-      "_idx": 3
-    },
-    {
-      "cut_label": 246,
-      "action": "ロをふって\n揺ってやる（道然）",
-      "dialogue": "僕も仲間だ。\n困ったことがあったら\n遠慮なく頼ってくれ。",
-      "se": "",
-      "time": "",
-      "numbered": true,
-      "characters": [
-        "道然"
-      ],
       "confidence": "medium",
-      "notes": "action欄崩し字。dialogueは道然のセリフ",
+      "notes": "黄爺(イタチの姿)。action『ボロロ手前』『包丁をとぎ』は崩し字で要確認。ページ下に(10+12)の集計メモあり ｜ ページ最初のコマはscene欄空白＝前ページ最後のカット248の続き。dialogue欄に丸囲み『黄爺』はキャラ指定でセリフではないがセリフの叫びとして記載",
       "_page": "page_073.png",
-      "_idx": 0
+      "_idx": 2
     },
     {
-      "cut_label": 247,
-      "action": "道観への道（朝）\n↓PAN DOWN ＋ フォローイング / 歩いてくる\n呂仁と芦花婆さん",
-      "dialogue": "…まったく！歳を考えずに張り切るからだ\n道然や呂仁が…いなかったらどうなってたか！ / へんっ。油断しただけじゃ！\nしばらく日陰れておくでね。",
-      "se": "",
-      "time": "",
-      "numbered": true,
-      "characters": [
-        "芦花婆さん",
-        "呂仁"
-      ],
-      "confidence": "medium",
-      "notes": "dialogue冒頭の話者は芦花婆さん(丸囲み崩し字)。time欄は前コマからの続き断片 ｜ コマ3(scene欄縦棒・番号なし)は直前247の続きとして統合",
-      "_page": "page_073.png",
-      "_idx": 1
-    },
-    {
-      "cut_label": 248,
-      "action": "包帯を引きずって水でいる猫(黄爺さん)\nHello手前\n──────\n(黄爺さんイタチの姿) / イタチ(黄爺)の顔アップ。手でつねられる。#新194兼用",
-      "dialogue": "こんなみっともない姿を\n尚善に見られたくないだろ？\nそういうことに気が利くんです。(黄爺さん) / ギャ……!",
-      "se": "",
-      "time": "5+",
-      "numbered": true,
-      "characters": [
-        "黄爺さん"
-      ],
-      "confidence": "low",
-      "notes": "丸囲み番号248。action欄崩し字・カメラ記号要確認。dialogue内に話者切替(黄爺さん) ｜ ページ最初のコマは丸番号なし＝前ページ最後のカット248の続きとして統合。action欄に『#新194』兼用指示",
-      "_page": "page_073.png",
-      "_idx": 3
-    },
-    {
-      "cut_label": 249,
-      "action": "Follow → ○ 汗タラの婆に",
-      "dialogue": "イダダダダッ!わしを殺す気か!くたばれ!それだけ元気なら問題はなさそうだね",
+      "cut_label": "249",
+      "action": "Follow→ 汗ダラの呂仁",
+      "dialogue": "イダダダッ！わしを殺す気か！くそばばあ！\nそれだけ元気なら問題はなさそうですね。",
       "se": "",
       "time": "5+12",
+      "scene_mark": "249",
       "numbered": true,
       "characters": [
-        "黄爺さん",
+        "呂仁",
         "芦花婆さん"
       ],
-      "confidence": "medium",
-      "notes": "dialogue末尾は芦花婆さんのセリフ",
+      "confidence": "high",
+      "notes": "芦花婆さんのセリフを含む",
       "_page": "page_074.png",
       "_idx": 1
     },
     {
-      "cut_label": 250,
-      "action": "F.I. △(ロケ)に +16%兼用(道然を見送ったところ) ↓じわ PAN DOWN",
-      "dialogue": "…官中に薪を持たせてありますので先に失礼させていただきます。",
+      "cut_label": "250",
+      "action": "F.I.イン(BK)に +6%兼用 (道然を見送ったところ) ↓じわPAN DOWN",
+      "dialogue": "…官中に弟子を待たせてありますので先に失礼させていただきます。",
       "se": "",
-      "time": "",
+      "time": "6",
+      "scene_mark": "250",
       "numbered": true,
       "characters": [
-        "呂仁"
+        "呂仁",
+        "道然"
       ],
       "confidence": "medium",
-      "notes": "dialogue冒頭に丸囲み呂仁(前)の話者表示",
+      "notes": "dialogue欄頭の丸囲み『呂仁』はキャラ指定",
       "_page": "page_074.png",
       "_idx": 2
     },
     {
-      "cut_label": 251,
-      "action": "芦花婆さん 何か察して、勘違う。",
-      "dialogue": "道然を待たなくてもいいのかい？少し不安なこともありますので急ぎます。 / …こちらのことも気にかけてもらってすみたいで、すまないね。",
+      "cut_label": "251",
+      "action": "芦花婆 何か察して気遣う。",
+      "dialogue": "道然を待たなくてもいいのかい？\n少し不安なこともありますので急ぎます / …こちらのことも気にかけてもらってすみたいで すまないね。",
       "se": "",
       "time": "6+12",
+      "scene_mark": "251",
       "numbered": true,
       "characters": [
         "芦花婆さん",
         "呂仁"
       ],
-      "confidence": "low",
-      "notes": "芦花婆さんと呂仁(前)の掛け合い ｜ scene欄は番号なし(顔アップのつなぎコマ)。直前251に続くが、dialogue/action独立のため便宜上252として補完。要確認",
+      "confidence": "medium",
+      "notes": "次コマ(scene欄縦棒｜)へ続く。本文を統合 ｜ scene欄縦棒＝251の続きだが、同一番号で別エントリにせず本来は統合すべき。便宜上ここでは前カット251に統合する内容。実際は1エントリ",
       "_page": "page_074.png",
       "_idx": 3
     },
     {
-      "cut_label": 252,
-      "action": "表情がくもる(芦花)\n←じわPAN",
-      "dialogue": "いえ、全てにおいて安全な世が一番です。私の方も道然に",
+      "cut_label": "252",
+      "action": "表情がくもる(呂仁)　←じわT.U.",
+      "dialogue": "いえ。全てにおいて安穏な世が一番です。私の方も道然に",
       "se": "",
-      "time": "5+12",
+      "time": "4+12",
+      "scene_mark": "252",
       "numbered": true,
       "characters": [
-        "芦花婆さん",
-        "道然"
+        "呂仁"
       ],
       "confidence": "medium",
-      "notes": "action欄『じわPAN』の方向は左向き矢印",
+      "notes": "action欄『じわT.U.』はじわっとトラックアップ",
       "_page": "page_075.png",
       "_idx": 0
     },
     {
-      "cut_label": 253,
-      "action": "",
-      "dialogue": "(off)ムリを言ってもらってすみません。お二人ともお元気で。(芦花婆)頷き−。",
+      "cut_label": "253",
+      "action": "↓(顔)",
+      "dialogue": "(off)ムリを言ってもらってますから。お二人ともお元気で。(芦花婆さん)頷き—。",
       "se": "",
       "time": "5+12",
+      "scene_mark": "253",
       "numbered": true,
       "characters": [
         "芦花婆さん"
@@ -3955,422 +4081,451 @@
       "_idx": 1
     },
     {
-      "cut_label": 254,
-      "action": "+6%兼用 加算\n○街への道\n−を走る馬車。\n加算 向く先に雲多め",
-      "dialogue": "(尚善)高軍−−\n(芦花婆)(off)…少し暗い顔してたね。",
+      "cut_label": "254",
+      "action": "#16%兼用[加筆]　・街への道—を走る馬車。[加筆]向く先に雲多め",
+      "dialogue": "(5)馬車—　(芦花婆さん)(off)……少し暗い顔してたね。",
       "se": "",
       "time": "5",
+      "scene_mark": "254",
       "numbered": true,
       "characters": [
-        "尚善",
         "芦花婆さん"
       ],
-      "confidence": "low",
-      "notes": "action欄『+6%兼用』『加算』は崩し字、要確認。尚善のセリフ『高軍』は判読難で要確認",
+      "confidence": "medium",
+      "notes": "action欄の『加算』は『加筆』と解釈",
       "_page": "page_075.png",
       "_idx": 2
     },
     {
-      "cut_label": 255,
+      "cut_label": "255",
       "action": "",
-      "dialogue": "(黄爺さん)顧一族の耳だな。(芦花婆)ええ。そうだね…",
+      "dialogue": "(黄爺さん)顧一族の事だね。(芦花婆さん)ええ。そうだね…",
       "se": "",
       "time": "3+12",
+      "scene_mark": "255",
       "numbered": true,
       "characters": [
         "黄爺さん",
         "芦花婆さん"
       ],
       "confidence": "medium",
-      "notes": "黄爺さんセリフの『顧一族』要確認",
+      "notes": "",
       "_page": "page_075.png",
       "_idx": 3
     },
     {
-      "cut_label": 256,
-      "action": "↑PAN UP 全尺・普通で",
-      "dialogue": "おそらく、もうすぐ騒がしい奴らが出てくるよ。きっと…\n(黄爺さん)(off)そうだろうな…",
+      "cut_label": "256",
+      "action": "↑PAN UP　全尺.普通で",
+      "dialogue": "おそらく。もうすぐ騒がしい奴らが出てくるよ。きっと…(黄爺さん)(off)そうだろうな…",
       "se": "",
       "time": "7+0",
+      "scene_mark": "256",
       "numbered": true,
       "characters": [
         "黄爺さん"
       ],
       "confidence": "medium",
-      "notes": "time欄は『7+0』と判読",
+      "notes": "ページ末に O.L.(1+12)など、(27+0)の集計あり",
       "_page": "page_075.png",
       "_idx": 4
     },
     {
-      "cut_label": 257,
-      "action": "T.U.で道観へ ○山の中／道観（昼） ↑じわPAN UP #6%兼用",
+      "cut_label": "257",
+      "action": "O.L.で道観へ ○山の中／道観 (昼) ↑じわPAN UP #6%兼用",
       "dialogue": "",
       "se": "",
       "time": "3",
+      "scene_mark": "257",
       "numbered": true,
       "characters": [],
-      "confidence": "medium",
-      "notes": "action欄に「+6%兼用」のカメラ/流用指示。場所は道観(257-273 道観・寝室)に合致",
+      "confidence": "high",
+      "notes": "",
       "_page": "page_076.png",
       "_idx": 0
     },
     {
-      "cut_label": 258,
-      "action": "○同／寝室 苗、寝ている（眠っている）",
-      "dialogue": "",
+      "cut_label": "258",
+      "action": "○同／寝室 眠っている尚善",
+      "dialogue": "(尚善) 寝息ー",
       "se": "",
       "time": "3",
+      "scene_mark": "258",
       "numbered": true,
       "characters": [
-        "苗"
+        "尚善"
       ],
-      "confidence": "medium",
-      "notes": "dialogue欄は「苗(寝た─」=ト書き的メモのため空。人物候補=苗",
+      "confidence": "high",
+      "notes": "",
       "_page": "page_076.png",
       "_idx": 1
     },
     {
-      "cut_label": 259,
-      "action": "苗を見守る道然 やってくる芦花婆さんの足音",
+      "cut_label": "259",
+      "action": "尚善を見守る道然 やってくる芦花婆さんの足音",
       "dialogue": "",
-      "se": "足音─",
+      "se": "(足音ー)",
       "time": "3",
+      "scene_mark": "259",
       "numbered": true,
       "characters": [
         "道然",
         "芦花婆さん"
       ],
-      "confidence": "medium",
-      "notes": "dialogue欄は「(足音─」効果音メモのためdialogueは空、seへ。芦龍→芦花の表記に統一",
+      "confidence": "high",
+      "notes": "dialogue欄の(足音)は効果音のためseに記載",
       "_page": "page_076.png",
       "_idx": 2
     },
     {
-      "cut_label": 260,
-      "action": "+6%兼用 芦花婆さん／棚→ / 道然、右で制して 苗を見つめてセリフ",
-      "dialogue": "道然、長旅で疲れているだろう。すぐに休んでよい。少し横になりなさい。 / （いえ。）…すごく怖がっているようだ。",
+      "cut_label": "260",
+      "action": "#6%兼用 芦花婆さん 棚あり (道然)右手で制して 尚善を見つめてセリフ",
+      "dialogue": "(芦花婆さん) 道然、長旅で疲れているだろう。すぐに休んでもいいし、少し横になりなさい。 (道然・小) (いえ。) ……だいぶ怖がっているようだ。",
       "se": "",
-      "time": "",
+      "time": "1+12",
+      "scene_mark": "260",
       "numbered": true,
       "characters": [
-        "道然",
         "芦花婆さん",
-        "苗"
+        "道然"
       ],
-      "confidence": "low",
-      "notes": "dialogue欄に芦花婆さんのセリフ。話者は芦花婆さん ｜ scene欄に丸番号が確認できず縦棒/番号なしの可能性。連番で260の次=261と補完。話者は道然。要確認",
+      "confidence": "medium",
+      "notes": "最終コマはscene欄が縦棒｜の継続コマのため260に統合。time欄末尾の(22+0)はページ集計と判断",
       "_page": "page_076.png",
       "_idx": 3
     },
     {
-      "cut_label": 261,
-      "action": "↓じわPAN Down\n（尚善）の手を握っている\nうすく震えている\n（尚善）の左手。",
-      "dialogue": "（道然）\n手を引いてしまうと。\nこの子が目を覚ましてしまうかもしれません。\n落ち着いたら自分も休みます…",
+      "cut_label": "261",
+      "action": "↓じわ PAN Down／尚善の手を握っては うすく震えては 尚善の左手。",
+      "dialogue": "手を引いてしまうと、この子が目を覚ましてしまうかもしれません。落ち着いたら自分も休みます…",
       "se": "",
       "time": "7+12",
-      "numbered": true,
-      "characters": [
-        "尚善",
-        "道然"
-      ],
-      "confidence": "medium",
-      "notes": "",
-      "_page": "page_077.png",
-      "_idx": 0
-    },
-    {
-      "cut_label": 262,
-      "action": "（苗の頭部・表情）→こっちを向く",
-      "dialogue": "（苗）\nあれ…ですか…\nきっと花の露が\n集まっていないことを",
-      "se": "",
-      "time": "8+0付近(読み取りにくい)",
-      "numbered": true,
-      "characters": [
-        "苗"
-      ],
-      "confidence": "low",
-      "notes": "time欄手書き不鮮明。dialogueの『花の露が集まっている』は要確認",
-      "_page": "page_077.png",
-      "_idx": 1
-    },
-    {
-      "cut_label": 263,
-      "action": "T.U. 全尺・普通で\nテーブルの奥\n空枠とばの利用に（要確認）",
-      "dialogue": "気にしているのかもしれないね。\nそれがあちたにバレてしまうと。",
-      "se": "",
-      "time": "",
-      "numbered": true,
-      "characters": [],
-      "confidence": "low",
-      "notes": "action後半『窓枠そばの利用に』など崩し字で要確認。dialogue『あちた』は人名候補不明、要確認",
-      "_page": "page_077.png",
-      "_idx": 2
-    },
-    {
-      "cut_label": 264,
-      "action": "（道然）が（尚善）に\n預けた花瓶。\nだまに（尚善）の\n（ひょうたん＝瓢箪） / 花ざかり\nPAN 全尺・普通で",
-      "dialogue": "（◯◯）\nまた離れ離れになることが怖いんだ。\n…持たねこのです（要確認） / そばにいるべきさ。",
-      "se": "",
-      "time": "8",
+      "scene_mark": "261",
       "numbered": true,
       "characters": [
         "道然",
         "尚善"
       ],
-      "confidence": "low",
-      "notes": "dialogue末尾崩し字で要確認。プロップ『瓢箪』は用語集と一致 ｜ scene欄に丸番号なし＝264の続きコマとして統合。action冒頭『花ざかり』要確認",
+      "confidence": "high",
+      "notes": "",
       "_page": "page_077.png",
-      "_idx": 3
+      "_idx": 0
     },
     {
-      "cut_label": 265,
-      "action": "嵐(顔のアップ・寝ている苗の横顔)",
-      "dialogue": "未熟な子供でも すぐに大きくちすんだ あっという間だよ…",
+      "cut_label": "262",
+      "action": "（芦花婆さんの顔、振り向く芝居）",
+      "dialogue": "あれまぁ…きっと花の露が集まっているのよ。",
       "se": "",
-      "time": "4+12",
+      "time": "4+0.6",
+      "scene_mark": "262",
       "numbered": true,
       "characters": [
         "芦花婆さん"
       ],
       "confidence": "medium",
-      "notes": "dialogue冒頭の話者名は丸囲みで『芦花婆』(off)。actionは崩し字で『嵐』と読めるが要確認",
+      "notes": "time欄『4+0.6』と読めるが要確認",
+      "_page": "page_077.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "263",
+      "action": "T.U. 全尺・普通で／テーブルの奥 窓枠そばの棚に",
+      "dialogue": "気にしているのかもしれないね。それがあなたにバレてしまうと。",
+      "se": "",
+      "time": "5+12",
+      "scene_mark": "263",
+      "numbered": true,
+      "characters": [
+        "芦花婆さん"
+      ],
+      "confidence": "high",
+      "notes": "",
+      "_page": "page_077.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "264",
+      "action": "道然が尚善に預けた花瓶。すぐ横に尚善のひょうたん。／九ぞ～り／T.PAN 全尺・普通で",
+      "dialogue": "また離れ離れになることが怖いんだよ。…あたしはこの子のそばにいるべきさ。",
+      "se": "",
+      "time": "8",
+      "scene_mark": "264",
+      "numbered": true,
+      "characters": [
+        "道然",
+        "尚善"
+      ],
+      "confidence": "medium",
+      "notes": "カット264は2コマにまたがり統合。2コマ目は縦棒継続(numbered=false)のため264に統合。action『九ぞ～り』は崩し字で要確認",
+      "_page": "page_077.png",
+      "_idx": 3
+    },
+    {
+      "cut_label": "265",
+      "action": "○兼",
+      "dialogue": "未熟な子供でも すぐに大きく育つんだ あっという間だよ…",
+      "se": "",
+      "time": "5+12",
+      "scene_mark": "265",
+      "numbered": true,
+      "characters": [
+        "芦花婆さん"
+      ],
+      "confidence": "high",
+      "notes": "dialogue冒頭に(芦花婆さん)(OFF)の指示。芦花は色見本準拠",
       "_page": "page_078.png",
       "_idx": 0
     },
     {
-      "cut_label": 266,
-      "action": "うつむく顔／↓(下向き矢印=芝居続く)",
+      "cut_label": "266",
+      "action": "(顔のカットイン、↓矢印)",
       "dialogue": "その瞬間、瞬間を 大切に見届けると いいよ。",
       "se": "",
       "time": "5+12",
+      "scene_mark": "266",
       "numbered": true,
       "characters": [
         "芦花婆さん",
         "道然"
       ],
       "confidence": "medium",
-      "notes": "dialogue話者は(off)。末尾に丸囲み『道然』＋『頷き――。』のト書きあり(セリフではないため除外)",
+      "notes": "dialogue欄に(OFF)台詞のあと(道然)頷き—のト書き。頷き—はセリフではないが演出メモ",
       "_page": "page_078.png",
       "_idx": 1
     },
     {
-      "cut_label": 267,
-      "action": "外から差し込む光。やがて F.O.(?) ▽(けに)",
-      "dialogue": "また、自由の身で 大きくするのかもち…",
+      "cut_label": "267",
+      "action": "外から差し込む光。 やがて 正の▽(IIに)",
+      "dialogue": "また、自由の身で 育つのかもな…",
       "se": "",
       "time": "6+12",
+      "scene_mark": "267",
       "numbered": true,
       "characters": [
         "道然"
       ],
-      "confidence": "low",
-      "notes": "dialogue話者は丸囲み『道然』(M)。action後半の記号判読困難・要確認",
+      "confidence": "medium",
+      "notes": "dialogue冒頭に(道然)(M)。actionの正の▽は記号、確信低め",
       "_page": "page_078.png",
       "_idx": 2
     },
     {
-      "cut_label": 268,
-      "action": "目を覚ます大(向き?)／よく〔反応〕あり／寄りフレーム(赤字)",
-      "dialogue": "！？……",
+      "cut_label": "268",
+      "action": "目を覚ます尚善 おさく 反応あり 寄りフレーム(赤字)",
+      "dialogue": "！っ…",
       "se": "",
       "time": "1+12",
+      "scene_mark": "268",
       "numbered": true,
       "characters": [
-        "苗"
+        "尚善"
       ],
-      "confidence": "low",
-      "notes": "dialogue話者は丸囲み『苗』。action崩し字多く要確認",
+      "confidence": "medium",
+      "notes": "dialogue冒頭に(尚善)。台詞は感嘆のみ",
       "_page": "page_078.png",
       "_idx": 3
     },
     {
-      "cut_label": 269,
+      "cut_label": "269",
       "action": "",
-      "dialogue": "「小鳥のさえずり」―― / ……",
-      "se": "小鳥のさえずり",
+      "dialogue": "……",
+      "se": "",
       "time": "4",
-      "numbered": true,
-      "characters": [],
-      "confidence": "low",
-      "notes": "dialogue欄は丸囲み『SE』＋『「小鳥のさえずり」――』＝効果音指定のためseに記載。time欄空欄 ｜ ページ最初のコマはscene欄に丸番号なし(縦棒のみ)。前ページの最後のカット269の続きとして統合。dialogue欄に署名(尚善)記入あり",
-      "_page": "page_078.png",
-      "_idx": 4
-    },
-    {
-      "cut_label": 270,
-      "action": "つかむ手。",
-      "dialogue": "(芝居より)",
-      "se": "",
-      "time": "2+12",
-      "numbered": true,
-      "characters": [],
-      "confidence": "medium",
-      "notes": "dialogue欄は演出メモ/サインのため空",
-      "_page": "page_079.png",
-      "_idx": 1
-    },
-    {
-      "cut_label": 271,
-      "action": "右手をのばし。そっと すっと触れる(尚善) / 静かに引いて。",
-      "dialogue": "よにそわく―。……",
-      "se": "",
-      "time": "1",
+      "scene_mark": "269",
       "numbered": true,
       "characters": [
         "尚善"
       ],
       "confidence": "low",
-      "notes": "dialogueの崩し字判読困難、要確認 ｜ scene欄に丸番号なし(縦棒のみ)。直前カット271の続きとして扱うが、time欄に『1』記入あり",
+      "notes": "dialogue欄に(正)「小鳥のさえずり—」とあり=効果音/環境音の指示。セリフではないためseに該当の音。time欄空白 ｜ ページ最初のコマはscene欄に縦棒のみ＝前ページの269の続き。dialogueに(尚善)の人物指定と『……』",
+      "_page": "page_078.png",
+      "_idx": 4
+    },
+    {
+      "cut_label": "270",
+      "action": "つかみだす",
+      "dialogue": "",
+      "se": "",
+      "time": "2+12",
+      "scene_mark": "270",
+      "numbered": true,
+      "characters": [],
+      "confidence": "medium",
+      "notes": "dialogue欄に(先行あり)の演出メモ＝セリフでないためdialogueに含めず。time『2+12』と読む",
+      "_page": "page_079.png",
+      "_idx": 1
+    },
+    {
+      "cut_label": "271",
+      "action": "右手をのばし。 そっと まつ毛に 触れる(尚善) 静かに引いて。",
+      "dialogue": "(尚善)ほこをひらく…… ……",
+      "se": "",
+      "time": "6",
+      "scene_mark": "271",
+      "numbered": true,
+      "characters": [
+        "尚善"
+      ],
+      "confidence": "low",
+      "notes": "2コマにまたがるカット(271と直後の継続コマ)を統合。dialogue冒頭の小書きや崩し字は要確認",
       "_page": "page_079.png",
       "_idx": 2
     },
     {
-      "cut_label": 273,
+      "cut_label": "272",
       "action": "",
-      "dialogue": "(道然)(寝息)―",
+      "dialogue": "(道然)眠……",
       "se": "",
       "time": "3",
+      "scene_mark": "272",
       "numbered": true,
       "characters": [
         "道然"
       ],
       "confidence": "medium",
-      "notes": "場所範囲257-273=道観・寝室。dialogue欄に道然の寝息表現",
+      "notes": "dialogue欄に(道然)の人物指定。続く語は要確認",
       "_page": "page_079.png",
-      "_idx": 4
+      "_idx": 3
     },
     {
-      "cut_label": 273,
-      "action": "笑みを浮かべる(尚善)。ホッとしている。",
-      "dialogue": "……(笑)。",
+      "cut_label": "273",
+      "action": "笑みを浮かべる（尚善）。ホッとしている。",
+      "dialogue": "…（笑う）。",
       "se": "",
       "time": "4",
+      "scene_mark": "273",
       "numbered": true,
       "characters": [
         "尚善"
       ],
-      "confidence": "medium",
+      "confidence": "high",
       "notes": "",
       "_page": "page_080.png",
       "_idx": 0
     },
     {
-      "cut_label": 274,
-      "action": "+6%兼用(苗)。小雨が降っている。",
-      "dialogue": "(苗)──",
+      "cut_label": "274",
+      "action": "+6%兼用。小雨が降っている。（夕）",
+      "dialogue": "（小雨）",
       "se": "",
       "time": "2",
+      "scene_mark": "274",
       "numbered": true,
-      "characters": [
-        "苗"
-      ],
+      "characters": [],
       "confidence": "medium",
-      "notes": "",
+      "notes": "dialogue欄は小雨の音表現で実セリフではない可能性。timeは2秒",
       "_page": "page_080.png",
       "_idx": 1
     },
     {
-      "cut_label": 275,
-      "action": "目をパチクリして(尚善)。",
-      "dialogue": "(芦花婆さん)(off)おや、起きたんだね。",
+      "cut_label": "275",
+      "action": "（尚善）目をパチクリして",
+      "dialogue": "おや、起きたんだね。",
       "se": "",
       "time": "2+12",
+      "scene_mark": "275",
       "numbered": true,
       "characters": [
         "尚善",
         "芦花婆さん"
       ],
       "confidence": "medium",
-      "notes": "",
+      "notes": "セリフ話者は芦花婆さん(off)",
       "_page": "page_080.png",
       "_idx": 2
     },
     {
-      "cut_label": 278,
-      "action": "+6%兼用。食卓を囲う。お喋りをしている(苗と芦花婆さん)。 / 歩き出す(尚善)。",
-      "dialogue": "お腹でも空いたかい?こっち来てご飯食べな。(尚善)うん…… / (SE)(足音)──",
+      "cut_label": "278",
+      "action": "+6%兼用。食卓を囲む。お話をしている（苗）と（芦花婆さん）。手前歩きます（続き）",
+      "dialogue": "お腹でも空いたかい？ こっち来てご飯食べる。 うん…",
       "se": "足音",
-      "time": "5+2",
+      "time": "5+12",
+      "scene_mark": "278",
       "numbered": true,
       "characters": [
         "苗",
         "芦花婆さん",
         "尚善"
       ],
-      "confidence": "low",
-      "notes": "番号275の次に丸番号278が描かれている(276・277は番号欠番。ヘッダの赤字メモ「C276、C277 番号欠番」と一致) ｜ scene欄に丸番号が無く右下に「2」、time欄に「5+2」。前カット278の続きの可能性あり。番号は連番補完で279とした。要確認",
+      "confidence": "medium",
+      "notes": "丸囲み番号は278。c276・c277は欠番(冒頭朱書きより)。最後のコマは縦棒(続き)で278に統合。「うん…」は尚善(若)のセリフ",
       "_page": "page_080.png",
       "_idx": 3
     },
     {
-      "cut_label": 279,
+      "cut_label": "279",
       "action": "",
       "dialogue": "……",
       "se": "",
       "time": "2",
+      "scene_mark": "279",
       "numbered": true,
       "characters": [
         "苗"
       ],
-      "confidence": "medium",
-      "notes": "dialogue欄に丸囲み『苗』らしき記号と『……』。time欄は2",
+      "confidence": "high",
+      "notes": "",
       "_page": "page_081.png",
       "_idx": 0
     },
     {
-      "cut_label": 280,
-      "action": "下からカンツしてIN",
+      "cut_label": "280",
+      "action": "廊下カンツン IN",
       "dialogue": "苗ちゃん、何してるの?",
       "se": "",
       "time": "3",
+      "scene_mark": "280",
       "numbered": true,
       "characters": [
-        "尚善"
+        "尚善",
+        "苗"
       ],
       "confidence": "medium",
-      "notes": "action欄崩し字。dialogue欄に丸囲み『尚善』",
+      "notes": "action『廊下カンツンIN』は崩し字のため要確認",
       "_page": "page_081.png",
       "_idx": 1
     },
     {
-      "cut_label": 281,
-      "action": "頭を上げる",
-      "dialogue": "黄爺さんの服の破れを縫っています。 ふ〜ん…",
+      "cut_label": "281",
+      "action": "はしを上げる",
+      "dialogue": "黄爺さんの服の破れを縫っています。\nふ〜ん…",
       "se": "",
       "time": "4",
+      "scene_mark": "281",
       "numbered": true,
       "characters": [
         "苗",
         "尚善"
       ],
-      "confidence": "medium",
-      "notes": "dialogue欄丸囲み『苗』『尚善』",
+      "confidence": "high",
+      "notes": "",
       "_page": "page_081.png",
       "_idx": 2
     },
     {
-      "cut_label": 282,
-      "action": "会話がはずむ 苗と芦花婆 / 尚善は食事。",
-      "dialogue": "いろいろ手伝ってもらってありがとうね。 いえ、私こそ面倒をおかけ / しました。それに、黄爺さんと你さまにケガをさせてしまいましたから",
+      "cut_label": "282",
+      "action": "兼(兼用)\n会話がはずむ 苗と芦花婆\n苗(尚善)は食事。",
+      "dialogue": "いろいろ手伝ってもらってありがとうね。\nいえ、私こそ面倒をおかけしました。それに、黄爺さんと姉さまにケガをさせてしまいましたが",
       "se": "",
-      "time": "5",
+      "time": "6",
+      "scene_mark": "282",
       "numbered": true,
       "characters": [
-        "苗",
         "芦花婆さん",
-        "尚善"
+        "苗",
+        "黄爺さん"
       ],
-      "confidence": "low",
-      "notes": "action欄に丸囲み『廉?』と『苗と芦花婆』。dialogue欄丸囲み『芦花婆』『苗』 ｜ scene欄に丸番号なし(縦棒のみ)で前カット282の続きの可能性もあるが、絵が別構図で食事描写。前ページ最後279からの連番で283と補完。number欄に丸数字確認できず numbered=false。dialogue欄『しました。それに、黄爺さまと…』要確認",
+      "confidence": "medium",
+      "notes": "282は5コマ目(縦棒/空白の続きコマ)を統合。dialogueの『姉さま』は崩し字のため要確認。actionの主体表記は崩し字",
       "_page": "page_081.png",
       "_idx": 3
     },
     {
-      "cut_label": 283,
-      "action": "苗の笑顔のアップ。",
-      "dialogue": "私にできることなら何でもやらせて下さい！ 私の心も少しは楽になります。",
+      "cut_label": "283",
+      "action": "苗の顔（笑顔）",
+      "dialogue": "私にできることなら何でもやらせて下さい！私の心も少しは楽になります。",
       "se": "",
       "time": "5",
+      "scene_mark": "283",
       "numbered": true,
       "characters": [
         "苗"
@@ -4381,44 +4536,46 @@
       "_idx": 0
     },
     {
-      "cut_label": 284,
-      "action": "棚。芦花婆さんが尚善の方を見る。",
-      "dialogue": "(芦花婆)まあ… (尚善)それ？",
+      "cut_label": "284",
+      "action": "棚。苗の方を見る",
+      "dialogue": "まぁ…\nあれ？",
       "se": "",
       "time": "3",
+      "scene_mark": "284",
       "numbered": true,
       "characters": [
         "芦花婆さん",
         "尚善"
       ],
       "confidence": "medium",
-      "notes": "dialogue欄のキャラ表記を読み取り。芦花婆さん・尚善",
+      "notes": "dialogueの『あれ？』の話者は丸囲み人名（尚善か）。手書き判読要確認",
       "_page": "page_082.png",
       "_idx": 1
     },
     {
-      "cut_label": 285,
-      "action": "↑PAN UP 全尺・普通で。蝶が高定にとっている。ヤママユガ。",
-      "dialogue": "(尚善)蝶が飛んできた。 (芦花婆)はは。これは蝶ではないよ。ヤママユガです。 / (苗)蝶…ですか。",
+      "cut_label": "285",
+      "action": "↑PAN UP! 全尺・普通で。固定にとっている（ヤママユガ）",
+      "dialogue": "蝶が飛んできた。\nはは。これは蝶ではない。ヤママユガです。\n蝶…ですか。",
       "se": "",
       "time": "7",
+      "scene_mark": "285",
       "numbered": true,
       "characters": [
-        "尚善",
         "芦花婆さん",
         "苗"
       ],
       "confidence": "medium",
-      "notes": "action欄の崩し字一部不確実、要確認 ｜ scene欄に丸番号なし(縦棒のみ)＝直前カット285の続きとして統合",
+      "notes": "285は2コマにまたがるため統合（2コマ目は番号・縦棒なしの続き）。action欄の判読一部不確実",
       "_page": "page_082.png",
       "_idx": 2
     },
     {
-      "cut_label": 286,
+      "cut_label": "286",
       "action": "",
-      "dialogue": "(苗)へぇ～…キレイですね。",
+      "dialogue": "へぇ～…\nキレイですわ。",
       "se": "",
       "time": "2",
+      "scene_mark": "286",
       "numbered": true,
       "characters": [
         "苗"
@@ -4426,200 +4583,215 @@
       "confidence": "high",
       "notes": "",
       "_page": "page_082.png",
-      "_idx": 4
+      "_idx": 3
     },
     {
-      "cut_label": 287,
-      "action": "○兼用 「フレーム修正」調整",
-      "dialogue": "きれいだな…苗ちゃんもきれい…え？",
+      "cut_label": "287",
+      "action": "○兼 フレーム位置 調整",
+      "dialogue": "きれいです。 ですね。 …苗ちゃんもきれい え？",
       "se": "",
-      "time": "6+12",
+      "time": "4+12",
+      "scene_mark": "287",
       "numbered": true,
       "characters": [
         "尚善",
         "苗"
       ],
-      "confidence": "medium",
-      "notes": "dialogue欄は尚善「きれいだな」苗「ですね」尚善「…苗ちゃんもきれい」苗「え？」の掛け合い",
+      "confidence": "high",
+      "notes": "",
       "_page": "page_083.png",
       "_idx": 0
     },
     {
-      "cut_label": 288,
-      "action": "回り込み← 苗をじっと見つめる尚善",
+      "cut_label": "288",
+      "action": "回り込み→ 苗をじっと見つめる 尚善",
       "dialogue": "",
       "se": "",
       "time": "3+12",
+      "scene_mark": "288",
       "numbered": true,
       "characters": [
         "苗",
         "尚善"
       ],
-      "confidence": "medium",
+      "confidence": "high",
       "notes": "",
       "_page": "page_083.png",
       "_idx": 1
     },
     {
-      "cut_label": 289,
-      "action": "目を泳がせ笑ってごまかす",
+      "cut_label": "289",
+      "action": "苗 目を潤ませ 涙がこぼれる。",
       "dialogue": "",
       "se": "",
       "time": "2",
+      "scene_mark": "289",
       "numbered": true,
       "characters": [
         "苗"
       ],
       "confidence": "medium",
-      "notes": "action欄丸囲み人物は苗",
+      "notes": "289は2コマに跨る(目のアップ→涙)。継続コマは縦棒で直前カットに統合",
       "_page": "page_083.png",
       "_idx": 2
     },
     {
-      "cut_label": 290,
-      "action": "イメージ(bk) 「I□」→ファブリング(クイック割) 「DF」あり 「BGイメージ」 尚善に抱きつく苗",
+      "cut_label": "290",
+      "action": "W2 IN(12k) F.I.→ファブリング(クイック割) D.F.あり BGイメージ 尚善に抱きつく 苗",
       "dialogue": "",
       "se": "",
       "time": "3",
+      "scene_mark": "290",
       "numbered": true,
       "characters": [
-        "苗",
-        "尚善"
+        "尚善",
+        "苗"
       ],
-      "confidence": "low",
-      "notes": "action欄の記号類は手書きで判読困難。場所はイメージ／森(290-)。time欄の数字は3と推定",
+      "confidence": "medium",
+      "notes": "action冒頭の略号は崩し字のため一部不確実",
       "_page": "page_083.png",
       "_idx": 3
     },
     {
-      "cut_label": 291,
-      "action": "2D-寄り／DFあり／イメージ寄り。たっぷり動いて。T.U.気味",
-      "dialogue": "…これからは…ちゃんと生きます…！",
+      "cut_label": "291",
+      "action": "2D-。DFあり。イメージ寄り。たっぷり動いて。",
+      "dialogue": "…これからは…ちゃんと生きるよ…！",
       "se": "",
-      "time": "",
+      "time": "4+12",
+      "scene_mark": "291",
+      "numbered": true,
+      "characters": [
+        "苗"
+      ],
+      "confidence": "high",
+      "notes": "苗(M)モノローグ",
+      "_page": "page_084.png",
+      "_idx": 0
+    },
+    {
+      "cut_label": "292",
+      "action": "上記と同処理。力強く抱きしめては様子で。やがて白ベタへ中OL。鱗粉がひらり代くでいく。",
+      "dialogue": "命を大切に…誰よりも…。真面目に生きて行くんだ…！",
+      "se": "",
+      "time": "6",
+      "scene_mark": "292",
       "numbered": true,
       "characters": [
         "苗"
       ],
       "confidence": "medium",
-      "notes": "dialogue欄に(M)モノローグ。苗(M)",
-      "_page": "page_084.png",
-      "_idx": 0
-    },
-    {
-      "cut_label": 292,
-      "action": "上記と同処理。力強く抱きしめてる様子で / やがて白ベタへF.O.／イメージ(蝶)がひらり飛んでいく",
-      "dialogue": "命を大切に…誰よりも… / 真面目に生きて行くんで…！",
-      "se": "",
-      "time": "1+6",
-      "numbered": true,
-      "characters": [],
-      "confidence": "medium",
-      "notes": "dialogue欄に(M)モノローグ ｜ scene欄に縦棒のみ・丸番号なし→直前292の続き。dialogue欄に(M)モノローグ。time欄『6』に縦棒",
+      "notes": "3コマ目は縦棒(続き)のため292に統合。(M)モノローグ",
       "_page": "page_084.png",
       "_idx": 1
     },
     {
-      "cut_label": 293,
-      "action": "#640兼用／翌朝／FIX。階段を下りていく尚善と道然(M)",
-      "dialogue": "(小鳥のさえずり)",
+      "cut_label": "293",
+      "action": "#6%兼用。翌朝。FIX。階段を下りていく。尚善と道然。",
+      "dialogue": "（小鳥のさえずり）",
       "se": "小鳥のさえずり",
       "time": "2+12",
+      "scene_mark": "293",
       "numbered": true,
       "characters": [
         "尚善",
         "道然"
       ],
       "confidence": "medium",
-      "notes": "action欄『#640兼用』『翌朝』『FIX』。dialogue欄括弧書きはSE的記述だが小鳥のさえずり=環境音",
+      "notes": "道観・南岩宮の石段。dialogue欄の小鳥のさえずりはセリフでなく環境音だが記載",
+      "_page": "page_084.png",
+      "_idx": 2
+    },
+    {
+      "cut_label": "294",
+      "action": "Follow！奥へ。森の中／道。朝。",
+      "dialogue": "爺ちゃん、来てくれてよかった。いろいろ忙しいのさ。でもまたふたりで会いに来よう。",
+      "se": "",
+      "time": "6+12",
+      "scene_mark": "294",
+      "numbered": true,
+      "characters": [
+        "尚善",
+        "道然"
+      ],
+      "confidence": "medium",
+      "notes": "尚善(前)「爺ちゃん…」、道然(前)「いろいろ…」",
       "_page": "page_084.png",
       "_idx": 3
     },
     {
-      "cut_label": 294,
-      "action": "Follow／奥へ。森の中/道。朝",
-      "dialogue": "爺ちゃん。来てくれ良かった。いろいろ忙しいのさ。でもまた二人で会いに来よう。",
-      "se": "",
-      "time": "6+12",
-      "numbered": true,
-      "characters": [
-        "尚善",
-        "道然"
-      ],
-      "confidence": "medium",
-      "notes": "dialogue欄に尚善(前)・道然(前)。time欄手書き不明瞭",
-      "_page": "page_084.png",
-      "_idx": 4
-    },
-    {
       "cut_label": "295A",
-      "action": "森の中、二人の人物が奥へ歩いていく。手前に大きな樹と蔦。",
-      "dialogue": "今夜は僕もゆっくり寝る\nうん",
+      "action": "心(火)　夏帰194",
+      "dialogue": "今夜は僕もゆっくりするよ\nうん。",
       "se": "",
-      "time": "",
+      "time": "3+0",
+      "scene_mark": "295A",
       "numbered": true,
       "characters": [
         "道然",
         "尚善"
       ],
       "confidence": "medium",
-      "notes": "dialogue欄に(道然)(背)・(尚善)(前)の話者指定あり。295Aと295Bが同一コマに併記されている",
+      "notes": "dialogue欄に道然(背)『今夜は僕もゆっくりするよ』、尚善(前)『うん。』。time欄は3+0。295Bは画面右に円囲みで指示あり",
       "_page": "page_085.png",
       "_idx": 0
     },
     {
       "cut_label": "295B",
-      "action": "道観・室内の階段と廊下、椅子のある一角。",
+      "action": "",
       "dialogue": "",
       "se": "",
-      "time": "",
+      "time": "1+4a UP",
+      "scene_mark": "295B",
       "numbered": true,
       "characters": [],
       "confidence": "low",
-      "notes": "scene欄に丸囲み295Bの記載。本編の絵と本文の対応は不確実",
+      "notes": "295A枠右に円囲みで『295B』、猫面の妖怪らしき顔のアップ指示。差し込みカット。time欄に『1+4a UP』と読める。確証低い",
       "_page": "page_085.png",
       "_idx": 1
     },
     {
       "cut_label": "296",
-      "action": "道観の楼閣下、石段の脇に人物が座っている広い構図。",
-      "dialogue": "にわとり——",
-      "se": "SE",
-      "time": "2+10",
+      "action": "出口(円囲み)",
+      "dialogue": "",
+      "se": "にわとり〜",
+      "time": "2+0",
+      "scene_mark": "296",
       "numbered": true,
       "characters": [],
       "confidence": "medium",
-      "notes": "dialogue欄に(SE)記号とセリフ断片。timeは2+10",
+      "notes": "道観の食堂/室内の風景。dialogue欄は効果音『にわとり〜』のみ。time欄は2+0、下方に4も見えるが結合不明",
       "_page": "page_085.png",
       "_idx": 2
     },
     {
       "cut_label": "297",
-      "action": "PAN ←→ ＋フッテリング。道然／中起。鶏(にわとり)の妖怪のアップ。手をかざす。",
+      "action": "七 PAN ← + フォローイング\n○道然 / 中尾.",
       "dialogue": "",
       "se": "",
       "time": "2+12",
+      "scene_mark": "297",
       "numbered": true,
       "characters": [
         "道然"
       ],
       "confidence": "medium",
-      "notes": "action欄『PAN←→＋フッテリング ○道然/中起』と読む",
+      "notes": "鶏(ニワトリ)と手のアップ。action欄にPAN+フォロー指示。『2+12』=2秒12コマ",
       "_page": "page_085.png",
       "_idx": 3
     },
     {
       "cut_label": "298",
-      "action": "目もとのアップ二つ。右上に下向き矢印(次カットへ)。 / （リピート ニュアンス）",
-      "dialogue": "（笑）",
+      "action": "",
+      "dialogue": "苗〜\n（笑う）〜",
       "se": "",
       "time": "3+12",
+      "scene_mark": "298",
       "numbered": true,
       "characters": [
         "苗"
       ],
-      "confidence": "low",
-      "notes": "dialogue欄に(苗)らしき丸囲みと(笑)。要確認 ｜ scene欄に丸番号なし。picture欄に『リピート…』のメモのみ。前カット298の続き/つなぎの可能性が高い。番号は連番補完(299)だが確証なし、要確認",
+      "confidence": "medium",
+      "notes": "目のアップ。dialogue欄に丸囲み『苗』と『（笑う）』。『3+12』=3秒12コマ。最終コマ(picture)は『リピート ニコニコ』のメモで番号なし→継続/メモのため独立カットにせず",
       "_page": "page_085.png",
       "_idx": 4
     }

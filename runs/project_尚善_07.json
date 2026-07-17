@@ -1,0 +1,12 @@
+{
+  "work": "尚善",
+  "ep": "07",
+  "root": "C:\\Users\\kuror\\OneDrive\\デスクトップ\\尚善\\尚善_原図修正自動化検証",
+  "genzu_dir": "C:\\Users\\kuror\\OneDrive\\デスクトップ\\尚善\\尚善_原図修正自動化検証\\00.原図",
+  "boards_dir": "C:\\Users\\kuror\\OneDrive\\デスクトップ\\尚善\\尚善_原図修正自動化検証\\01.美術ボード\\01.美術ボード",
+  "out_dir": "C:\\Users\\kuror\\OneDrive\\デスクトップ\\尚善\\尚善_原図修正自動化検証\\10.生成結果",
+  "csv": "runs/cut_board_map_ep7.csv",
+  "cut_info": "runs/cut_scene_info_ep7.csv",
+  "overview": "runs/ep_overview.json",
+  "_note": "尚善 ep7（一時中断中）。run_console.py 起動時に自動で読み込まれタブに載る。"
+}

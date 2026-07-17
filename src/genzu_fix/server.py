@@ -127,10 +127,15 @@ def _load_json(path, default):
     return default
 
 
-def _index_dir(d, exts):
+def _index_dir(d, exts, subdir: str | None = None):
+    """d配下を再帰索引。subdir指定時は「その文字列を含む名前のフォルダ配下」だけ拾う
+    （例: subdir="ボード" → 00_ボード/01_ボード 配下のみ＝サンプルBG素材を除外。
+    フォルダ名の番号揺れを吸収するため部分一致）。"""
     idx = {}
     if d and os.path.isdir(d):
         for root, _, files in os.walk(d):
+            if subdir and not any(subdir in c for c in root.replace("\\", "/").split("/")):
+                continue
             for fn in files:
                 if fn.lower().endswith(exts):
                     idx.setdefault(fn, os.path.join(root, fn))
@@ -198,32 +203,132 @@ def _units_from_csv(csv_path):
 
 
 def _units_from_folder(genzu_dir):
-    """フォルダ走査でカット表を作る（scene/assignee はサブフォルダ名から）。"""
+    """フォルダ走査でカット表を作る（scene/assignee はサブフォルダ名から）。
+
+    - 並びは**カット番号順**（フォルダの走査順ではない）。
+    - 同名PSDが複数フォルダにある場合は最初に見つかった方を採用し、警告を出す
+      （黙って上書きするとカット数が減って見える）。
+    """
     units = {}
+    dup = []
+    n_psd = 0
     gd = os.path.abspath(genzu_dir)
     for root, _, files in os.walk(gd):
-        for fn in files:
+        for fn in sorted(files):
             if not fn.lower().endswith(".psd"):
                 continue
+            n_psd += 1
             uid = os.path.splitext(fn)[0]
+            rel = os.path.relpath(os.path.join(root, fn), gd)
+            if uid in units:
+                # 同名PSD: 「old」フォルダ配下は常に負ける（旧版をGKV優先分より先に
+                # 拾ってしまう事故の防止）。それ以外は先勝ちのまま。
+                def _is_old(p):
+                    return re.search(r"(^|[\\/])(old|旧)([\\/]|$)", p, re.I) is not None
+                if _is_old(units[uid]["_rel"]) and not _is_old(rel):
+                    dup.append((units[uid]["_rel"], rel))  # (無視=old, 採用=新) に置き換え
+                    del units[uid]
+                else:
+                    dup.append((rel, units[uid]["_rel"]))  # (無視=新, 採用=既存) 先勝ち
+                    continue
             info = naming.parse_cut_codes(fn)
             cuts = info.get("cuts") or [uid]
-            rel = os.path.relpath(os.path.join(root, fn), gd)
             parts = rel.split(os.sep)
             scene = next((p for p in parts[:-1] if re.search(r"c\d", p)), "")
             parent = parts[-2] if len(parts) >= 2 else ""
             assignee = parent if (parent and not re.search(r"c\d", parent)) else "(直下)"
             units[uid] = {"id": uid, "filename": fn, "cuts": cuts,
-                          "assignee": assignee, "scene": scene, "board": ""}
-    return units
+                          "assignee": assignee, "scene": scene, "board": "", "_rel": rel}
+
+    def cut_key(u):
+        m = re.match(r"(\d+)([A-Za-z]*)", (u["cuts"][0] if u["cuts"] else ""))
+        return (int(m.group(1)), m.group(2)) if m else (10 ** 9, u["id"])
+
+    ordered = {u["id"]: {k: v for k, v in u.items() if k != "_rel"}
+               for u in sorted(units.values(), key=cut_key)}
+    print(f"[scan] {gd}: PSD {n_psd}枚 → {len(ordered)}ユニット")
+    for a, b in dup:
+        print(f"  [warn] 同名PSDが複数あります（採用: {b} / 無視: {a}）")
+    return ordered
 
 
-def _make_project(key, work, ep, genzu_dir, boards_dir=None, csv_path=None, source="scan"):
+def _load_board_map(path):
+    """cut,board のCSV → {正規化カット番号: ボード名}（前ゼロ落とし・枝番保持）。"""
+    out = {}
+    if not (path and os.path.exists(path)):
+        return out
+    import csv as _csv
+    with open(path, encoding="utf-8-sig") as f:
+        for r in _csv.DictReader(f):
+            m = re.match(r"0*(\d+)([A-Za-z]?)", (r.get("cut") or "").strip())
+            if m and (r.get("board") or "").strip():
+                out[m.group(1) + m.group(2).upper()] = r["board"].strip()
+    return out
+
+
+def _load_staging_map(path):
+    """cut,staging,confidence のCSV → {正規化カット番号: {"staging","confidence"}}。
+    scene_understanding(build_staging.py)の下書き。手動保存(state.staging)が常に優先。"""
+    out = {}
+    if not (path and os.path.exists(path)):
+        return out
+    import csv as _csv
+    with open(path, encoding="utf-8-sig") as f:
+        for r in _csv.DictReader(f):
+            m = re.match(r"0*(\d+)([A-Za-z]?)", (r.get("cut") or "").strip())
+            if m and (r.get("staging") or "").strip():
+                out[m.group(1) + m.group(2).upper()] = {
+                    "staging": r["staging"].strip(),
+                    "confidence": (r.get("confidence") or "").strip()}
+    return out
+
+
+def _unit_staging(proj, u, st):
+    """このユニットに効く staging を返す (text, source, confidence)。手動 > 自動下書き。"""
+    manual = (st.get("staging") or "").strip()
+    if manual:
+        return manual, "manual", ""
+    m = re.match(r"0*(\d+)([A-Za-z]?)", (u["cuts"][0] if u.get("cuts") else ""))
+    if m:
+        auto = (proj.get("staging_map") or {}).get(m.group(1) + m.group(2).upper())
+        if auto:
+            return auto["staging"], "auto", auto.get("confidence", "")
+    return "", "", ""
+
+
+def _proj_genzu_trust(proj) -> str:
+    """原図信頼度モード。"high"=3Dレイアウト出し等で幾何が正＝忠実清書（SP2）/
+    "rough"=手描きラフで狂いがある前提＝修正パス（尚善・既定）。project json で宣言。"""
+    return (proj or {}).get("genzu_trust") or "rough"
+
+
+def _proj_include_book(proj) -> bool:
+    """BOOKを原図に含めるか（作品ごと。SP2はBook=椅子等がシーンの空間アンカーなので含める）。"""
+    v = (proj or {}).get("include_book")
+    return bool(CFG.get("include_book")) if v is None else bool(v)
+
+
+def _make_project(key, work, ep, genzu_dir, boards_dir=None, csv_path=None, source="scan",
+                  out_dir=None, cut_info=None, board_map=None, include_book=None,
+                  staging_map=None, genzu_trust=None, boards_subdir=None):
     if source == "csv":
         units = _units_from_csv(csv_path)
     else:
         units = _units_from_folder(genzu_dir)
-    board_idx = _index_dir(boards_dir, _BOARD_EXTS)
+    # カット→ボードの紐づけ表（scan構成の作品向け。CSV構成でも空欄の補完に使う）
+    bmap = _load_board_map(board_map)
+    if bmap:
+        n = 0
+        for u in units.values():
+            if u.get("board"):
+                continue
+            m = re.match(r"0*(\d+)([A-Za-z]?)", (u["cuts"][0] if u["cuts"] else ""))
+            b = bmap.get(m.group(1) + m.group(2).upper()) if m else None
+            if b:
+                u["board"] = b
+                n += 1
+        print(f"[board_map] {key}: {n}/{len(units)} ユニットにボードを紐づけ（{board_map}）")
+    board_idx = _index_dir(boards_dir, _BOARD_EXTS, subdir=boards_subdir)
     # 正規化キー（拡張子/全半角/空白ゆれ吸収）→ パス。PSDを先に書きPNG等を後で上書き＝軽いPNG優先。
     board_norm = {}
     for fn, path in sorted(board_idx.items(),
@@ -234,9 +339,19 @@ def _make_project(key, work, ep, genzu_dir, boards_dir=None, csv_path=None, sour
         boards_opts = _load_json(CFG["boards_json"], [])
     if boards_dir:
         print(f"[boards] {boards_dir}: {len(board_idx)} 枚 索引（{key}）")
+    # カット別 situation/remove（プロンプトCUT層）は作品ごと（他作品の同番カットに混ぜない）
+    cut_info_map = {}
+    if cut_info and os.path.exists(cut_info):
+        try:
+            cut_info_map = batch.promptlib.load_cut_info(cut_info)
+        except Exception:
+            pass
     return {
         "key": key, "work": work, "ep": ep, "group": f"{work} #{ep}",
         "genzu_dir": genzu_dir, "boards_dir": boards_dir, "csv": csv_path, "source": source,
+        "out_dir": out_dir or CFG.get("out"), "cut_info_map": cut_info_map,
+        "include_book": include_book, "staging_map": _load_staging_map(staging_map),
+        "genzu_trust": genzu_trust,
         "units": units, "psd_idx": _index_dir(genzu_dir, (".psd",)),
         "board_idx": board_idx, "board_norm": board_norm, "boards_opts": boards_opts,
     }
@@ -259,7 +374,10 @@ def _find_unit(uid):
 
 
 def _unit_dir(uid):
-    return os.path.join(CFG["out"], uid)
+    # 出力は作品(プロジェクト)ごとの out_dir 配下（尚善とSP2の生成結果を混ぜない）
+    proj, _ = _find_unit(uid)
+    base = (proj or {}).get("out_dir") or CFG["out"]
+    return os.path.join(base, uid)
 
 
 def _result_path(uid):
@@ -320,9 +438,12 @@ def _adopt_take(uid, n):
     return True
 
 
+_PREVIEW_REV = "r4"   # 抽出規則を変えたら上げる（旧キャッシュを使わせない）
+
+
 def _genzu_preview(uid, psd_path, source="base", force=False):
     # ソース別ファイル名（base/visible を分離）＋ process_cut の中間 visible.png と衝突させない。
-    out = os.path.join(_unit_dir(uid), f"genzu_{source}.png")
+    out = os.path.join(_unit_dir(uid), f"genzu_{source}_{_PREVIEW_REV}.png")
     stale = bool(psd_path and os.path.exists(out) and os.path.exists(psd_path)
                  and os.path.getmtime(psd_path) > os.path.getmtime(out))  # PSD更新で再取得
     if (force or stale or not os.path.exists(out)) and psd_path:
@@ -336,7 +457,9 @@ def _genzu_preview(uid, psd_path, source="base", force=False):
                 psd_export.export_with_overrides(
                     psd_path, out, show=names, hide={n for n in allnames if n not in names})
             else:
-                psd_export.export_background_layer(psd_path, out, include_book=CFG["include_book"])
+                proj, _u = _find_unit(uid)
+                psd_export.export_background_layer(psd_path, out,
+                                                   include_book=_proj_include_book(proj))
         except Exception as e:  # noqa
             print(f"[warn] 原図プレビュー失敗 {uid}/{source}: {str(e)[:200]}")
             return None
@@ -352,7 +475,9 @@ def _effective_prompt(proj, u):
     # プロンプトは genzu_fix.prompt（3層）に委譲（great-edisonの設計と統合）。
     # 表示と生成を一致させるため cut_info_map（situation/remove）も渡す。
     en, _ = batch.build_prompt_pair(board, u["scene"], None, cut=cut,
-                                    cut_info_map=CFG.get("cut_info_map"))
+                                    cut_info_map=(proj.get("cut_info_map") or CFG.get("cut_info_map")),
+                                    staging=_unit_staging(proj, u, st)[0] or None,
+                                    genzu_trust=_proj_genzu_trust(proj))
     return en
 
 
@@ -382,6 +507,8 @@ def _run_generate(uid):
     st = STATE.get(uid, {})
     prev_status = st.get("status", "todo")   # 失敗時に戻す（「生成中」で固まらせない）
     board = st.get("board", u["board"])
+    # ボードは常に全景で参照する（画風・意匠・「どの角度から見た場所か」の根拠）。
+    # 構図の乗っ取りはプロンプトの意匠辞書ルール（batch側 [IMAGES]）で抑える。
     board_path = _board_png(proj, board) if (proj.get("boards_dir") and board) else None
     # リテイク指示（端的な修正メモ）があれば、最終プロンプト末尾へ最優先の修正指示として足す。
     note = (st.get("retake_note") or "").strip()
@@ -389,18 +516,23 @@ def _run_generate(uid):
     if note:
         cut0 = u["cuts"][0] if u.get("cuts") else ""
         eff = base_prompt or batch.build_prompt_pair(
-            board, u["scene"], None, cut=cut0, cut_info_map=CFG.get("cut_info_map"))[0]
+            board, u["scene"], None, cut=cut0,
+            cut_info_map=(proj.get("cut_info_map") or CFG.get("cut_info_map")),
+            staging=_unit_staging(proj, u, st)[0] or None,
+            genzu_trust=_proj_genzu_trust(proj))[0]
         base_prompt = eff + "\n\n[RETAKE CORRECTION — apply with top priority]: " + note
     try:
         log("prep→生成→finish 実行中…" + (f"（指示: {note[:30]}）" if note else ""))
         batch.process_cut(psd, board, u["scene"], _unit_dir(uid), base_prompt,
                           CFG["resolution"], CFG["quality"], CFG["model"], CFG["image_flag"],
-                          dry=False, include_book=CFG["include_book"],
+                          dry=False, include_book=_proj_include_book(proj),
+                          staging=_unit_staging(proj, u, st)[0] or None,
+                          genzu_trust=_proj_genzu_trust(proj),
                           header_top=CFG["header_top"], board_path=board_path,
                           genzu_source=st.get("genzu_source", "base"),
                           genzu_layers=st.get("layers_show"),
                           cut_num=(u["cuts"][0] if u.get("cuts") else ""),
-                          cut_info_map=CFG.get("cut_info_map"),
+                          cut_info_map=(proj.get("cut_info_map") or CFG.get("cut_info_map")),
                           qc_vision=CFG.get("qc_vision", False))
         n = _snapshot_take(uid)   # 上書きせず takes/take_NN/ に保存（S5・前版を失わない）
         with STATE_LOCK:
@@ -420,6 +552,8 @@ def _run_generate(uid):
         with JOBS_LOCK:
             JOBS[uid].update(status="error", error=str(e)[:300])
         log("失敗: " + str(e)[:200])
+        # コンソール窓にも必ず出す（UIを見ていなくても原因が分かるように）
+        print(f"    [gen] {uid} 失敗: {str(e)[:300]}")
 
 
 def _enqueue(uids, force):
@@ -458,18 +592,23 @@ def create_app():
         uid = u["id"]
         st = STATE.get(uid, {})
         with JOBS_LOCK:
-            running = JOBS.get(uid, {}).get("status") == "running"
+            j = JOBS.get(uid, {})
+            running = j.get("status") == "running"
+            gen_error = j.get("error") if j.get("status") == "error" else None
         q = _load_json(os.path.join(_unit_dir(uid), "qc.json"), {})
         return {"id": uid, "cuts": u["cuts"], "assignee": u["assignee"], "scene": u["scene"],
                 "board": st.get("board", u["board"]), "group": proj["group"], "project": proj["key"],
                 "work": proj["work"], "ep": proj["ep"],
                 "has_psd": u["filename"] in proj["psd_idx"],
-                "status": st.get("status", "todo"), "running": running,
+                "status": st.get("status", "todo"), "running": running, "gen_error": gen_error,
                 "genzu_source": st.get("genzu_source", "base"),
+                "genzu_rev": st.get("genzu_rev", 0),
                 "has_result": _result_path(uid) is not None,
                 "qc_verdict": q.get("verdict"), "qc_reasons": q.get("reasons", []),
+                "qc_trust": q.get("trust"), "qc_suspect": q.get("suspect_prompt", ""),
+                "qc_suggest": q.get("suggest_retake", ""),
                 "takes": st.get("takes", []), "adopted": st.get("adopted"),
-                "retake_note": st.get("retake_note", ""),
+                "retake_note": st.get("retake_note", ""), "staging": st.get("staging", ""),
                 "prompt_edited": bool(st.get("prompt")), "retakes": st.get("retakes", 0)}
 
     @app.get("/")
@@ -550,9 +689,27 @@ def create_app():
         proj, u = _find_unit(uid)
         if not u:
             return jsonify({"error": "not found"}), 404
+        st = STATE.get(uid, {})
+        board = st.get("board", u["board"])
+        cut = (u["cuts"][0] if u.get("cuts") else "")
+        cim = proj.get("cut_info_map") or CFG.get("cut_info_map") or {}
+        stg_text, stg_src, stg_conf = _unit_staging(proj, u, st)
+        _, jp = batch.build_prompt_pair(board, u["scene"], None, cut=cut, cut_info_map=cim,
+                                        staging=stg_text or None,
+                                        genzu_trust=_proj_genzu_trust(proj))
+        # コンテ由来の場面情報（詳細画面の日本語概要＋OCR信頼度の表示に使う）
+        info = cim.get(batch.promptlib._norm_cut(cut)) if cim else None
+        ci = {}
+        if info:
+            m = re.search(r"conf:(\w+)", info.source or "")
+            ci = {"place": info.place, "time": info.time, "situation": info.situation,
+                  "scene_key": info.scene_key, "conf": (m.group(1) if m else ""),
+                  "source": info.source}
         return jsonify({**unit_view(proj, u), "filename": u["filename"],
-                        "prompt": _effective_prompt(proj, u),
-                        "boards_opts": proj["boards_opts"]})
+                        "prompt": _effective_prompt(proj, u), "prompt_jp": jp or "",
+                        "staging": stg_text, "staging_source": stg_src,
+                        "staging_conf": stg_conf,
+                        "cut_info": ci, "boards_opts": proj["boards_opts"]})
 
     @app.post("/api/unit/<uid>/prompt")
     def api_prompt(uid):
@@ -567,6 +724,12 @@ def create_app():
     @app.post("/api/unit/<uid>/retake_note")
     def api_retake_note(uid):
         _update_state(uid, retake_note=(request.json or {}).get("note", "").strip())
+        return jsonify({"ok": True})
+
+    @app.post("/api/unit/<uid>/staging")
+    def api_staging(uid):
+        # 画角・場面の言語記述（構図の主チャンネル。日本語OK・最優先ブロックとして生成に入る）
+        _update_state(uid, staging=(request.json or {}).get("text", "").strip())
         return jsonify({"ok": True})
 
     @app.post("/api/unit/<uid>/accept")
@@ -596,7 +759,9 @@ def create_app():
             return jsonify({"error": "not found"}), 404
         b = request.json or {}
         source = b.get("source", "base")
-        kw = {"genzu_source": source}
+        # genzu_rev: 取り直しごとに上げ、カードのサムネイルURLを変えてブラウザキャッシュを外す
+        kw = {"genzu_source": source,
+              "genzu_rev": int(STATE.get(uid, {}).get("genzu_rev", 0)) + 1}
         if source == "override":
             kw["layers_show"] = list(b.get("layers") or [])
         _update_state(uid, **kw)
@@ -744,14 +909,25 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
  .mboards .noimg{width:140px;height:90px;border:1px dashed #ccc;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:10px;text-align:center;padding:4px}
  .ovbox .note{font-size:10px;color:#999;margin-top:8px}
  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px}
- .card{background:#fff;border:1px solid #ddd;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px}
- .card.reject{border-color:#d1242f} .card.accepted{border-color:#1a7f37} .card.running{border-color:#bf8700;box-shadow:0 0 0 2px #ffe6a8}
+ .card{background:#fff;border:1px solid #ddd;border-left:4px solid #ddd;border-radius:10px;
+   padding:10px;display:flex;flex-direction:column;gap:6px}
+ /* カードは淡いアクセント（左帯＋薄い地）に留め、彩度の高い色はバッジ/ボタン専用にする
+    （旧: .done 等がカード全体を塗り潰し、OKボタンの緑と衝突していた） */
+ .card.generating{border-left-color:#d4a72c}
+ .card.done{border-left-color:#0969da}
+ .card.accepted{border-left-color:#1a7f37;background:#f6fcf8}
+ .card.reject{border-left-color:#d1242f;background:#fff7f7}
+ .card.running{box-shadow:0 0 0 2px #ffe6a8}
  .chead{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
- .cut{font-weight:700} .scene{color:#888;font-size:11px;width:100%}
+ .cut{font-weight:700} .scene{color:#888;font-size:11px}
  .who{display:inline-block;padding:1px 7px;border-radius:8px;color:#fff;font-size:10px}
  .gkv{background:#d1242f} .other{background:#1a5fb4}
  .b{display:inline-block;padding:1px 7px;border-radius:8px;font-size:11px;color:#fff}
- .todo{background:#9aa0a6}.generating{background:#bf8700}.done{background:#1a7f37}.accepted{background:#0a5}.reject{background:#d1242f}
+ .b.todo{background:#9aa0a6}.b.generating{background:#b07d00}.b.done{background:#0969da}
+ .b.accepted{background:#1a7f37}.b.reject{background:#d1242f}
+ .mini{padding:2px 9px;font-size:11px;border-radius:999px;background:#fff}
+ .mini.mok{color:#1a7f37;border-color:#a8d5b5} .mini.mok.on{background:#1a7f37;color:#fff;border-color:#1a7f37}
+ .mini.mng{color:#d1242f;border-color:#efb9b9} .mini.mng.on{background:#d1242f;color:#fff;border-color:#d1242f}
  .thumbs{display:flex;gap:6px}
  .thumbs figure{margin:0;flex:1} .thumbs figcaption{font-size:10px;color:#888}
  .thumbs img{width:100%;height:150px;object-fit:contain;border:1px solid #eee;background:#fff;cursor:zoom-in}
@@ -760,6 +936,8 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
  .takes{font-size:11px;color:#666;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
  .takechip{font-size:11px;padding:2px 7px;border:1px solid #ccc;border-radius:10px;background:#fff;cursor:pointer}
  .takechip.on{background:#1a5fb4;color:#fff;border-color:#1a5fb4}
+ .generr{color:#d1242f;background:#ffefef;border:1px solid #ffc9c9;border-radius:6px;
+   padding:4px 8px;font-size:12px;margin:4px 0;word-break:break-all}
  .prog{height:6px;background:#ffe6a8;border-radius:4px;overflow:hidden;display:none}
  .prog.on{display:block} .prog>i{display:block;height:100%;width:40%;background:#bf8700;animation:slide 1.1s infinite}
  @keyframes slide{0%{margin-left:-40%}100%{margin-left:100%}}
@@ -775,8 +953,22 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
  .log{white-space:pre-wrap;font-size:10px;color:#666;background:#fafafa;border:1px solid #eee;padding:4px;max-height:64px;overflow:auto}
  .muted{color:#999;font-size:11px}
  .ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:60}
+ .dbox{display:flex;padding:0;width:min(1500px,96vw);height:92vh;overflow:hidden}
+ .dleft{flex:1;background:#14161a;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0}
+ .dleft img{max-width:96%;max-height:calc(100% - 52px);object-fit:contain;cursor:zoom-in;background:#fff}
+ .dtabs{height:46px;display:flex;gap:6px;align-items:center}
+ .dright{width:400px;background:#fff;padding:12px 14px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+ .dright h4{margin:8px 0 2px;font-size:12px;color:#57606a}
+ .dscene{background:#f6f8fa;border:1px solid #d0d7de;border-radius:6px;padding:8px;font-size:13px;white-space:pre-wrap}
+ .dscene.lowconf{background:#fff5f5;border-color:#ffb3b3;color:#c1121f}
+ .djp{background:#f6f8fa;border:1px solid #d0d7de;border-radius:6px;padding:8px;font-size:12px;
+   white-space:pre-wrap;max-height:220px;overflow:auto}
+ .dkv{font-size:12px;border-collapse:collapse} .dkv td{padding:2px 6px;vertical-align:top}
+ .dkv td:first-child{color:#57606a;white-space:nowrap}
+ #dEn{width:100%;min-height:150px} #dStage{width:100%;min-height:84px}
  .ov .box{background:#fff;padding:16px;border-radius:10px;max-width:96vw;max-height:96vh;overflow:auto}
  #lb{z-index:70} #lb .box{background:none;padding:0} #lb img{max-width:94vw;max-height:90vh}
+ #cmp,#gmodal{z-index:65}  /* 詳細画面(dmodal)の上に重ねられるように */
  #bpop{position:fixed;z-index:80;display:none;pointer-events:none;background:#fff;border:1px solid #888;border-radius:6px;padding:3px;box-shadow:0 4px 16px rgba(0,0,0,.3)}
  #bpop img{display:block;max-width:300px;max-height:220px} #bpop .cap{font-size:10px;color:#666;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
  #gmodal .box{width:auto} #gmodal img{max-width:80vw;max-height:72vh;border:1px solid #ddd}
@@ -856,6 +1048,40 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
   <div class="muted">PhotoshopでPSDを直して保存→「取得しなおす」。Base=背景レイヤー自動検出／visible=表示中の全レイヤー／レイヤー選択=チェックしたレイヤーだけを原図にする（025/052 の誤検出対策）。</div>
 </div></div>
 
+<div class="ov" id="dmodal" onclick="if(event.target===this)this.style.display='none'"><div class="box dbox">
+  <div class="dleft"><img id="dImg" onclick="lb(this.src)">
+    <div class="dtabs">
+      <button id="dbG" onclick="dShow('genzu')">原図</button>
+      <button id="dbR" onclick="dShow('result')">生成結果</button>
+      <button id="dbB" onclick="dShow('board')">ボード</button>
+      <button onclick="openCmp(DCUR)">前後比較</button>
+      <span style="width:10px"></span>
+      <button onclick="openGenzu(DCUR)">拡大/取り直し</button>
+      <button onclick="openPsd(DCUR)">PSDを開く</button></div></div>
+  <div class="dright">
+    <div class="bar"><b id="dTitle"></b><span class="grow"></span>
+      <button onclick="document.getElementById('dmodal').style.display='none'">閉じる</button></div>
+    <div id="dBadges"></div>
+    <h4>画角・場面の記述（生成の核・日本語OK・最優先で効く）</h4>
+    <textarea id="dStage" placeholder="例: カメラはモニター側にあり、ブラインドのある窓側へ向かって撮影。壁面とブラインドのみが写る。キャラクターや枠線は描かない。"></textarea>
+    <div class="bar"><button onclick="dSaveStage()">記述を保存</button><span id="dStageHint" class="muted"></span></div>
+    <h4>コンテ情報（自動・記述の下書きに使う）</h4><div id="dScene" class="dscene"></div>
+    <h4>詳細</h4><table class="dkv" id="dKv"></table>
+    <h4>検品レポート（生成のたびに自動）</h4><div id="dQC" class="dscene"></div>
+    <div class="bar"><button id="dQCApply" style="display:none" onclick="dApplySuggest()">指示に反映して次へ</button></div>
+    <h4>プロンプト（日本語・確認用）</h4><div id="dJp" class="djp"></div>
+    <details><summary>英語プロンプト（生成に使われる・編集可）</summary>
+      <textarea id="dEn"></textarea>
+      <div class="bar"><button onclick="dSavePrompt()">保存</button>
+        <button onclick="dResetPrompt()">自動に戻す</button></div></details>
+    <h4>リテイク指示（最優先の修正指示としてプロンプト末尾に付く）</h4>
+    <input id="dNote" placeholder="例: 壁面とブラインドのみ。机・扉・部屋の奥行きは描かない"
+      onchange="post('/api/unit/'+DCUR+'/retake_note',{note:this.value})">
+    <div class="bar"><button class="primary" id="dGenBtn" onclick="dGenerate()">生成</button>
+      <button class="ok" onclick="accept(DCUR,'accepted')">OK</button>
+      <button class="ng" onclick="accept(DCUR,'reject')">要修正</button></div>
+    <div id="dMsg" class="muted"></div>
+  </div></div></div>
 <div class="ov" id="modal"><div class="box">
   <h3 style="margin:0 0 6px" id="mTitle">作品・話数を追加（フォルダから取得）</h3>
   <label>作品名</label><input id="mWork" placeholder="尚善">
@@ -973,16 +1199,27 @@ function render(){
     +`<span class="pill">全${all.length}</span><span class="pill">生成済 ${gen}</span>`
     +`<span class="pill ok">OK ${ok}</span><span class="pill ng">要修正 ${ng}</span><span class="pill">未生成 ${all.length-gen}</span>`
     +`<div class="pbar"><i style="width:${pct}%"></i></div><span class="muted">${pct}% OK</span>`;
+  // 再描画で編集中の状態（開いたタブ・入力途中のテキスト・フォーカス）を失わないよう退避→復元。
+  // 生成ポーリングの度に render() が走るため、これが無いと編集がステータス更新で吹き飛ぶ。
+  const focusId=document.activeElement&&document.activeElement.id;
+  const keepVals={};
+  document.querySelectorAll('#grid textarea, #grid input[type=text], #grid input:not([type])').forEach(el=>{if(el.id)keepVals[el.id]=el.value;});
+  const openCards=[...document.querySelectorAll('#grid details[open]')].map(dt=>dt.closest('[id^=card_]')&&dt.closest('[id^=card_]').id).filter(Boolean);
   $('#grid').innerHTML=us.map(card).join('');
+  openCards.forEach(cid=>{const el=document.getElementById(cid); const dt=el&&el.querySelector('details'); if(dt)dt.open=true;});
+  Object.entries(keepVals).forEach(([id,v])=>{const el=document.getElementById(id); if(el&&v&&el.value!==v)el.value=v;});
+  if(focusId){const el=document.getElementById(focusId); if(el){el.focus(); try{el.setSelectionRange(el.value.length,el.value.length);}catch(e){}}}
   us.forEach(u=>{if(RUN.has(u.id))markRunning(u.id,true);});
 }
 function qcBadge(u){
   if(!u.qc_verdict||u.qc_verdict==='unknown') return '';
-  const map={pass:['QC✓','#dff3e6','#0a5'],needs_retake:['QC⚠','#fde2e2','#d1242f'],
-             human:['QC要確認','#fff3d6','#a36a00']};
+  // 信頼度があれば数値で出す（「QCをした事実」でなく「どのくらい信頼できるか」を見せる）
+  const t=u.qc_trust;
+  const map={pass:['#dff3e6','#0a5'],needs_retake:['#fde2e2','#d1242f'],human:['#fff3d6','#a36a00']};
   const m=map[u.qc_verdict]; if(!m) return '';
-  const tip=(u.qc_reasons||[]).join(' / ');
-  return `<span class="b" style="background:${m[1]};color:${m[2]}" title="${esc(tip)}">${m[0]}</span>`;
+  const label=(t!==null&&t!==undefined)?`信頼${t}`:( {pass:'QC✓',needs_retake:'QC⚠',human:'QC要確認'}[u.qc_verdict] );
+  const tip=[(u.qc_reasons||[]).join(' / '),u.qc_suspect?('疑: '+u.qc_suspect):''].filter(Boolean).join('｜');
+  return `<span class="b" style="background:${m[0]};color:${m[1]}" title="${esc(tip)}">${label}</span>`;
 }
 function takeStrip(u){
   const tk=u.takes||[]; if(tk.length<2) return '';   // 2テイク以上で履歴を出す
@@ -1004,31 +1241,26 @@ function card(u){
   const t=Date.now();
   const opts='<option value="">— ボード未選択 —</option>'+BOARDS.map(b=>`<option ${b===u.board?'selected':''}>${esc(b)}</option>`).join('');
   return `<div class="card ${u.status} ${RUN.has(u.id)?'running':''}" id="card_${u.id}">
-   <div class="chead"><span class="cut">c${u.cuts.join(',')}</span>
+   <div class="chead"><span class="cut" style="cursor:pointer" title="クリックで詳細画面" onclick="openDetail('${u.id}')">c${u.cuts.join(',')}</span>
      <span class="who ${u.assignee==='GKV'?'gkv':'other'}">${u.assignee}</span>
      <span class="b ${u.status}">${u.status}</span>${u.retakes?`<span class="muted">RT${u.retakes}</span>`:''}
      ${qcBadge(u)}
-     ${u.has_psd?'':'<span class="muted">PSD無</span>'}<span class="scene">${esc(u.scene)}</span></div>
+     ${u.has_psd?'':'<span class="muted">PSD無</span>'}
+     <span class="grow"></span>
+     <button class="mini mok ${u.status==='accepted'?'on':''}" title="承認" onclick="accept('${u.id}','accepted')">OK</button>
+     <button class="mini mng ${u.status==='reject'?'on':''}" title="要修正にする" onclick="accept('${u.id}','reject')">要修正</button></div>
+   ${u.scene?`<div class="scene">${esc(u.scene)}</div>`:''}
    <div class="thumbs">
-     <figure><figcaption>原図[${u.genzu_source}] ${u.has_psd?`<a href="#" onclick="openPsd('${u.id}');return false">PSDを開く</a> · <a href="#" onclick="openGenzu('${u.id}');return false">拡大/取り直し</a>`:''}</figcaption>
-       ${u.has_psd?`<img loading="lazy" src="/img/${u.id}/genzu" onclick="openGenzu('${u.id}')" onerror="this.outerHTML='<div class=ph>原図なし</div>'">`:'<div class="ph">PSD未検出</div>'}</figure>
-     <figure><figcaption>生成結果 ${u.has_result?`<a href="#" onclick="openCmp('${u.id}');return false">前後比較</a>`:''}</figcaption>${u.has_result?`<img loading="lazy" src="/img/${u.id}/result?t=${t}" onclick="openCmp('${u.id}')">`:'<div class="ph">未生成</div>'}</figure>
+     <figure><figcaption>原図[${u.genzu_source}]</figcaption>
+       ${u.has_psd?`<img loading="lazy" src="/img/${u.id}/genzu?v=${u.genzu_source}${u.genzu_rev||0}" title="クリックで詳細画面" onclick="openDetail('${u.id}')" onerror="this.outerHTML='<div class=ph>原図なし</div>'">`:'<div class="ph">PSD未検出</div>'}</figure>
+     <figure><figcaption>生成結果</figcaption>${u.has_result?`<img loading="lazy" src="/img/${u.id}/result?t=${t}" title="クリックで詳細画面" onclick="openDetail('${u.id}')">`:`<div class="ph" style="cursor:pointer" onclick="openDetail('${u.id}')">未生成</div>`}</figure>
    </div>
    ${takeStrip(u)}
+   ${u.gen_error?`<div class="generr" title="${esc(u.gen_error)}">⚠ 生成失敗: ${esc(u.gen_error.slice(0,120))}</div>`:''}
    <div class="prog ${RUN.has(u.id)?'on':''}" id="prog_${u.id}"><i></i></div>
    <div class="bar"><select style="flex:1;width:auto" onchange="setBoard('${u.id}',this.value)">${opts}</select>
-     <button onclick="showBoard('${u.id}')" onmousemove="boardHover('${u.id}',event)" onmouseleave="boardOut()" title="クリックで拡大／ホバーでプレビュー">ボード表示</button></div>
-   <details><summary>プロンプト${u.prompt_edited?'（編集済）':''}</summary>
-     <textarea id="pr_${u.id}" placeholder="（自動生成。編集して保存で上書き）"></textarea>
-     <div class="bar"><button onclick="savePrompt('${u.id}')">保存</button>
-       <button onclick="loadPrompt('${u.id}')">自動表示</button>
-       <button onclick="resetPrompt('${u.id}')">自動に戻す</button></div></details>
-   ${u.has_result?`<input class="rnote" id="rn_${u.id}" value="${esc(u.retake_note||'')}"
-     placeholder="リテイク指示（例: 右の木の幹をつなげる / 奥行きを出す）"
-     onchange="saveNote('${u.id}')">`:''}
-   <div class="bar"><button class="primary" onclick="gen('${u.id}')">${u.has_result?'リテイク':'生成'}</button>
-     <button class="ok" onclick="accept('${u.id}','accepted')">OK</button>
-     <button class="ng" onclick="accept('${u.id}','reject')">要修正</button></div>
+     <button onclick="showBoard('${u.id}')" onmousemove="boardHover('${u.id}',event)" onmouseleave="boardOut()" title="クリックで拡大／ホバーでプレビュー">ボード表示</button>
+     ${u.has_result?'':`<button class="primary" onclick="gen('${u.id}')">生成</button>`}</div>
    <div class="log" id="log_${u.id}" style="display:none"></div></div>`;
 }
 function markRunning(id,on){const c=document.getElementById('card_'+id),p=document.getElementById('prog_'+id);
@@ -1059,6 +1291,68 @@ async function recapture(){const src=document.querySelector('input[name=gsrc]:ch
   $('#gImg').src='/img/'+GCUR+'/genzu?t='+Date.now(); $('#gMsg').textContent='取得しました（'+src+'）'; await refresh();}
 async function openPsd(id){const r=await post('/api/unit/'+id+'/open',{}); slog(id,r.error?('開けません: '+r.error):'PSDを開きました');}
 async function loadPrompt(id){const d=await (await fetch('/api/unit/'+id)).json(); const t=document.getElementById('pr_'+id); if(t)t.value=d.prompt;}
+let DCUR=null;
+async function openDetail(id){DCUR=id; const u=unit(id); if(!u)return;
+  $('#dTitle').textContent='c'+u.cuts.join(',')+'（'+u.assignee+'）';
+  $('#dGenBtn').textContent=u.has_result?'リテイク':'生成';
+  $('#dBadges').innerHTML=`<span class="b ${u.status}">${u.status}</span> ${qcBadge(u)}${u.retakes?` <span class="muted">RT${u.retakes}</span>`:''}`;
+  $('#dScene').textContent='読み込み中…'; $('#dJp').textContent='…'; $('#dEn').value=''; $('#dMsg').textContent='';
+  $('#dmodal').style.display='flex'; dShow(u.has_result?'result':'genzu');
+  const d=await (await fetch('/api/unit/'+id)).json();
+  const ci=d.cut_info||{};
+  const low=(ci.conf==='low')||!ci.place;
+  const sc=$('#dScene'); sc.classList.toggle('lowconf',low);
+  sc.textContent=ci.place
+    ?('場所: '+ci.place+'\n時刻: '+(ci.time||'—')+(ci.situation?('\n状況: '+ci.situation):'')
+      +(low?'\n⚠ コンテOCRの信頼度が低い/場面説明なし。内容を確認してください':''))
+    :'場面情報なし（コンテ未紐づけ）。⚠ 画角・場所はリテイク指示かプロンプトで手動指定してください';
+  $('#dJp').textContent=d.prompt_jp||'（日本語プロンプトなし）';
+  $('#dEn').value=d.prompt||'';
+  $('#dNote').value=u.retake_note||'';
+  $('#dStage').value=d.staging||'';
+  $('#dStageHint').textContent=d.staging_source==='auto'
+    ?('自動下書き'+(d.staging_conf?('（信頼度 '+d.staging_conf+'）'):'')+' — 直して保存で確定')
+    :(d.staging_source==='manual'?'手動確定済み':'未記入（コンテ情報を下書きに書いてください）');
+  $('#dStageHint').style.color=(d.staging_conf==='low'||!d.staging)?'#c1121f':'';
+  const qcl=[];
+  if(u.qc_trust!==null&&u.qc_trust!==undefined)qcl.push('信頼度: '+u.qc_trust+'/100');
+  (u.qc_reasons||[]).forEach(r=>qcl.push('・'+r));
+  if(u.qc_suspect)qcl.push('疑わしい指示: '+u.qc_suspect);
+  if(u.qc_suggest)qcl.push('提案リテイク指示: '+u.qc_suggest);
+  $('#dQC').textContent=qcl.length?qcl.join('\n'):(u.has_result?'（レポートなし＝旧生成。次の生成から付きます）':'（未生成）');
+  $('#dQC').classList.toggle('lowconf',(u.qc_trust!==null&&u.qc_trust!==undefined&&u.qc_trust<50));
+  $('#dQCApply').style.display=u.qc_suggest?'':'none';
+  window._dSuggest=u.qc_suggest||'';
+  $('#dKv').innerHTML=[['ファイル',d.filename],['原図ソース',u.genzu_source],
+    ['ボード',u.board||'—'],['テイク',(u.takes||[]).length+(u.adopted?('（採用 T'+u.adopted+'）'):'')],
+    ['OCR信頼度',ci.conf||'—'],['QC',(u.qc_reasons||[]).join(' / ')||'—']]
+    .map(([k,v])=>`<tr><td>${k}</td><td>${esc(String(v))}</td></tr>`).join('');
+}
+function dShow(which){const u=unit(DCUR); if(!u)return; const t=Date.now();
+  const srcs={genzu:`/img/${DCUR}/genzu?v=${u.genzu_source}${u.genzu_rev||0}`,
+              result:`/img/${DCUR}/result?t=${t}`, board:`/img/${DCUR}/board?t=${t}`};
+  const im=$('#dImg'); im.onerror=()=>{im.onerror=null;$('#dMsg').textContent='画像がありません（'+which+'）';};
+  $('#dMsg').textContent=''; im.src=srcs[which];
+  const ids={genzu:'dbG',result:'dbR',board:'dbB'};
+  Object.values(ids).forEach(b=>$('#'+b).classList.remove('primary'));
+  if(ids[which])$('#'+ids[which]).classList.add('primary');
+}
+async function dApplySuggest(){if(!window._dSuggest)return;
+  $('#dNote').value=window._dSuggest;
+  await post('/api/unit/'+DCUR+'/retake_note',{note:window._dSuggest});
+  $('#dMsg').textContent='検品レポートの提案をリテイク指示に反映しました（「リテイク」で再生成）';}
+async function dSaveStage(){await post('/api/unit/'+DCUR+'/staging',{text:$('#dStage').value});
+  const d=await (await fetch('/api/unit/'+DCUR)).json(); $('#dJp').textContent=d.prompt_jp||''; $('#dEn').value=d.prompt||'';
+  $('#dMsg').textContent='画角・場面の記述を保存しました（プロンプトに反映済み）';}
+async function dSavePrompt(){await post('/api/unit/'+DCUR+'/prompt',{prompt:$('#dEn').value}); $('#dMsg').textContent='プロンプトを保存しました';}
+async function dResetPrompt(){await post('/api/unit/'+DCUR+'/prompt',{prompt:''});
+  const d=await (await fetch('/api/unit/'+DCUR)).json(); $('#dEn').value=d.prompt||''; $('#dMsg').textContent='自動生成に戻しました';}
+async function dGenerate(){
+  await post('/api/unit/'+DCUR+'/staging',{text:$('#dStage').value});
+  await post('/api/unit/'+DCUR+'/retake_note',{note:$('#dNote').value});
+  const r=await post('/api/unit/'+DCUR+'/generate',{}); if(r.error){$('#dMsg').textContent='エラー: '+r.error;return;}
+  RUN.add(DCUR); const u=unit(DCUR); if(u){u.status='generating';u.running=true;} render(); pollJobs();
+  $('#dMsg').textContent='生成キューに投入しました（完了後「生成結果」タブで確認）';}
 async function savePrompt(id){const t=document.getElementById('pr_'+id); await post('/api/unit/'+id+'/prompt',{prompt:t?t.value:''}); slog(id,'保存しました');}
 async function resetPrompt(id){await post('/api/unit/'+id+'/prompt',{prompt:''}); const t=document.getElementById('pr_'+id); if(t)t.value=''; slog(id,'自動に戻しました');}
 async function setBoard(id,v){await post('/api/unit/'+id+'/board',{board:v}); slog(id,'ボード保存');}
@@ -1113,6 +1407,8 @@ def main(argv=None):
     p = argparse.ArgumentParser(prog="genzu_fix.server", description="原図修正コンソール")
     p.add_argument("--project", default=None,
                    help="discover_assets が作る project json。genzu_dir/boards_dir/out/work/ep を補完")
+    p.add_argument("--projects-glob", default="runs/project_*.json",
+                   help="起動時に読み込む作品レジストリ（全作品がタブに載る）")
     p.add_argument("--genzu-dir", default=None)
     p.add_argument("--out", default="work/console")
     p.add_argument("--csv", default="runs/cut_board_map_ep7.csv")
@@ -1129,8 +1425,9 @@ def main(argv=None):
     p.add_argument("--header-top", type=int, default=None)
     p.add_argument("--cut-info", default="runs/cut_scene_info_ep7.csv")
     p.add_argument("--max-parallel", type=int, default=3, help="生成の同時実行数の上限")
-    p.add_argument("--qc-vision", action="store_true",
-                   help="生成後にAI視覚QC（人物残り/文字残り/画角）も走らせる（要 ANTHROPIC_API_KEY）")
+    p.add_argument("--qc-vision", action=argparse.BooleanOptionalAction, default=True,
+                   help="生成後にAI検品レポート（信頼度・エラー・プロンプト疑義・リテイク指示案）を付ける"
+                        "（要 ANTHROPIC_API_KEY・既定ON。--no-qc-vision で無効）")
     p.add_argument("--port", type=int, default=8765)
     a = p.parse_args(argv)
     # --project（discover_assets 出力）で未指定の genzu_dir/boards_dir/out/work/ep を補完。
@@ -1144,8 +1441,15 @@ def main(argv=None):
             a.work = pj["work"]
         if pj.get("ep"):
             a.ep = pj["ep"]
-    if not a.genzu_dir:
-        p.error("--genzu-dir か --project のどちらかが必要です")
+        # カット表は project 側を正とする。project に csv が無い作品（SP2等・香盤表なし）は
+        # --csv の既定値(ep7)を引きずらず、原図フォルダ走査で組む。
+        if a.csv == "runs/cut_board_map_ep7.csv":
+            a.csv = pj.get("csv")
+        # 話数概要・cut_info も既定(尚善ep7)のままなら project 側を正とする
+        if a.overview_json == "runs/ep_overview.json" and pj.get("overview"):
+            a.overview_json = pj["overview"]
+        if a.cut_info == "runs/cut_scene_info_ep7.csv":
+            a.cut_info = pj.get("cut_info") or ""
     # カット別 situation/remove（great-edisonの3層プロンプトCUT層）。在ればプロンプトに反映。
     cut_info_map = {}
     try:
@@ -1160,15 +1464,56 @@ def main(argv=None):
     OVERVIEWS.update(_load_json(a.overview_json, {}))
     global STATE
     STATE = _load_json(_state_path(), {})
-    # 既定プロジェクト（起動引数のCSV）
-    dkey = f"{a.work}#{a.ep}"
-    PROJECTS[dkey] = _make_project(dkey, a.work, a.ep, a.genzu_dir, a.boards_dir, a.csv, source="csv")
-    # 永続化された追加プロジェクトを復元
+
+    def add_project(work, ep, genzu_dir, boards_dir, csv_path, out_dir, cut_info, label,
+                    board_map=None, include_book=None, staging_map=None, genzu_trust=None,
+                    boards_subdir=None):
+        """genzu_dir が実在すれば PROJECTS に登録。csv が実在すれば csv、無ければ scan。"""
+        if not (genzu_dir and os.path.isdir(genzu_dir)):
+            print(f"[skip] {label}: 原図フォルダが見つかりません: {genzu_dir}")
+            return None
+        key = f"{work}#{ep}"
+        source = "csv" if (csv_path and os.path.exists(csv_path)) else "scan"
+        if source == "scan":
+            print(f"[info] {label}: カット表CSVなし→原図フォルダ走査で構成: {genzu_dir}")
+        PROJECTS[key] = _make_project(key, work, ep, genzu_dir, boards_dir,
+                                      csv_path if source == "csv" else None,
+                                      source=source, out_dir=out_dir, cut_info=cut_info,
+                                      board_map=board_map, include_book=include_book,
+                                      staging_map=staging_map, genzu_trust=genzu_trust,
+                                      boards_subdir=boards_subdir)
+        # 各作品の過去state(OK判定/プロンプト編集等)を取り込む。
+        # その作品のユニットに属する uid だけ・既存キーは上書きしない（他作品の混入や汚染を防ぐ）。
+        if out_dir:
+            units = PROJECTS[key]["units"]
+            for k, v in _load_json(os.path.join(out_dir, "console_state.json"), {}).items():
+                if k in units:
+                    STATE.setdefault(k, v)
+        return key
+
+    # 1) 作品レジストリ（runs/project_*.json）を全部読み込む → 全作品がタブに載る
+    import glob as _glob
+    for pjpath in sorted(_glob.glob(a.projects_glob)):
+        pj = _load_json(pjpath, {})
+        if not pj.get("work"):
+            continue
+        add_project(pj["work"], str(pj.get("ep", "00")), pj.get("genzu_dir"),
+                    pj.get("boards_dir"), pj.get("csv"), pj.get("out_dir"),
+                    pj.get("cut_info"), os.path.basename(pjpath),
+                    board_map=pj.get("board_map"), include_book=pj.get("include_book"),
+                    staging_map=pj.get("staging_map"), genzu_trust=pj.get("genzu_trust"),
+                    boards_subdir=pj.get("boards_subdir"))
+    # 2) CLI 指定があれば従来どおり追加/上書き（後方互換）
+    if a.genzu_dir:
+        add_project(a.work, a.ep, a.genzu_dir, a.boards_dir, a.csv, a.out, a.cut_info, "CLI引数")
+    # 3) 永続化された追加プロジェクト（＋作品ボタン由来）を復元
     for rec in _load_json(_projects_path(), []):
         if rec["key"] not in PROJECTS and os.path.isdir(rec.get("genzu_dir", "")):
             PROJECTS[rec["key"]] = _make_project(rec["key"], rec["work"], rec["ep"],
                                                  rec["genzu_dir"], rec.get("boards_dir"),
                                                  rec.get("csv"), rec.get("source", "scan"))
+    if not PROJECTS:
+        p.error("作品が1つも見つかりません（runs/project_*.json を作るか --genzu-dir を指定）")
     _save_projects()
     app = create_app()
     print(f"原図修正コンソール: http://127.0.0.1:{a.port}  (out={a.out})")

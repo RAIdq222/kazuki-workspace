@@ -1,5 +1,41 @@
 {
   "_comment": "作品レジストリ。新作品はここに1エントリ足す（コードは触らない）。prefix=原図ファイル名の接頭辞。",
+  "佐々木とピーちゃん第2期": {
+    "prefix": "SP2",
+    "aliases": ["SP2", "佐々木とピーちゃん", "佐々木とピーちゃん第2期"],
+    "status": "着手（#10テスト）。原図修正=ラフ原図→修正済み原図（PSD入出力）",
+    "note": "原図は担当別フォルダ直下・_genzuサフィックス無し（SP2_10_006.psd / 束=022_025 / _R=リテイク版 / 'BG only'修飾）。香盤表なし→カット表はフォルダ走査。設定資料=絵コンテ＋アニメ1期参考カットのみ（1期参考カット=画調の正解）。project=runs/project_佐々木とピーちゃん第2期_10.json",
+    "eps": {
+      "10": {
+        "status": "テスト準備（2026-07-14 HOSHI様向けテストフォルダ確認）",
+        "total_cuts": 314,
+        "cuts_breakdown": {"アバン": 24, "A": 204, "B": 86},
+        "genzu_delivered": 83,
+        "conte": {
+          "paper": "SILVER LINK.（印字ヘッダ Cut|Picture|Action|Dialog|Sec）",
+          "cols": "0.53,0.71,0.91",
+          "first_content_page": 3,
+          "glossary": "runs/conte_glossary_sp2_10.md",
+          "note": "p1=表紙(カット数集計) p2=白紙。赤バツ=欠番。Sec=丸数字(秒)"
+        },
+        "drive": {
+          "genzu_folder": "15etNV3IXsM0p_bPz0oWDwXfaiA-RarbS",
+          "genzu_folder_name": "#10_佐々木とピーちゃん（担当別: 談/野田/西脇）",
+          "test_package": "1u-NqFXiql5aMyKBEiD2hFmoOapRbqfQp",
+          "test_package_name": "HOSHI様_20260714_佐々木とピーちゃん#10_テスト",
+          "conte_pdf": "1gjUR-_K45zUUcAQ44uKH66s9VS7-FUdp",
+          "genzu_zip_20260709": "1yQDIKgVweIs84wPQpQrLJjHtYKMnwnb0"
+        },
+        "style_refs": [
+          "密度参考BG(場所やシーンは違います)/",
+          "隔離空間の輪郭線について.jpg",
+          "SP2_現実世界_隔離空間_夜.psd",
+          "SP2_10_283～_場所参考/",
+          "BGサイズ_144dpi基本.psd / 216dpi基本.psd"
+        ]
+      }
+    }
+  },
   "尚善": {
     "prefix": "shz",
     "aliases": ["shz", "尚善"],

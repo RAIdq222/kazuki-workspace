@@ -44,7 +44,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 # Anthropic REST（conte.py と同流儀＝標準ライブラリのみ・要 ANTHROPIC_API_KEY）
-DEFAULT_MODEL = "claude-opus-4-8"
+DEFAULT_MODEL = "claude-fable-5"
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
 ANTHROPIC_VERSION = "2023-06-01"
 

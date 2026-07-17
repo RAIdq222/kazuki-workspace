@@ -32,8 +32,8 @@ def _make_fixture(root):
     for d in (out, boards, gz, os.path.join(out, "testcut01")):
         os.makedirs(d, exist_ok=True)
     # 原図(前)=赤 / 最終結果(後)=青。比較で左右に出る。
-    # 原図プレビューはソース別ファイル名（genzu_<source>.png）。既定 source=base。
-    _solid(os.path.join(out, "testcut01", "genzu_base.png"), (220, 60, 60))
+    # 原図プレビューはソース別+規則rev付きファイル名（server._PREVIEW_REV と一致させる）。
+    _solid(os.path.join(out, "testcut01", "genzu_base_r4.png"), (220, 60, 60))
     _solid(os.path.join(out, "testcut01", "restored_full.png"), (60, 80, 220))
     _solid(os.path.join(boards, "BoardA.png"), (60, 200, 90))
     # QC結果（S3）: カードにバッジ／フィルタが出るか検証するため
@@ -126,13 +126,15 @@ def main():
             u1 = _json.loads(urllib.request.urlopen(base + "/api/units").read())[0]
             check("採用でadopted=1に", u1.get("adopted") == 1)
 
-            # 指示付きリテイク（A）: 指示入力→保存→APIに反映
-            check("リテイク指示欄あり", page.locator("#rn_testcut01").count() == 1)
-            page.fill("#rn_testcut01", "右の木の幹をつなげる")
-            page.locator("#rn_testcut01").blur()
+            # 指示付きリテイク（A）: 詳細画面の指示欄→保存→APIに反映
+            page.evaluate("openDetail('testcut01')")
+            page.wait_for_selector("#dmodal", state="visible")
+            page.fill("#dNote", "右の木の幹をつなげる")
+            page.locator("#dNote").dispatch_event("change")
             page.wait_for_timeout(500)
             u2 = _json.loads(urllib.request.urlopen(base + "/api/units").read())[0]
             check("リテイク指示が保存された", u2.get("retake_note") == "右の木の幹をつなげる")
+            page.evaluate("()=>document.querySelector('#dmodal').style.display='none'")
             # 画像ルート（原図/結果/ボード）が200
             import urllib.request
             for which in ("genzu", "result", "board"):
@@ -152,9 +154,9 @@ def main():
             mbsrc = page.get_attribute("#ovbox .mboards img", "src") or ""
             check("ボード画像=/board-img", "/board-img" in mbsrc)
 
-            # 比較を開く（横並びが既定）
+            # 比較を開く（横並びが既定。カードのリンクは廃止＝詳細画面のボタン相当を直接呼ぶ）
             page.evaluate("setCmpMode('side')")
-            page.locator("text=前後比較").first.click()
+            page.evaluate("openCmp('testcut01')")
             page.wait_for_selector("#cmp", state="visible")
             check("比較オーバーレイ表示", page.locator("#cmp").is_visible())
             check("横並びモード表示", page.locator("#cmpSide").is_visible())
@@ -201,6 +203,25 @@ def main():
             page.click("text=入替")  # 元に戻す
 
             page.evaluate("()=>document.querySelector('#cmp').style.display='none'")
+
+            # カット詳細画面（Higgsfield風）: cut番号クリックで開き、場面・プロンプトが載る
+            page.click(".cut")
+            page.wait_for_selector("#dmodal", state="visible")
+            check("詳細画面が開く", page.locator("#dmodal").is_visible())
+            page.wait_for_timeout(500)
+            check("詳細: 日本語プロンプト表示", len(page.inner_text("#dJp")) > 10)
+            check("詳細: ENプロンプト表示", len(page.input_value("#dEn")) > 10)
+            check("詳細: 場面欄あり", page.locator("#dScene").count() == 1)
+            page.evaluate("()=>document.querySelector('#dmodal').style.display='none'")
+
+            # 再描画で編集が消えない（詳細画面は#grid外＝render()の影響を受けない）
+            page.evaluate("openDetail('testcut01')")
+            page.wait_for_selector("#dmodal", state="visible")
+            page.fill("#dNote", "編集途中のテキスト")
+            page.evaluate("render()")
+            check("再描画で入力が保持される",
+                  page.input_value("#dNote") == "編集途中のテキスト")
+            page.evaluate("()=>document.querySelector('#dmodal').style.display='none'")
 
             # ③ ボード表示ホバーでプレビュー
             page.eval_on_selector("button:has-text('ボード表示')",

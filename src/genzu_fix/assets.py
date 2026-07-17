@@ -93,8 +93,9 @@ def _build_specs(work: str, ep: str):
                               rf"{w_alt}0*{ep_alt}.*(?:脚本|決定稿|シナリオ).*\.pdf$")),
         ("koban", "file", rx(rf"香盤.*#?\s*{ep_alt}.*\.xlsx?$",
                              rf"{w_alt}.*香盤.*{ep_alt}.*\.xlsx?$")),
-        ("conte", "file", rx(rf"(?:shz|{w_alt})[_\s]*{ep_alt}[_\s]*conte.*\.pdf$",
-                             rf"(?:絵?コンテ).*{ep_alt}.*\.pdf$")),
+        ("conte", "file", rx(rf"(?:shz|{w_alt})[_\s#]*{ep_alt}[_\s]*conte.*\.pdf$",
+                             rf"(?:絵?コンテ).*{ep_alt}.*\.pdf$",
+                             rf"{ep_alt}.*(?:絵?コンテ).*\.pdf$")),  # 例) SP2#10_決定稿コンテ.pdf
         # 作品共通（複数）
         ("settings", "files", rx(rf"{w_alt}.*設定.*\.(?:pdf|docx)$",
                                  r"(?:世界観|設定補足|設定参考).*\.(?:pdf|docx)$")),
@@ -118,10 +119,16 @@ def discover(root: str, work: str, ep: str, max_depth: int = 4) -> dict:
             for k, kind, pats in specs:
                 if kind == "dir" and any(p.search(d) for p in pats):
                     dir_hits[k].append(os.path.join(cur, d))
+        # 「設定資料」系フォルダ配下は、ファイル名に「設定」が無くても設定資料として収集
+        # （例: 03.設定資料/密度参考BG…、隔離空間の輪郭線について.jpg、参考PSD）。
+        in_settings_dir = bool(re.search(r"設定資料|^資料$", os.path.basename(cur)))
         for f in files:
             for k, kind, pats in specs:
                 if kind in ("file", "files") and any(p.search(f) for p in pats):
                     file_hits[k].append(os.path.join(cur, f))
+            if in_settings_dir and f.lower().endswith(
+                    (".pdf", ".docx", ".jpg", ".jpeg", ".png", ".psd", ".txt", ".md")):
+                file_hits["settings"].append(os.path.join(cur, f))
 
     def pick_dir(cands):
         # 浅い（ルートに近い）ものを優先。ネスト boards(01/01)は最深の実体でなく最初でOK。
@@ -131,6 +138,9 @@ def discover(root: str, work: str, ep: str, max_depth: int = 4) -> dict:
     conte_set = set(file_hits.get("conte", []))
     if "script" in file_hits:
         file_hits["script"] = [f for f in file_hits["script"] if f not in conte_set]
+    # settings から script/koban/conte 該当分を除外（コンテPDFが設定資料に重複計上されないように）
+    others = conte_set | set(file_hits.get("script", [])) | set(file_hits.get("koban", []))
+    file_hits["settings"] = [f for f in file_hits["settings"] if f not in others]
 
     def pick_file(cands):
         return sorted(cands, key=lambda p: (p.count(os.sep), -len(os.path.basename(p))))[0] if cands else None

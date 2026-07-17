@@ -122,16 +122,37 @@ def export_with_overrides(psd_path: str, out_path: str,
 _EXCLUDE_HINTS = ("美監補足", "指示", "セル参考", "camera", "参考")
 
 
+def _is_blank(image) -> bool:
+    """合成結果が「絵なし」か＝全面透明 or 完全単色（描線が1本も無い）。
+    空レイヤー/白紙レイヤーを選んでしまったことの検知に使う。"""
+    if image is None:
+        return True
+    ex = image.getextrema()
+    if not isinstance(ex[0], tuple):  # 単バンド
+        ex = (ex,)
+    if image.mode == "RGBA":
+        if ex[3][0] == ex[3][1] == 0:
+            return True  # 全面透明
+        ex = ex[:3]
+    return all(lo == hi for lo, hi in ex)
+
+
 def export_background_layer(psd_path: str, out_path: str, bg=(255, 255, 255),
                             include_book: bool = False):
     """背景作画レイヤーだけを合成して PNG 保存する（指示/参考/セル/BOOK を除外）。
 
-    選択ロジック:
+    選択ロジック（候補を優先順に試し、合成が空＝全面同一色なら次の候補へ落ちる）:
       1) [type](文字) と 美監補足/指示/セル参考/Camera/参考 を含む名前は常に非表示。
-      2) トップレベルで背景作画を選ぶ: 名前が "BG" 始まり → 無ければ "LO" 始まり → 無ければ "背景"。
-         選んだもの以外のトップレベル画像（参考フレーム等）も非表示にする。
-      3) BOOK◯（燭台/寝台/柱/モヤ 等の別ブック）は既定で除外。include_book=True で合成に含める。
-      4) どれも該当しなければフォールバック（除外後の可視レイヤーをそのまま合成）。
+      2) 候補の優先順:
+         BG …… トップレベルで名前が "BG" 始まり（_BG / BG[group] / _BG_Book◯ を含む。
+                BGとBookの統合レイヤーは背景本体として採用する）＋ "PAN" 始まり（引き背景）
+         LO …… トップレベルの pixel で "LO" 始まり
+         BG(nested) …… グループ内にネストした "BG" 始まりの pixel
+                （SP2の 005型: BG[group]の中身が空で、実背景が LO[group]>_BG にあるPSD向け）
+         背景 …… トップレベルの「背景」
+      3) 名前が "Book" 始まり（Book_1/_book_e 等の別ブック）は既定で除外。
+         include_book=True で採用候補に合成する。
+      4) どの候補も絵にならなければフォールバック（除外後の可視レイヤーをそのまま合成）。
     戻り値: (width, height, info)  info={"strategy","layers"}。
     """
     psd = PSDImage.open(psd_path)
@@ -140,48 +161,89 @@ def export_background_layer(psd_path: str, out_path: str, bg=(255, 255, 255),
         nl = (name or "").lower()
         return any(h.lower() in nl for h in _EXCLUDE_HINTS)
 
-    def is_book(name: str) -> bool:
-        return "book" in (name or "").lower()
+    def norm(l):
+        # SP2等は "_BG" "_PAN" のように先頭 _ が付く。判定は _ を剥がして行う。
+        return (l.name or "").lstrip("_").lower()
 
-    # 1) 文字・指示・参考・セルを全階層で隠す
-    for layer in psd.descendants():
-        if str(layer.kind) == "type" or excluded(layer.name):
-            layer.visible = False
+    def starts(l, p):
+        return norm(l).startswith(p)
 
-    top = list(psd)
+    def is_book(l) -> bool:
+        # 「Bookで始まる名前」だけをブック扱いする。_BG_Book はBG本体（統合レイヤー）。
+        return norm(l).startswith("book")
 
     def is_pixel(l):
         return str(l.kind) != "group"
 
-    def starts(l, p):
-        return (l.name or "").lower().startswith(p)
+    orig_visible = {id(l): bool(l.visible) for l in psd.descendants()}
+    top = list(psd)
 
-    bg_layers = [l for l in top if is_pixel(l) and starts(l, "bg") and not excluded(l.name)]
+    bg_layers = [l for l in top if starts(l, "bg") and not excluded(l.name)]
+    pan_layers = [l for l in top if starts(l, "pan") and not excluded(l.name)]
     lo_layers = [l for l in top if is_pixel(l) and starts(l, "lo") and not excluded(l.name)]
+    nested_bg = [l for l in psd.descendants()
+                 if is_pixel(l) and starts(l, "bg") and not excluded(l.name) and l not in top]
     haikei = [l for l in top if l.name == "背景"]
-    book_layers = [l for l in top if is_pixel(l) and is_book(l.name)]
-    target = bg_layers or lo_layers or haikei
+    book_layers = [l for l in top if is_book(l)]
 
-    if target:
-        strategy = "BG" if bg_layers else ("LO" if lo_layers else "背景")
-        keep = {id(l) for l in target}
-        if include_book:
-            keep |= {id(l) for l in book_layers}
-        # 選択レイヤー(+任意でBOOK)以外のトップレベル画像は隠す（参考フレーム等を排除）。
-        # グループ（セル参考/美監補足等）も一律オフ（背景作画はトップレベルのpixel）。
-        for l in top:
-            l.visible = is_pixel(l) and (id(l) in keep)
-    else:
-        strategy = "fallback"
+    candidates = []
+    if bg_layers or pan_layers:
+        candidates.append(("BG" if bg_layers else "PAN", bg_layers + pan_layers))
+    if lo_layers:
+        candidates.append(("LO", lo_layers))
+    if nested_bg:
+        candidates.append(("BG(nested)", nested_bg))
+    if haikei:
+        candidates.append(("背景", haikei))
+
+    def render(keep_layers):
+        """keep_layers(+任意でBOOK)だけが写るように可視状態を組み、再合成する。"""
+        keeps = list(keep_layers) + (book_layers if include_book else [])
+        kept = {id(l) for l in keeps}
+        inside = set()   # 採用したグループの中身＝保存時の可視状態のまま
+        anc = set()      # ネスト採用時は先祖グループを表示にしないと写らない
+        for x in keeps:
+            if x.is_group():
+                inside |= {id(d) for d in x.descendants()}
+            p = getattr(x, "parent", None)
+            while p is not None and p is not psd and getattr(p, "name", None) is not None:
+                anc.add(id(p))
+                p = getattr(p, "parent", None)
+        for l in psd.descendants():
+            if str(l.kind) == "type" or excluded(l.name):
+                l.visible = False
+            elif id(l) in kept or id(l) in anc:
+                l.visible = True
+            elif id(l) in inside:
+                l.visible = orig_visible[id(l)]
+            else:
+                l.visible = False
+        return psd.composite(force=True)
+
+    image, strategy, used = None, "fallback", []
+    for name, layers in candidates:
+        img = render(layers)
+        if not _is_blank(img):
+            image, strategy, used = img, name, layers
+            break
+
+    if image is None:
+        # フォールバック: 保存時の可視状態に戻し、文字/指示/BOOKだけ隠して合成
+        for l in psd.descendants():
+            l.visible = orig_visible[id(l)]
+        for l in psd.descendants():
+            if str(l.kind) == "type" or excluded(l.name):
+                l.visible = False
         if not include_book:
             for l in book_layers:
                 l.visible = False
+        image = psd.composite(force=True)
 
-    image = _flatten(psd.composite(force=True), bg)
+    image = _flatten(image, bg)
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
     image.save(out_path)
-    used = list(target) + (book_layers if (include_book and target) else [])
-    info = {"strategy": strategy, "layers": [l.name for l in used]}
+    used_all = list(used) + (book_layers if (include_book and used) else [])
+    info = {"strategy": strategy, "layers": [l.name for l in used_all]}
     return image.size[0], image.size[1], info
 
 

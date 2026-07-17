@@ -46,13 +46,18 @@ def build_prompt(board: str, scene: str, prompt_override: str | None = None,
 
 
 def build_prompt_pair(board: str, scene: str, prompt_override: str | None = None,
-                      registry=None, cut: str = "", cut_info_map=None) -> tuple[str, str | None]:
+                      registry=None, cut: str = "", cut_info_map=None,
+                      staging: str | None = None,
+                      genzu_trust: str = "rough") -> tuple[str, str | None]:
     """(EN, JP) を返す。EN はモデル入力、JP は人の確認用。
     cut_info_map があり当該カットの充足済み行が在れば situation/remove 込みで組む。
+    staging=画角・場面の言語記述（最優先ブロック）。genzu_trust="high"=忠実清書モード。
     prompt_override がある場合は (override, None)。"""
     if prompt_override:
         return prompt_override, None
-    p = promptlib.build_for_cut(cut, board, scene, registry=registry, cut_info_map=cut_info_map)
+    p = promptlib.build_for_cut(cut, board, scene, registry=registry,
+                                cut_info_map=cut_info_map, staging=staging,
+                                genzu_trust=genzu_trust)
     return p.en, p.jp
 
 
@@ -81,20 +86,48 @@ def _run(cmd: list[str], dry: bool, timeout: int = 900) -> str:
     print("    $ " + " ".join(cmd))
     if dry:
         return ""
-    # timeout でハングを打ち切る（1本の生成停止でバッチ全体が固まらないように）
+    # - stdin=DEVNULL: CLIが対話入力（ログイン確認等）を求めても永久に待たず、即エラーで返す
+    # - timeout: ハングを打ち切る。Windowsのnpm系CLIは .cmd ラッパの下に node の孫プロセスが
+    #   いるため、親だけ kill するとパイプが閉じず communicate が解けない → taskkill /T で子孫ごと止める
+    proc = subprocess.Popen(_resolve(cmd), stdin=subprocess.DEVNULL,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                            text=True, encoding="utf-8")
     try:
-        r = subprocess.run(_resolve(cmd), capture_output=True, text=True,
-                           encoding="utf-8", timeout=timeout)
+        out, err = proc.communicate(timeout=timeout)
     except subprocess.TimeoutExpired:
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                           capture_output=True)
+        else:
+            proc.kill()
+        try:
+            proc.communicate(timeout=10)
+        except Exception:  # noqa 後始末失敗でも本体のエラーを優先
+            pass
         raise RuntimeError(f"command timed out after {timeout}s: {' '.join(cmd[:3])}…")
-    if r.returncode != 0:
-        raise RuntimeError(f"command failed ({r.returncode}): {(r.stderr or r.stdout).strip()[:400]}")
-    return r.stdout.strip()
+    if proc.returncode != 0:
+        raise RuntimeError(f"command failed ({proc.returncode}): {((err or out) or '').strip()[:400]}")
+    return (out or "").strip()
+
+
+def _run_retry(cmd: list[str], dry: bool, timeout: int = 900, tries: int = 3) -> str:
+    """_run に一時エラー(HTTP 5xx)のリトライを足したもの。それ以外のエラーは即時raise。"""
+    for attempt in range(tries):
+        try:
+            return _run(cmd, dry, timeout=timeout)
+        except RuntimeError as e:
+            if attempt + 1 < tries and re.search(r"HTTP 5\d\d", str(e)):
+                wait = 8 * (attempt + 1)
+                print(f"    [retry] 一時エラー、{wait}s後に再試行 {attempt + 1}/{tries - 1}: {str(e)[:100]}")
+                time.sleep(wait)
+                continue
+            raise
+    return ""  # 到達しない
 
 
 def _hf_upload(path: str, dry: bool) -> str:
     """higgsfield upload create <path> → media UUID（--json 優先、無ければ出力からUUID抽出）。"""
-    out = _run(["higgsfield", "upload", "create", path, "--json"], dry)
+    out = _run_retry(["higgsfield", "upload", "create", path, "--json"], dry)
     if dry or not out:
         return "<uuid>"
     try:
@@ -110,27 +143,11 @@ def _hf_upload(path: str, dry: bool) -> str:
     raise RuntimeError(f"uploadのUUIDを取得できませんでした: {out[:200]}")
 
 
-def _hf_generate(media_id: str, prompt: str, aspect: str, resolution: str,
-                 quality: str, model: str, image_flag: str, dry: bool,
-                 extra_images: list[str] | None = None) -> str:
-    """generate create → 結果画像URL。extra_images は追加の参照画像(UUID/パス)。"""
-    cmd = ["higgsfield", "generate", "create", model,
-           "--prompt", prompt, "--aspect_ratio", aspect,
-           "--resolution", resolution, "--quality", quality,
-           image_flag, media_id]
-    for ex in (extra_images or []):
-        cmd += [image_flag, ex]
-    cmd += ["--wait", "--json"]
-    out = _run(cmd, dry)
-    if dry or not out:
-        return ""
-    try:
-        data = json.loads(out)
-    except json.JSONDecodeError:
-        m = re.search(r"https?://\S+\.(?:png|webp|jpg)", out)
-        if m:
-            return m.group(0)
-        raise RuntimeError(f"生成結果URLを取得できませんでした: {out[:200]}")
+def _find_result_url(out: str) -> str | None:
+    """CLI出力（JSON or テキスト）から結果画像URLを探す。無ければ None。"""
+    if not out:
+        return None
+
     # JSON構造はバージョン差があるため複数候補を探索
     def find_url(o):
         if isinstance(o, str) and re.match(r"https?://.*\.(png|webp|jpg)", o):
@@ -146,20 +163,188 @@ def _hf_generate(media_id: str, prompt: str, aspect: str, resolution: str,
                 if u:
                     return u
         return None
-    url = find_url(data)
+    try:
+        return find_url(json.loads(out))
+    except json.JSONDecodeError:
+        m = re.search(r"https?://\S+\.(?:png|webp|jpg)", out)
+        return m.group(0) if m else None
+
+
+_UUID_RE = r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+
+
+def _hf_generate(media_id: str, prompt: str, aspect: str, resolution: str,
+                 quality: str, model: str, image_flag: str, dry: bool,
+                 extra_images: list[str] | None = None) -> str:
+    """generate create → 結果画像URL。extra_images は追加の参照画像(UUID/パス)。
+
+    CLIの世代差に両対応する:
+      旧: create --wait が完了まで待って結果URL入りJSONを返す
+      新: create はジョブIDを即返す → `generate wait <job_id>` で完了を待って結果を取る
+    """
+    # 改行はCLIに渡す前に畳む。Windowsではコマンドライン中の改行で引数列が分断され、
+    # 改行以降（プロンプト残り・--aspect_ratio・--image・--wait）が全て失われる
+    # （実測: ジョブに prompt=1行目のみ / medias=[] / aspect_ratio=既定 で記録されていた）。
+    prompt = re.sub(r"\s*\n+\s*", " ", prompt or "").strip()
+    # create は待たずにジョブIDだけ受け取り、完了待ちは自前ループで行う。
+    # （create --wait はポーリング中の一時エラー(HTTP 502等)で即死し、走っている
+    #   リモートジョブを失敗扱いにしてしまう。ID さえあれば待ち直しは何度でも安全）
+    cmd = ["higgsfield", "generate", "create", model,
+           "--prompt", prompt, "--aspect_ratio", aspect,
+           "--resolution", resolution, "--quality", quality,
+           image_flag, media_id]
+    for ex in (extra_images or []):
+        cmd += [image_flag, ex]
+    cmd += ["--json"]
+    out = _run_retry(cmd, dry)
+    if dry:
+        return ""
+    url = _find_result_url(out)
+    m = re.search(_UUID_RE, out or "")
+    if not url and not m:
+        raise RuntimeError(f"生成結果URLもジョブIDも取得できませんでした: {(out or '')[:200]}")
+    job_id = m.group(0) if m else ""
+
+    # 完了待ち: wait → get を一時エラーに耐えながら繰り返す（予算 ~13分）
+    deadline = time.time() + 780
+    last_err = ""
+    while not url and time.time() < deadline:
+        try:
+            out = _run(["higgsfield", "generate", "wait", job_id, "--json"], dry, timeout=300)
+            url = _find_result_url(out)
+        except RuntimeError as e:  # 502等の一時エラー/タイムアウト → get で状態確認して継続
+            last_err = str(e)
+        if url:
+            break
+        try:
+            got = json.loads(_run(["higgsfield", "generate", "get", job_id, "--json"],
+                                  dry, timeout=120))
+            status = (got.get("status") or "").lower()
+            url = _find_result_url(json.dumps(got))
+            if url:
+                break
+            if status in ("failed", "canceled", "cancelled", "error"):
+                raise RuntimeError(f"ジョブ {job_id} が失敗しました: {str(got)[:200]}")
+            print(f"    [wait] ジョブ {job_id[:8]}… status={status or '?'} 待機継続"
+                  + (f"（直前: {last_err[:80]}）" if last_err else ""))
+        except RuntimeError as e:
+            if "が失敗しました" in str(e):
+                raise
+            last_err = str(e)  # get 自体の一時エラーも継続
+        except json.JSONDecodeError:
+            pass
+        time.sleep(10)
     if not url:
-        raise RuntimeError(f"JSONから結果URLが見つかりません: {out[:200]}")
+        raise RuntimeError(f"ジョブ {job_id} の結果を取得できませんでした: {last_err[:200]}")
+
+    # パラメータがジョブに正しく載ったかの事後検証（黙って捨てられる事故を早期検知）
+    if job_id:
+        try:
+            got = json.loads(_run(["higgsfield", "generate", "get", job_id, "--json"],
+                                  dry, timeout=120))
+            p = got.get("params") or {}
+            want_medias = 1 + len(extra_images or [])
+            n_medias = len(p.get("medias") or [])
+            if n_medias < want_medias:
+                print(f"    [warn] 参照画像がジョブに {n_medias}/{want_medias} 枚しか載っていません")
+            if p.get("aspect_ratio") and p["aspect_ratio"] != aspect:
+                print(f"    [warn] aspect_ratio がジョブに反映されていません: {p['aspect_ratio']} (指定 {aspect})")
+        except Exception:  # noqa 検証失敗は本体を止めない
+            pass
     return url
 
 
-def _prep_board(src: str, out: str, maxside: int = 1536):
-    """美術ボードを参照入力用に縮小（巨大PNG対策）。"""
+def _detect_eye_level(png_path: str) -> float | None:
+    """原図の赤いEYEライン（水平線）のY位置を検出し、画面高さに対する割合(0-1)を返す。
+
+    SILVER LINK等のレイアウト用紙はアイレベルを赤の水平線で明記する。これを数値化して
+    プロンプトに渡す（「アイレベルは上からN%」）。見つからなければ None。
+    """
     from PIL import Image
-    im = Image.open(src).convert("RGB")
+    im = Image.open(png_path).convert("RGB")
+    if im.width > 800:
+        im = im.resize((800, round(im.height * 800 / im.width)))
+    w, h = im.size
+    px = im.load()
+    best_y, best_n = None, 0
+    for y in range(h):
+        n = 0
+        for x in range(0, w, 2):  # 1行おきに間引き
+            r, g, b = px[x, y]
+            if r > 140 and (r - g) > 60 and (r - b) > 60:
+                n += 1
+        if n > best_n:
+            best_y, best_n = y, n
+    # 赤画素が行の30%以上を占める行だけ「線」とみなす（文字や小さな赤マークを弾く）
+    if best_y is not None and best_n >= (w // 2) * 0.30:
+        return best_y / h
+    return None
+
+
+def _perspective_block(inp_path: str) -> tuple[str, str]:
+    """入力画像から消失点を検出し、[PERSPECTIVE]ブロック(EN/JP)を返す。検出不能なら空。
+
+    画像参照では幾何が伝わらない（GKV実測）ため、EYE%と同様に消失点も数値の言語で渡す。
+    検出は hybrid（Vision がラフ線を意味的に読み、CVの実直線で最小二乗精密化）。
+    CV単体はレイアウト用紙のノイズ（枠・ヘッダ・市松）で偽VPを出す（実測: 平坦な壁の
+    c008に(93%,95%)を検出）ため使わない。Vision不可（キー無し）なら注入しない方が安全。
+    """
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        return "", ""
+    try:
+        from . import perspective
+        res = perspective.detect_hybrid(inp_path)
+    except Exception as e:  # noqa 検出失敗はブロック無しで続行
+        print(f"    [warn] perspective検出スキップ: {str(e)[:80]}")
+        return "", ""
+    # 画面から極端に遠い消失点は言語化の価値が低いので捨てる（±50%まで許容＝画面外もあり得る）
+    vps = [v for v in (res.vanishing_points or [])
+           if -0.5 <= v.x <= 1.5 and -0.5 <= v.y <= 1.5][:2]
+    if not vps:
+        return "", ""
+    def pct(v):
+        return f"x={round(v.x * 100)}%, y={round(v.y * 100)}%"
+    if len(vps) == 1:
+        en = (f"\n\n[PERSPECTIVE] Measured from the layout's own construction lines: "
+              f"one-point perspective. The main vanishing point is at ({pct(vps[0])}) of the frame"
+              f"{' (outside the frame)' if not (0 <= vps[0].x <= 1 and 0 <= vps[0].y <= 1) else ''}. "
+              f"All receding edges — walls, road, eaves, rails — must converge exactly there. "
+              f"The rough perspective guide lines in the layout encode this geometry: follow them "
+              f"precisely, but do not draw the guide lines themselves.")
+        jp = (f"\n\n[パース] 原図の作図線からの実測: 一点透視。主消失点は画面の ({pct(vps[0])})"
+              f"{'（画面外）' if not (0 <= vps[0].x <= 1 and 0 <= vps[0].y <= 1) else ''}。"
+              f"壁・道・庇・手すり等の奥行き線は全て厳密にそこへ収束させる。"
+              f"原図のラフなパース線はこの幾何を示すもの — 従うこと。ただし線自体は描かない。")
+    else:
+        pts = " / ".join(f"VP{i+1}: ({pct(v)})" for i, v in enumerate(vps))
+        en = (f"\n\n[PERSPECTIVE] Measured from the layout's own construction lines: "
+              f"two-point perspective — {pts} (frame-relative; may lie outside the frame). "
+              f"Receding edges must converge to these points. The rough perspective guide lines "
+              f"encode this geometry: follow them precisely, but do not draw them.")
+        jp = (f"\n\n[パース] 原図の作図線からの実測: 二点透視 — {pts}（画面基準・画面外もある）。"
+              f"奥行き線はこれらの点へ収束させる。原図のパース線は幾何の指示 — 従い、線自体は描かない。")
+    return en, jp
+
+
+def _trim_border(im):
+    """ボード外周の黒/単色フチ（PSDキャンバスの余白）を落とし、絵の領域だけにする。"""
+    from PIL import Image, ImageChops
+    bg = Image.new("RGB", im.size, im.getpixel((2, 2)))
+    bbox = ImageChops.difference(im, bg).getbbox()
+    return im.crop(bbox) if bbox else im
+
+
+def _prep_board(src: str, out: str, maxside: int = 1536):
+    """美術ボードを参照入力用に整える（外周の黒フチをトリムし、縮小）。
+    全景で渡す＝「どの角度から見た場所か」の情報を保つ。構図の乗っ取りは
+    プロンプト側の意匠辞書ルール（許可/禁止の明示）で抑える。"""
+    from PIL import Image
+    im = _trim_border(Image.open(src).convert("RGB"))
     if max(im.size) > maxside:
         s = maxside / max(im.size)
         im = im.resize((round(im.width * s), round(im.height * s)), Image.LANCZOS)
     im.save(out)
+    return out
     return out
 
 
@@ -169,7 +354,8 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
                 header_top: int | None = None, board_path: str | None = None,
                 genzu_source: str = "base", cut_num: str = "",
                 cut_info_map=None, qc_vision: bool = False,
-                genzu_layers=None) -> dict:
+                genzu_layers=None, staging: str | None = None,
+                genzu_trust: str = "rough") -> dict:
     os.makedirs(out_dir, exist_ok=True)
     cut = os.path.splitext(os.path.basename(psd_path))[0]
     visible = os.path.join(out_dir, "visible.png")
@@ -198,17 +384,85 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
     else:
         region = frame.strip_header(visible, body, top_override=header_top)
     prep = image_aspect.build_input_image(body, inp, resolution=resolution)
+    # 幾何デバッグ用に前処理パラメータを残す（scripts/debug_geometry.py が読む）
+    with open(os.path.join(out_dir, "prep.json"), "w", encoding="utf-8") as f:
+        json.dump({k: getattr(prep, k) for k in (
+            "aspect_ratio", "canvas_w", "canvas_h", "paste_x", "paste_y",
+            "src_w", "src_h", "scale", "scaled_w", "scaled_h", "resolution")},
+            f, ensure_ascii=False)
     use_board = bool(board_path)
     # プロンプトは genzu_fix.prompt（3層）に委譲。EN=モデル入力 / JP=確認用を出力先へ残す。
     prompt, prompt_jp = build_prompt_pair(board, scene, prompt_override,
-                                          cut=cut_num, cut_info_map=cut_info_map)
+                                          cut=cut_num, cut_info_map=cut_info_map,
+                                          staging=staging, genzu_trust=genzu_trust)
+    if use_board:
+        # ボード＝「同一ロケーションの意匠辞書」。許可と禁止を明示的に分ける。
+        # 権限を広く渡す（room's structure / furniture 等）と、原図の曖昧部分を
+        # ボードで補完する「再構成モード」に入り、構図が乗っ取られる（SP2 c005実測）。
+        prompt += (
+            "\n\n[IMAGES] Two images are attached."
+            " IMAGE 1 (the rough layout / genzu) is the sole authority for this shot:"
+            " composition, camera, framing, and WHAT IS VISIBLE. Everything you draw must be a"
+            " cleaned-up version of something IMAGE 1 already shows."
+            " IMAGE 2 (an art board of the same location) is a DESIGN DICTIONARY only — it tells"
+            " you how the things IMAGE 1 shows are designed."
+            " ALLOWED uses of IMAGE 2: reading the design, construction and materials of elements"
+            " that already appear in IMAGE 1; judging an appropriate level of line density."
+            " FORBIDDEN uses of IMAGE 2: taking its composition, camera or framing; adding or"
+            " completing furniture, fixtures, openings, walls or any part of the room that IMAGE 1"
+            " does not show; inferring the room layout beyond IMAGE 1's view."
+            " IMAGE 2 can never add content to this shot — it can only inform how IMAGE 1's"
+            " existing content is drawn.")
+        if prompt_jp:
+            prompt_jp += (
+                "\n\n[画像] 1枚目=原図。このカットの唯一の正: 構図・カメラ・画角・「何が写っているか」。"
+                "描いてよいのは1枚目に既に写っているものの清書だけ。"
+                "2枚目=同じ場所の美術ボード＝**意匠辞書**。1枚目に写っているものが"
+                "どうデザインされているかを知るためだけに使う。"
+                "許可: 1枚目に既に在る要素（壁・窓・扉・机・天井等）の意匠・作り・材質の解釈／線密度の目安。"
+                "禁止: 構図・カメラ・画角を取ること／1枚目に無い家具・什器・開口部・壁・部屋の続きの追加や補完／"
+                "1枚目の画角の外のレイアウト推定。"
+                "2枚目がこのカットに内容を足すことは決して無い — 足せるのは「描き方」の情報だけ。")
+    # 幾何の言語化注入: 消失点（CV実測）→[PERSPECTIVE]。忠実モードのみ
+    # （手描きラフ(尚善)はCV誤検出リスクがあるため従来通り）。
+    if genzu_trust == "high" and os.path.exists(inp):
+        p_en, p_jp = _perspective_block(inp)
+        if p_en:
+            prompt += p_en
+            if prompt_jp:
+                prompt_jp += p_jp
+            print("    [persp] " + p_jp.strip().splitlines()[0][:100])
+        else:
+            print("    [persp] 消失点の注入なし（未検出 or APIキー無し）")
+    # 原図の赤いEYEライン→アイレベルを数値でプロンプトへ（言語化した幾何指示は画像より通る）
+    eye = _detect_eye_level(inp) if os.path.exists(inp) else None
+    if eye is not None:
+        pct = round(eye * 100)
+        if genzu_trust == "high":
+            # 忠実モード: アイレベルは「組み直す」対象ではなく「既に正しい」確認情報
+            prompt += (f"\n\n[EYE LEVEL] The red horizontal 'EYE' line marks the eye level, "
+                       f"{pct}% of the frame height from the top. The layout's perspective "
+                       f"already matches it — keep it as-is, and erase the red line itself "
+                       f"as a production mark.")
+            if prompt_jp:
+                prompt_jp += (f"\n\n[アイレベル] 赤い水平線(EYE)＝アイレベルは画面上端から{pct}%。"
+                              f"原図のパースは既にこれに一致している — そのまま維持し、赤線自体は消す。")
+        else:
+            prompt += (f"\n\n[EYE LEVEL] The red horizontal 'EYE' line in the layout marks the "
+                       f"camera's eye level: {pct}% of the frame height from the top. Build the "
+                       f"perspective so the horizon sits exactly there, then erase the red line "
+                       f"itself as a production mark.")
+            if prompt_jp:
+                prompt_jp += (f"\n\n[アイレベル] 原図の赤い水平線(EYE)がカメラのアイレベル＝画面上端から{pct}%の高さ。"
+                              f"地平線がそこに来るようにパースを組む。赤線自体は制作用マークとして消す。")
     with open(os.path.join(out_dir, "prompt.en.txt"), "w", encoding="utf-8") as f:
         f.write(prompt)
     if prompt_jp:
         with open(os.path.join(out_dir, "prompt.jp.txt"), "w", encoding="utf-8") as f:
             f.write(prompt_jp)
     print(f"    layer[{linfo['strategy']}]={linfo['layers']}  "
-          f"crop={'no' if header_top is None else header_top}  board_img={'yes' if use_board else 'no'}  "
+          f"crop={'no' if header_top is None else header_top}  "
+          f"board_img={'yes' if use_board else 'no'}  "
           f"input {prep.canvas_w}x{prep.canvas_h} ({prep.aspect_ratio})")
     # 2. 生成（Higgsfield CLI）。gpt_image_2 の --image はパス可（MODELS.md）。
     gen_raw = os.path.join(out_dir, "gen_raw.png")
@@ -224,6 +478,14 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
         # timeout 付きDL（ハングでスレッド/バッチが永久 running 化するのを防ぐ）
         with urllib.request.urlopen(url, timeout=300) as r, open(gen_raw, "wb") as f:
             f.write(r.read())
+        # 生成寸の実測チェック: 想定グリッドと違えばrestoreで無言リサイズが入る＝
+        # 系統的なズレの温床なので、必ず警告に出す（縦長比率は転置推定のため特に要監視）
+        from PIL import Image as _Img
+        gw, gh = _Img.open(gen_raw).size
+        if (gw, gh) != (prep.canvas_w, prep.canvas_h):
+            print(f"    [warn] 生成寸が想定グリッドと不一致: 実測 {gw}x{gh} / "
+                  f"想定 {prep.canvas_w}x{prep.canvas_h}（{prep.aspect_ratio}）"
+                  f" → restoreでリサイズ整合。GPT_OUTPUT_SIZES の更新候補")
     # 3. finish（戻し→region復帰→PSD差し込み）
     out_psd = os.path.join(out_dir, f"{cut}_AI.psd")
     if not dry:
@@ -232,16 +494,33 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
         image_aspect.restore_output_image(gen_raw, restored, prep)
         frame.paste_into_region((vw, vh), tuple(region), restored, full)
         layer = psd_export.insert_result_layer(psd_path, full, out_psd, base_name="AI原図修正")
-        # 検品(QC): プログラム判定は常時（空白/破綻・色残り）。視覚判定は qc_vision 時のみ。
+        # 検品(QC): プログラム判定は常時（空白/破綻・色残り）。
+        # APIキーがあれば検品レポート（信頼度・エラー内容・プロンプト疑義・リテイク指示案）も付ける。
         qc_dict = {}
         try:
-            vv = None
-            if qc_vision and os.environ.get("ANTHROPIC_API_KEY"):
-                vv = qc.vision_check(visible, full)
-            qc_dict = qc.asdict(qc.evaluate(full, vision_verdicts=vv))
+            qc_dict = qc.asdict(qc.evaluate(full))
+            if os.environ.get("ANTHROPIC_API_KEY") and qc_vision is not False:
+                rep = qc.inspect(inp, full, staging=staging or "")
+                if rep:
+                    qc_dict.update({
+                        "trust": rep.get("trust"),
+                        "errors": rep.get("errors") or [],
+                        "suspect_prompt": rep.get("suspect_prompt", ""),
+                        "suggest_retake": rep.get("suggest_retake", ""),
+                    })
+                    t = rep.get("trust")
+                    if isinstance(t, (int, float)):
+                        if t < 50 and qc_dict.get("verdict") == "pass":
+                            qc_dict["verdict"] = "needs_retake"
+                        elif t < 80 and qc_dict.get("verdict") == "pass":
+                            qc_dict["verdict"] = "human"
+                    for e in (rep.get("errors") or []):
+                        qc_dict.setdefault("reasons", []).append(
+                            f"{e.get('type','')}: {e.get('desc','')}")
             with open(os.path.join(out_dir, "qc.json"), "w", encoding="utf-8") as f:
                 json.dump(qc_dict, f, ensure_ascii=False)
-            print(f"    qc[{qc_dict.get('verdict')}] {qc_dict.get('reasons')}")
+            print(f"    qc[{qc_dict.get('verdict')}] trust={qc_dict.get('trust','—')} "
+                  f"{[r[:40] for r in (qc_dict.get('reasons') or [])]}")
         except Exception as e:  # noqa QCで生成自体を失敗にしない
             print(f"    qc skip: {str(e)[:120]}")
         rec = ledger.GenRecord(

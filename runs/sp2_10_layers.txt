@@ -1,0 +1,734 @@
+# レイヤー構成ダンプ: C:\Users\kuror\OneDrive\デスクトップ\佐々木とピーちゃん\佐々木とピーちゃん_原図修正自動化検証\00.原図  PSD 86本
+
+## Base抽出 strategy 内訳（BG/LO/背景/fallback の比率＝規則が合っているかの目安）
+  BG: 85
+  BG(nested): 1
+
+## トップレベルのレイヤー名 頻度（上位40）
+    67x  _BG
+    47x  A1
+    18x  A1_e
+    12x  _frame_e
+    11x  C1
+    10x  B1
+     9x  C1_e
+     7x  Book_1
+     7x  Book_2
+     6x  _PAN
+     6x  A0001
+     5x  C2
+     5x  A2
+     5x  _PAN_e
+     4x  _BG_Book
+     4x  B1_e
+     4x  B2
+     3x  D0001
+     3x  Book_3
+     3x  Book
+     3x  A1_C1
+     3x  _BG_Q.TB
+     3x  A4
+     3x  B2_e
+     3x  A1Bx
+     2x  BG
+     2x  _BG_Book0
+     2x  A0002
+     2x  C0001
+     2x  _Book_1
+     2x  _Book_2
+     2x  B0001
+     2x  Book_4
+     2x  Book_5
+     2x  Book_6
+     2x  _book_e
+     2x  _Book1_Book2
+     2x  _Book1_Book2_Book3
+     2x  D1
+     2x  C3_e
+
+## 全レイヤー名 頻度（上位60）
+    68x  _BG
+    48x  A1
+    18x  A1_e
+    12x  _frame_e
+    11x  C1
+    10x  B1
+     9x  C1_e
+     7x  Book_1
+     7x  Book_2
+     6x  _PAN
+     6x  A0001
+     5x  C2
+     5x  A2
+     5x  _PAN_e
+     4x  _BG_Book
+     4x  B1_e
+     4x  B2
+     3x  D0001
+     3x  Book_3
+     3x  Book
+     3x  A1_C1
+     3x  _BG_Q.TB
+     3x  A4
+     3x  B2_e
+     3x  A1Bx
+     2x  BG
+     2x  _BG_Book0
+     2x  A0002
+     2x  C0001
+     2x  _Book_1
+     2x  _Book_2
+     2x  B0001
+     2x  Book_4
+     2x  Book_5
+     2x  Book_6
+     2x  _book_e
+     2x  _Book1_Book2
+     2x  _Book1_Book2_Book3
+     2x  D1
+     2x  C3_e
+     2x  _BG_e
+     2x  BG_E
+     1x  0
+     1x  LO
+     1x  fr
+     1x  A0003
+     1x  _BG_Book_T.B
+     1x  A4Bx
+     1x  A0007、F0004
+     1x  B0002
+     1x  D0001、F0001
+     1x  A8F4
+     1x  D4Ex
+     1x  B2、C1
+     1x  F0001
+     1x  _Book
+     1x  A、B、F1
+     1x  E1
+     1x  G1
+     1x  _BG_book0
+
+=== [1/86] 社内\西脇\SP2_10_005.psd ===
+  * BG [group]
+    * 0 [pixel]
+  * LO [group]
+    * _BG [pixel]
+    * A1 [pixel]
+  . fr [pixel]
+  -> Base抽出: strategy=BG(nested) layers=['_BG'] (1672x1180)
+
+=== [2/86] 社内\談\済み\SP2_10_006.psd ===
+  * _BG_Book0 [pixel]
+  * _PAN [pixel]
+  * Book_1 [pixel]
+  * A1 [pixel]
+  * Book_2 [pixel]
+  * D0001 [pixel]
+  * Book_3 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG_Book0', '_PAN'] (3766x2715)
+
+=== [3/86] 社内\談\済み\SP2_10_007.psd ===
+  * _BG_Book [pixel]
+  * A0002 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG_Book'] (1672x1180)
+
+=== [4/86] 社内\野田\sumi\SP2_10_008.psd ===
+  * _BG [pixel]
+  * Book_1 [pixel]
+  * A0003 [pixel]
+  * C0001 [pixel]
+  * Book_2 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [5/86] 社内\談\済み\SP2_10_009.psd ===
+  * _BG_Book_T.B [pixel]
+  * A1 [pixel]
+  * B1 [pixel]
+  * B1_e [pixel]
+  * C1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG_Book_T.B'] (2508x1770)
+
+=== [6/86] 社内\野田\sumi\SP2_10_010.psd ===
+  * _BG [pixel]
+  * Book [pixel]
+  * A4Bx [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [7/86] 社内\野田\sumi\SP2_10_011.psd ===
+  * _BG [pixel]
+  * Book [pixel]
+  * A0002 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [8/86] 社内\西脇\SP2_10_012.psd ===
+  * _BG [pixel]
+  * Book_1 [pixel]
+  * C0001 [pixel]
+  * D0001 [pixel]
+  * Book_2 [pixel]
+  * A0007、F0004 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [9/86] 社内\野田\sumi\SP2_10_013.psd ===
+  * _BG [pixel]
+  * Book_1 [pixel]
+  * A0001 [pixel]
+  * B0002 [pixel]
+  * D0001、F0001 [pixel]
+  * Book_2 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [10/86] 社内\談\済み\SP2_10_014.psd ===
+  * _BG [pixel]
+  * A1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [11/86] 社内\野田\sumi\SP2_10_015.psd ===
+  * _BG [pixel]
+  * _Book_1 [pixel]
+  * A8F4 [pixel]
+  * C2 [pixel]
+  * D4Ex [pixel]
+  * _Book_2 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [12/86] 社内\野田\sumi\SP2_10_016.psd ===
+  * _BG [pixel]
+  * Book [pixel]
+  * A1 [pixel]
+  * B2、C1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [13/86] 社内\西脇\SP2_10_017.psd ===
+  * _BG [pixel]
+  * Book_1 [pixel]
+  * A0001 [pixel]
+  * Book_2 [pixel]
+  * B0001 [pixel]
+  * Book_3 [pixel]
+  * D0001 [pixel]
+  * Book_4 [pixel]
+  * F0001 [pixel]
+  * Book_5 [pixel]
+  * Book_6 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [14/86] 社内\談\済み\SP2_10_018.psd ===
+  * _PAN [pixel]
+  * _BG [pixel]
+  * A1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG', '_PAN'] (1939x1186)
+
+=== [15/86] 社内\西脇\SP2_10_019.psd ===
+  * _BG [pixel]
+  * _PAN [pixel]
+  * _Book [pixel]
+  * A1 [pixel]
+  * B1 [pixel]
+  * C1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG', '_PAN'] (1937x1186)
+
+=== [16/86] 社内\野田\sumi\SP2_10_020.psd ===
+  * _BG [pixel]
+  * _Book_1 [pixel]
+  * A、B、F1 [pixel]
+  * C1 [pixel]
+  * E1 [pixel]
+  * _Book_2 [pixel]
+  * G1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1677x1185)
+
+=== [17/86] 社内\談\済み\SP2_10_021.psd ===
+  * _BG_book0 [pixel]
+  * Book_1 [pixel]
+  * A0001 [pixel]
+  * Book_2 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG_book0'] (1677x1185)
+
+=== [18/86] 社内\西脇\SP2_10_022_025.psd ===
+  * _BG_Book0 [pixel]
+  * Book_1 [pixel]
+  * A0001 [pixel]
+  * Book_2 [pixel]
+  * B0001 [pixel]
+  * Book_3 [pixel]
+  * Book_4 [pixel]
+  * Book_5 [pixel]
+  * C、D0001 [pixel]
+  * Book_6 [pixel]
+  * Book_7 [pixel]
+  * E0001 [pixel]
+  * Book_8 [pixel]
+  * Book_9 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG_Book0'] (1677x1185)
+
+=== [19/86] 社内\西脇\SP2_10_023.psd ===
+  * _BG [pixel]
+  * A0001 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1677x1185)
+
+=== [20/86] 社内\談\済み\SP2_10_024.psd ===
+  * _BG_Book [pixel]
+  * _T.U [pixel]
+  * A0001 [pixel]
+  * _book_e [pixel]
+  -> Base抽出: strategy=BG layers=['_BG_Book'] (4995x3136)
+
+=== [21/86] 社内\野田\sumi\SP2_10_026.psd ===
+  * _BG [pixel]
+  * A2 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1677x1185)
+
+=== [22/86] 社内\談\済み\SP2_10_027.psd ===
+  * _BG_Book [pixel]
+  * A3 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG_Book'] (1677x1185)
+
+=== [23/86] 社内\野田\sumi\SP2_10_028.psd ===
+  * _BG [pixel]
+  * _Book1_Book2 [pixel]
+  * A1 [pixel]
+  * B1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1677x1185)
+
+=== [24/86] 社内\談\済み\SP2_10_029.psd ===
+  * PAN [pixel]
+  * _BG_book1_book2_book3 [pixel]
+  * A1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG_book1_book2_book3', 'PAN'] (1822x1582)
+
+=== [25/86] 社内\西脇\SP2_10_030.psd ===
+  * _BG [pixel]
+  * _Book1_Book2_Book3 [pixel]
+  * _PAN [pixel]
+  * A1 [pixel]
+  * C1 [pixel]
+  * D1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG', '_PAN'] (1751x1185)
+
+=== [26/86] 社内\西脇\SP2_10_031.psd ===
+  * _BG [pixel]
+  * _Book1_Book2 [pixel]
+  * A1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1677x1185)
+
+=== [27/86] 社内\西脇\SP2_10_032.psd ===
+  * _BG_Book1_Book2_Book3_Book4 [pixel]
+  * A1 [pixel]
+  * B1 [pixel]
+  * C0 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG_Book1_Book2_Book3_Book4'] (1677x1185)
+
+=== [28/86] 社内\西脇\SP2_10_033.psd ===
+  * _BG [pixel]
+  * A1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1677x1185)
+
+=== [29/86] 社内\談\済み\SP2_10_034.psd ===
+  * _BG_Book1_Book2_Book3 [pixel]
+  * _PAN [pixel]
+  * A1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG_Book1_Book2_Book3', '_PAN'] (1823x1449)
+
+=== [30/86] 社内\野田\sumi\SP2_10_035.psd ===
+  * _PAN [pixel]
+  * _BG_Book [pixel]
+  * A1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG_Book', '_PAN'] (2030x1354)
+
+=== [31/86] 社内\野田\sumi\SP2_10_036.psd ===
+  * _BG [pixel]
+  * _Book1_Book2_Book3 [pixel]
+  * A1 [pixel]
+  * B1 [pixel]
+  * C3 [pixel]
+  * _Book4 [pixel]
+  * C3_e [pixel]
+  * D3 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1677x1185)
+
+=== [32/86] 社内\野田\sumi\SP2_10_037.psd ===
+  * _BG [pixel]
+  * A1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1677x1185)
+
+=== [33/86] 社内\談\済み\SP2_10_038.psd ===
+  * _BG [pixel]
+  * A1 [pixel]
+  * A1_e [pixel]
+  * PAN.UP_e [pixel]
+  -> Base抽出: strategy=BG layers=['_BG', 'PAN.UP_e'] (1698x1654)
+
+=== [34/86] 社内\談\SP2_10_258_BG only.psd ===
+  * BG [pixel]
+  * book1_e [pixel]
+  * book2_e [pixel]
+  * SL_e [pixel]
+  -> Base抽出: strategy=BG layers=['BG'] (1626x1134)
+
+=== [35/86] 社内\談\SP2_10_260.psd ===
+  * _BG [pixel]
+  * _frame_e [pixel]
+  * A1 [pixel]
+  * A1_e [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (2439x1701)
+
+=== [36/86] 社内\野田\SP2_10_261.psd ===
+  * A1_C1 [pixel]
+  * _BG [pixel]
+  * _PAN_e [pixel]
+  * C1_e [pixel]
+  * _book_e [pixel]
+  -> Base抽出: strategy=BG layers=['_BG', '_PAN_e'] (1778x1794)
+
+=== [37/86] 社内\野田\SP2_10_262.psd ===
+  * _BG [pixel]
+  * B1 [pixel]
+  * B1_e [pixel]
+  * _A.DTU [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [38/86] 社内\談\SP2_10_263.psd ===
+  * BG1 [pixel]
+  * _PAN_e [pixel]
+  * A1 [pixel]
+  * A1_e [pixel]
+  -> Base抽出: strategy=BG layers=['BG1', '_PAN_e'] (1679x2120)
+
+=== [39/86] 社内\談\SP2_10_264.psd ===
+  * _BG_SL [pixel]
+  -> Base抽出: strategy=BG layers=['_BG_SL'] (1672x1180)
+
+=== [40/86] 社内\談\SP2_10_265_279.psd ===
+  * _BG [pixel]
+  * A1_C1 [pixel]
+  * C1_E [pixel]
+  * A1.5_E [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [41/86] 社内\野田\SP2_10_266.psd ===
+  * _BG [pixel]
+  * A1_C1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [42/86] 社内\談\SP2_10_267_276.psd ===
+  * _BG [pixel]
+  * _BG.SL_e [pixel]
+  * A1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG', '_BG.SL_e'] (1672x1180)
+
+=== [43/86] 社内\野田\SP2_10_269.psd ===
+  * BG_A1 [pixel]
+  * tb_e [pixel]
+  -> Base抽出: strategy=BG layers=['BG_A1'] (2510x2906)
+
+=== [44/86] 社内\談\SP2_10_270.psd ===
+  * _BG [pixel]
+  * A1 [pixel]
+  * frame_e [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [45/86] 社内\談\SP2_10_271.psd ===
+  * _BG [pixel]
+  * A1_e [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [46/86] 社内\談\SP2_10_272.psd ===
+  * _BG [pixel]
+  * A1_e [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [47/86] 社内\野田\SP2_10_274.psd ===
+  * _BG [pixel]
+  * A1 [pixel]
+  * A1_e [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [48/86] 社内\野田\SP2_10_275.psd ===
+  * _BG [pixel]
+  * A1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [49/86] 社内\野田\SP2_10_277.psd ===
+  * _BG [pixel]
+  * _TU [pixel]
+  * A1_SL [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (2508x1770)
+
+=== [50/86] 社内\野田\SP2_10_278.psd ===
+  * _BG [pixel]
+  * _frame_e [pixel]
+  * A1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1419)
+
+=== [51/86] 社内\野田\SP2_10_280.psd ===
+  * _BG [pixel]
+  * _frame_e [pixel]
+  * A1 [pixel]
+  * C1 [pixel]
+  * C1_e [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [52/86] 社内\野田\SP2_10_281.psd ===
+  * _frame_e [pixel]
+  * _BG [pixel]
+  * A2 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [53/86] 社内\談\SP2_10_282.psd ===
+  * _BG [pixel]
+  * A1 [pixel]
+  * A1_e [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [54/86] GKV\SP2_10_283_BG only.psd ===
+  * _BG [smartobject]
+  * _BG_e [smartobject]
+  * _PAN_e [smartobject]
+  * A1_e [smartobject]
+  -> Base抽出: strategy=BG layers=['_BG', '_BG_e', '_PAN_e'] (2517x2384)
+
+=== [55/86] GKV\先行\SP2_10_284.psd ===
+  * _BG [pixel]
+  * A2 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [56/86] GKV\先行\SP2_10_285.psd ===
+  * _BG [pixel]
+  * A1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [57/86] GKV\先行\SP2_10_286.psd ===
+  * _BG [pixel]
+  * _frame_e [pixel]
+  * A1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [58/86] GKV\先行\SP2_10_287.psd ===
+  * _BG [pixel]
+  * _BG_e [pixel]
+  * _frame_e [pixel]
+  * A1 [pixel]
+  * C1_e [pixel]
+  -> Base抽出: strategy=BG layers=['_BG', '_BG_e'] (1672x1180)
+
+=== [59/86] GKV\先行\SP2_10_288.psd ===
+  * _BG [pixel]
+  * _TU_e [pixel]
+  * A1 [pixel]
+  * C1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (2508x1770)
+
+=== [60/86] GKV\先行\SP2_10_289.psd ===
+  * _BG [pixel]
+  * A0_e [pixel]
+  * C1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (2508x1770)
+
+=== [61/86] GKV\old\SP2_10_290.psd ===
+  * _BG_Q.TB [pixel]
+  * C2 [pixel]
+  * A4 [pixel]
+  * B2 [pixel]
+  * B2_e [pixel]
+  -> Base抽出: strategy=BG layers=['_BG_Q.TB'] (1672x1945)
+
+=== [62/86] GKV\優先順位高\SP2_10_290.psd ===
+  * _BG_Q.TB [pixel]
+  * C2 [pixel]
+  * A4 [pixel]
+  * B2 [pixel]
+  * B2_e [pixel]
+  -> Base抽出: strategy=BG layers=['_BG_Q.TB'] (1672x1945)
+
+=== [63/86] GKV\先行\SP2_10_290_R.psd ===
+  . _BG_Q.TB [pixel]
+  * BG_E [pixel]
+  * BG_E のコピー [pixel]
+  * レイヤー 5 [pixel]
+  * レイヤー 4 [pixel]
+  . レイヤー 2 [smartobject]
+  . レイヤー 1 [smartobject]
+  . + [pixel]
+  . C2 [pixel]
+  . A4 [pixel]
+  . B2 [pixel]
+  * グループ 2 [group]
+    * レイヤー 6 [pixel]
+    * image_jiOTDKEEFlHzMJE3GPOQa [pixel]
+    * image_jiOTDKEEFlHzMJE3GPOQa のコピー [pixel]
+    * レイヤー 8 [smartobject]
+    * レイヤー 7 [smartobject]
+    * レイヤー 9 [pixel]
+  . cell [pixel]
+  . レイヤー 3 [pixel]
+  . レイヤー 3 のコピー [pixel]
+  . B2_e [pixel]
+  . image_Xmw255ghfYaOOEmMg3cKd [smartobject]
+  . image_ZpFzip6k7sljbfS_S1VwR [smartobject]
+  * 参考LO [group]
+    * パース　放射状 [smartobject]
+    * パース 2 [smartobject]
+  * Fr [smartobject]
+  * ボード [type]
+  * データ内の「参考LO」フォルダを元に作業お願いします。 ただし、他の原図を切り貼りしているので側面などパース感が破綻しています [type]
+  -> Base抽出: strategy=BG layers=['_BG_Q.TB', 'BG_E', 'BG_E のコピー'] (1905x2136)
+
+=== [64/86] GKV\先行\SP2_10_291.psd ===
+  * _BG [pixel]
+  * A1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [65/86] GKV\先行\SP2_10_292.psd ===
+  * _BG [pixel]
+  * A2 [pixel]
+  * B1 [pixel]
+  * C7_e [pixel]
+  * D2_SL [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [66/86] GKV\old\SP2_10_293.psd ===
+  * _BG [pixel]
+  * A1_e [pixel]
+  * A1Bx [pixel]
+  * C1 [pixel]
+  . C1_e [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1945)
+
+=== [67/86] GKV\優先順位高\SP2_10_293.psd ===
+  * _BG [pixel]
+  * A1_e [pixel]
+  * A1Bx [pixel]
+  * C1 [pixel]
+  . C1_e [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1945)
+
+=== [68/86] GKV\先行\SP2_10_293_R.psd ===
+  * _BG [pixel]
+  * BG_E [pixel]
+  * A1_e [pixel]
+  * A1Bx [pixel]
+  * C1 [pixel]
+  * C1_e [pixel]
+  -> Base抽出: strategy=BG layers=['_BG', 'BG_E'] (1672x1945)
+
+=== [69/86] GKV\SP2_10_294_301.psd ===
+  * _BG [pixel]
+  * A下1_e [pixel]
+  * A1 [pixel]
+  * A1_e [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [70/86] GKV\SP2_10_295.psd ===
+  * _BG [pixel]
+  * A2 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [71/86] GKV\SP2_10_296.psd ===
+  * _BG [pixel]
+  * A1 [pixel]
+  * B2 [pixel]
+  * C2 [pixel]
+  * C2_e [pixel]
+  * D1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [72/86] GKV\SP2_10_297.psd ===
+  * _BG [pixel]
+  * _PAN_e [pixel]
+  * A1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG', '_PAN_e'] (1672x1619)
+
+=== [73/86] GKV\優先順位高\SP2_10_297.psd ===
+  * _BG [pixel]
+  * _PAN_e [pixel]
+  * A1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG', '_PAN_e'] (1672x1619)
+
+=== [74/86] GKV\SP2_10_298.psd ===
+  * _BG [pixel]
+  * _frame_e [pixel]
+  * A1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [75/86] GKV\SP2_10_299.psd ===
+  * _BG [pixel]
+  * _frame_e [pixel]
+  * A1 [pixel]
+  * B1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [76/86] GKV\SP2_10_300.psd ===
+  * _BG [pixel]
+  * A1 [pixel]
+  * A1_e [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [77/86] GKV\SP2_10_302.psd ===
+  * _BG [pixel]
+  * A1 [pixel]
+  * C1_e [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [78/86] GKV\SP2_10_303.psd ===
+  * _BG [pixel]
+  * A1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [79/86] GKV\SP2_10_304.psd ===
+  * _BG [pixel]
+  * A1 [pixel]
+  * B1 [pixel]
+  * B1_e [pixel]
+  * C3_e [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [80/86] GKV\SP2_10_305.psd ===
+  * _BG [pixel]
+  * A1 [pixel]
+  * A1_e [pixel]
+  * BxC1 [pixel]
+  * C1_e [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1675x1740)
+
+=== [81/86] GKV\SP2_10_306.psd ===
+  * _BG [pixel]
+  * _frame_e [pixel]
+  * A1 [pixel]
+  * A1_e [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [82/86] GKV\SP2_10_307.psd ===
+  * _BG [pixel]
+  * A1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [83/86] GKV\SP2_10_308.psd ===
+  * _BG [pixel]
+  * _frame_e [pixel]
+  * A1 [pixel]
+  * B1 [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [84/86] GKV\SP2_10_309.psd ===
+  * _BG [pixel]
+  * _frame_e [pixel]
+  * A1 [pixel]
+  * A1_e [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [85/86] GKV\SP2_10_310.psd ===
+  * _BG [pixel]
+  * _frame_e [pixel]
+  * A1_B1 [pixel]
+  * A1_e [pixel]
+  * B1_e [pixel]
+  * C1 [pixel]
+  * C1_e [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
+
+=== [86/86] GKV\SP2_10_311.psd ===
+  * _BG [pixel]
+  * A1 [pixel]
+  * A1_e [pixel]
+  -> Base抽出: strategy=BG layers=['_BG'] (1672x1180)
