@@ -50,11 +50,16 @@ def main(argv=None) -> int:
     p.add_argument("--out", default="runs/boards_dump.txt")
     p.add_argument("--samples-out", default="handoff/boards_sample")
     p.add_argument("--maxside", type=int, default=700)
+    p.add_argument("--subdir", default="",
+                   help="この名前のフォルダ配下だけ拾う（例: 01_ボード ＝サンプルBG素材を除外）")
+    p.add_argument("--no-thumbs", action="store_true", help="一覧だけ書き出す（サムネイル無し）")
     a = p.parse_args(argv)
 
     bd = os.path.abspath(a.boards_dir)
     files = []
     for root, _, fns in os.walk(bd):
+        if a.subdir and a.subdir not in root.replace("\\", "/").split("/"):
+            continue
         for fn in sorted(fns):
             if fn.lower().endswith(EXTS):
                 path = os.path.join(root, fn)
@@ -70,6 +75,8 @@ def main(argv=None) -> int:
             f.write(f"{size // 1024:>7}KB  {rel}\n")
     print(f"一覧書き出し: {os.path.abspath(a.out)}  ({len(files)}枚)")
 
+    if a.no_thumbs:
+        return 0
     os.makedirs(a.samples_out, exist_ok=True)
     total = 0
     for rel, _ in files:

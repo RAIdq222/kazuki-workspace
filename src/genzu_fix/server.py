@@ -127,10 +127,14 @@ def _load_json(path, default):
     return default
 
 
-def _index_dir(d, exts):
+def _index_dir(d, exts, subdir: str | None = None):
+    """d配下を再帰索引。subdir指定時は「その名前のフォルダ配下」のファイルだけ拾う
+    （例: 00_資料_#10 のシーン別フォルダから 01_ボード 配下のみ＝サンプルBG素材を除外）。"""
     idx = {}
     if d and os.path.isdir(d):
         for root, _, files in os.walk(d):
+            if subdir and subdir not in root.replace("\\", "/").split("/"):
+                continue
             for fn in files:
                 if fn.lower().endswith(exts):
                     idx.setdefault(fn, os.path.join(root, fn))
@@ -305,7 +309,7 @@ def _proj_include_book(proj) -> bool:
 
 def _make_project(key, work, ep, genzu_dir, boards_dir=None, csv_path=None, source="scan",
                   out_dir=None, cut_info=None, board_map=None, include_book=None,
-                  staging_map=None, genzu_trust=None):
+                  staging_map=None, genzu_trust=None, boards_subdir=None):
     if source == "csv":
         units = _units_from_csv(csv_path)
     else:
@@ -323,7 +327,7 @@ def _make_project(key, work, ep, genzu_dir, boards_dir=None, csv_path=None, sour
                 u["board"] = b
                 n += 1
         print(f"[board_map] {key}: {n}/{len(units)} ユニットにボードを紐づけ（{board_map}）")
-    board_idx = _index_dir(boards_dir, _BOARD_EXTS)
+    board_idx = _index_dir(boards_dir, _BOARD_EXTS, subdir=boards_subdir)
     # 正規化キー（拡張子/全半角/空白ゆれ吸収）→ パス。PSDを先に書きPNG等を後で上書き＝軽いPNG優先。
     board_norm = {}
     for fn, path in sorted(board_idx.items(),
@@ -1441,7 +1445,8 @@ def main(argv=None):
     STATE = _load_json(_state_path(), {})
 
     def add_project(work, ep, genzu_dir, boards_dir, csv_path, out_dir, cut_info, label,
-                    board_map=None, include_book=None, staging_map=None, genzu_trust=None):
+                    board_map=None, include_book=None, staging_map=None, genzu_trust=None,
+                    boards_subdir=None):
         """genzu_dir が実在すれば PROJECTS に登録。csv が実在すれば csv、無ければ scan。"""
         if not (genzu_dir and os.path.isdir(genzu_dir)):
             print(f"[skip] {label}: 原図フォルダが見つかりません: {genzu_dir}")
@@ -1454,7 +1459,8 @@ def main(argv=None):
                                       csv_path if source == "csv" else None,
                                       source=source, out_dir=out_dir, cut_info=cut_info,
                                       board_map=board_map, include_book=include_book,
-                                      staging_map=staging_map, genzu_trust=genzu_trust)
+                                      staging_map=staging_map, genzu_trust=genzu_trust,
+                                      boards_subdir=boards_subdir)
         # 各作品の過去state(OK判定/プロンプト編集等)を取り込む。
         # その作品のユニットに属する uid だけ・既存キーは上書きしない（他作品の混入や汚染を防ぐ）。
         if out_dir:
@@ -1474,7 +1480,8 @@ def main(argv=None):
                     pj.get("boards_dir"), pj.get("csv"), pj.get("out_dir"),
                     pj.get("cut_info"), os.path.basename(pjpath),
                     board_map=pj.get("board_map"), include_book=pj.get("include_book"),
-                    staging_map=pj.get("staging_map"), genzu_trust=pj.get("genzu_trust"))
+                    staging_map=pj.get("staging_map"), genzu_trust=pj.get("genzu_trust"),
+                    boards_subdir=pj.get("boards_subdir"))
     # 2) CLI 指定があれば従来どおり追加/上書き（後方互換）
     if a.genzu_dir:
         add_project(a.work, a.ep, a.genzu_dir, a.boards_dir, a.csv, a.out, a.cut_info, "CLI引数")
