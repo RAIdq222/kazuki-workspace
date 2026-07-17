@@ -795,11 +795,12 @@ def render(res: PerspectiveResult, src_path: str, out_path: str,
     def P(pt):  # 正規化 → ピクセル
         return (pt[0] * W, pt[1] * H)
 
-    # --- 消失点へのガイド線（扇状・密度=guides、薄く先に） + 消失点マーカー
-    for vp in res.vanishing_points:
-        vx, vy = P((vp.x, vp.y))
-        for seg in _fan_segments(vx, vy, W, H, guides):
-            draw.line(seg, fill=COL_GUIDE + (110,), width=gw)
+    # --- 消失点へのガイド線（扇状・密度=guides、薄く先に。0=扇なし） + 消失点マーカー
+    if guides > 0:
+        for vp in res.vanishing_points:
+            vx, vy = P((vp.x, vp.y))
+            for seg in _fan_segments(vx, vy, W, H, guides):
+                draw.line(seg, fill=COL_GUIDE + (110,), width=gw)
 
     # --- アイレベル（地平線）
     if res.eye_level:

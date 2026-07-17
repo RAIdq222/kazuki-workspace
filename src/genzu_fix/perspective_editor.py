@@ -213,7 +213,7 @@ PAGE = r"""<!DOCTYPE html>
   <div class="grp">
     <label class="chk"><input id="snap" type="checkbox" checked>消失点を地平線へスナップ</label>
     <span id="hint">ガイド密度</span>
-    <input id="density" type="range" min="3" max="40" value="14">
+    <input id="density" type="range" min="0" max="40" value="14">
     <span id="dval" class="pill">14</span>
     <span id="hint2">線の太さ</span>
     <input id="lw" type="range" min="1" max="10" step="0.5" value="4">
@@ -391,10 +391,12 @@ function draw(){
   // 参考画像（アタリ・ラフ）: 背景の上・線の下
   S.overlays.forEach((ov,i)=>drawOverlayOn(ctx,ov,(nx,ny)=>n2s(nx,ny),
     S.sel&&S.sel.type==='ov'&&S.sel.i===i, 7));
-  // パースガイド（やや濃いめ）
-  ctx.save();ctx.globalAlpha=0.6;
-  S.vps.forEach(v=>{const [sx,sy]=n2s(v.x,v.y);ctx.strokeStyle=C.GUIDE;ctx.lineWidth=GW;drawFan(ctx,sx,sy,r,S.density);});
-  ctx.restore();
+  // パースガイド（やや濃いめ。密度0=扇を描かない→レイだけ残せる）
+  if(S.density>0){
+    ctx.save();ctx.globalAlpha=0.6;
+    S.vps.forEach(v=>{const [sx,sy]=n2s(v.x,v.y);ctx.strokeStyle=C.GUIDE;ctx.lineWidth=GW;drawFan(ctx,sx,sy,r,S.density);});
+    ctx.restore();
+  }
   // 個別パース線（レイ）: 濃く・選択可能
   S.vps.forEach((v,vi)=>{ (v.rays||[]).forEach((_,ri)=>{
     const seg=raySeg(v,ri,(nx,ny)=>n2s(nx,ny),r);
@@ -636,10 +638,12 @@ function renderFullCanvas(withImage){
   const lbl=(px,py,t,col)=>{x.font=FS+'px system-ui';x.lineWidth=Math.max(3,LW);x.strokeStyle='rgba(0,0,0,.85)';x.strokeText(t,px,py);x.fillStyle=col;x.fillText(t,px,py);};
   // 参考画像（アタリ）: PNG保存(withImage)にのみ焼き込む。透過(線だけ)には入れない
   if(withImage!==false) S.overlays.forEach(ov=>drawOverlayOn(x,ov,(nx,ny)=>P(nx,ny),false,0));
-  // ガイド
-  x.save();x.globalAlpha=0.6;x.strokeStyle=C.GUIDE;x.lineWidth=GW;
-  S.vps.forEach(v=>{const [vx,vy]=P(v.x,v.y);drawFan(x,vx,vy,r,S.density);});
-  x.restore();
+  // ガイド（密度0=扇なし）
+  if(S.density>0){
+    x.save();x.globalAlpha=0.6;x.strokeStyle=C.GUIDE;x.lineWidth=GW;
+    S.vps.forEach(v=>{const [vx,vy]=P(v.x,v.y);drawFan(x,vx,vy,r,S.density);});
+    x.restore();
+  }
   // 個別パース線（レイ）
   S.vps.forEach(v=>{(v.rays||[]).forEach((_,ri)=>{
     const seg=raySeg(v,ri,(nx,ny)=>P(nx,ny),r);
@@ -716,8 +720,8 @@ function addRay(){
   if(!S.vps.length){setMsg('先に消失点を追加してください');return;}
   const vi=(S.sel&&S.sel.type==='vp')?S.sel.i:S.vps.length-1;
   const v=S.vps[vi]; v.rays=v.rays||[];
-  // 既定角: 下向き45°から少しずつずらす（重なり防止）
-  v.rays.push(Math.PI/4 + v.rays.length*0.22);
+  // 既定角: 上向き45°から少しずつずらす（重なり防止。アイレベルが低くても掴みやすい）
+  v.rays.push(-Math.PI/4 - v.rays.length*0.22);
   S.sel={type:'ray',vi,ri:v.rays.length-1};
   draw();setMsg('パース線を追加（VP'+(vi+1)+'）。線をドラッグで角度調整、Delで削除。');
 }
