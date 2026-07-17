@@ -133,6 +133,13 @@ def main():
             check("レイ削除", page.evaluate("() => (window.S.vps.at(-1).rays||[]).length") == 0)
             page.click("#addray")  # 保存検証用に1本残す
             check("レイ角度は数値", isinstance(ang0, (int, float)))
+            check("レイ初期角は上向き(y負方向)", page.evaluate(
+                "() => Math.sin(window.S.vps.at(-1).rays[0]) < 0"))
+
+            # ガイド密度0: 扇ガイドを消してレイだけ残せる（描画・保存ともJSエラーなし）
+            page.eval_on_selector("#density", "el=>{el.value=0;el.dispatchEvent(new Event('input'))}")
+            check("密度0が設定可能", page.evaluate("() => window.S.density") == 0)
+            page.eval_on_selector("#density", "el=>{el.value=14;el.dispatchEvent(new Event('input'))}")
 
             # 参考画像（アタリ）: 追加→四隅の射影変形→JSONに載る
             page.set_input_files("#refimg", img)
