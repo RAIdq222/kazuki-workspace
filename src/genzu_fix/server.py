@@ -1060,8 +1060,11 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
       <button onclick="openPsd(DCUR)">PSDを開く</button></div></div>
   <div class="dright">
     <div class="bar"><b id="dTitle"></b><span class="grow"></span>
-      <button onclick="document.getElementById('dmodal').style.display='none'">閉じる</button></div>
+      <button onclick="dNav(-1)" title="前のカット（←キー）">◀ 前</button>
+      <button onclick="dNav(1)" title="次のカット（→キー）">次 ▶</button>
+      <button onclick="document.getElementById('dmodal').style.display='none'" title="Escキーでも閉じる">閉じる</button></div>
     <div id="dBadges"></div>
+    <div id="dTakes"></div>
     <h4>画角・場面の記述（生成の核・日本語OK・最優先で効く）</h4>
     <textarea id="dStage" placeholder="例: カメラはモニター側にあり、ブラインドのある窓側へ向かって撮影。壁面とブラインドのみが写る。キャラクターや枠線は描かない。"></textarea>
     <div class="bar"><button onclick="dSaveStage()">記述を保存</button><span id="dStageHint" class="muted"></span></div>
@@ -1079,7 +1082,8 @@ PAGE = r"""<!doctype html><html lang="ja"><head><meta charset="utf-8">
       onchange="post('/api/unit/'+DCUR+'/retake_note',{note:this.value})">
     <div class="bar"><button class="primary" id="dGenBtn" onclick="dGenerate()">生成</button>
       <button class="ok" onclick="accept(DCUR,'accepted')">OK</button>
-      <button class="ng" onclick="accept(DCUR,'reject')">要修正</button></div>
+      <button class="ng" onclick="dReject()" title="修正指示（上の欄）を入れてから">要修正</button>
+      <button onclick="dUnset()">未判定に戻す</button></div>
     <div id="dMsg" class="muted"></div>
   </div></div></div>
 <div class="ov" id="modal"><div class="box">
@@ -1100,7 +1104,15 @@ let POLL=null,BATCH='';
 const RUN=new Set();
 const $=s=>document.querySelector(s);
 const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
-async function post(u,b){return (await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})})).json();}
+async function post(u,b){
+  // HTTP/通信エラーを握り潰さない（失敗時は通知して {error} を返す＝呼び手はUI更新しない）
+  try{
+    const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})});
+    if(!r.ok){let t='';try{t=(await r.text()).slice(0,120);}catch(e){}
+      const msg='通信エラー HTTP '+r.status+(t?('｜'+t):'');alert(msg);return {error:msg};}
+    return await r.json();
+  }catch(e){alert('通信失敗: '+e);return {error:String(e)};}
+}
 function lb(src){const im=$('#lbimg');im.onerror=null;im.src=src;$('#lb').style.display='flex';}
 function unit(id){return UNITS.find(u=>u.id===id);}
 // 生成前後比較（通常=横並び / スライダー比較）
@@ -1187,11 +1199,14 @@ async function renderOverview(cur){
     ${mb?`<div class="mboards">${mb}</div>`:'<div class="muted">ボード未割当 / 画像なし</div>'}
     ${o.note?`<div class="note">${esc(o.note)}</div>`:''}</details>`;
 }
-function render(){
+function visibleUnits(){
   const fa=$('#fAssignee').value,fs=$('#fStatus').value,fr=$('#fResult').checked,fq=$('#fQC').checked;
+  return UNITS.filter(u=>u.group===GROUP).filter(u=>(!fa||u.assignee===fa)&&(!fs||u.status===fs)
+    &&(!fr||!u.has_result)&&(!fq||['needs_retake','human'].includes(u.qc_verdict)));
+}
+function render(){
   const all=UNITS.filter(u=>u.group===GROUP);
-  const us=all.filter(u=>(!fa||u.assignee===fa)&&(!fs||u.status===fs)&&(!fr||!u.has_result)
-    &&(!fq||['needs_retake','human'].includes(u.qc_verdict)));
+  const us=visibleUnits();
   const gen=all.filter(u=>u.has_result).length, ok=all.filter(u=>u.status==='accepted').length, ng=all.filter(u=>u.status==='reject').length;
   const pct=all.length?Math.round(ok/all.length*100):0;
   const running=[...RUN].map(unit).filter(u=>u&&u.group===GROUP);
@@ -1232,10 +1247,12 @@ function takeStrip(u){
   return `<div class="takes">テイク履歴: ${chips}<span class="muted">（クリックで採用＝現行結果に戻す）</span></div>`;
 }
 async function adoptTake(id,n){
+  if(RUN.has(id)){alert('生成中は採用切替できません（結果と競合します）');return;}
   const u=unit(id); if(u&&u.adopted===n) return;
   const r=await post('/api/unit/'+id+'/adopt',{take:n});
   if(r.error){alert(r.error);return;}
   await refresh();
+  if(DCUR===id&&$('#dmodal').style.display==='flex'){dSyncHead();dShow('result');}
 }
 function card(u){
   const t=Date.now();
@@ -1292,11 +1309,33 @@ async function recapture(){const src=document.querySelector('input[name=gsrc]:ch
 async function openPsd(id){const r=await post('/api/unit/'+id+'/open',{}); slog(id,r.error?('開けません: '+r.error):'PSDを開きました');}
 async function loadPrompt(id){const d=await (await fetch('/api/unit/'+id)).json(); const t=document.getElementById('pr_'+id); if(t)t.value=d.prompt;}
 let DCUR=null;
-async function openDetail(id){DCUR=id; const u=unit(id); if(!u)return;
+function dSyncHead(){const u=unit(DCUR); if(!u)return;
   $('#dTitle').textContent='c'+u.cuts.join(',')+'（'+u.assignee+'）';
   $('#dGenBtn').textContent=u.has_result?'リテイク':'生成';
-  $('#dBadges').innerHTML=`<span class="b ${u.status}">${u.status}</span> ${qcBadge(u)}${u.retakes?` <span class="muted">RT${u.retakes}</span>`:''}`;
-  $('#dScene').textContent='読み込み中…'; $('#dJp').textContent='…'; $('#dEn').value=''; $('#dMsg').textContent='';
+  $('#dGenBtn').disabled=RUN.has(u.id);
+  $('#dBadges').innerHTML=`<span class="b ${u.status}">${u.status}</span> ${qcBadge(u)}`
+    +(u.retakes?` <span class="muted">RT${u.retakes}</span>`:'')
+    +(RUN.has(u.id)?' <span class="b generating">生成中…</span>':'');
+  $('#dTakes').innerHTML=takeStrip(u)||'';
+  if(u.gen_error){$('#dMsg').style.color='#d1242f';$('#dMsg').textContent='⚠ 生成失敗: '+u.gen_error;}
+  else if($('#dMsg').style.color){$('#dMsg').style.color='';$('#dMsg').textContent='';}
+}
+function dNav(d){const list=visibleUnits(); if(!list.length)return;
+  const i=list.findIndex(u=>u.id===DCUR);
+  const next=list[(i<0?0:i+d+list.length)%list.length];
+  if(next)openDetail(next.id);}
+async function dReject(){const note=$('#dNote').value.trim();
+  if(!note){$('#dMsg').textContent='要修正には修正指示が必要です（上の欄に入力してから）';$('#dNote').focus();return;}
+  const r=await post('/api/unit/'+DCUR+'/retake_note',{note}); if(r.error)return;
+  const u=unit(DCUR); if(u)u.retake_note=note;
+  await accept(DCUR,'reject');}
+async function dUnset(){const u=unit(DCUR); if(!u)return;
+  const nv=u.has_result?'done':'todo';
+  const r=await post('/api/unit/'+DCUR+'/accept',{value:nv}); if(r.error)return;
+  u.status=nv; render(); dSyncHead(); $('#dMsg').textContent='未判定に戻しました';}
+async function openDetail(id){DCUR=id; const u=unit(id); if(!u)return;
+  dSyncHead();
+  $('#dScene').textContent='読み込み中…'; $('#dJp').textContent='…'; $('#dMsg').textContent='';
   $('#dmodal').style.display='flex'; dShow(u.has_result?'result':'genzu');
   const d=await (await fetch('/api/unit/'+id)).json();
   const ci=d.cut_info||{};
@@ -1307,9 +1346,11 @@ async function openDetail(id){DCUR=id; const u=unit(id); if(!u)return;
       +(low?'\n⚠ コンテOCRの信頼度が低い/場面説明なし。内容を確認してください':''))
     :'場面情報なし（コンテ未紐づけ）。⚠ 画角・場所はリテイク指示かプロンプトで手動指定してください';
   $('#dJp').textContent=d.prompt_jp||'（日本語プロンプトなし）';
-  $('#dEn').value=d.prompt||'';
-  $('#dNote').value=u.retake_note||'';
-  $('#dStage').value=d.staging||'';
+  // 入力途中の欄は上書きしない（生成完了の自動更新でユーザーの編集を消さない）
+  const act=document.activeElement;
+  if(act!==$('#dEn'))$('#dEn').value=d.prompt||'';
+  if(act!==$('#dNote'))$('#dNote').value=u.retake_note||'';
+  if(act!==$('#dStage'))$('#dStage').value=d.staging||'';
   $('#dStageHint').textContent=d.staging_source==='auto'
     ?('自動下書き'+(d.staging_conf?('（信頼度 '+d.staging_conf+'）'):'')+' — 直して保存で確定')
     :(d.staging_source==='manual'?'手動確定済み':'未記入（コンテ情報を下書きに書いてください）');
@@ -1351,12 +1392,29 @@ async function dGenerate(){
   await post('/api/unit/'+DCUR+'/staging',{text:$('#dStage').value});
   await post('/api/unit/'+DCUR+'/retake_note',{note:$('#dNote').value});
   const r=await post('/api/unit/'+DCUR+'/generate',{}); if(r.error){$('#dMsg').textContent='エラー: '+r.error;return;}
-  RUN.add(DCUR); const u=unit(DCUR); if(u){u.status='generating';u.running=true;} render(); pollJobs();
-  $('#dMsg').textContent='生成キューに投入しました（完了後「生成結果」タブで確認）';}
+  RUN.add(DCUR); const u=unit(DCUR); if(u){u.status='generating';u.running=true;} render(); dSyncHead(); pollJobs();
+  $('#dMsg').textContent='生成中…（完了/失敗すると、この画面が自動で更新されます）';}
 async function savePrompt(id){const t=document.getElementById('pr_'+id); await post('/api/unit/'+id+'/prompt',{prompt:t?t.value:''}); slog(id,'保存しました');}
 async function resetPrompt(id){await post('/api/unit/'+id+'/prompt',{prompt:''}); const t=document.getElementById('pr_'+id); if(t)t.value=''; slog(id,'自動に戻しました');}
-async function setBoard(id,v){await post('/api/unit/'+id+'/board',{board:v}); slog(id,'ボード保存');}
-async function accept(id,v){await post('/api/unit/'+id+'/accept',{value:v}); const u=unit(id); if(u)u.status=v; render();}
+async function setBoard(id,v){
+  if(RUN.has(id)){alert('生成中はボード変更できません（この生成には反映されないため）');render();return;}
+  const r=await post('/api/unit/'+id+'/board',{board:v}); if(!r.error)slog(id,'ボード保存');}
+async function accept(id,v){
+  if(RUN.has(id)){alert('生成中は判定できません（完了後にどうぞ）');return;}
+  const u=unit(id);
+  // 同じ判定をもう一度クリック＝未判定へ戻す（トグル）
+  const nv=(u&&u.status===v)?(u.has_result?'done':'todo'):v;
+  if(nv==='reject'&&!((u&&u.retake_note)||'').trim()){
+    // 要修正は修正指示とセット（指示なしの要修正を作らない）
+    openDetail(id);
+    setTimeout(()=>{$('#dNote').focus();
+      $('#dMsg').textContent='要修正には修正指示が必要です。指示を入れて「要修正」を押してください';},300);
+    return;
+  }
+  const r=await post('/api/unit/'+id+'/accept',{value:nv}); if(r.error)return;
+  if(u)u.status=nv; render();
+  if(DCUR===id&&$('#dmodal').style.display==='flex')dSyncHead();
+}
 function slog(id,m){const l=document.getElementById('log_'+id); if(l){l.style.display='block';l.textContent=m;}}
 async function saveNote(id){const e=document.getElementById('rn_'+id);
   await post('/api/unit/'+id+'/retake_note',{note:e?e.value:''}); const u=unit(id); if(u)u.retake_note=e?e.value:'';}
@@ -1386,7 +1444,11 @@ function pollJobs(){
     UNITS.forEach(u=>{ if(active[u.id]) u.status='generating'; });
     BATCH=`待ち/生成中 ${j.busy||0}`+((j.qsize||0)?`（残 ${j.qsize}）`:'');
     render();
-    if((j.busy||0)===0){ clearInterval(POLL); POLL=null; BATCH=''; await refresh(); }
+    if($('#dmodal').style.display==='flex'&&DCUR)dSyncHead();
+    if((j.busy||0)===0){ clearInterval(POLL); POLL=null; BATCH=''; await refresh();
+      // 詳細画面を開いていたら結果・バッジ・検品レポートまで自動更新（リテイク後の陳腐化防止）
+      if($('#dmodal').style.display==='flex'&&DCUR){await openDetail(DCUR);}
+    }
   },2500);
 }
 async function rescan(){const p=PROJECTS.find(x=>x.group===GROUP); if(!p)return; await post('/api/projects/'+encodeURIComponent(p.key)+'/rescan',{}); await refresh();}
@@ -1398,7 +1460,21 @@ async function addProject(){$('#mMsg').textContent='追加中…';
   $('#modal').style.display='none'; WORK=$('#mWork').value||WORK; GROUP=null; await refresh();}
 $('#fAssignee').onchange=render;$('#fStatus').onchange=render;$('#fResult').onchange=render;$('#fQC').onchange=render;
 $('#cmpSlider').addEventListener('pointermove',cmpMove);
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('#cmp').style.display='none';$('#lb').style.display='none';$('#gmodal').style.display='none';}});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    // 一番手前のオーバーレイだけ閉じる（拡大→比較→取り直し→詳細の順）
+    for(const id of ['lb','cmp','gmodal','dmodal']){
+      const el=document.getElementById(id);
+      if(el&&el.style.display==='flex'){el.style.display='none';return;}
+    }
+    return;
+  }
+  const tag=(document.activeElement||{}).tagName||'';
+  if(!/^(INPUT|TEXTAREA|SELECT)$/.test(tag)&&$('#dmodal').style.display==='flex'){
+    if(e.key==='ArrowLeft')dNav(-1);
+    if(e.key==='ArrowRight')dNav(1);
+  }
+});
 refresh();
 </script></body></html>"""
 

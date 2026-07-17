@@ -212,7 +212,12 @@ def main():
             check("詳細: 日本語プロンプト表示", len(page.inner_text("#dJp")) > 10)
             check("詳細: ENプロンプト表示", len(page.input_value("#dEn")) > 10)
             check("詳細: 場面欄あり", page.locator("#dScene").count() == 1)
-            page.evaluate("()=>document.querySelector('#dmodal').style.display='none'")
+            check("詳細: テイク履歴表示", page.locator("#dTakes .takechip").count() == 2)
+            check("詳細: 前後ナビあり", page.locator("button:has-text('次 ▶')").count() == 1)
+            page.keyboard.press("Escape")
+            page.wait_for_timeout(200)
+            check("詳細: Escapeで閉じる",
+                  page.evaluate("()=>document.querySelector('#dmodal').style.display") != "flex")
 
             # 再描画で編集が消えない（詳細画面は#grid外＝render()の影響を受けない）
             page.evaluate("openDetail('testcut01')")
