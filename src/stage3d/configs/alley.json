@@ -1,0 +1,65 @@
+{
+  "exposure": 1.0,
+  "background": "#aebfd3",
+  "fog": { "color": "#c2ccd8", "near": 28, "far": 95 },
+  "moveSpeed": 2.2,
+  "eyeRange": [0.35, 2.7],
+  "presets": {
+    "A": { "pos": [0.45, 1.45, 1.6], "tgt": [-0.15, 1.15, -12.0], "label": "ボード", "mm": 21 },
+    "B": { "pos": [-0.3, 1.5, -13.5], "tgt": [0.4, 1.3, 3.0], "label": "逆方向", "mm": 24 },
+    "C": { "pos": [0.2, 1.3, -5.5], "tgt": [0.0, 7.5, -14.0], "label": "見上げ", "mm": 20 },
+    "T": { "pos": [-6.0, 14.0, 3.0], "tgt": [1.0, 0.0, -14.0], "label": "俯瞰", "mm": 30 }
+  },
+  "lights": [
+    { "type": "hemi", "sky": "#cdd8e4", "ground": "#6a675f", "i": 1.15 },
+    { "type": "dir", "p": [8.0, 14.0, 4.0], "tgt": [0.0, 0.0, -12.0],
+      "c": "#fff7e8", "i": 2.2, "shadow": true, "shadowExtent": 30 }
+  ],
+  "bounds": {
+    "min": [-1.35, 0.35, -41.0],
+    "max": [1.35, 2.7, 2.5]
+  },
+  "lightingPresets": {
+    "昼": {
+      "lights": [
+        { "type": "hemi", "sky": "#cdd8e4", "ground": "#6a675f", "i": 1.15 },
+        { "type": "dir", "p": [8.0, 14.0, 4.0], "tgt": [0.0, 0.0, -12.0],
+          "c": "#fff7e8", "i": 2.2, "shadow": true, "shadowExtent": 30 }
+      ],
+      "background": "#aebfd3",
+      "exposure": 1.0,
+      "emissives": {
+        "m_lamp": { "c": "#e8f4d0", "i": 0.0 },
+        "m_glow_win": { "c": "#ffe2a8", "i": 0.0 }
+      }
+    },
+    "夕": {
+      "lights": [
+        { "type": "hemi", "sky": "#b0785a", "ground": "#241a14", "i": 0.9 },
+        { "type": "dir", "p": [-22.0, 6.0, -8.0], "tgt": [2.0, 1.0, -8.0],
+          "c": "#ff8a48", "i": 3.0, "shadow": true, "shadowExtent": 30 },
+        { "type": "point", "p": [0.0, 6.0, -20.0], "c": "#c88a68", "i": 3.0 }
+      ],
+      "background": "#d99a6c",
+      "exposure": 0.9,
+      "emissives": {
+        "m_lamp": { "c": "#eaf0d8", "i": 2.0 },
+        "m_glow_win": { "c": "#ffd9a0", "i": 1.4 }
+      }
+    },
+    "夜": {
+      "lights": [
+        { "type": "hemi", "sky": "#1c2430", "ground": "#05060a", "i": 0.4 },
+        { "type": "point", "p": [-0.45, 4.7, -10.5], "c": "#d8e8c8", "i": 34.0, "shadow": true },
+        { "type": "point", "p": [0.5, 4.0, -25.0], "c": "#cfd8e8", "i": 7.0 },
+        { "type": "point", "p": [0.2, 3.5, 0.5], "c": "#bccadf", "i": 4.0 }
+      ],
+      "background": "#0a0e16",
+      "exposure": 1.1,
+      "emissives": {
+        "m_lamp": { "c": "#e8f4d0", "i": 5.0 },
+        "m_glow_win": { "c": "#ffe2a8", "i": 2.6 }
+      }
+    }
+  }
+}

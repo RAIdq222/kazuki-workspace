@@ -138,6 +138,20 @@ python3 src/stage3d/build_viewer.py --blend work/kitchen_stage.blend \
 
 注意: `build_viewer.py --glb` は既存GLBを再利用する (シーン変更後は付けずに再エクスポートすること)。
 
+## 9.5 実写ボード: 東中野の路地 (2026-07-17)
+
+写真(チャット貼付)からの空間化第1号。`src/stage3d/alley_higashinakano.py` + `alley_textures.py`。
+
+- 原画クロップが使えない実写は **PILの手続きテクスチャ + 実テキスト看板** で対応。
+  日本語フォントはコンテナに `fonts-japanese-gothic.ttf` (IPAゴシック) がある。
+- 電線は curve(bevel) をポリラインで張って `convert(target='MESH')`。カテナリーは
+  放物線近似 `z -= sag·4t(1-t)` で十分。
+- 空はグラデ+雲のPIL画像を Environment Texture でワールドに (青みの環境光を兼ねる)。
+- 寸法の基準: 路地幅3.0m(側溝0.3×2含む)・CBブロック塀6段=1.15m・階高3m。
+  「見えている範囲以外は作らない」指示 → 遠景は簡略ボリューム+ビューワーのFog。
+- `viewer_app.js` に `window.__V = {camera, controls, renderFrame}` を追加。
+  Playwright 検証でカメラを直接置けるようになった (プリセット外の視点確認が楽)。
+
 ## 10. 次アクション(案)
 
 - [ ] 尚善の他ボードの立体化(線画設定 `shz_b01_04_食堂` はパース図+立面図で好条件)
