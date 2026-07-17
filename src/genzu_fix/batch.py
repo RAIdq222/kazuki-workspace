@@ -281,6 +281,51 @@ def _detect_eye_level(png_path: str) -> float | None:
     return None
 
 
+def _perspective_block(inp_path: str) -> tuple[str, str]:
+    """入力画像から消失点を検出し、[PERSPECTIVE]ブロック(EN/JP)を返す。検出不能なら空。
+
+    画像参照では幾何が伝わらない（GKV実測）ため、EYE%と同様に消失点も数値の言語で渡す。
+    検出は hybrid（Vision がラフ線を意味的に読み、CVの実直線で最小二乗精密化）。
+    CV単体はレイアウト用紙のノイズ（枠・ヘッダ・市松）で偽VPを出す（実測: 平坦な壁の
+    c008に(93%,95%)を検出）ため使わない。Vision不可（キー無し）なら注入しない方が安全。
+    """
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        return "", ""
+    try:
+        from . import perspective
+        res = perspective.detect_hybrid(inp_path)
+    except Exception as e:  # noqa 検出失敗はブロック無しで続行
+        print(f"    [warn] perspective検出スキップ: {str(e)[:80]}")
+        return "", ""
+    # 画面から極端に遠い消失点は言語化の価値が低いので捨てる（±50%まで許容＝画面外もあり得る）
+    vps = [v for v in (res.vanishing_points or [])
+           if -0.5 <= v.x <= 1.5 and -0.5 <= v.y <= 1.5][:2]
+    if not vps:
+        return "", ""
+    def pct(v):
+        return f"x={round(v.x * 100)}%, y={round(v.y * 100)}%"
+    if len(vps) == 1:
+        en = (f"\n\n[PERSPECTIVE] Measured from the layout's own construction lines: "
+              f"one-point perspective. The main vanishing point is at ({pct(vps[0])}) of the frame"
+              f"{' (outside the frame)' if not (0 <= vps[0].x <= 1 and 0 <= vps[0].y <= 1) else ''}. "
+              f"All receding edges — walls, road, eaves, rails — must converge exactly there. "
+              f"The rough perspective guide lines in the layout encode this geometry: follow them "
+              f"precisely, but do not draw the guide lines themselves.")
+        jp = (f"\n\n[パース] 原図の作図線からの実測: 一点透視。主消失点は画面の ({pct(vps[0])})"
+              f"{'（画面外）' if not (0 <= vps[0].x <= 1 and 0 <= vps[0].y <= 1) else ''}。"
+              f"壁・道・庇・手すり等の奥行き線は全て厳密にそこへ収束させる。"
+              f"原図のラフなパース線はこの幾何を示すもの — 従うこと。ただし線自体は描かない。")
+    else:
+        pts = " / ".join(f"VP{i+1}: ({pct(v)})" for i, v in enumerate(vps))
+        en = (f"\n\n[PERSPECTIVE] Measured from the layout's own construction lines: "
+              f"two-point perspective — {pts} (frame-relative; may lie outside the frame). "
+              f"Receding edges must converge to these points. The rough perspective guide lines "
+              f"encode this geometry: follow them precisely, but do not draw them.")
+        jp = (f"\n\n[パース] 原図の作図線からの実測: 二点透視 — {pts}（画面基準・画面外もある）。"
+              f"奥行き線はこれらの点へ収束させる。原図のパース線は幾何の指示 — 従い、線自体は描かない。")
+    return en, jp
+
+
 def _trim_border(im):
     """ボード外周の黒/単色フチ（PSDキャンバスの余白）を落とし、絵の領域だけにする。"""
     from PIL import Image, ImageChops
@@ -378,6 +423,17 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
                 "禁止: 構図・カメラ・画角を取ること／1枚目に無い家具・什器・開口部・壁・部屋の続きの追加や補完／"
                 "1枚目の画角の外のレイアウト推定。"
                 "2枚目がこのカットに内容を足すことは決して無い — 足せるのは「描き方」の情報だけ。")
+    # 幾何の言語化注入: 消失点（CV実測）→[PERSPECTIVE]。忠実モードのみ
+    # （手描きラフ(尚善)はCV誤検出リスクがあるため従来通り）。
+    if genzu_trust == "high" and os.path.exists(inp):
+        p_en, p_jp = _perspective_block(inp)
+        if p_en:
+            prompt += p_en
+            if prompt_jp:
+                prompt_jp += p_jp
+            print("    [persp] " + p_jp.strip().splitlines()[0][:100])
+        else:
+            print("    [persp] 消失点の注入なし（未検出 or APIキー無し）")
     # 原図の赤いEYEライン→アイレベルを数値でプロンプトへ（言語化した幾何指示は画像より通る）
     eye = _detect_eye_level(inp) if os.path.exists(inp) else None
     if eye is not None:
