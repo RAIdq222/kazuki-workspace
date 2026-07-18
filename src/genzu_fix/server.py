@@ -601,6 +601,7 @@ def create_app():
                 "work": proj["work"], "ep": proj["ep"],
                 "has_psd": u["filename"] in proj["psd_idx"],
                 "status": st.get("status", "todo"), "running": running, "gen_error": gen_error,
+                "status_by": st.get("status_by", ""),
                 "genzu_source": st.get("genzu_source", "base"),
                 "genzu_rev": st.get("genzu_rev", 0),
                 "has_result": _result_path(uid) is not None,
@@ -734,7 +735,19 @@ def create_app():
 
     @app.post("/api/unit/<uid>/accept")
     def api_accept(uid):
-        _update_state(uid, status=(request.json or {}).get("value", "accepted"))
+        b = request.json or {}
+        v = b.get("value", "accepted")
+        by = (b.get("by") or "").strip()[:40]
+        # 複数人運用: 誰がいつ判定したかを記録（最新値＋履歴）
+        with STATE_LOCK:
+            s = STATE.setdefault(uid, {})
+            s["status"] = v
+            s["status_by"] = by
+            s["status_at"] = time.time()
+            s.setdefault("judgments", []).append(
+                {"ts": time.time(), "by": by, "value": v})
+            s["judgments"] = s["judgments"][-20:]  # 履歴は直近20件
+            _save_state_locked()
         return jsonify({"ok": True})
 
     @app.get("/api/unit/<uid>/layers")
@@ -1366,7 +1379,8 @@ async function openDetail(id){DCUR=id; const u=unit(id); if(!u)return;
   window._dSuggest=u.qc_suggest||'';
   $('#dKv').innerHTML=[['ファイル',d.filename],['原図ソース',u.genzu_source],
     ['ボード',u.board||'—'],['テイク',(u.takes||[]).length+(u.adopted?('（採用 T'+u.adopted+'）'):'')],
-    ['OCR信頼度',ci.conf||'—'],['QC',(u.qc_reasons||[]).join(' / ')||'—']]
+    ['OCR信頼度',ci.conf||'—'],['QC',(u.qc_reasons||[]).join(' / ')||'—'],
+    ['判定者',(u.status==='accepted'||u.status==='reject')?(u.status_by||'（記録なし）'):'—']]
     .map(([k,v])=>`<tr><td>${k}</td><td>${esc(String(v))}</td></tr>`).join('');
 }
 function dShow(which){const u=unit(DCUR); if(!u)return; const t=Date.now();
@@ -1399,6 +1413,12 @@ async function resetPrompt(id){await post('/api/unit/'+id+'/prompt',{prompt:''})
 async function setBoard(id,v){
   if(RUN.has(id)){alert('生成中はボード変更できません（この生成には反映されないため）');render();return;}
   const r=await post('/api/unit/'+id+'/board',{board:v}); if(!r.error)slog(id,'ボード保存');}
+function reviewer(){
+  let n=localStorage.getItem('reviewer')||'';
+  if(!n){n=(prompt('あなたの名前（判定の記録に使います）')||'').trim();
+    if(n)localStorage.setItem('reviewer',n);}
+  return n;
+}
 async function accept(id,v){
   if(RUN.has(id)){alert('生成中は判定できません（完了後にどうぞ）');return;}
   const u=unit(id);
@@ -1411,8 +1431,8 @@ async function accept(id,v){
       $('#dMsg').textContent='要修正には修正指示が必要です。指示を入れて「要修正」を押してください';},300);
     return;
   }
-  const r=await post('/api/unit/'+id+'/accept',{value:nv}); if(r.error)return;
-  if(u)u.status=nv; render();
+  const r=await post('/api/unit/'+id+'/accept',{value:nv,by:reviewer()}); if(r.error)return;
+  if(u){u.status=nv;u.status_by=localStorage.getItem('reviewer')||'';} render();
   if(DCUR===id&&$('#dmodal').style.display==='flex')dSyncHead();
 }
 function slog(id,m){const l=document.getElementById('log_'+id); if(l){l.style.display='block';l.textContent=m;}}
@@ -1505,6 +1525,11 @@ def main(argv=None):
                    help="生成後にAI検品レポート（信頼度・エラー・プロンプト疑義・リテイク指示案）を付ける"
                         "（要 ANTHROPIC_API_KEY・既定ON。--no-qc-vision で無効）")
     p.add_argument("--port", type=int, default=8765)
+    p.add_argument("--host", default="127.0.0.1",
+                   help="待受アドレス。チーム共有時は 0.0.0.0（Tailscale/LAN内から見える）")
+    p.add_argument("--auth-token", default=os.environ.get("CONSOLE_TOKEN", ""),
+                   help="共有トークン。設定すると全ページで要求（環境変数 CONSOLE_TOKEN でも可）。"
+                        "メンバーには http://<host>:<port>/?token=<値> を配る（初回のみ・以後Cookie）")
     a = p.parse_args(argv)
     # --project（discover_assets 出力）で未指定の genzu_dir/boards_dir/out/work/ep を補完。
     if a.project:
@@ -1593,7 +1618,39 @@ def main(argv=None):
     _save_projects()
     app = create_app()
     print(f"原図修正コンソール: http://127.0.0.1:{a.port}  (out={a.out})")
-    app.run(host="127.0.0.1", port=a.port, threaded=True)
+    # 共有トークン認証（設定時のみ）。?token=◯ で入るとCookieに保存され以後不要。
+    if a.auth_token:
+        _TOKEN = a.auth_token
+
+        @app.before_request
+        def _auth():  # noqa
+            if request.cookies.get("ctoken") == _TOKEN:
+                return None
+            t = request.args.get("token", "")
+            if t == _TOKEN:
+                from flask import redirect
+                resp = redirect(request.path or "/")
+                resp.set_cookie("ctoken", _TOKEN, max_age=90 * 24 * 3600, httponly=True)
+                return resp
+            return Response(
+                "<meta charset='utf-8'><body style='font-family:sans-serif;padding:40px'>"
+                "<h3>原図修正コンソール</h3><p>アクセストークンが必要です。"
+                "配布されたURL（<code>?token=…</code>付き）から開いてください。</p>"
+                "<form onsubmit=\"location='/?token='+this.t.value;return false\">"
+                "<input name='t' placeholder='トークン'> <button>入る</button></form>",
+                status=401, mimetype="text/html")
+        print(f"[auth] 共有トークン認証: 有効（配布URL http://<このマシン>:{a.port}/?token=***）")
+
+    # 複数人アクセスは waitress（本番用WSGI）で受ける。未導入なら開発サーバへフォールバック。
+    try:
+        from waitress import serve as _serve
+        print(f"[serve] waitress で {a.host}:{a.port} 待受")
+        _serve(app, host=a.host, port=a.port, threads=12)
+    except ImportError:
+        if a.host != "127.0.0.1":
+            print("[warn] waitress 未導入のため Flask開発サーバで公開します"
+                  "（複数人運用では pip install waitress を推奨）")
+        app.run(host=a.host, port=a.port, threaded=True)
 
 
 if __name__ == "__main__":

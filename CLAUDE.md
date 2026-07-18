@@ -46,6 +46,7 @@
 | 新話数の参照先自動探索 | `scripts/discover_assets.py`＋`src/genzu_fix/assets.py` → `runs/project_<work>_<ep>.json`（`docs/asset-discovery.md`） |
 | 香盤表→カット表の自動生成 | `scripts/build_cut_board_map.py`＋`src/genzu_fix/koban.py`（xlsxは標準ライブラリで読む/BANK・枝番・終端開き対応） |
 | ローカル実行手順 | `docs/local-cli-runbook.md` |
+| コンソールのチーム共有手順 | `docs/deploy-console.md`（間借り機＋Tailscale＋トークン認証） |
 | TODO | `docs/TODO.md` |
 | セッション台帳（誰が何を/ブランチ/決定） | `docs/sessions.md` |
 | スキル（再利用手順） | `.claude/skills/`（例 `read-genzu`） |
