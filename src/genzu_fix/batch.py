@@ -355,7 +355,7 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
                 genzu_source: str = "base", cut_num: str = "",
                 cut_info_map=None, qc_vision: bool = False,
                 genzu_layers=None, staging: str | None = None,
-                genzu_trust: str = "rough") -> dict:
+                genzu_trust: str = "rough", inject_persp: bool = True) -> dict:
     os.makedirs(out_dir, exist_ok=True)
     cut = os.path.splitext(os.path.basename(psd_path))[0]
     visible = os.path.join(out_dir, "visible.png")
@@ -425,7 +425,7 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
                 "2枚目がこのカットに内容を足すことは決して無い — 足せるのは「描き方」の情報だけ。")
     # 幾何の言語化注入: 消失点（CV実測）→[PERSPECTIVE]。忠実モードのみ
     # （手描きラフ(尚善)はCV誤検出リスクがあるため従来通り）。
-    if genzu_trust == "high" and os.path.exists(inp):
+    if genzu_trust == "high" and inject_persp and os.path.exists(inp):
         p_en, p_jp = _perspective_block(inp)
         if p_en:
             prompt += p_en
