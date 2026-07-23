@@ -101,6 +101,26 @@
   既存出力は `python scripts\check_align.py <出力フォルダ>` で後追い計測可。
   合成テストで scale1.41 のズームを 1.405 と推定・逆変換後残差0.5%を確認。
 
+  **原図修正タスクモデルの再設計＝Issue #5で設計フェーズ完了（2026-07-23）**: 黒江さん発行の
+  Issue #5（Codex起案）で、①修正内容の決定 ②プロンプト符号化 ③評価 の3層を分離する再設計を
+  Codex-Fable往復でレビューし、**データモデル(EditSpec)と評価基準の設計を承認・クローズ**。
+  経緯と全文はIssue #5のコメント列が一次資料（このファイルはポインタのみ）。要点:
+  - **EditSpec v0.3**: 差分記述＋基底宣言(genzu_as_drawn)＋被覆宣言。assertion統一レコードで
+    軸を直交分離（subject/content{edit6種|declaration|knowledge}/provenance{created_by+
+    derivation_mode+evidence_refs}/confidence/criticality/review）。参照は全てrevision限定、
+    hash=RFC8785+SHA-256、承認はrevision/hashに紐付け(stale_approval)。elements=参照台帳のみ。
+  - **バリデータ(T2 v0.2)**: policy非依存の決定論診断（コード台帳19件・テスト10件固定）。
+    生成可否は別のpolicy evaluatorが導出（allow/allow_with_disclosure/block）＝fail-closedの一元化。
+  - **評価器(T3 v0.2)**: trustスカラー廃止→assertion×軸のベクトル。not_evaluated/refused_*を
+    passと区別。カット間連続性はT8（後続）へ分離。
+  - **監査の主要発見**（Round 1）: 信頼度が生成境界で消える／全段fail-open／QCはgenzu_trust非対応で
+    常に原図=正（P10）／cut274でstaging「見上げ(high)」vs cut_info「俯瞰」の矛盾がプロンプト同居／
+    仮説→仕様化10件（P1-P10、REGISTRATION・anchors既定ON・align閾値等の自作分含む）。
+  - **[D]/[T]切り分け運用**: 業務判断[D]は黒江さんキュー（D1手本全文/D2 cut274原図/D3要件追認/
+    D4赤書き/D5原図vsコンテ/D6未確認推論の使用/D7 unresolved既定/D8評価教師例）、技術[T]は
+    Codex-Fable間。**次工程はRound 2（手本の句単位分析）先行が推奨**。JSON Schema化・バリデータ
+    骨格の実装はD回答後に黒江さんの実装承認を得てから（この設計期間中コードは一切未変更）。
+
 ## 並行ブランチの地図
 | ブランチ | 役割 | 主な成果物 |
 |---|---|---|
