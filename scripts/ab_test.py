@@ -5,8 +5,9 @@
 条件を1つずつ抜いた比較で寄与を測る。歩留まり（同条件での分散）も同時に取れる。
 
 条件（--conditions のカンマ区切り）:
-  full      … 現行フル装備（staging＋ボード意匠辞書＋EYE＋[PERSPECTIVE]）
+  full      … 現行フル装備（staging＋ボード意匠辞書＋EYE＋[PERSPECTIVE]＋[ANCHORS]）
   nopersp   … [PERSPECTIVE]なし（消失点注入の効果測定）
+  noanchor  … [ANCHORS]なし（位置アンカー注入の効果測定＝再フレーミング対策の寄与）
   noboard   … ボード参照なし（構図汚染 vs 画風の綱引き測定）
   nostaging … 画角記述なし（言語チャンネルの寄与測定）
 
@@ -112,6 +113,7 @@ def main(argv=None) -> int:
                     board_path=(None if cond == "noboard" else board_png),
                     staging=(None if cond == "nostaging" else (staging or None)),
                     genzu_trust="high", inject_persp=(cond != "nopersp"),
+                    inject_anchors=(cond != "noanchor"),
                     cut_num=str(a.cut), cut_info_map=cim, qc_vision=True)
             except Exception as e:  # noqa 1条件の失敗で全体を止めない
                 print(f"  [warn] {cond} run{r} 失敗: {str(e)[:150]}")
@@ -122,8 +124,11 @@ def main(argv=None) -> int:
             qp = os.path.join(od, "qc.json")
             if os.path.exists(qp):
                 q = json.load(open(qp, encoding="utf-8"))
+            al = q.get("align") or {}
             rows.append({"cond": cond, "run": r, "trust": q.get("trust", ""),
                          "verdict": q.get("verdict", ""),
+                         "align_scale": al.get("scale", ""),
+                         "align_shift": (f"{al.get('dx_pct')},{al.get('dy_pct')}" if al else ""),
                          "errors": " / ".join(q.get("reasons", []))[:200]})
             rp = os.path.join(od, "restored_full.png")
             if os.path.exists(rp):
@@ -135,7 +140,8 @@ def main(argv=None) -> int:
 
     os.makedirs(a.out, exist_ok=True)
     with open(os.path.join(a.out, "summary.csv"), "w", encoding="utf-8-sig", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=["cond", "run", "trust", "verdict", "errors"])
+        w = csv.DictWriter(f, fieldnames=["cond", "run", "trust", "verdict",
+                                          "align_scale", "align_shift", "errors"])
         w.writeheader()
         w.writerows(rows)
     print("\n== summary ==")

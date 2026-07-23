@@ -326,6 +326,73 @@ def _perspective_block(inp_path: str) -> tuple[str, str]:
     return en, jp
 
 
+_ANCHORS_SCHEMA = {
+    "type": "object",
+    "properties": {"elements": {"type": "array", "items": {"type": "object", "properties": {
+        "name_en": {"type": "string"}, "name_jp": {"type": "string"},
+        "cx": {"type": "number"}, "cy": {"type": "number"},
+        "w": {"type": "number"}, "h": {"type": "number"}},
+        "required": ["name_en", "name_jp", "cx", "cy"]}}},
+    "required": ["elements"],
+}
+
+_ANCHORS_SYSTEM = (
+    "あなたは背景レイアウトの計測係。画像は用紙余白・ヘッダー込みの**全キャンバス**である。"
+    "主要な描画要素（構図上重要な順に最大5個）の位置を、画像全体に対する百分率で返す"
+    "（cx=左端から要素中心まで% / cy=上端から% / w,h=おおよその幅・高さ%）。"
+    "制作用マーク（フレーム枠・手書き文字・番号・タップ穴・赤線）は要素に含めない。"
+    "name_en は英語の短い名詞句、name_jp は日本語。位置は±3%程度の精度でよいが偏りなく測ること。"
+)
+
+
+def _anchors_block(inp_path: str) -> tuple[str, str]:
+    """入力キャンバス上の主要要素の位置(%)をVisionで実測し、[ANCHORS]ブロック(EN/JP)を返す。
+
+    構図ずれの主モード「作画フレーム内へズームして再フレーミング」（c283実測: 内容は良いのに
+    全体が約1.3倍拡大＋上シフト）への対策。EYE%・消失点と同じ「幾何は数値の言語で渡す」路線で、
+    要素の絶対位置をキャンバス基準の数値として釘打ちする。キー無し/失敗時は注入しない。
+    """
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        return "", ""
+    try:
+        from .scene_understanding import _anthropic_call
+        res = _anthropic_call(
+            {"system": _ANCHORS_SYSTEM, "schema": _ANCHORS_SCHEMA,
+             "text": "この背景レイアウトの主要要素の位置を計測して。", "images": [inp_path]},
+            "claude-fable-5", os.environ["ANTHROPIC_API_KEY"], max_tokens=1200, timeout=120)
+    except (Exception, SystemExit) as e:  # noqa 計測失敗はブロック無しで続行
+        print(f"    [warn] anchors計測スキップ: {str(e)[:80]}")
+        return "", ""
+    els = [e for e in (res.get("elements") or [])
+           if isinstance(e.get("cx"), (int, float)) and isinstance(e.get("cy"), (int, float))][:5]
+    if not els:
+        return "", ""
+
+    def _en(e):
+        s = f"{e.get('name_en') or e.get('name_jp')} — center ({round(e['cx'])}%, {round(e['cy'])}%)"
+        if isinstance(e.get("w"), (int, float)):
+            s += f", ~{round(e['w'])}% wide"
+        return s
+
+    def _jp(e):
+        s = f"{e.get('name_jp') or e.get('name_en')}＝中心({round(e['cx'])}%, {round(e['cy'])}%)"
+        if isinstance(e.get("w"), (int, float)):
+            s += f"・幅約{round(e['w'])}%"
+        return s
+
+    en = ("\n\n[ANCHORS] Element positions measured on the full input canvas (percent of "
+          "canvas width/height from the top-left corner; the canvas includes the sheet "
+          "margins): " + "; ".join(_en(e) for e in els) + ". "
+          "Hold every element at exactly these canvas positions and sizes. Do not zoom "
+          "toward the drawn area or spread the drawing to fill the canvas — if an element "
+          "drifts from these numbers, move it back.")
+    jp = ("\n\n[アンカー] 入力キャンバス全体（余白込み・左上基準の%）で実測した要素位置: "
+          + "／".join(_jp(e) for e in els) + "。"
+          "全要素をこのキャンバス位置・サイズに厳密に固定する。作画領域へズームしたり絵を広げて"
+          "キャンバスを埋めたりしない — この数値から要素がずれたら戻すこと。")
+    return en, jp
+
+
 def _trim_border(im):
     """ボード外周の黒/単色フチ（PSDキャンバスの余白）を落とし、絵の領域だけにする。"""
     from PIL import Image, ImageChops
@@ -355,7 +422,8 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
                 genzu_source: str = "base", cut_num: str = "",
                 cut_info_map=None, qc_vision: bool = False,
                 genzu_layers=None, staging: str | None = None,
-                genzu_trust: str = "rough", inject_persp: bool = True) -> dict:
+                genzu_trust: str = "rough", inject_persp: bool = True,
+                inject_anchors: bool = True) -> dict:
     os.makedirs(out_dir, exist_ok=True)
     cut = os.path.splitext(os.path.basename(psd_path))[0]
     visible = os.path.join(out_dir, "visible.png")
@@ -423,6 +491,17 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
                 "禁止: 構図・カメラ・画角を取ること／1枚目に無い家具・什器・開口部・壁・部屋の続きの追加や補完／"
                 "1枚目の画角の外のレイアウト推定。"
                 "2枚目がこのカットに内容を足すことは決して無い — 足せるのは「描き方」の情報だけ。")
+    # 位置の言語化注入: 主要要素のキャンバス座標→[ANCHORS]。忠実モードのみ。
+    # 再フレーミング（フレーム内へのズーム）を絶対座標の釘打ちで抑える（c283対策）。
+    if genzu_trust == "high" and inject_anchors and os.path.exists(inp):
+        a_en, a_jp = _anchors_block(inp)
+        if a_en:
+            prompt += a_en
+            if prompt_jp:
+                prompt_jp += a_jp
+            print("    [anchors] " + a_jp.strip().splitlines()[0][:110])
+        else:
+            print("    [anchors] 位置アンカー注入なし（未計測 or APIキー無し）")
     # 幾何の言語化注入: 消失点（CV実測）→[PERSPECTIVE]。忠実モードのみ
     # （手描きラフ(尚善)はCV誤検出リスクがあるため従来通り）。
     if genzu_trust == "high" and inject_persp and os.path.exists(inp):
@@ -493,12 +572,33 @@ def process_cut(psd_path: str, board: str, scene: str, out_dir: str,
         full = os.path.join(out_dir, "restored_full.png")
         image_aspect.restore_output_image(gen_raw, restored, prep)
         frame.paste_into_region((vw, vh), tuple(region), restored, full)
+        # 位置ずれ計測（決定的・API不要）: フレーム内ズーム等の相似ズレを数値化。
+        # mismatch なら逆変換版 restored_aligned.png と重ね図も出す（=救済候補）。
+        al = None
+        try:
+            from . import align as alignlib
+            al = alignlib.measure(visible, full, out_dir)
+            if al["verdict"] == "mismatch":
+                print(f"    [align] ずれ検出: scale×{al['scale']:.2f} "
+                      f"shift=({al['dx_pct']:+.1f}%, {al['dy_pct']:+.1f}%) score={al['score']:.2f}"
+                      f" → restored_aligned.png（逆変換で原図グリッドへ戻した版）")
+            else:
+                print(f"    [align] {al['verdict']} scale×{al['scale']:.2f} "
+                      f"shift=({al['dx_pct']:+.1f}%, {al['dy_pct']:+.1f}%) score={al['score']:.2f}")
+        except Exception as e:  # noqa 計測失敗で生成を失敗にしない
+            print(f"    align skip: {str(e)[:80]}")
         layer = psd_export.insert_result_layer(psd_path, full, out_psd, base_name="AI原図修正")
         # 検品(QC): プログラム判定は常時（空白/破綻・色残り）。
         # APIキーがあれば検品レポート（信頼度・エラー内容・プロンプト疑義・リテイク指示案）も付ける。
         qc_dict = {}
         try:
             qc_dict = qc.asdict(qc.evaluate(full))
+            if al:
+                qc_dict["align"] = al
+                if al["verdict"] == "mismatch":
+                    qc_dict.setdefault("reasons", []).append(
+                        f"registration: 生成が原図から scale×{al['scale']:.2f} / "
+                        f"({al['dx_pct']:+.1f}%, {al['dy_pct']:+.1f}%) ずれ（フレーム内ズーム疑い）")
             if os.environ.get("ANTHROPIC_API_KEY") and qc_vision is not False:
                 rep = qc.inspect(inp, full, staging=staging or "")
                 if rep:

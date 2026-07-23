@@ -66,8 +66,13 @@ GLOBAL_EN = (
     "behind them. Keep furniture and fixtures that belong to the space (a bed, shelves, a "
     "lamp stay; a book in a hand goes).\n"
     "DON'T over-correct: where a judgement is genuinely ambiguous, respect the layout's "
-    "intent rather than inventing. MARGINS: the blank padding bands are intentional — leave "
-    "them empty."
+    "intent rather than inventing.\n"
+    "REGISTRATION: your canvas IS the input canvas, 1:1 — work like ink on tracing paper "
+    "taped over it. Every element keeps its exact position and scale relative to the FULL "
+    "canvas, sheet margins included. After erasing frame borders and production marks, do "
+    "NOT zoom into the drawing area, re-frame it, or spread the drawing outward to fill "
+    "the canvas — erased margins and header bands simply remain blank. MARGINS: the blank "
+    "padding bands are intentional — leave them empty."
 )
 
 GLOBAL_JP = (
@@ -91,7 +96,11 @@ GLOBAL_JP = (
     "薄いグレーの大きな市松模様は透明部分のプレースホルダであり絵ではない — 空白として扱い、市松柄を描かない。\n"
     "  さらに、キャラ/人物/動物と、その持ち物・着衣・携行物を全て消し、背後の素の環境を再構成する。\n"
     "  その場所に属する家具・什器は残す（寝台・棚・燭台は残す／手に持つ本は消す）。\n"
-    "過修正の禁止: 判断が本当に曖昧な所は、捏造せず原図の意図を尊重する。余白: 周囲の空白パディング帯は意図的なもの。空白のまま残す。"
+    "過修正の禁止: 判断が本当に曖昧な所は、捏造せず原図の意図を尊重する。\n"
+    "レジストレーション: 出力キャンバスは入力キャンバスと1:1 — 入力に重ねたトレーシングペーパーへ清書するのと同じ。"
+    "全要素は、用紙余白も含む**キャンバス全体**に対する位置・大きさを厳密に保つ。"
+    "フレーム枠や制作用マークを消しても、作画領域へズームしたり、絵を外へ広げてキャンバスを埋め直したりしない — "
+    "消した余白・ヘッダー帯はただの空白として残る。余白: 周囲の空白パディング帯は意図的なもの。空白のまま残す。"
 )
 
 # ---------------------------------------------------------------------------
@@ -129,8 +138,13 @@ GLOBAL_TRUST_EN = (
     "checker pattern. Also remove any character/person/animal and everything they hold, "
     "wear or carry, and rebuild the plain environment behind them. Keep furniture and "
     "fixtures that belong to the space.\n"
-    "WHEN UNSURE: follow the layout literally. MARGINS: the blank padding bands are "
-    "intentional — leave them empty."
+    "WHEN UNSURE: follow the layout literally.\n"
+    "REGISTRATION: your canvas IS the input canvas, 1:1 — work like ink on tracing paper "
+    "taped over it. Every element keeps its exact position and scale relative to the FULL "
+    "canvas, sheet margins included. After erasing frame borders and production marks, do "
+    "NOT zoom into the drawing area, re-frame it, or spread the drawing outward to fill "
+    "the canvas — erased margins and header bands simply remain blank. MARGINS: the blank "
+    "padding bands are intentional — leave them empty."
 )
 
 GLOBAL_TRUST_JP = (
@@ -152,7 +166,11 @@ GLOBAL_TRUST_JP = (
     "そのうえで線自体は出力に描かない。"
     "薄いグレーの大きな市松模様は透明部分のプレースホルダであり絵ではない — 空白として扱い、市松柄を描かない。"
     "キャラ/人物/動物とその持ち物・着衣は全て消し、背後の素の環境を再構成する。場所に属する家具・什器は残す。\n"
-    "迷ったら: 原図を字義通りに写す。余白: 周囲の空白パディング帯は意図的なもの。空白のまま残す。"
+    "迷ったら: 原図を字義通りに写す。\n"
+    "レジストレーション: 出力キャンバスは入力キャンバスと1:1 — 入力に重ねたトレーシングペーパーへ清書するのと同じ。"
+    "全要素は、用紙余白も含む**キャンバス全体**に対する位置・大きさを厳密に保つ。"
+    "フレーム枠や制作用マークを消しても、作画領域へズームしたり、絵を外へ広げてキャンバスを埋め直したりしない — "
+    "消した余白・ヘッダー帯はただの空白として残る。余白: 周囲の空白パディング帯は意図的なもの。空白のまま残す。"
 )
 
 # era の既定値（作品共通の時代様式）。scene_profile 側で個別指定があればそちらを優先。
