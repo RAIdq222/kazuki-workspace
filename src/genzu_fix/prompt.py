@@ -105,14 +105,17 @@ GLOBAL_JP = (
 
 # ---------------------------------------------------------------------------
 # genzu_trust="high" 用のA層 — 原図を「正」として扱う忠実清書モード。
-# SP2のように3Dレイアウト出しでパース・アイレベルが最初から正しい原図に、
-# 「狂いを直せ」と言うのは誤り（再解釈の権限を与え、構図が動く原因になる）。
-# 「守る」か「直す」かは作品/カットごとの宣言であり、決め打ちにしない（黒江さん指摘）。
+# trust=high は「この原図を正として扱う」という**宣言**であって、原図の素性の主張ではない。
+# ※旧根拠「SP2=3Dレイアウト出しだから正しい」は誤認（Issue #5 D3-2, 2026-07-23）。
+#   SP2原図も手書きで、正しいかは原図次第・本来はカット単位の判断。話数一括の宣言は
+#   EditSpec移行で置き換える予定。「狂いを直せ」と言うのは正しい原図への再解釈権限の
+#   付与であり構図が動く原因になる、という機序自体は有効。
 # ---------------------------------------------------------------------------
 GLOBAL_TRUST_EN = (
-    "You are a background art finishing pass. Take a background layout (genzu) exported "
-    "from an accurate 3D layout — its composition, camera, perspective, eye level and "
-    "proportions are ALREADY CORRECT — and redraw it as a delivery-quality BLACK-AND-WHITE "
+    "You are a background art finishing pass. This background layout (genzu) has been "
+    "reviewed and is declared correct for this cut — treat its composition, camera, "
+    "perspective, eye level and proportions as the answer, not a draft — "
+    "and redraw it as a delivery-quality BLACK-AND-WHITE "
     "background line drawing (haikei). This is faithful finishing and densification, NOT "
     "correction: change nothing about the geometry.\n"
     "PRESERVE (absolute): the composition, camera angle, eye-level and framing; the exact "
@@ -148,8 +151,8 @@ GLOBAL_TRUST_EN = (
 )
 
 GLOBAL_TRUST_JP = (
-    "あなたは背景美術の「清書パス」である。この原図は正確な3Dレイアウトから出力されており、"
-    "構図・カメラ・パース・アイレベル・比率は**最初から正しい**。それを納品品質の白黒背景線画（背景）として"
+    "あなたは背景美術の「清書パス」である。この原図はこのカットの「正」として確認済みであり、"
+    "構図・カメラ・パース・アイレベル・比率は**正しいものとして扱う**（下書きではなく答え）。それを納品品質の白黒背景線画（背景）として"
     "描き起こす。これは忠実な仕上げ・描き込みであり、修正ではない — 幾何は一切変えない。\n"
     "保持（絶対）: 構図・カメラアングル・アイレベル・画角／全要素の正確な位置・大きさ・形。"
     "ズーム・トリミング・パン・再センタリング・比率変更・パースの「改善」をしない — 既に正しい。\n"

@@ -130,6 +130,15 @@
     （矛盾2文をそのまま流す現行動作は廃止対象）⑦未確認AI下書きでの生成は許可
     ⑧**業務的不確実性で生成を止めない**——コンテ等からの類推で解決し、アラート＋指示付きリテイクで回収
     （fail-closedは技術的不整合のみ）。残: D1手書きプロンプト全文・D2 cut274原図・D8評価教師例（後日）。
+  **実装開始（2026-07-24 黒江さん指示）**: Codex最終承認（規範5点: 赤書き評価はassertionでありvalidator診断に
+    昇格させない／genzu>conteは競合assertion単位／既定non-blockingだがrefused_by_policyは残す／カット一括trust
+    再導入禁止・派生表示のみ／T9登録承認）を受けて実装着手。成果:
+    ① `src/genzu_fix/editspec/`（canonical=rfc8785-subset/1+SHA-256、validator=T2 v0.2診断・冪等・
+    policy非依存、policy=D4〜D7を写したprofileで allow/allow_with_disclosure/block(invalid_spec|policy) 導出）
+    ② `tests/editspec_test.py`（固定10ケース＋hash/冪等/hold）③ `runs/policy_profiles/sp2_10.json`（v0.1）
+    ④ prompt.py hotfix: GLOBAL_TRUSTの虚偽文言「3Dレイアウト出しで既に正しい」→「このカットの正として
+    確認済み・宣言として扱う」へ（D3-2の事実訂正。詳細設計の符号化はD1手本待ちで別途）。
+    未着手: EditSpecの生成パイプライン配線（既存staging/cut_infoからの移行=T6実装）、評価器T3実装、T5符号化、T9。
 
 ## 並行ブランチの地図
 | ブランチ | 役割 | 主な成果物 |

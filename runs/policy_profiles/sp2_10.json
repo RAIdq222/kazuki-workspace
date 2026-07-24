@@ -1,0 +1,23 @@
+{
+  "_comment": "SP2#10 policy profile v0.1 — Issue #5 D4〜D7の黒江さん回答の写し。値の変更は黒江さん判断（[D]）。スキーマが表現できること(editspec)と、この実行ポリシーは別物。",
+  "profile": "sp2_10",
+  "version": "0.1",
+  "precedence_on_declaration_conflict": ["human", "genzu", "conte", "board", "model"],
+  "block_on_invalid_spec": true,
+  "block_on_human_hold": true,
+  "disclose_on_codes": [
+    "SHEET_NOTE_UNTRIAGED",
+    "OUTDATED_REFERENCE",
+    "UNRESOLVED_PRESENT",
+    "CRITICAL_UNREVIEWED_INFERENCE",
+    "COVERAGE_UNREVIEWED_MODEL_FULL",
+    "REMOVE_WITHOUT_REBUILD_PLAN",
+    "MATERIAL_REV_UNKNOWN",
+    "REBUILD_LINK_CANDIDATE"
+  ],
+  "disclose_on_unreviewed_inference": true,
+  "unresolved_default": "default_preserve_with_disclosure",
+  "sheet_notes_mode": "model_proposes_human_approves",
+  "trust_display": "derived_only",
+  "retake_loop": {"retry_budget": 2, "escalate_on_no_improvement": true}
+}
