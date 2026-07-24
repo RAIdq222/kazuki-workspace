@@ -135,17 +135,35 @@ def stone_paving():
 
 
 def cloud_ramp():
-    """御路 (階段中央の雲龍紋の斜路) の略記."""
-    w, h = 256, 1024
-    img = Image.new("RGB", (w, h), (150, 148, 140))
+    """御路 (階段中央の雲龍紋の斜路)。二重縁+中央の蛇行帯+絡み雲."""
+    w, h = 512, 2048
+    base = (154, 152, 144)
+    img = Image.new("RGB", (w, h), base)
     d = ImageDraw.Draw(img)
-    d.rectangle([4, 4, w - 4, h - 4], outline=(110, 108, 100), width=6)
+    dk = (112, 110, 102)
+    md = (128, 126, 118)
+    lt = (168, 166, 158)
+    d.rectangle([6, 6, w - 6, h - 6], outline=dk, width=10)
+    d.rectangle([26, 26, w - 26, h - 26], outline=md, width=5)
+    # 中央の蛇行帯 (龍体の略記)
+    import math as _m
+    pts = [(w / 2 + _m.sin(t / 90) * w * 0.16, 60 + t) for t in range(0, h - 120, 8)]
+    for i in range(len(pts) - 1):
+        d.line([pts[i], pts[i + 1]], fill=md, width=26)
+    for i in range(len(pts) - 1):
+        d.line([pts[i], pts[i + 1]], fill=lt, width=10)
+    # 絡み雲 (二重渦を規則的に)
     rng = random.Random(7)
-    for _ in range(26):
-        x, y = rng.randrange(20, w - 60), rng.randrange(20, h - 60)
-        d.arc([x, y, x + 56, y + 40], 180, 420, fill=(122, 120, 112), width=5)
-        d.arc([x + 14, y + 14, x + 44, y + 44], 0, 260, fill=(132, 130, 122), width=4)
-    img = img.filter(ImageFilter.GaussianBlur(1.0))
+    for iy in range(10):
+        for ix in range(3):
+            cx = 60 + ix * 140 + rng.randint(-18, 18)
+            cy = 100 + iy * 190 + rng.randint(-24, 24)
+            r = rng.randint(30, 44)
+            d.arc([cx - r, cy - r * 0.7, cx + r, cy + r * 0.7], 160, 520, fill=dk, width=7)
+            d.arc([cx - r * 0.55, cy - r * 0.4, cx + r * 0.55, cy + r * 0.4],
+                  0, 320, fill=lt, width=5)
+            d.ellipse([cx + r * 0.3, cy - 6, cx + r * 0.3 + 12, cy + 6], fill=md)
+    img = img.filter(ImageFilter.GaussianBlur(1.2))
     return _save(img, "kw_ongro.png")
 
 

@@ -82,44 +82,57 @@ def terrace_tiered(name, x, y, w, d, h, mats, tiers=2, stair_gap=None):
     return z, tpls
 
 
-def grand_stair_steps(name, x, y_front, h, mats, tpls, width=16, ongro_img=None,
-                      fill_depth=6.4):
-    """実段の大階段2連 (踊り場付き)+両脇と中央の高欄+御路.
+def grand_stair_steps(name, x, y_front, h, mats, tpls, width=20, ongro_img=None,
+                      fill_depth=6.4, ongro_w=6.0):
+    """大階段 (b08_17構成): 中央=御路(雲紋の連続斜路)、左右=実段レーン、欄干4列.
 
-    下(南)から上(北=基壇 y_front)へ登る。最上段の背後には詰め壇 (fill_depth) を
-    置き、段付き基壇の凹みまで面一の歩行面を確保する。
+    下(南)から上(北=基壇 y_front)へ登る。踊り場1つ。最上段の背後には詰め壇。
     """
     from stagelib import box, plane, mat_image
     step_h, step_d = 0.146, 0.32
     n_total = int(h / step_h)
     n1 = n_total // 2
     run = n_total * step_d + 2.9  # 総水平距離 (踊り場込み)
-    tpl_step = box("tpl_step", width, step_d, step_h, (0, 0, -54), mats["stone"])
-    y = y_front - run  # 南端(最下段)から北へ登る
-    z = 0.0
-    for i in range(n_total):
-        if i == n1:  # 踊り場
-            box(f"{name}_land", width + 3, 3.2, step_h, (x, y + 1.45, z + step_h / 2),
-                mats["stone"])
-            y += 2.9
-        _link_copy(tpl_step, f"{name}_s{i}", (x, y + step_d / 2, z + step_h / 2))
-        y += step_d
-        z += step_h
-    tpl_step.location = (0, 0, -500)  # テンプレは地下へ
+    ang = math.atan2(h, run)
+    slope = math.hypot(run, h)
+    lane_w = (width - ongro_w) / 2 - 0.6
+    # ---- 左右レーンの実段 ----
+    tpl_step = box("tpl_step", lane_w, step_d, step_h, (0, 0, -54), mats["stone"])
+    for sx in (-1, 1):
+        px = x + sx * (ongro_w / 2 + 0.6 + lane_w / 2)
+        y = y_front - run
+        z = 0.0
+        for i in range(n_total):
+            if i == n1:  # 踊り場
+                box(f"{name}_land{sx}", lane_w + 1, 3.2, step_h,
+                    (px, y + 1.45, z + step_h / 2), mats["stone"])
+                y += 2.9
+            _link_copy(tpl_step, f"{name}_s{sx}_{i}",
+                       (px, y + step_d / 2, z + step_h / 2))
+            y += step_d
+            z += step_h
+    tpl_step.location = (0, 0, -500)
+    # ---- 中央の御路 (連続斜路+雲紋) ----
+    ramp = box(f"{name}_ongro_base", ongro_w, slope + 0.4, 0.5,
+               (x, y_front - run / 2, h / 2 - 0.18), mats["stone"])
+    ramp.rotation_euler = (ang, 0, 0)
+    if ongro_img:
+        mo = mat_image("kw_ongro", ongro_img, rough=0.85)
+        pl = plane(f"{name}_ongro", ongro_w - 0.5, slope,
+                   (x, y_front - run / 2, h / 2 + 0.10), mo)
+        pl.rotation_euler = (ang, 0, 0)
     if fill_depth > 0:  # 最上段の背後の詰め壇 (2段基壇の凹みまで)
         box(f"{name}_fill", width + 3, fill_depth, h,
             (x, y_front + fill_depth / 2, h / 2), mats["stone"])
-    ang = math.atan2(h, run)
-    slope = math.hypot(run, h)
-    # 垂帯石: 欄干下の斜めの石側壁。欄板と段の間の素通し(黒く抜ける)を塞ぐ
+    # ---- 垂帯石 (外縁のみ) ----
     for sx in (-1, 1):
         fl = box(f"{name}_flank{sx}", 0.5, slope + 0.6, 1.5,
                  (x + sx * (width / 2 + 0.2), y_front - run / 2, h / 2 - 0.42),
                  mats["stone"])
         fl.rotation_euler = (ang, 0, 0)
-    # 両脇+中央の欄干: 薄い欄板+笠木+望柱 (スラブだと階段を隠すため)
-    for sx, tag in ((-1, "w"), (1, "e"), (0, "c")):
-        px = x + sx * (width / 2 + 0.4) if sx else x
+    # ---- 欄干4列: 外縁± と 御路の両脇± ----
+    for px, tag in ((x - width / 2 - 0.4, "w"), (x + width / 2 + 0.4, "e"),
+                    (x - ongro_w / 2 - 0.3, "cw"), (x + ongro_w / 2 + 0.3, "ce")):
         for nm, tt, hh, zoff in ((f"{name}_rb{tag}", 0.16, 0.5, 0.30),
                                  (f"{name}_rc{tag}", 0.30, 0.15, 0.62)):
             r = box(nm, tt, slope + 0.6, hh,
@@ -132,13 +145,6 @@ def grand_stair_steps(name, x, y_front, h, mats, tpls, width=16, ongro_img=None,
                        (px, y_front - run * t, h * (1 - t) + 0.50))
             _link_copy(tpls[1], f"{name}_rh{tag}{i}",
                        (px, y_front - run * t, h * (1 - t) + 1.15))
-    # 御路 (中央の雲紋斜路) は中央欄干の両側に敷く
-    if ongro_img:
-        mo = mat_image("kw_ongro", ongro_img, rough=0.85)
-        for sx in (-1, 1):
-            pl = plane(f"{name}_ongro{sx}", 3.4, math.hypot(run, h),
-                       (x + sx * 2.2, y_front - run / 2, h / 2 + 0.03), mo)
-            pl.rotation_euler = (ang, 0, 0)
 
 
 def wood_rail(name, p1, p2, z, mat_wood, h=0.85, pitch=1.4):

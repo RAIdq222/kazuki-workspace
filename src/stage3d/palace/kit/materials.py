@@ -30,7 +30,7 @@ def make_materials():
         wood_red=mat("wood_red", (0.48, 0.17, 0.11), rough=0.65),
         paving=mat_image("kw_paving", tex["paving"], rough=0.95, blend="OPAQUE",
                          uv_scale=(24, 21)),
-        bronze=mat("bronze", (0.16, 0.15, 0.11), rough=0.45),
+        bronze=mat("bronze", (0.032, 0.026, 0.016), rough=0.6),  # 青銅(リニア値なので暗く)
         fig=mat("fig", (0.15, 0.30, 0.75), rough=0.6),
         tree=mat("tree", (0.23, 0.36, 0.19), rough=0.9),
         ongro=mat_image("kw_ongro_m", tex["ongro"], rough=0.85, blend="OPAQUE"),

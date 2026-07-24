@@ -54,6 +54,18 @@ generic.yard_generic(M, "yemp", -72, 210, 46, 54, gate_side="E",
 generic.yard_generic(M, "ydow", -72, 275, 46, 54, gate_side="E",
                      trees=[(-58, 288, 2.6)])                       # 皇太后の院
 generic.corridor_gen(M, "wcorr", (-49.5, 60), (-49.5, 150), width=3.2)  # 客間→主殿廊下(c205)
+# 主殿の左右に伸びる屋根付き廊 (b08_17で袖塀の上に見える橙屋根)
+generic.corridor_gen(M, "mcorr_e", (34, 163.8), (98, 163.8), width=3.8, col_h=3.1)
+generic.corridor_gen(M, "mcorr_w", (-98, 163.8), (-34, 163.8), width=3.8, col_h=3.1)
+# 掖門 (袖塀の通用門 ±40): 門柱+楣+小屋根 — 主殿区と北区を行き来できる通路
+for px in (-40, 40):
+    for sx in (-1, 1):
+        box(f"ekimon_j{px}{sx}", 0.9, 1.2, 3.8, (px + sx * 3.8, 160, 1.9), M["red"])
+    box(f"ekimon_l{px}", 8.6, 1.2, 0.8, (px, 160, 4.2), M["red"])
+    from kit.roofs import roof as _roof
+    _roof(f"ekimon_r{px}", 9.6, 2.6, 1.3, style="wudian", lift=0.3, zone=1.4,
+          material=M["tile_amber"], ridge_mat=M["ridge_amber"],
+          loc=(px, 160, 4.6), shiwei=False)
 
 # ---- 塀 (白壁+橙瓦笠) ----
 for wdef in LK.WALLS:
@@ -90,6 +102,9 @@ cams = {
     "P1": add_camera("cam_P1", (5, -34, 1.8), (0, 10, 9), lens=28),     # 正門前
     "C2": add_camera("cam_C2", (-49.5, 63, 2.4), (-49.5, 150, 2.4), lens=30),  # 廊下(c205)
     "Y": add_camera("cam_Y", (-56, 20, 2.0), (-80, 50, 4), lens=26),    # 客間の院
+    "B2": add_camera("cam_B2", (0, 70, 7.0), (0, 160, 17), lens=45),    # ボード角(広場内)
+    "CU": add_camera("cam_CU", (58, 126, 10.0), (0, 162, 13), lens=30),  # 東寄り(指摘角)
+    "ST": add_camera("cam_ST", (3, 100, 1.8), (0, 150, 10), lens=35),   # 階段正面
 }
 for c in cams.values():
     c.data.clip_end = 900.0

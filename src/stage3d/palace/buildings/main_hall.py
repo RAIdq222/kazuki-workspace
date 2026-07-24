@@ -23,9 +23,9 @@ BAYS = [3.4, 4.0, 4.6, 5.2, 4.6, 4.0, 3.4]
 
 def build(M, ongro_img=None):
     Z0 = TH
-    # ---- 基壇+大階段 ----
-    _, tpls = terrace_tiered("terr", X, Y, TW, TD, TH, M, tiers=2, stair_gap=17.4)
-    grand_stair_steps("stair", X, Y - TD / 2, TH, M, tpls, width=16,
+    # ---- 基壇+大階段 (御路+左右レーン) ----
+    _, tpls = terrace_tiered("terr", X, Y, TW, TD, TH, M, tiers=2, stair_gap=22)
+    grand_stair_steps("stair", X, Y - TD / 2, TH, M, tpls, width=20,
                       ongro_img=ongro_img)
 
     # ---- 1層: 柱廊+壁 ----
@@ -49,25 +49,29 @@ def build(M, ongro_img=None):
               rot=(math.pi / 2, 0, 0))
     _bands("1", X, Y, HW, HD, Z0 + 6.2, M)
 
-    # ---- 裳階(腰屋根)+平座 ----
+    # ---- 裳階(腰屋根)+軒裏 (帯の上に隙間を残さない=浮き防止) ----
+    box("soffit1", HW + 1.8, HD + 1.8, 0.55, (X, Y, Z0 + 8.05), M["ridge"])
     roof("r_lower", HW + 3.2, HD + 3.2, 3.0, top_rect=(13.4, 7.4),
          lift=0.4, reach=0.28, material=M["tile"], ridge_mat=M["ridge"],
          loc=(X, Y, Z0 + 8.3))
+    # ---- 平座+赤い高欄 (二段貫・太柱) ----
     box("balc", 28.4, 16.4, 0.5, (X, Y, Z0 + 11.55), M["stone_w"])
-    tpl_rp = box("tpl_rpost", 0.14, 0.14, 0.95, (0, 0, -60), M["col"])
+    tpl_rp = box("tpl_rpost", 0.19, 0.19, 1.05, (0, 0, -60), M["col"])
     for i in range(22):
         px = X - 13.6 + i * (27.2 / 21)
         for sy in (-1, 1):
-            _link_copy(tpl_rp, f"balcp_{i}{sy}", (px, Y + sy * 8.0, Z0 + 12.28))
+            _link_copy(tpl_rp, f"balcp_{i}{sy}", (px, Y + sy * 8.0, Z0 + 12.33))
     for i in range(12):
         py = Y - 7.4 + i * (14.8 / 11)
         for sx in (-1, 1):
-            _link_copy(tpl_rp, f"balcq_{i}{sx}", (X + sx * 14.0, py, Z0 + 12.28))
+            _link_copy(tpl_rp, f"balcq_{i}{sx}", (X + sx * 14.0, py, Z0 + 12.33))
     tpl_rp.location = (0, 0, -500)
-    for bx, by, bw, bd in ((0, -8.0, 28.4, 0.12), (0, 8.0, 28.4, 0.12),
-                           (-14.0, 0, 0.12, 16.2), (14.0, 0, 0.12, 16.2)):
-        box(f"balc_rail{bx}_{by}", bw, bd, 0.12, (X + bx, Y + by, Z0 + 12.80),
+    for bx, by, bw, bd in ((0, -8.0, 28.6, 0.16), (0, 8.0, 28.6, 0.16),
+                           (-14.0, 0, 0.16, 16.4), (14.0, 0, 0.16, 16.4)):
+        box(f"balc_rail{bx}_{by}", bw, bd, 0.18, (X + bx, Y + by, Z0 + 12.92),
             M["col"])
+        box(f"balc_railm{bx}_{by}", bw, bd * 0.8, 0.10,
+            (X + bx, Y + by, Z0 + 12.60), M["col"])
 
     # ---- 2層 ----
     box("body2", 26, 14, 4.4, (X, Y, Z0 + 11.0 + 2.2), M["red"])
@@ -81,14 +85,10 @@ def build(M, ongro_img=None):
     plane("lat2", 19, 1.9, (X, Y - 7.03, Z0 + 13.55), M["lattice"],
           rot=(math.pi / 2, 0, 0))
     _bands("2", X, Y, 26, 14, Z0 + 15.4, M, scale=0.85)
+    box("soffit2", 26 + 1.6, 14 + 1.6, 0.55, (X, Y, Z0 + 17.05), M["ridge"])
     roof("r_upper", 29, 17, 5.6, style="xieshan", xr=0.45, lift=0.5, reach=0.35,
          material=M["tile"], ridge_mat=M["ridge"], loc=(X, Y, Z0 + 17.3))
-
-    # ---- 袖塀 ----
-    for sx in (-1, 1):
-        box(f"sode{sx}", 46, 1.0, 4.6, (X + sx * (TW / 2 + 23), Y, 2.3), M["red"])
-        box(f"sode_cap{sx}", 46.4, 1.5, 0.5, (X + sx * (TW / 2 + 23), Y, 4.85),
-            M["ridge"])
+    # 袖塀は統合シーン側 (wall_main+廊) が持つため、ここでは作らない
 
 
 def _bands(tag, x, y, w, d, z_base, M, scale=1.0):
