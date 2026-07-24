@@ -81,25 +81,33 @@ def terrace_tiered(name, x, y, w, d, h, mats, tiers=2, stair_gap=None):
     return z, tpls
 
 
-def grand_stair_steps(name, x, y_front, h, mats, tpls, width=16, ongro_img=None):
-    """実段の大階段2連 (踊り場付き)+両脇と中央の高欄+御路."""
+def grand_stair_steps(name, x, y_front, h, mats, tpls, width=16, ongro_img=None,
+                      fill_depth=6.4):
+    """実段の大階段2連 (踊り場付き)+両脇と中央の高欄+御路.
+
+    下(南)から上(北=基壇 y_front)へ登る。最上段の背後には詰め壇 (fill_depth) を
+    置き、段付き基壇の凹みまで面一の歩行面を確保する。
+    """
     from stagelib import box, plane, mat_image
     step_h, step_d = 0.146, 0.32
     n_total = int(h / step_h)
     n1 = n_total // 2
+    run = n_total * step_d + 2.9  # 総水平距離 (踊り場込み)
     tpl_step = box("tpl_step", width, step_d, step_h, (0, 0, -54), mats["stone"])
-    y = y_front
+    y = y_front - run  # 南端(最下段)から北へ登る
     z = 0.0
     for i in range(n_total):
         if i == n1:  # 踊り場
-            box(f"{name}_land", width + 3, 3.2, step_h, (x, y - 1.3, z + step_h / 2),
+            box(f"{name}_land", width + 3, 3.2, step_h, (x, y + 1.45, z + step_h / 2),
                 mats["stone"])
-            y -= 2.9
-        _link_copy(tpl_step, f"{name}_s{i}", (x, y - step_d / 2, z + step_h / 2))
-        y -= step_d
+            y += 2.9
+        _link_copy(tpl_step, f"{name}_s{i}", (x, y + step_d / 2, z + step_h / 2))
+        y += step_d
         z += step_h
     tpl_step.location = (0, 0, -500)  # テンプレは地下へ
-    run = y_front - y
+    if fill_depth > 0:  # 最上段の背後の詰め壇 (2段基壇の凹みまで)
+        box(f"{name}_fill", width + 3, fill_depth, h,
+            (x, y_front + fill_depth / 2, h / 2), mats["stone"])
     ang = math.atan2(h, run)
     slope = math.hypot(run, h)
     # 両脇+中央の欄干: 薄い欄板+笠木+望柱 (スラブだと階段を隠すため)

@@ -138,7 +138,7 @@ for sx in (-1, 1):
 
 # ---- 広場コンテキスト (b08_17の構図確認用) ----
 plane("plaza", 100, 92, (0, 110, 0.02), M["paving"])
-box("ongdo", 10, 34, 0.8, (0, 121, 0.4), M["stone"])
+box("ongdo", 10, 16, 0.5, (0, 112, 0.25), M["stone"])  # 甬道は大階段の足元まで
 cyl("censer", 1.35, 2.7, (0, 104, 1.35 + 0.8), M["bronze"], verts=24)
 cyl("censer_lid", 0.9, 0.9, (0, 104, 3.4), M["bronze"], verts=24, r2=0.35)
 for i, (dx, dy, sw, sd) in enumerate([(0, -4.4, 9.6, 0.35), (0, 4.4, 9.6, 0.35),
