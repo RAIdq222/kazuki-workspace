@@ -29,13 +29,17 @@ plane("ground", 220, 160, (0, 0, 0), mat("ground", (0.5, 0.5, 0.44), rough=0.95)
 # ---- 1) 主殿クラス: 重檐歇山 (身舎34×20、軒の出1.5) ----
 box("terr", 44, 30, 2.0, (0, 0, 1.0), M_stone)
 box("body1", 34, 20, 7.0, (0, 0, 2 + 3.5), M_body)
-# 裳階(下層)は全周葺きの寄棟。上部は身舎に隠れるので棟飾りなし
-roof("r_lower", 37, 23, 3.6, style="wudian", lift=0.4, reach=0.28,
-     material=M_roof, ridge_mat=M_ridge, loc=(0, 0, 9.0), with_ridges=False,
-     shiwei=False)
-box("body2", 26, 14, 3.6, (0, 0, 12.6 + 1.8), M_body)
+# 裳階(下層)= 腰屋根: 上端を上層壁面(top_rect)で止めて博脊を回す
+roof("r_lower", 37, 23, 3.0, top_rect=(13.4, 7.4), lift=0.4, reach=0.28,
+     material=M_roof, ridge_mat=M_ridge, loc=(0, 0, 9.0))
+# 平座(上層バルコニー): ボードb08_17の上層の縁+手すり
+box("balc", 28.4, 16.4, 0.5, (0, 0, 12.25), M_stone)
+for i, (bx, by, bw, bd) in enumerate([(0, -8.0, 28.4, 0.25), (0, 8.0, 28.4, 0.25),
+                                      (-14.0, 0, 0.25, 16.4), (14.0, 0, 0.25, 16.4)]):
+    box(f"balc_rail{i}", bw, bd, 0.9, (bx, by, 12.95), M_body)
+box("body2", 26, 14, 4.4, (0, 0, 11.6 + 2.2), M_body)
 roof("r_upper", 29, 17, 5.4, style="xieshan", xr=0.45, lift=0.5, reach=0.35,
-     material=M_roof, ridge_mat=M_ridge, loc=(0, 0, 16.2))
+     material=M_roof, ridge_mat=M_ridge, loc=(0, 0, 16.0))
 
 # ---- 2) 廡殿(寄棟)単檐: 門・脇殿クラス ----
 box("body_w", 22, 12, 5.5, (-52, 0, 2.75), M_body)

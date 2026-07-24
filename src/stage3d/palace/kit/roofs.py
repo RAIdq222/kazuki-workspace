@@ -37,18 +37,26 @@ def _profile(d_half, h, ratios, sub):
 def roof(name, w, d, h, style="xieshan", ratios=(0.5, 0.65, 0.75, 0.9), sub=3,
          lift=0.45, reach=0.3, zone=None, xr=0.45, nu=29,
          material=None, loc=(0, 0, 0), rot_z=0.0, ridge_mat=None,
-         with_ridges=True, shiwei=True):
+         with_ridges=True, shiwei=True, top_rect=None):
     """反り屋根 (w=桁行全幅, d=梁間全奥行, h=軒から棟までの高さ)。w>=d 前提.
 
     style: 'wudian'=廡殿(寄棟) / 'xieshan'=歇山(入母屋)
     lift/reach: 翼角の持ち上げ/突き出し量(m)。zone: 反りが効く隅からの距離(m)
     xr: 歇山の収山位置 (水平進行の割合)
+    top_rect: (sx_half, sy_half) を与えると腰屋根(裳階)になる —
+      頂点まで閉じずに上端がこの矩形(=上層の壁面)で止まり、博脊が回る。
+      重檐の下層は必ずこれを使う (独立屋根で閉じると上層が浮いて見える)
     """
     zone = zone if zone is not None else min(w, d) * 0.32
     rows = _profile(d / 2, h, ratios, sub)
     nv = len(rows)
 
     def extents(s):
+        if top_rect:
+            sxh, syh = top_rect
+            hx = w / 2 - (w / 2 - sxh) * s
+            hy = d / 2 - (d / 2 - syh) * s
+            return hx, hy
         hy = d / 2 * (1 - s)
         if style == "xieshan" and s > xr:
             hx = w / 2 - d / 2 * xr
@@ -94,8 +102,9 @@ def roof(name, w, d, h, style="xieshan", ratios=(0.5, 0.65, 0.75, 0.9), sub=3,
             grid.append(row)
         add_grid(grid)
 
-    # 妻側スロープ (歇山は xr まで)
-    side_rows = [(s, z) for s, z in rows if style == "wudian" or s <= xr + 1e-6]
+    # 妻側スロープ (歇山は xr まで、腰屋根は全行)
+    side_rows = [(s, z) for s, z in rows
+                 if top_rect or style == "wudian" or s <= xr + 1e-6]
     nus = max(9, nu // 2)
     for sx in (-1, 1):
         grid = []
@@ -110,7 +119,7 @@ def roof(name, w, d, h, style="xieshan", ratios=(0.5, 0.65, 0.75, 0.9), sub=3,
         add_grid(grid)
 
     # 歇山の山花 (三角板)。下端を0.35下げ・面をほぼ外面に置いて隙間を塞ぐ
-    if style == "xieshan":
+    if style == "xieshan" and not top_rect:
         s_x = side_rows[-1][0]
         z_x = side_rows[-1][1]
         hx_f, hy_x = extents(s_x)
@@ -139,7 +148,14 @@ def roof(name, w, d, h, style="xieshan", ratios=(0.5, 0.65, 0.75, 0.9), sub=3,
         o.data.materials.append(material)
     bpy.context.collection.objects.link(o)
 
-    if with_ridges:
+    if top_rect:
+        # 博脊: 腰屋根の上端(壁との取り合い)を一周する水平の見切り棟
+        sxh, syh = top_rect
+        ring = [(-sxh, -syh, h), (sxh, -syh, h), (sxh, syh, h),
+                (-sxh, syh, h), (-sxh, -syh, h)]
+        _poly_tube(f"{name}_boseki", [(px, py, pz + 0.08) for px, py, pz in ring],
+                   0.18, ridge_mat or material, o)
+    elif with_ridges:
         _ridges(name, w, d, h, style, rows, extents, corner_mod,
                 ridge_mat or material, o, shiwei)
     return o
