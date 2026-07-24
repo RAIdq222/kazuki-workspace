@@ -80,8 +80,11 @@ def export_glb(blend_path, glb_path, exclude_prefixes=()):
                 base.default_value = (*m["fallback"], 1.0)
             elif m.name.startswith("m_floor"):
                 base.default_value = (0.19, 0.12, 0.07, 1.0)
+    # export_gpu_instances: リンク複製(欄干の望柱など)を EXT_mesh_gpu_instancing で
+    # 出力し、Three.js側で自動的にInstancedMesh化する (ノードJSONの肥大も防ぐ)
     bpy.ops.export_scene.gltf(filepath=os.path.abspath(glb_path), export_format="GLB",
-                              export_apply=True, export_lights=False, export_cameras=False)
+                              export_apply=True, export_lights=False, export_cameras=False,
+                              export_gpu_instances=True)
 
 
 def bundle_js(node_dir):

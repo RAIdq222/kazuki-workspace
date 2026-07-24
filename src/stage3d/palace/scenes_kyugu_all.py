@@ -68,7 +68,7 @@ for wdef in LK.WALLS:
         M["ridge_amber"], rot=(0, 0, rz))
 
 # ---- 地面・広場・庭園・点景 ----
-plane("ground_all", 240, 340, (0, 158, -0.02), M["stone"])
+plane("ground_all", 240, 420, (0, 128, -0.02), M["stone"])  # 正門の南側の地面も確保
 plane("fore_court", 100, 52, (0, 34, 0.02), M["paving"])  # 両脇の院に食い込まない幅
 props.court_context(M)
 plane("garden", 88, 100, (64, 262, 0.03), M["stone_w"])

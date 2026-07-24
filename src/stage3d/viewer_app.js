@@ -36,7 +36,9 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(CFG.background || '#17120d');
 if (CFG.fog) scene.fog = new THREE.Fog(CFG.fog.color, CFG.fog.near, CFG.fog.far);
 
-const camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.05, 500);
+// 大規模フィールド(宮殿250m級)は CFG.far で描画距離を拡張できる
+const camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight,
+  CFG.near ?? 0.05, CFG.far ?? 500);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.12;
