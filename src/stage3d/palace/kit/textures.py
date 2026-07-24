@@ -1,0 +1,157 @@
+# 皇宮キット用 PIL手続きテクスチャ (work/sprites/ に生成)
+# 様式: 南朝風 = 灰黒瓦 / 朱柱・赤壁 / 金彫刻帯 / 白石基壇 (docs/palace-sources.md §4/§7)
+import os
+import random
+
+from PIL import Image, ImageDraw, ImageFilter
+
+OUT = os.path.join(os.getcwd(), "work", "sprites")
+os.makedirs(OUT, exist_ok=True)
+
+
+def _save(img, name):
+    p = os.path.join(OUT, name)
+    img.save(p)
+    return p
+
+
+def _noise(draw, w, h, base, amp, n, seed):
+    rng = random.Random(seed)
+    for _ in range(n):
+        x, y = rng.randrange(w), rng.randrange(h)
+        v = rng.randint(-amp, amp)
+        c = tuple(max(0, min(255, b + v)) for b in base)
+        draw.rectangle([x, y, x + rng.randint(1, 3), y + rng.randint(1, 3)], fill=c)
+
+
+def tiles(name="kw_tile_grey.png", base=(72, 78, 82), rib=(46, 50, 54),
+          hi=(96, 102, 106)):
+    """筒瓦: 1タイル=筒瓦1列(縦リブ)+平瓦。u=0.35m 相当でタイル."""
+    w = h = 256
+    img = Image.new("RGB", (w, h), base)
+    d = ImageDraw.Draw(img)
+    # 平瓦のうねり (横方向の淡い段)
+    for y in range(0, h, 32):
+        d.rectangle([0, y, w, y + 2], fill=tuple(int(b * 0.92) for b in base))
+    # 筒瓦 (右端に縦リブ)
+    d.rectangle([w - 46, 0, w - 1, h], fill=rib)
+    d.rectangle([w - 46, 0, w - 40, h], fill=tuple(min(255, r + 24) for r in rib))
+    d.rectangle([w - 8, 0, w - 1, h], fill=tuple(max(0, r - 14) for r in rib))
+    d.line([(w - 23, 0), (w - 23, h)], fill=hi, width=3)
+    _noise(d, w, h, base, 7, 900, 11)
+    img = img.filter(ImageFilter.GaussianBlur(0.6))
+    return _save(img, name)
+
+
+def tiles_amber():
+    return tiles("kw_tile_amber.png", base=(196, 130, 52), rib=(150, 92, 30),
+                 hi=(224, 162, 84))
+
+
+def red_wall():
+    """赤壁 (経年の朱漆喰)."""
+    w = h = 512
+    base = (118, 42, 30)
+    img = Image.new("RGB", (w, h), base)
+    d = ImageDraw.Draw(img)
+    _noise(d, w, h, base, 12, 4000, 21)
+    for i in range(14):  # 雨だれ・退色の縦ムラ
+        rng = random.Random(100 + i)
+        x = rng.randrange(w)
+        col = (int(base[0] * 0.9), int(base[1] * 0.9), int(base[2] * 0.9))
+        d.rectangle([x, rng.randrange(h // 2), x + rng.randint(4, 14), h], fill=col)
+    img = img.filter(ImageFilter.GaussianBlur(2.2))
+    return _save(img, "kw_redwall.png")
+
+
+def frieze():
+    """額枋の金彫刻帯 (赤地+金の雲文、横リピート32モチーフ)."""
+    w, h = 2048, 128
+    img = Image.new("RGB", (w, h), (96, 32, 24))
+    d = ImageDraw.Draw(img)
+    gold = (198, 158, 74)
+    dark = (140, 100, 42)
+    d.rectangle([0, 0, w, 8], fill=gold)
+    d.rectangle([0, h - 8, w, h], fill=gold)
+    step = 64
+    for i in range(w // step):
+        x = i * step
+        # 雲文風の渦: 円弧2つ+点
+        d.arc([x + 8, 28, x + 46, 66], 200, 500, fill=gold, width=5)
+        d.arc([x + 22, 44, x + 52, 92], 20, 300, fill=dark, width=4)
+        d.ellipse([x + 40, 30, x + 50, 40], outline=gold, width=3)
+    img = img.filter(ImageFilter.GaussianBlur(0.8))
+    return _save(img, "kw_frieze.png")
+
+
+def dougong_band():
+    """斗栱帯の略記 (檐下の影+斗栱シルエットの繰り返し)."""
+    w, h = 1024, 128
+    img = Image.new("RGB", (w, h), (52, 26, 22))
+    d = ImageDraw.Draw(img)
+    arm = (120, 66, 36)
+    for i in range(w // 64):
+        x = i * 64 + 8
+        d.rectangle([x, 70, x + 48, 84], fill=arm)
+        d.rectangle([x + 8, 46, x + 40, 60], fill=arm)
+        d.rectangle([x + 18, 22, x + 30, 40], fill=(150, 88, 46))
+    img = img.filter(ImageFilter.GaussianBlur(1.0))
+    return _save(img, "kw_dougong.png")
+
+
+def lattice_door():
+    """格子扉 (回紋窓系の方形グリッド+金枠、youkai_10参照)."""
+    w, h = 256, 512
+    img = Image.new("RGB", (w, h), (60, 30, 22))
+    d = ImageDraw.Draw(img)
+    gold = (172, 132, 62)
+    # 上2/3 = 格子、下1/3 = 板パネル
+    gy = int(h * 0.62)
+    d.rectangle([6, 6, w - 6, gy], outline=gold, width=5)
+    for x in range(6, w - 6, 24):
+        d.line([(x, 6), (x, gy)], fill=gold, width=3)
+    for y in range(6, gy, 24):
+        d.line([(6, y), (w - 6, y)], fill=gold, width=3)
+    d.rectangle([6, gy + 8, w - 6, h - 6], outline=gold, width=4)
+    d.rectangle([26, gy + 26, w - 26, h - 26], outline=(120, 84, 40), width=3)
+    return _save(img, "kw_lattice.png")
+
+
+def stone_paving():
+    """広場の大判石畳."""
+    w = h = 512
+    base = (168, 165, 156)
+    img = Image.new("RGB", (w, h), base)
+    d = ImageDraw.Draw(img)
+    _noise(d, w, h, base, 9, 2500, 31)
+    for y in range(0, h, 128):
+        d.line([(0, y), (w, y)], fill=(120, 118, 110), width=4)
+    for i, x in enumerate(range(0, w, 128)):
+        off = 64 if (i % 2) else 0
+        for y in range(off, h + 1, 128):
+            d.line([(x, y - 64), (x, y + 64)], fill=(126, 124, 116), width=3)
+    img = img.filter(ImageFilter.GaussianBlur(0.8))
+    return _save(img, "kw_paving.png")
+
+
+def cloud_ramp():
+    """御路 (階段中央の雲龍紋の斜路) の略記."""
+    w, h = 256, 1024
+    img = Image.new("RGB", (w, h), (150, 148, 140))
+    d = ImageDraw.Draw(img)
+    d.rectangle([4, 4, w - 4, h - 4], outline=(110, 108, 100), width=6)
+    rng = random.Random(7)
+    for _ in range(26):
+        x, y = rng.randrange(20, w - 60), rng.randrange(20, h - 60)
+        d.arc([x, y, x + 56, y + 40], 180, 420, fill=(122, 120, 112), width=5)
+        d.arc([x + 14, y + 14, x + 44, y + 44], 0, 260, fill=(132, 130, 122), width=4)
+    img = img.filter(ImageFilter.GaussianBlur(1.0))
+    return _save(img, "kw_ongro.png")
+
+
+def build_all():
+    return dict(
+        tile_grey=tiles(), tile_amber=tiles_amber(), redwall=red_wall(),
+        frieze=frieze(), dougong=dougong_band(), lattice=lattice_door(),
+        paving=stone_paving(), ongro=cloud_ramp(),
+    )

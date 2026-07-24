@@ -75,15 +75,19 @@ def roof(name, w, d, h, style="xieshan", ratios=(0.5, 0.65, 0.75, 0.9), sub=3,
         sy = 1 if y >= 0 else -1
         return (x + sx * reach * k * 0.7, y + sy * reach * k, z + lift * k)
 
-    verts, faces = [], []
+    verts, faces, uvs = [], [], []   # uvs は頂点と並行 (u=桁行m, v=流れ弧長m)
+    arc = [0.0]
+    for i in range(1, nv):
+        (s0, z0), (s1, z1) = rows[i - 1], rows[i]
+        arc.append(arc[-1] + math.hypot((s1 - s0) * d / 2, z1 - z0))
 
-    def add_grid(pts_grid):
-        """pts_grid[iv][iu] を面に張る (縮退四角は remove_doubles で潰れる)."""
+    def add_grid(pts_grid, uv_grid):
         base = len(verts)
         nvv = len(pts_grid)
         nuu = len(pts_grid[0])
-        for row in pts_grid:
+        for row, uvrow in zip(pts_grid, uv_grid):
             verts.extend(row)
+            uvs.extend(uvrow)
         for iv in range(nvv - 1):
             for iu in range(nuu - 1):
                 a = base + iv * nuu + iu
@@ -91,51 +95,59 @@ def roof(name, w, d, h, style="xieshan", ratios=(0.5, 0.65, 0.75, 0.9), sub=3,
 
     # 前後スロープ
     for sy in (-1, 1):
-        grid = []
-        for s, z in rows:
+        grid, uvg = [], []
+        for iv, (s, z) in enumerate(rows):
             hx, hy = extents(s)
-            row = []
+            row, uvrow = [], []
             for iu in range(nu):
                 u = -1 + 2 * iu / (nu - 1)
                 x = max(-hx, min(hx, u * w / 2))
                 row.append(corner_mod(x, sy * hy, s, z))
+                uvrow.append((u * w / 2, arc[iv]))
             grid.append(row)
-        add_grid(grid)
+            uvg.append(uvrow)
+        add_grid(grid, uvg)
 
     # 妻側スロープ (歇山は xr まで、腰屋根は全行)
-    side_rows = [(s, z) for s, z in rows
+    side_rows = [(i, s, z) for i, (s, z) in enumerate(rows)
                  if top_rect or style == "wudian" or s <= xr + 1e-6]
     nus = max(9, nu // 2)
     for sx in (-1, 1):
-        grid = []
-        for s, z in side_rows:
+        grid, uvg = [], []
+        for iv, s, z in side_rows:
             hx, hy = extents(s)
-            row = []
+            row, uvrow = [], []
             for iu in range(nus):
                 u = -1 + 2 * iu / (nus - 1)
                 y = max(-hy, min(hy, u * d / 2))
                 row.append(corner_mod(sx * hx, y, s, z))
+                uvrow.append((u * d / 2, arc[iv]))
             grid.append(row)
-        add_grid(grid)
+            uvg.append(uvrow)
+        add_grid(grid, uvg)
 
     # 歇山の山花 (三角板)。下端を0.35下げ・面をほぼ外面に置いて隙間を塞ぐ
     if style == "xieshan" and not top_rect:
-        s_x = side_rows[-1][0]
-        z_x = side_rows[-1][1]
+        s_x = side_rows[-1][1]
+        z_x = side_rows[-1][2]
         hx_f, hy_x = extents(s_x)
         for sx in (-1, 1):
             base = len(verts)
             gx = sx * (hx_f - 0.02)
             verts.extend([(gx, -hy_x - 0.2, z_x - 0.35), (gx, hy_x + 0.2, z_x - 0.35),
                           (gx, 0, h)])
+            uvs.extend([(-hy_x, 0), (hy_x, 0), (0, h)])
             faces.append((base, base + 1, base + 2))
 
     me = bpy.data.meshes.new(name)
     me.from_pydata(verts, [], faces)
     me.update()
+    uvl = me.uv_layers.new(name="UVMap")
+    for poly in me.polygons:
+        for li in poly.loop_indices:
+            uvl.data[li].uv = uvs[me.loops[li].vertex_index]
     bm = bmesh.new()
     bm.from_mesh(me)
-    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.02)
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
     bm.to_mesh(me)
     bm.free()
