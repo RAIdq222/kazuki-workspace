@@ -149,9 +149,67 @@ def cloud_ramp():
     return _save(img, "kw_ongro.png")
 
 
+def frieze_olive():
+    """別殿系のオリーブ金彫刻帯 (b08_19)."""
+    return _frieze_base("kw_frieze_o.png", bg=(74, 66, 34), fg=(178, 148, 66),
+                        fg2=(120, 104, 48))
+
+
+def _frieze_base(name, bg, fg, fg2):
+    w, h = 2048, 128
+    img = Image.new("RGB", (w, h), bg)
+    d = ImageDraw.Draw(img)
+    d.rectangle([0, 0, w, 8], fill=fg)
+    d.rectangle([0, h - 8, w, h], fill=fg)
+    step = 64
+    for i in range(w // step):
+        x = i * step
+        d.arc([x + 8, 28, x + 46, 66], 200, 500, fill=fg, width=5)
+        d.arc([x + 22, 44, x + 52, 92], 20, 300, fill=fg2, width=4)
+        d.ellipse([x + 40, 30, x + 50, 40], outline=fg, width=3)
+    img = img.filter(ImageFilter.GaussianBlur(0.8))
+    return _save(img, name)
+
+
+def sudare():
+    """簾 (巻き下ろし状態)。横編みの竹ひご+吊り紐2本."""
+    w, h = 256, 512
+    img = Image.new("RGB", (w, h), (188, 162, 108))
+    d = ImageDraw.Draw(img)
+    rng = random.Random(5)
+    for y in range(0, h, 7):
+        tone = rng.randint(-14, 10)
+        c = (188 + tone, 162 + tone, 108 + tone)
+        d.rectangle([0, y, w, y + 4], fill=c)
+        d.line([(0, y + 5), (w, y + 5)], fill=(130, 106, 62), width=2)
+    for x in (w // 4, w * 3 // 4):
+        d.rectangle([x - 3, 0, x + 3, h], fill=(96, 70, 40))
+    d.rectangle([0, 0, w, 10], fill=(96, 70, 40))
+    img = img.filter(ImageFilter.GaussianBlur(0.5))
+    return _save(img, "kw_sudare.png")
+
+
+def rough_stone():
+    """野面積み (不整形の石積み、b08_19の基壇)."""
+    w, h = 512, 256
+    img = Image.new("RGB", (w, h), (104, 100, 92))
+    d = ImageDraw.Draw(img)
+    rng = random.Random(9)
+    for _ in range(90):
+        cx, cy = rng.randrange(w), rng.randrange(h)
+        rx, ry = rng.randint(28, 64), rng.randint(18, 40)
+        tone = rng.randint(-16, 22)
+        c = (150 + tone, 146 + tone, 138 + tone)
+        d.ellipse([cx - rx, cy - ry, cx + rx, cy + ry], fill=c,
+                  outline=(96, 92, 84), width=4)
+    img = img.filter(ImageFilter.GaussianBlur(1.4))
+    return _save(img, "kw_rough.png")
+
+
 def build_all():
     return dict(
         tile_grey=tiles(), tile_amber=tiles_amber(), redwall=red_wall(),
-        frieze=frieze(), dougong=dougong_band(), lattice=lattice_door(),
-        paving=stone_paving(), ongro=cloud_ramp(),
+        frieze=frieze(), frieze_o=frieze_olive(), dougong=dougong_band(),
+        lattice=lattice_door(), paving=stone_paving(), ongro=cloud_ramp(),
+        sudare=sudare(), rough_stone=rough_stone(),
     )

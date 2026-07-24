@@ -62,7 +62,8 @@ def terrace_tiered(name, x, y, w, d, h, mats, tiers=2, stair_gap=None):
         td = d - 6 * t
         th = h * (0.55 if t == 0 else 0.45) if tiers == 2 else h / tiers
         box(f"{name}_t{t}", tw, td, th, (x, y, z + th / 2), mats["stone"])
-        box(f"{name}_t{t}c", tw + 0.9, td + 0.9, 0.32, (x, y, z + th - 0.16),
+        # コーニスは天端を2cm高くして基壇上面との同一平面(z-fight→黒抜け)を回避
+        box(f"{name}_t{t}c", tw + 0.9, td + 0.9, 0.32, (x, y, z + th - 0.14),
             mats["stone_w"])
         z += th
         # 高欄 (各段の縁、南辺は階段の開口を残す)
@@ -110,6 +111,12 @@ def grand_stair_steps(name, x, y_front, h, mats, tpls, width=16, ongro_img=None,
             (x, y_front + fill_depth / 2, h / 2), mats["stone"])
     ang = math.atan2(h, run)
     slope = math.hypot(run, h)
+    # 垂帯石: 欄干下の斜めの石側壁。欄板と段の間の素通し(黒く抜ける)を塞ぐ
+    for sx in (-1, 1):
+        fl = box(f"{name}_flank{sx}", 0.5, slope + 0.6, 1.5,
+                 (x + sx * (width / 2 + 0.2), y_front - run / 2, h / 2 - 0.42),
+                 mats["stone"])
+        fl.rotation_euler = (ang, 0, 0)
     # 両脇+中央の欄干: 薄い欄板+笠木+望柱 (スラブだと階段を隠すため)
     for sx, tag in ((-1, "w"), (1, "e"), (0, "c")):
         px = x + sx * (width / 2 + 0.4) if sx else x
@@ -132,6 +139,26 @@ def grand_stair_steps(name, x, y_front, h, mats, tpls, width=16, ongro_img=None,
             pl = plane(f"{name}_ongro{sx}", 3.4, math.hypot(run, h),
                        (x + sx * 2.2, y_front - run / 2, h / 2 + 0.03), mo)
             pl.rotation_euler = (ang, 0, 0)
+
+
+def wood_rail(name, p1, p2, z, mat_wood, h=0.85, pitch=1.4):
+    """赤木欄干 (角柱+上下2段の貫)。別殿・平座・回廊用."""
+    from stagelib import box
+    x1, y1 = p1
+    x2, y2 = p2
+    length = math.hypot(x2 - x1, y2 - y1)
+    ux, uy = (x2 - x1) / length, (y2 - y1) / length
+    rz = math.atan2(uy, ux)
+    cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
+    box(f"{name}_top", length, 0.12, 0.10, (cx, cy, z + h), mat_wood, rot=(0, 0, rz))
+    box(f"{name}_mid", length, 0.08, 0.07, (cx, cy, z + h * 0.55), mat_wood,
+        rot=(0, 0, rz))
+    tpl = box(f"{name}_tpl", 0.10, 0.10, h, (0, 0, -58), mat_wood)
+    n = max(2, round(length / pitch) + 1)
+    for i in range(n):
+        t = i * length / (n - 1)
+        _link_copy(tpl, f"{name}_p{i}", (x1 + ux * t, y1 + uy * t, z + h / 2))
+    tpl.location = (0, 0, -500)
 
 
 def column_row(name, x0, y, bays, mat_col, mat_gold, z0, col_h, r=0.28):
