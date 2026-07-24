@@ -206,10 +206,30 @@ def rough_stone():
     return _save(img, "kw_rough.png")
 
 
+def door_red():
+    """朱漆板門: 縦板+門釘(金鋲)+鋪首(sasage_16の指定)."""
+    w, h = 256, 512
+    img = Image.new("RGB", (w, h), (108, 30, 22))
+    d = ImageDraw.Draw(img)
+    for x in range(0, w, 32):  # 縦板の目地
+        d.line([(x, 0), (x, h)], fill=(84, 22, 16), width=3)
+    gold = (196, 156, 72)
+    for iy in range(7):  # 門釘 5列×7段
+        for ix in range(5):
+            cx, cy = 26 + ix * 51, 40 + iy * 64
+            d.ellipse([cx - 9, cy - 9, cx + 9, cy + 9], fill=gold,
+                      outline=(140, 104, 42), width=2)
+    # 鋪首 (獅子環の略記: 金の円環)
+    d.ellipse([w // 2 - 22, 236, w // 2 + 22, 280], outline=gold, width=7)
+    d.ellipse([w // 2 - 12, 226, w // 2 + 12, 250], fill=gold)
+    img = img.filter(ImageFilter.GaussianBlur(0.6))
+    return _save(img, "kw_door.png")
+
+
 def build_all():
     return dict(
         tile_grey=tiles(), tile_amber=tiles_amber(), redwall=red_wall(),
         frieze=frieze(), frieze_o=frieze_olive(), dougong=dougong_band(),
         lattice=lattice_door(), paving=stone_paving(), ongro=cloud_ramp(),
-        sudare=sudare(), rough_stone=rough_stone(),
+        sudare=sudare(), rough_stone=rough_stone(), door=door_red(),
     )
