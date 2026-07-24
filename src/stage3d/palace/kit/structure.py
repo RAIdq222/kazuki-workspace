@@ -167,8 +167,8 @@ def grand_stair_steps(name, x, y_front, h, mats, tpls, width=20, ongro_img=None,
                        (px, y_front - run * t, h * (1 - t) + 1.15))
 
 
-def wood_rail(name, p1, p2, z, mat_wood, h=0.85, pitch=1.4):
-    """赤木欄干 (角柱+上下2段の貫)。別殿・平座・回廊用."""
+def wood_rail(name, p1, p2, z, mat_wood, h=0.85, pitch=1.4, slats=True):
+    """赤木欄干 (親柱+笠木+上下貫+縦子)。別殿・平座・回廊用."""
     from stagelib import box
     x1, y1 = p1
     x2, y2 = p2
@@ -176,15 +176,25 @@ def wood_rail(name, p1, p2, z, mat_wood, h=0.85, pitch=1.4):
     ux, uy = (x2 - x1) / length, (y2 - y1) / length
     rz = math.atan2(uy, ux)
     cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
-    box(f"{name}_top", length, 0.12, 0.10, (cx, cy, z + h), mat_wood, rot=(0, 0, rz))
-    box(f"{name}_mid", length, 0.08, 0.07, (cx, cy, z + h * 0.55), mat_wood,
+    box(f"{name}_top", length, 0.14, 0.11, (cx, cy, z + h), mat_wood, rot=(0, 0, rz))
+    box(f"{name}_mid", length, 0.08, 0.07, (cx, cy, z + h * 0.58), mat_wood,
         rot=(0, 0, rz))
-    tpl = box(f"{name}_tpl", 0.10, 0.10, h, (0, 0, -58), mat_wood)
+    box(f"{name}_low", length, 0.08, 0.06, (cx, cy, z + h * 0.18), mat_wood,
+        rot=(0, 0, rz))
+    tpl = box(f"{name}_tpl", 0.11, 0.11, h, (0, 0, -58), mat_wood)
     n = max(2, round(length / pitch) + 1)
     for i in range(n):
         t = i * length / (n - 1)
         _link_copy(tpl, f"{name}_p{i}", (x1 + ux * t, y1 + uy * t, z + h / 2))
     tpl.location = (0, 0, -500)
+    if slats:  # 縦子 (貫の間の細い縦材)
+        ts = box(f"{name}_tsl", 0.035, 0.035, h * 0.40, (0, 0, -59), mat_wood)
+        ns = max(2, int(length / 0.36))
+        for i in range(ns):
+            t = (i + 0.5) * length / ns
+            _link_copy(ts, f"{name}_s{i}",
+                       (x1 + ux * t, y1 + uy * t, z + h * 0.38))
+        ts.location = (0, 0, -500)
 
 
 def column_row(name, x0, y, bays, mat_col, mat_gold, z0, col_h, r=0.28):

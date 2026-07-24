@@ -26,6 +26,7 @@ def make_materials():
         lattice_dk=mat_image("kw_lattice_dk", tex["lattice_dk"], rough=0.7,
                              blend="OPAQUE"),
         wood_dark=mat("wood_dark", (0.16, 0.055, 0.035), rough=0.7),  # 頭貫・軒桁
+        wood_tan=mat("wood_tan", (0.42, 0.30, 0.17), rough=0.65),  # 桁帯・軒裏の生地木
         void=mat("void", (0.008, 0.006, 0.006), rough=1.0),  # 開口の奥の闇
         sudare=mat_image("kw_sudare", tex["sudare"], rough=0.8, blend="OPAQUE"),
         rough_stone=mat_image("kw_rough", tex["rough_stone"], rough=0.95,
