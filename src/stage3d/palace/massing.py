@@ -1,7 +1,7 @@
 # 宮殿 Phase 0: 箱マッシング (承認用ラフ)
 # 実行例:
 #   宮邸: python src/stage3d/palace/massing.py -- --site mansion --views T,A,F,P --tag mans
-#   皇宮: python src/stage3d/palace/massing.py -- --site kyugu --views B,T,P,G --tag kyu
+#   皇宮: python src/stage3d/palace/massing.py -- --site kogu --views B,T,P,G --tag kyu
 import importlib
 import math
 import os
@@ -23,7 +23,7 @@ if "--site" in argv:
     i = argv.index("--site")
     site = argv[i + 1]
     del argv[i:i + 2]
-L = importlib.import_module({"mansion": "layout", "kyugu": "layout_kyugu"}[site])
+L = importlib.import_module({"mansion": "layout", "kogu": "layout_kogu"}[site])
 
 if lint_scene.run(L):
     raise SystemExit("lint エラーを解消してから実行してください")

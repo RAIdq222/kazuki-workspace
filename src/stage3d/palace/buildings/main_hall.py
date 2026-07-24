@@ -15,7 +15,7 @@ from kit.roofs import roof  # noqa: E402
 from kit.structure import (terrace_tiered, grand_stair_steps, column_row,  # noqa: E402
                            _link_copy)
 
-X, Y = 0.0, 160.0            # layout_kyugu の main_hall 位置
+X, Y = 0.0, 160.0            # layout_kogu の main_hall 位置
 TW, TD, TH = 64.0, 44.0, 7.0  # 基壇
 HW, HD = 34.0, 20.0          # 身舎
 GAL = 2.2                    # 前面柱廊の奥行
@@ -45,11 +45,31 @@ def build(M, ongro_img=None):
               rot=(math.pi / 2, 0, math.pi / 2))
     plane("wall1_b", HW, 6.2, (X, Y + HD / 2 + 0.01, Z0 + 3.1), M["redwall"],
           rot=(math.pi / 2, 0, math.pi))
-    for i in range(1, 6):  # 中央5間は格子扉
+    # 柱間ごとの建具 (Issue #6 P1-4): 中央=暗い開口 / 隣接4間=暗色格子扉
+    for i in range(1, 6):
         bx0, bx1 = xs[i], xs[i + 1]
-        plane(f"door{i}", bx1 - bx0 - 0.25, 4.7,
-              ((bx0 + bx1) / 2, wall_y - 0.03, Z0 + 2.4), M["lattice"],
-              rot=(math.pi / 2, 0, 0))
+        cx, bw = (bx0 + bx1) / 2, bx1 - bx0
+        if i == 3:  # 明間: 独立した暗い開口 (奥に闇、手前に金枠)
+            plane(f"door_void", bw - 0.3, 4.9, (cx, wall_y + 0.9, Z0 + 2.45),
+                  M["void"], rot=(math.pi / 2, 0, 0))
+            for s2 in (-1, 1):
+                box(f"door_fj{s2}", 0.3, 0.22, 5.0, (cx + s2 * (bw / 2 - 0.3),
+                                                     wall_y - 0.05, Z0 + 2.5),
+                    M["wood_dark"])
+            box("door_fh", bw - 0.2, 0.22, 0.35, (cx, wall_y - 0.05, Z0 + 5.05),
+                M["wood_dark"])
+        else:
+            plane(f"door{i}", bw - 0.25, 4.7, (cx, wall_y - 0.03, Z0 + 2.4),
+                  M["lattice_dk"], rot=(math.pi / 2, 0, 0))
+    # 頭貫・軒桁 (柱列の上に載る別部材) と柱礎
+    from stagelib import cyl as _cyl
+    box("kashiranuki", span + 1.2, 0.4, 0.5, (X, Y - HD / 2, Z0 + 5.85),
+        M["wood_dark"])
+    box("nokigeta", span + 1.6, 0.5, 0.35, (X, Y - HD / 2, Z0 + 6.25),
+        M["wood_dark"])
+    for i, cx in enumerate(xs):
+        _cyl(f"colbase{i}", 0.38, 0.26, (cx, Y - HD / 2, Z0 + 0.13),
+             M["stone_w"], verts=14)
     _bands("1", X, Y, HW, HD, Z0 + 6.2, M)
 
     # ---- 裳階(腰屋根)+軒裏 (帯の上に隙間を残さない=浮き防止) ----
@@ -57,8 +77,18 @@ def build(M, ongro_img=None):
     roof("r_lower", HW + 3.2, HD + 3.2, 3.0, top_rect=(13.4, 7.4),
          lift=0.4, reach=0.28, material=M["tile"], ridge_mat=M["ridge"],
          loc=(X, Y, Z0 + 8.3))
-    # ---- 平座+赤い高欄 (二段貫・太柱) ----
-    box("balc", 28.4, 16.4, 0.5, (X, Y, Z0 + 11.55), M["stone_w"])
+    # ---- 平座 (木質の床+持送り)+赤い高欄 (二段貫・太柱) ----
+    box("balc", 28.4, 16.4, 0.5, (X, Y, Z0 + 11.55), M["wood_floor"])
+    tpl_bk = box("tpl_bracket", 0.35, 0.55, 0.4, (0, 0, -72), M["wood_dark"])
+    for i in range(14):
+        px = X - 13.2 + i * (26.4 / 13)
+        for sy in (-1, 1):
+            _link_copy(tpl_bk, f"balc_bk{i}{sy}", (px, Y + sy * 7.9, Z0 + 11.1))
+    for i in range(8):
+        py = Y - 7.0 + i * (14.0 / 7)
+        for sx in (-1, 1):
+            _link_copy(tpl_bk, f"balc_bl{i}{sx}", (X + sx * 13.9, py, Z0 + 11.1))
+    tpl_bk.location = (0, 0, -500)
     tpl_rp = box("tpl_rpost", 0.19, 0.19, 1.05, (0, 0, -60), M["col"])
     for i in range(22):
         px = X - 13.6 + i * (27.2 / 21)
@@ -76,17 +106,25 @@ def build(M, ongro_img=None):
         box(f"balc_railm{bx}_{by}", bw, bd * 0.8, 0.10,
             (X + bx, Y + by, Z0 + 12.60), M["col"])
 
-    # ---- 2層 ----
+    # ---- 2層 (Issue #6 P1-5: 前面列柱+柱間ごとの暗い建具+中央の額) ----
     box("body2", 26, 14, 4.4, (X, Y, Z0 + 11.0 + 2.2), M["red"])
-    plane("wall2_f", 26, 3.4, (X, Y - 7.01, Z0 + 13.3), M["redwall"],
-          rot=(math.pi / 2, 0, 0))
     plane("wall2_b", 26, 4.4, (X, Y + 7.01, Z0 + 13.2), M["redwall"],
           rot=(math.pi / 2, 0, math.pi))
     for sx in (-1, 1):
         plane(f"wall2_s{sx}", 14, 4.4, (X + sx * 13.01, Y, Z0 + 13.2), M["redwall"],
               rot=(math.pi / 2, 0, math.pi / 2))
-    plane("lat2", 19, 1.9, (X, Y - 7.03, Z0 + 13.55), M["lattice"],
-          rot=(math.pi / 2, 0, 0))
+    xs2 = [X + (x0 - X) * (24.0 / span) for x0 in xs]  # 1層柱筋を2層幅へ縮小
+    tpl_c2 = _cyl("tpl_col2", 0.16, 3.3, (0, 0, -74), M["col"], verts=14)
+    for i, cx in enumerate(xs2):
+        _link_copy(tpl_c2, f"col2_{i}", (cx, Y - 7.35, Z0 + 11.8 + 1.65))
+    tpl_c2.location = (0, 0, -500)
+    for i in range(len(xs2) - 1):  # 柱間の暗い建具
+        cx = (xs2[i] + xs2[i + 1]) / 2
+        bw = xs2[i + 1] - xs2[i]
+        plane(f"lat2_{i}", bw - 0.3, 2.5, (cx, Y - 7.01, Z0 + 13.35),
+              M["lattice_dk"], rot=(math.pi / 2, 0, 0))
+    box("gaku_plaque", 2.0, 0.14, 1.2, (X, Y - 7.45, Z0 + 14.9), M["gold"])
+    box("gaku_plaque_in", 1.7, 0.1, 0.95, (X, Y - 7.48, Z0 + 14.9), M["wood_dark"])
     _bands("2", X, Y, 26, 14, Z0 + 15.4, M, scale=0.85)
     box("soffit2", 26 + 1.6, 14 + 1.6, 0.55, (X, Y, Z0 + 17.05), M["ridge"])
     roof("r_upper", 29, 17, 5.6, style="xieshan", xr=0.45, lift=0.5, reach=0.35,

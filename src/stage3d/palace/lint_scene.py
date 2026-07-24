@@ -78,8 +78,8 @@ def run(mod=None, verbose=True):
 
 
 if __name__ == "__main__":
-    # 引数で対象を選択: python3 lint_scene.py [mansion|kyugu]
+    # 引数で対象を選択: python3 lint_scene.py [mansion|kogu]
     tgt = sys.argv[1] if len(sys.argv) > 1 else "mansion"
     import importlib
-    m = importlib.import_module({"mansion": "layout", "kyugu": "layout_kyugu"}[tgt])
+    m = importlib.import_module({"mansion": "layout", "kogu": "layout_kogu"}[tgt])
     sys.exit(1 if run(m) else 0)

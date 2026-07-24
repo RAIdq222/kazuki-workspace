@@ -23,7 +23,7 @@ bpy.ops.object.delete()
 
 M = make_materials()
 main_hall.build(M, ongro_img=os.path.join(textures.OUT, "kw_ongro.png"))
-bekkuden.build(M, 28, 110, facing="W", tag="e")   # layout_kyugu: x=±28, y=110
+bekkuden.build(M, 28, 110, facing="W", tag="e")   # layout_kogu: x=±28, y=110
 bekkuden.build(M, -28, 110, facing="E", tag="w")
 props.court_context(M)
 

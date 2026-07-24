@@ -117,6 +117,23 @@ def lattice_door():
     return _save(img, "kw_lattice.png")
 
 
+def lattice_door_dark():
+    """格子扉の暗色版 (軒下の陰の中の建具。b08_17の1層)."""
+    w, h = 256, 512
+    img = Image.new("RGB", (w, h), (28, 16, 12))
+    d = ImageDraw.Draw(img)
+    gold = (96, 74, 38)
+    gy = int(h * 0.62)
+    d.rectangle([6, 6, w - 6, gy], outline=gold, width=5)
+    for x in range(6, w - 6, 24):
+        d.line([(x, 6), (x, gy)], fill=gold, width=2)
+    for y in range(6, gy, 24):
+        d.line([(6, y), (w - 6, y)], fill=gold, width=2)
+    d.rectangle([6, gy + 8, w - 6, h - 6], outline=gold, width=4)
+    d.rectangle([26, gy + 26, w - 26, h - 26], outline=(70, 52, 28), width=3)
+    return _save(img, "kw_lattice_dk.png")
+
+
 def stone_paving():
     """広場の大判石畳."""
     w = h = 512
@@ -248,6 +265,7 @@ def build_all():
     return dict(
         tile_grey=tiles(), tile_amber=tiles_amber(), redwall=red_wall(),
         frieze=frieze(), frieze_o=frieze_olive(), dougong=dougong_band(),
-        lattice=lattice_door(), paving=stone_paving(), ongro=cloud_ramp(),
+        lattice=lattice_door(), lattice_dk=lattice_door_dark(),
+        paving=stone_paving(), ongro=cloud_ramp(),
         sudare=sudare(), rough_stone=rough_stone(), door=door_red(),
     )
