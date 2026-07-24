@@ -4,7 +4,7 @@ import sys
 import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from layout import BUILDINGS, WALLS, SITE, expand
+import layout as _default_layout
 
 # 舗装・砂利・池・塀・香炉は重なり判定から除外 (面や点景のため)
 _FLAT = {"plaza", "gravel", "pond", "censer", "wall"}
@@ -26,7 +26,9 @@ def _overlap(a, b):
     return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
 
 
-def run(verbose=True):
+def run(mod=None, verbose=True):
+    mod = mod or _default_layout
+    BUILDINGS, WALLS, SITE, expand = mod.BUILDINGS, mod.WALLS, mod.SITE, mod.expand
     errors, warns = [], []
     bs = [b for b in expand() if b["kind"] not in _FLAT]
 
@@ -76,4 +78,8 @@ def run(verbose=True):
 
 
 if __name__ == "__main__":
-    sys.exit(1 if run() else 0)
+    # 引数で対象を選択: python3 lint_scene.py [mansion|kyugu]
+    tgt = sys.argv[1] if len(sys.argv) > 1 else "mansion"
+    import importlib
+    m = importlib.import_module({"mansion": "layout", "kyugu": "layout_kyugu"}[tgt])
+    sys.exit(1 if run(m) else 0)
