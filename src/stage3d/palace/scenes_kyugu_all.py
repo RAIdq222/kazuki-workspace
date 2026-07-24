@@ -107,20 +107,55 @@ for i, (tx, ty, tr) in enumerate(LK.TREES):
     sphere(f"tree{i}", tr, (tx, ty, tr * 1.35), M["tree"], scale=(1, 1, 0.85))
 props.figures(M, [(0, -14), (-3, -18), (2, 20), (-46, 100), (52, 266)])
 
+# ---- 背景の充填 (Issue #6 P0-2: 樹冠と屋根列で地平線を閉じ、空白帯をなくす) ----
+from kit.roofs import roof as _r2
+for i, (bx, by, bw, bd, bh) in enumerate([
+        (-72, 194, 24, 11, 6.5), (72, 194, 24, 11, 6.5),   # 廊のすぐ背後の二階級
+        (-44, 204, 18, 10, 5.0), (44, 206, 18, 10, 5.0),
+        (-90, 212, 20, 10, 7.0), (90, 214, 20, 10, 7.0),
+        (-28, 212, 15, 9, 4.5), (28, 214, 15, 9, 4.5),     # 主殿の両脇の奥
+        (-60, 228, 18, 9, 6.0), (60, 230, 18, 9, 6.0)]):
+    box(f"bgh{i}", bw, bd, bh, (bx, by, bh / 2), M["red"])
+    _r2(f"bgh{i}_r", bw + 2.2, bd + 2.2, 3.4, style="xieshan", xr=0.5, lift=0.4,
+        material=M["tile_amber"], ridge_mat=M["ridge_amber"], loc=(bx, by, bh),
+        shiwei=False, with_ridges=False)
+for i in range(30):  # 主殿背後〜東西の樹冠帯 (廊の屋根越しに覗く高さ)
+    tx = -102 + (i * 7.1) % 204
+    ty = 176 + ((i * 37) % 5) * 8
+    tr = 3.8 + ((i * 13) % 3) * 0.9
+    cyl(f"bgt{i}t", tr * 0.1, tr * 1.6, (tx, ty, tr * 0.8), M["bronze"], verts=6)
+    sphere(f"bgt{i}", tr, (tx, ty, tr * 1.9), M["tree"], scale=(1.15, 1, 0.9))
+for i in range(14):  # 広場の東西外側 (別殿の背後) の樹冠
+    sx = -1 if i % 2 else 1
+    tx = sx * (60 + (i * 11) % 34)
+    ty = 66 + (i * 17) % 80
+    tr = 3.2 + (i % 3) * 0.9
+    cyl(f"bgs{i}t", tr * 0.1, tr * 1.5, (tx, ty, tr * 0.75), M["bronze"], verts=6)
+    sphere(f"bgs{i}", tr, (tx, ty, tr * 1.8), M["tree"], scale=(1.1, 1, 0.9))
+
 set_world((0.60, 0.72, 0.88), 0.68)
 sun_light("sun", rot=(math.radians(48), 0, math.radians(135)), energy=3.2,
           angle_deg=2)
 
-cams = {
-    "W": add_camera("cam_W", (155, -70, 90), (-25, 175, 2), lens=35),   # 全景(南東上空)
-    "P1": add_camera("cam_P1", (5, -34, 1.8), (0, 10, 9), lens=28),     # 正門前
-    "C2": add_camera("cam_C2", (-49.5, 63, 2.4), (-49.5, 150, 2.4), lens=30),  # 廊下(c205)
-    "Y": add_camera("cam_Y", (-56, 20, 2.0), (-80, 50, 4), lens=26),    # 客間の院
-    "B2": add_camera("cam_B2", (0, 70, 7.0), (0, 160, 17), lens=45),    # ボード角(広場内)
-    "CU": add_camera("cam_CU", (58, 126, 10.0), (0, 162, 13), lens=30),  # 東寄り(指摘角)
-    "ST": add_camera("cam_ST", (3, 100, 1.8), (0, 150, 10), lens=35),   # 階段正面
-    "G": add_camera("cam_G", (36, 230, 3.4), (88, 292, 8), lens=28),    # 庭園
-}
+# カメラは configs/kyugu.json を単一の情報源とする (Issue #6 P0-1: 手転記の廃止)
+# config は three.js 座標系 (x, z, -y) なので blender 座標へ逆変換する
+import json  # noqa: E402
+
+with open(os.path.join(os.path.dirname(_HERE), "configs", "kyugu.json"),
+          encoding="utf-8") as _f:
+    _CFG = json.load(_f)
+
+
+def _b(p):  # three -> blender: (x, y_up, z_south) -> (x, -z, y)
+    return (p[0], -p[2], p[1])
+
+
+cams = {}
+for _k, _v in list(_CFG["presets"].items()) + list(_CFG.get("qaCams", {}).items()):
+    if _k in cams:
+        continue
+    cams[_k] = add_camera(f"cam_{_k}", _b(_v["pos"]), _b(_v["tgt"]),
+                          lens=_v.get("mm", 35))
 for c in cams.values():
     c.data.clip_end = 900.0
 
