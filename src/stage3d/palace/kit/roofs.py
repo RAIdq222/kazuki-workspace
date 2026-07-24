@@ -160,6 +160,25 @@ def roof(name, w, d, h, style="xieshan", ratios=(0.5, 0.65, 0.75, 0.9), sub=3,
         o.data.materials.append(material)
     bpy.context.collection.objects.link(o)
 
+    # 軒先の瓦当列 (軒縁の見切り)。反り(corner_mod)に追従した閉リング
+    s0, z0v = rows[0]
+    hx0, hy0 = extents(s0)
+    ring_pts = []
+    for iu in range(nu):
+        u = -1 + 2 * iu / (nu - 1)
+        ring_pts.append(corner_mod(max(-hx0, min(hx0, u * w / 2)), -hy0, s0, z0v))
+    for iu in range(nus):
+        u = -1 + 2 * iu / (nus - 1)
+        ring_pts.append(corner_mod(hx0, max(-hy0, min(hy0, u * d / 2)), s0, z0v))
+    for iu in range(nu):
+        u = 1 - 2 * iu / (nu - 1)
+        ring_pts.append(corner_mod(max(-hx0, min(hx0, u * w / 2)), hy0, s0, z0v))
+    for iu in range(nus):
+        u = 1 - 2 * iu / (nus - 1)
+        ring_pts.append(corner_mod(-hx0, max(-hy0, min(hy0, u * d / 2)), s0, z0v))
+    ring_pts.append(ring_pts[0])
+    _poly_tube(f"{name}_eave", ring_pts, 0.10, ridge_mat or material, o)
+
     if top_rect:
         # 博脊: 腰屋根の上端(壁との取り合い)を一周する水平の見切り棟
         sxh, syh = top_rect
@@ -222,10 +241,12 @@ def _ridges(name, w, d, h, style, rows, extents, corner_mod, material, parent,
             fin = bpy.data.meshes.new(f"{name}_shiwei{sx}")
             x0 = sx * ridge_half
             ww = 0.35 * sc
-            pts = [
-                (x0 - ww, -0.0, h - 0.4 * sc), (x0 + ww * 1.6, 0, h - 0.4 * sc),
-                (x0 + ww * 1.6, 0, h + 1.3 * sc), (x0 + ww * 0.9, 0, h + 1.55 * sc),
-                (x0 - ww * 0.4, 0, h + 1.45 * sc), (x0 - ww, 0, h + 0.9 * sc),
+            pts = [  # 内側に巻き込む鉤形 (南朝の大ぶりの鴟尾)
+                (x0 - ww, 0, h - 0.4 * sc), (x0 + ww * 1.7, 0, h - 0.4 * sc),
+                (x0 + ww * 1.7, 0, h + 1.15 * sc), (x0 + ww * 1.05, 0, h + 1.5 * sc),
+                (x0 + ww * 0.35, 0, h + 1.62 * sc), (x0 + ww * 0.30, 0, h + 1.18 * sc),
+                (x0 - ww * 0.15, 0, h + 1.05 * sc), (x0 - ww * 0.5, 0, h + 1.38 * sc),
+                (x0 - ww, 0, h + 0.85 * sc),
             ]
             verts = [(px, -ww / 2, pz) for px, py, pz in pts] + \
                     [(px, ww / 2, pz) for px, py, pz in pts]

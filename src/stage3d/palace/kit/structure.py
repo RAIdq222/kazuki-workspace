@@ -52,8 +52,12 @@ def balustrade_run(name, p1, p2, z, tpls, pitch=1.3):
     del ph
 
 
-def terrace_tiered(name, x, y, w, d, h, mats, tiers=2, stair_gap=None):
-    """高基壇: 段状の石壇+コーニス+高欄。stair_gap=(幅) で南辺中央を開ける."""
+def terrace_tiered(name, x, y, w, d, h, mats, tiers=2, stair_gap=None,
+                   side_gaps=None):
+    """高基壇: 段状の石壇+コーニス+高欄。stair_gap=(幅)で南辺中央を開ける.
+
+    side_gaps: [(中心xオフセット, 幅)] — 1段目南辺の側階用の追加開口
+    """
     from stagelib import box
     tpls = (*make_post_template(mats["stone_w"]), make_panel_template(mats["stone_w"]))
     z = 0.0
@@ -69,16 +73,32 @@ def terrace_tiered(name, x, y, w, d, h, mats, tiers=2, stair_gap=None):
         # 高欄 (各段の縁、南辺は階段の開口を残す)
         ins = 0.55
         hw, hd = tw / 2 - ins, td / 2 - ins
-        gap = (stair_gap or 0) / 2
         top = z
         balustrade_run(f"{name}_r{t}n", (x - hw, y + hd), (x + hw, y + hd), top, tpls)
         balustrade_run(f"{name}_r{t}w", (x - hw, y - hd), (x - hw, y + hd), top, tpls)
         balustrade_run(f"{name}_r{t}e", (x + hw, y - hd), (x + hw, y + hd), top, tpls)
-        if gap > 0:
-            balustrade_run(f"{name}_r{t}s1", (x - hw, y - hd), (x - gap, y - hd), top, tpls)
-            balustrade_run(f"{name}_r{t}s2", (x + gap, y - hd), (x + hw, y - hd), top, tpls)
-        else:
-            balustrade_run(f"{name}_r{t}s", (x - hw, y - hd), (x + hw, y - hd), top, tpls)
+        gaps = []
+        if stair_gap:
+            gaps.append((0.0, stair_gap))
+        if t == 0 and side_gaps:
+            gaps.extend(side_gaps)
+        segs = [(-hw, hw)]
+        for gc, gw in gaps:  # 開口を切り抜いて区間リストに
+            nxt = []
+            for a, b in segs:
+                g0, g1 = gc - gw / 2, gc + gw / 2
+                if g1 <= a or g0 >= b:
+                    nxt.append((a, b))
+                else:
+                    if g0 > a:
+                        nxt.append((a, g0))
+                    if g1 < b:
+                        nxt.append((g1, b))
+            segs = nxt
+        for k, (a, b) in enumerate(segs):
+            if b - a > 0.8:
+                balustrade_run(f"{name}_r{t}s{k}", (x + a, y - hd), (x + b, y - hd),
+                               top, tpls)
     return z, tpls
 
 

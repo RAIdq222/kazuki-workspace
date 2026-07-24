@@ -35,5 +35,5 @@ def make_materials():
         tree=mat("tree", (0.23, 0.36, 0.19), rough=0.9),
         ongro=mat_image("kw_ongro_m", tex["ongro"], rough=0.85, blend="OPAQUE"),
         door=mat_image("kw_door", tex["door"], rough=0.6, blend="OPAQUE"),
-        water=mat("water", (0.30, 0.48, 0.50), rough=0.15),
+        water=mat("water", (0.05, 0.10, 0.11), rough=0.12),  # 深い池の水面
     )

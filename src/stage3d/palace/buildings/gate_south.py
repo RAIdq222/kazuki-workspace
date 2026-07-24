@@ -39,10 +39,16 @@ def build(M):
               M["redwall"], rot=(math.pi / 2, 0, 0))
         plane(f"gate_bwb{sx}", side_w, 5.4, (bx, Y + D / 2 + 0.01, TH + 2.7),
               M["redwall"], rot=(math.pi / 2, 0, math.pi))
-        # 脇の飾り扉 (朱漆板門+門釘)
-        plane(f"gate_door{sx}", 2.8, 3.8, (X + sx * (OPEN_W / 2 + side_w * 0.55),
-                                           Y - D / 2 - 0.03, TH + 1.95),
+        # 脇の飾り扉 (朱漆板門+門釘) と扉枠
+        dx0 = X + sx * (OPEN_W / 2 + side_w * 0.55)
+        plane(f"gate_door{sx}", 2.8, 3.8, (dx0, Y - D / 2 - 0.03, TH + 1.95),
               M["door"], rot=(math.pi / 2, 0, 0))
+        for s2 in (-1, 1):
+            box(f"gate_dj{sx}{s2}", 0.26, 0.16, 4.1, (dx0 + s2 * 1.55,
+                                                      Y - D / 2 - 0.06, TH + 2.0),
+                M["gold"])
+        box(f"gate_dh{sx}", 3.36, 0.16, 0.26, (dx0, Y - D / 2 - 0.06, TH + 3.98),
+            M["gold"])
     box("gate_lintel", OPEN_W + 0.8, D, 1.0, (X, Y, TH + 4.9), M["red"])
     # 開口の内壁 (通り抜けの見え)
     for sx in (-1, 1):

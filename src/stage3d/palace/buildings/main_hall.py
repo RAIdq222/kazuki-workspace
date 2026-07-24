@@ -10,6 +10,7 @@ sys.path.insert(0, os.path.dirname(_PAL))  # src/stage3d
 sys.path.insert(0, _PAL)                   # palace
 
 from stagelib import box, plane  # noqa: E402
+from kit.structure import _link_copy  # noqa: E402
 from kit.roofs import roof  # noqa: E402
 from kit.structure import (terrace_tiered, grand_stair_steps, column_row,  # noqa: E402
                            _link_copy)
@@ -23,10 +24,12 @@ BAYS = [3.4, 4.0, 4.6, 5.2, 4.6, 4.0, 3.4]
 
 def build(M, ongro_img=None):
     Z0 = TH
-    # ---- 基壇+大階段 (御路+左右レーン) ----
-    _, tpls = terrace_tiered("terr", X, Y, TW, TD, TH, M, tiers=2, stair_gap=22)
+    # ---- 基壇+大階段 (御路+左右レーン)+側階 ----
+    _, tpls = terrace_tiered("terr", X, Y, TW, TD, TH, M, tiers=2, stair_gap=22,
+                             side_gaps=[(-24, 9.5), (24, 9.5)])
     grand_stair_steps("stair", X, Y - TD / 2, TH, M, tpls, width=20,
                       ongro_img=ongro_img)
+    _side_stairs(M)
 
     # ---- 1層: 柱廊+壁 ----
     span = sum(BAYS)
@@ -89,6 +92,30 @@ def build(M, ongro_img=None):
     roof("r_upper", 29, 17, 5.6, style="xieshan", xr=0.45, lift=0.5, reach=0.35,
          material=M["tile"], ridge_mat=M["ridge"], loc=(X, Y, Z0 + 17.3))
     # 袖塀は統合シーン側 (wall_main+廊) が持つため、ここでは作らない
+
+
+def _side_stairs(M):
+    """基壇前面の側階 (b08_17で中央階段の左右に見える斜めの欄干の正体)。1段目まで."""
+    h1 = TH * 0.55
+    y_front = Y - TD / 2
+    n = int(h1 / 0.146)
+    run = n * 0.32
+    ang = math.atan2(h1, run)
+    slope = math.hypot(run, h1)
+    for sx in (-1, 1):
+        px = X + sx * 24
+        tpl = box(f"sstpl{sx}", 8.0, 0.32, 0.146, (0, 0, -70), M["stone"])
+        y = y_front - run
+        z = 0.0
+        for i in range(n):
+            _link_copy(tpl, f"sst{sx}_{i}", (px, y + 0.16, z + 0.073))
+            y += 0.32
+            z += 0.146
+        tpl.location = (0, 0, -500)
+        for s2 in (-1, 1):  # 垂帯石
+            fl = box(f"ssfl{sx}{s2}", 0.45, slope + 0.5, 1.1,
+                     (px + s2 * 4.2, y_front - run / 2, h1 / 2 - 0.3), M["stone"])
+            fl.rotation_euler = (ang, 0, 0)
 
 
 def _bands(tag, x, y, w, d, z_base, M, scale=1.0):

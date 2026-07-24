@@ -26,10 +26,15 @@ def censer(M, x, y, ground=0.0):
     # 蓋 (ドーム+宝珠)
     sphere("cen_lid", 1.02, (x, y, z0 + 2.85), M["bronze"], scale=(1, 1, 0.45))
     sphere("cen_knob", 0.2, (x, y, z0 + 3.35), M["bronze"])
-    # 石高欄の囲い
-    for i, (dx, dy, sw, sd) in enumerate([(0, -4.4, 9.6, 0.35), (0, 4.4, 9.6, 0.35),
-                                          (-4.8, 0, 0.35, 8.5), (4.8, 0, 0.35, 8.5)]):
-        box(f"cen_rail{i}", sw, sd, 0.95, (x + dx, y + dy, ground + 1.3), M["stone_w"])
+    # 石高欄の囲い (望柱+欄板)
+    for i, (dx, dy, sw, sd) in enumerate([(0, -4.4, 9.6, 0.22), (0, 4.4, 9.6, 0.22),
+                                          (-4.8, 0, 0.22, 8.5), (4.8, 0, 0.22, 8.5)]):
+        box(f"cen_rail{i}", sw, sd, 0.75, (x + dx, y + dy, ground + 1.05), M["stone_w"])
+    for i, (dx, dy) in enumerate([(-4.8, -4.4), (4.8, -4.4), (-4.8, 4.4), (4.8, 4.4),
+                                  (0, -4.4), (0, 4.4), (-4.8, 0), (4.8, 0)]):
+        box(f"cen_post{i}", 0.24, 0.24, 1.15, (x + dx, y + dy, ground + 1.25),
+            M["stone_w"])
+        sphere(f"cen_ph{i}", 0.13, (x + dx, y + dy, ground + 1.9), M["stone_w"])
 
 
 def figures(M, spots):
